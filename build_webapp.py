@@ -556,12 +556,14 @@ function setLang(l){if(l!==LANG){LANG=l;try{localStorage.setItem('wtb_lang',l);}
   applyI18N();relabelDynamic();}
 
 const DATA={}, DATA_DIR='cluster_results/ca/';
-async function loadGroup(g){if(DATA[g])return;const r=await fetch(DATA_DIR+FILES[g]);Object.assign(DATA,await r.json());}
+// Bounded fetch: abort after `ms` so a hung request can't leave the UI stuck (spinner / "finding routes…") forever.
+function fetchT(url,ms){const c=new AbortController();const id=setTimeout(()=>c.abort(),ms||9000);return fetch(url,{signal:c.signal}).finally(()=>clearTimeout(id));}
+async function loadGroup(g){if(DATA[g])return;const r=await fetchT(DATA_DIR+FILES[g],20000);if(!r.ok)throw new Error('HTTP '+r.status+' loading '+FILES[g]);Object.assign(DATA,await r.json());}
 // Getting Even: most under-represented taxonomic group per cell. CVD-safe Paul Tol Bright palette (index matches ge_cats order); -1 -> grey "all under-sampled".
 const GE={}, GE_PAL=['#4477AA','#EE6677','#AA3377','#CCBB44','#66CCEE','#228833'], GE_ALL='#BBBBBB';
 const gekey=(lat,lon)=>lat.toFixed(3)+','+lon.toFixed(3);
 let GE_LOADED=false;
-async function loadGE(){if(GE_LOADED)return;const r=await fetch(DATA_DIR+'webapp_data_gettingeven.json'),j=await r.json();
+async function loadGE(){if(GE_LOADED)return;const r=await fetchT(DATA_DIR+'webapp_data_gettingeven.json',15000),j=await r.json();
   for(const e of j.gettingeven)GE[gekey(e[0],e[1])]=[e[2],e[3]];GE_LOADED=true;}
 function geActive(){const e=document.getElementById('tgGettingEven');return!!(e&&e.checked);}
 function geColour(m){const v=GE[gekey(m.r[0],m.r[1])];if(!v)return GE_ALL;return v[0]<0?GE_ALL:(GE_PAL[v[0]]||GE_ALL);}
@@ -579,7 +581,7 @@ const OSRM_BASE="https://routing.openstreetmap.de/";   // FOSSGIS public OSRM (c
 const MODES={Walk:{host:'routed-foot',kmh:5,emit:0,icon:'🚶'},Cycle:{host:'routed-bike',kmh:14,emit:0,icon:'🚲'},Drive:{host:'routed-car',kmh:60,emit:0.18,icon:'🚗'}};
 const UNITS={Minutes:{toH:1/60,min:15,max:600,step:15,def:120},Hours:{toH:1,min:1,max:14,step:0.5,def:5},Days:{toH:24,min:1,max:21,step:1,def:2}};
 const ROAD_FACTOR=1.35, MIN_FIELD_H=0.5, N_CANDIDATES=8;
-function co2lbl(kg){return kg<=0?t('car_free'):'~'+(kg<10?kg.toFixed(1):Math.round(kg))+' kg CO₂';}
+function co2lbl(kg){return (kg<=0&&MODES[state.mode].emit===0)?t('car_free'):'~'+(kg<10?kg.toFixed(1):Math.round(kg))+' kg CO₂';}
 const ICONIC={Amphibia:'Amphibia',Aves:'Aves',Insecta:'Insecta',Mammalia:'Mammalia',Reptilia:'Reptilia',Plantae:'Plantae',Fungi:'Fungi',Actinopterygii:'Actinopterygii',Arachnida:'Arachnida',Mollusca:'Mollusca'};
 let prospectSeq=0;
 // whereKey is a stable sentinel ('around_start'|'right_here'|'destination'); the displayed
@@ -598,13 +600,15 @@ async function fetchProspects(lat,lon,whereKey){
   const ic=ICONIC[state.taxon]||'', HH=0.125;
   const q=(h)=>`https://api.inaturalist.org/v1/observations/species_counts?swlat=${lat-h}&nelat=${lat+h}&swlng=${lon-h}&nelng=${lon+h}&quality_grade=research&taxon_geoprivacy=open&threatened=false&per_page=500&order_by=count`+(ic?`&iconic_taxa=${ic}`:'');
   try{
-    const j=await fetch(q(HH)).then(r=>r.json());
+    const j=await fetchT(q(HH)).then(r=>r.json());
+    if(myseq!==prospectSeq)return;
     const total=j.total_results||0;
     const cellIds=new Set((j.results||[]).map(r=>r.taxon&&r.taxon.id).filter(Boolean));   // everything already logged in this cell
     let res=(j.results||[]).filter(r=>r.count>=2 && r.taxon && r.taxon.default_photo).map(r=>({count:r.count,taxon:r.taxon,_here:true}));
     let nearby=false;
     if(res.length<4){
-      const k=await fetch(q(3*HH)).then(r=>r.json());
+      const k=await fetchT(q(3*HH)).then(r=>r.json());
+      if(myseq!==prospectSeq)return;
       const have=new Set(res.map(r=>r.taxon.id));
       const extra=(k.results||[]).filter(r=>r.taxon&&r.taxon.default_photo&&r.count>=3&&!have.has(r.taxon.id)).map(r=>({count:r.count,taxon:r.taxon,_here:false}));
       if(extra.length){res=res.concat(extra);nearby=true;}
@@ -645,7 +649,7 @@ function spreadByTaxon(arr){const by={};arr.forEach(r=>{const k=(r.taxon.iconic_
 async function fetchFirsts(lat,lon,ic,cellIds,cellN){
   const R=0.5;   // ~50 km neighbourhood -- same habitat zone, not a different ecoregion
   const u=`https://api.inaturalist.org/v1/observations/species_counts?swlat=${lat-R}&nelat=${lat+R}&swlng=${lon-R}&nelng=${lon+R}&quality_grade=research&taxon_geoprivacy=open&threatened=false&per_page=200&order_by=count`+(ic?`&iconic_taxa=${ic}`:'');
-  try{const j=await fetch(u).then(r=>r.json());
+  try{const j=await fetchT(u).then(r=>r.json());
     const all=(j.results||[]).filter(r=>r.taxon&&r.taxon.default_photo);
     const M=j.total_results||all.length;                  // TRUE neighbourhood richness (uncapped), not the top-200 page; same filters as the cell query (research/open/threatened=false)
     const miss=spreadByTaxon(all.filter(r=>!cellIds.has(r.taxon.id)&&r.count>=10&&(r.taxon.observations_count||0)>40)).slice(0,6);
@@ -723,8 +727,9 @@ function planTap(lat,lon){state.startSet?setDest(lat,lon):setStart(lat,lon);}
 function legendTapKey(){if(state&&state.view==='plan')return state.startSet?'legendtap_plan_dest':'legendtap_plan_start';return 'legendtap_explore';}
 function refreshTapHint(){const lt=document.getElementById('legendtap');if(lt)lt.textContent=t(legendTapKey());}
 const geocode=debounce((lat,lon,tag)=>{
-  fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=10&lat=${lat}&lon=${lon}`)
-    .then(r=>r.json()).then(j=>{const a=j.address||{};const nm=a.city||a.town||a.village||a.hamlet||a.county||a.state||((j.display_name||'').split(',')[0])||t('here');
+  fetchT(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=10&lat=${lat}&lon=${lon}`,7000)
+    .then(r=>r.json()).then(j=>{if(state.start[0]!==lat||state.start[1]!==lon)return;   // start moved while geocoding -> stale label, skip
+      const a=j.address||{};const nm=a.city||a.town||a.village||a.hamlet||a.county||a.state||((j.display_name||'').split(',')[0])||t('here');
       setStartLabel((tag?tag+' · ':'')+t('near')+' '+nm);}).catch(()=>{});},600);
 
 function rows(){return DATA[state.taxon]||[];}
@@ -795,10 +800,12 @@ function rebuildTaxonOptions(){const cur=state.taxon;taxonSel.innerHTML='';
   Object.keys(FILES).forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=groupName(k);taxonSel.appendChild(o);});
   taxonSel.value=cur;}
 rebuildTaxonOptions();
-taxonSel.onchange=()=>{state.taxon=taxonSel.value;
+taxonSel.onchange=()=>{const prev=state.taxon;state.taxon=taxonSel.value;
   const pr=document.getElementById('prospects');if(pr){pr.dataset.idle='0';pr.innerHTML='<div class="hd">'+t('cells_loading',groupName(state.taxon))+'</div>';}
   if(typeof showLoading==='function')showLoading(true);
-  loadGroup(state.taxon).then(()=>{buildMarkers();setCoverage();if(document.getElementById('insights').style.display==='block')renderInsights();if(typeof showLoading==='function')showLoading(false);});};
+  loadGroup(state.taxon).then(()=>{buildMarkers();setCoverage();if(document.getElementById('insights').style.display==='block')renderInsights();})
+    .catch(()=>{state.taxon=prev;taxonSel.value=prev;if(pr){pr.dataset.idle='1';pr.innerHTML='<div class="hd" style="margin-top:10px">'+t('prospects_idle')+'</div>';}})   // load failed: revert dropdown, don't leave a half-switched map
+    .finally(()=>{if(typeof showLoading==='function')showLoading(false);});};
 
 const objsDiv=document.getElementById('objs');
 function rebuildObjs(){objsDiv.innerHTML='';
@@ -892,11 +899,12 @@ psEl.addEventListener('input',e=>doSearch(e.target.value));
 psEl.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();const f=srEl.querySelector('.res[data-lat]');if(f)f.click();}else if(e.key==='Escape')closeResults();});
 document.addEventListener('click',e=>{if(!srEl.contains(e.target)&&e.target!==psEl)closeResults();});
 function locateMe(){setStartLabel(t('locating'));
-  const ok=(lat,lon,how)=>{map.setView([lat,lon],8);setStart(lat,lon,how);};
   let done=false;
-  if(navigator.geolocation){navigator.geolocation.getCurrentPosition(p=>{done=true;ok(p.coords.latitude,p.coords.longitude,t('my_loc_short'));},()=>{if(!done)ipLoc(ok);},{timeout:6000});setTimeout(()=>{if(!done)ipLoc(ok);},6500);}else ipLoc(ok);}
+  const ok=(lat,lon,how)=>{if(done)return;done=true;map.setView([lat,lon],8);setStart(lat,lon,how);};   // idempotent: GPS resolving after the IP fallback fired can't double-set
+  const fail=()=>{if(!done)setStartLabel(t('loc_unavail'));};                                            // never clobber a successful locate
+  if(navigator.geolocation){navigator.geolocation.getCurrentPosition(p=>ok(p.coords.latitude,p.coords.longitude,t('my_loc_short')),()=>{if(!done)ipLoc(ok,fail);},{timeout:6000});setTimeout(()=>{if(!done)ipLoc(ok,fail);},6500);}else ipLoc(ok,fail);}
 document.getElementById('setMe').onclick=locateMe;
-function ipLoc(ok){fetch('https://ipapi.co/json/').then(r=>r.json()).then(j=>{if(j&&j.latitude)ok(j.latitude,j.longitude,t('my_area_ip'));else setStartLabel(t('loc_unavail'));}).catch(()=>setStartLabel(t('loc_unavail')));}
+function ipLoc(ok,fail){fetchT('https://ipapi.co/json/',6000).then(r=>r.json()).then(j=>{if(j&&j.latitude)ok(j.latitude,j.longitude,t('my_area_ip'));else if(fail)fail();}).catch(()=>{if(fail)fail();});}
 
 // the trip planner
 document.getElementById('plan').onclick=async()=>{await planTrip();const t=document.getElementById('trips');if(t)t.scrollIntoView({behavior:'smooth',block:'start'});};
@@ -916,7 +924,7 @@ async function planTrip(){
   const cand=[...new Set([...byImp,...byNear])].slice(0,N_CANDIDATES+4);
   trips.innerHTML='<div class="hd">'+t('finding_routes',modeName(state.mode).toLowerCase())+'</div>';
   const out=await Promise.all(cand.map(async c=>{
-    try{const u=`${OSRM_BASE}${M.host}/route/v1/driving/${slon},${slat};${c.m.r[1]},${c.m.r[0]}?overview=full&geometries=geojson`;const j=await fetch(u).then(r=>r.json());
+    try{const u=`${OSRM_BASE}${M.host}/route/v1/driving/${slon},${slat};${c.m.r[1]},${c.m.r[0]}?overview=full&geometries=geojson`;const j=await fetchT(u).then(r=>r.json());
       if(j.code==='Ok'&&j.routes&&j.routes[0]){const rt=j.routes[0];return {...c,oneH:rt.duration/3600,oneKm:rt.distance/1000,geo:rt.geometry,real:true};}}catch(e){}
     return {...c,oneH:c.estOne,oneKm:c.km*ROAD_FACTOR,geo:null,real:false};}));
   const scored=out.map(o=>({...o,fieldH:budget-2*o.oneH,co2:2*o.oneKm*M.emit}));
@@ -946,7 +954,7 @@ async function setDest(lat,lon){
   if(trips)trips.innerHTML='<div class="hd">'+t('finding_routes',modeName(state.mode).toLowerCase())+'</div>';
   let oneH=(km*ROAD_FACTOR)/M.kmh,oneKm=km*ROAD_FACTOR,geo=null,real=false;
   try{const u=`${OSRM_BASE}${M.host}/route/v1/driving/${slon},${slat};${best.r[1]},${best.r[0]}?overview=full&geometries=geojson`;
-    const j=await fetch(u).then(r=>r.json());
+    const j=await fetchT(u).then(r=>r.json());
     if(j.code==='Ok'&&j.routes&&j.routes[0]){const rt=j.routes[0];oneH=rt.duration/3600;oneKm=rt.distance/1000;geo=rt.geometry;real=true;}}catch(e){}
   const o={m:best,km,imp:impact(best.r),oneH,oneKm,geo,real,fieldH:budget-2*oneH,co2:2*oneKm*M.emit};
   if(trips){trips.innerHTML='<div class="hd">'+t('pop_go_title2')+'</div>';tripRow(trips,o,'d',0);}
@@ -1112,10 +1120,10 @@ applyI18N();   // paint static chrome + set <html lang> for the seeded language
 
 loadGroup(state.taxon).then(()=>{buildMarkers();setView('explore');showLoading(false);
   try{const u=new URLSearchParams(location.search),at=u.get('at'),g=u.get('g');
-    const go=()=>{if(at){const p=at.split(',').map(Number);if(p.length===2&&isFinite(p[0])&&isFinite(p[1])){map.setView([p[0],p[1]],8);exploreCell(p[0],p[1]);}}};
-    if(g&&FILES[g]&&g!==state.taxon){state.taxon=g;taxonSel.value=g;loadGroup(g).then(()=>{buildMarkers();go();});}else{go();}
+    const go=()=>{if(at){const p=at.split(',').map(Number);if(p.length===2&&isFinite(p[0])&&isFinite(p[1])&&p[0]>=BB.minlat&&p[0]<=BB.maxlat&&p[1]>=BB.minlon&&p[1]<=BB.maxlon){map.setView([p[0],p[1]],8);exploreCell(p[0],p[1]);}}};
+    if(g&&FILES[g]&&g!==state.taxon){state.taxon=g;taxonSel.value=g;loadGroup(g).then(()=>{buildMarkers();go();}).catch(()=>{});}else{go();}
     if(!at)locateMe();   // default Explore to the user's location (no shared cell to restore)
-  }catch(e){}});
+  }catch(e){}}).catch(()=>showLoading(false));
 </script></body></html>"""
 
 out = (HTML.replace("__FILES__", json.dumps(FILES, separators=(",", ":")))
