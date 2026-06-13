@@ -333,6 +333,10 @@ const I18N={
     pop_round:"round trip", pop_estimated:"(estimated)",
     pop_over_budget:bud=>`round trip — over your ${bud}`,
     pop_explore_title:"This area", pop_explore_sub:"— anywhere in the highlighted ~25 km cell",
+    pop_low_gap:"Well-sampled — low gap here, but still worth a look:",
+    pop_ge_gap:g=>`Most under-recorded group here: <b>${g}</b> — record those.`,
+    pop_nearest_gap:km=>`Nearest strong gap ~${km} km away.`,
+    pop_find_gaps:"Find gaps reachable from here →",
     share_link:"🔗 Copy link to this spot", copied:"✓ Copied!",
     car_free:"car-free 🌿",
     table_caption:"Top 40 cells for your goal mix & group, highest first. Tap a row to open it.",
@@ -447,6 +451,10 @@ const I18N={
     pop_round:"aller-retour", pop_estimated:"(estimé)",
     pop_over_budget:bud=>`aller-retour — au-delà de votre ${bud}`,
     pop_explore_title:"Cette zone", pop_explore_sub:"— n'importe où dans la cellule de ~25 km en surbrillance",
+    pop_low_gap:"Bien échantillonné — faible lacune ici, mais ça vaut le coup :",
+    pop_ge_gap:g=>`Groupe le plus sous-documenté ici : <b>${g}</b> — notez-les.`,
+    pop_nearest_gap:km=>`Lacune forte la plus proche à ~${km} km.`,
+    pop_find_gaps:"Trouver des lacunes accessibles d'ici →",
     share_link:"🔗 Copier le lien", copied:"✓ Copié !",
     car_free:"sans voiture 🌿",
     table_caption:"40 meilleures cellules pour votre combinaison d'objectifs et votre groupe, du plus élevé au plus bas. Touchez une ligne pour l'ouvrir.",
@@ -519,6 +527,15 @@ async function loadGE(){if(GE_LOADED)return;const r=await fetch(DATA_DIR+'webapp
   for(const e of j.gettingeven)GE[gekey(e[0],e[1])]=[e[2],e[3]];GE_LOADED=true;}
 function geActive(){const e=document.getElementById('tgGettingEven');return!!(e&&e.checked);}
 function geColour(m){const v=GE[gekey(m.r[0],m.r[1])];if(!v)return GE_ALL;return v[0]<0?GE_ALL:(GE_PAL[v[0]]||GE_ALL);}
+// A cell in the bottom band of the national gap ranking (e.g. well-sampled cities) is a low
+// priority for the all-taxa mission -- but it's not worthless. Surface the two honest reasons
+// to still record here: the single most under-recorded group (Getting Even), and the nearest
+// cell that IS a strong gap. Never inflate the score to do it.
+const LOW_GAP_T=0.15, STRONG_GAP_T=0.5;
+let geGapSeq=0;
+function nearestStrongGap(lat,lon){let best=null,bd=1e9;for(const m of markers){if((m.t||0)<STRONG_GAP_T)continue;const d=haversine(lat,lon,m.r[0],m.r[1]);if(d>1&&d<bd){bd=d;best=m;}}return best?{m:best,km:bd}:null;}
+function geGapPhrase(lat,lon){if(!GE_LOADED)return '';const v=GE[gekey(lat,lon)];return(!v||v[0]<0)?'':t('pop_ge_gap',t('ge_cats')[v[0]]);}
+function exploreToPlan(lat,lon){setView('plan');setStart(lat,lon);planTrip();}
 const IDX={discover:2,conservation:3,env:4,staleness:5,urgency:6}, TT=7, NTR=8;
 const OSRM_BASE="https://routing.openstreetmap.de/";   // FOSSGIS public OSRM (car/bike/foot, CORS-enabled)
 const MODES={Walk:{host:'routed-foot',kmh:5,emit:0,icon:'🚶'},Cycle:{host:'routed-bike',kmh:14,emit:0,icon:'🚲'},Drive:{host:'routed-car',kmh:60,emit:0.18,icon:'🚗'}};
@@ -1008,8 +1025,21 @@ function exploreCell(lat,lon){
   let geLine='';if(geActive()){const v=GE[gekey(dest[0],dest[1])];geLine='<div style="margin-bottom:4px">'+t('ge_most')+' <b>'+(!v||v[0]<0?t('ge_all'):t('ge_cats')[v[0]])+'</b></div>';}
   try{history.replaceState(null,'','?at='+dest[0].toFixed(3)+','+dest[1].toFixed(3)+'&g='+encodeURIComponent(state.taxon));}catch(e){}
   destCell=L.rectangle([[dest[0]-0.125,dest[1]-0.125],[dest[0]+0.125,dest[1]+0.125]],{color:'#1b7837',weight:2,dashArray:'5 5',fillColor:'#74c476',fillOpacity:0.16,interactive:false}).addTo(map);
+  const score=(o.t*100|0);
+  let body;
+  if((o.t||0)<LOW_GAP_T){
+    // low-gap cell: reframe instead of a bare "0/100 · —". Show the gap score muted (honest, not
+    // inflated), the most under-recorded group here, and the nearest cell that is a real gap.
+    const gid='gegap'+(++geGapSeq), near=nearestStrongGap(dest[0],dest[1]);
+    body=`${t('pop_low_gap')} <span style="color:#889">(${score}/100)</span>`
+      +`<div id="${gid}" style="margin-top:3px">${geGapPhrase(dest[0],dest[1])}</div>`
+      +(near?`<div style="margin-top:3px">${t('pop_nearest_gap',Math.round(near.km))} <a href="#" onclick="exploreToPlan(${dest[0]},${dest[1]});return false;" style="color:#1f6fe0">${t('pop_find_gaps')}</a></div>`:'');
+    if(!GE_LOADED)loadGE().then(()=>{const el=document.getElementById(gid);if(el)el.innerHTML=geGapPhrase(dest[0],dest[1]);}).catch(()=>{});
+  } else {
+    body=`${t('pop_impact')} <b>${score}/100</b> · ${contribStr(o.r)}`;
+  }
   destMarker=L.marker(dest,{icon:destIcon,zIndexOffset:900}).addTo(map)
-    .bindPopup(`${geLine}<b>${t('pop_explore_title')}</b> ${t('pop_explore_sub')}<br><span style="color:#667">${t('pop_centre')} ${dest[0].toFixed(2)}, ${dest[1].toFixed(2)}</span><br>${t('pop_impact')} <b>${(o.t*100|0)}/100</b> · ${contribStr(o.r)}<br><a href="#" onclick="navigator.clipboard&&navigator.clipboard.writeText(location.href);this.textContent=t('copied');return false;" style="color:#1f6fe0;font-size:12px">${t('share_link')}</a>`).openPopup();
+    .bindPopup(`${geLine}<b>${t('pop_explore_title')}</b> ${t('pop_explore_sub')}<br><span style="color:#667">${t('pop_centre')} ${dest[0].toFixed(2)}, ${dest[1].toFixed(2)}</span><br>${body}<br><a href="#" onclick="navigator.clipboard&&navigator.clipboard.writeText(location.href);this.textContent=t('copied');return false;" style="color:#1f6fe0;font-size:12px">${t('share_link')}</a>`).openPopup();
   fetchProspects(dest[0],dest[1],'destination');
 }
 function setView(v){
