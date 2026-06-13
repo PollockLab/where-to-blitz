@@ -267,9 +267,13 @@ async function fetchProspects(lat,lon,where){
     // "missing from this cell", not "nobody has seen it here" -- records-based, not absolute.
     const firsts=await fetchFirsts(lat,lon,ic,cellIds);
     if(myseq!==prospectSeq) return;
+    // well-surveyed cell -> a missing common species is a real gap; barely-surveyed cell ->
+    // almost everything is "missing", so any record helps (don't overclaim a "gap").
+    let nt=0,bd=1e9;for(const m of markers){const dd=Math.abs(m.r[0]-lat)+Math.abs(m.r[1]-lon);if(dd<bd){bd=dd;nt=m.r[8]||0;}}
+    const surveyed=nt>=40;
     const fe=document.getElementById('firsts');
     if(fe && firsts.length){
-      fe.innerHTML=`<div class="hd" style="margin-top:11px">🎯 <b style="color:var(--ink)">Fill the gap</b> — common nearby, missing from this cell:</div>`+
+      fe.innerHTML=`<div class="hd" style="margin-top:11px">${surveyed?'🎯 <b style="color:var(--ink)">Fill the gap</b> — common nearby, missing from this well-recorded cell:':'🎯 <b style="color:var(--ink)">Undersampled here</b> — barely recorded; any of these (common nearby) helps:'}</div>`+
         '<div class="prospects">'+firsts.map(r=>{const t=r.taxon,nm=t.preferred_common_name||t.name;return `<a class="sp" href="https://www.inaturalist.org/taxa/${t.id}" target="_blank" rel="noopener" title="${t.name} — common nearby but missing from this cell's records"><img src="${t.default_photo.square_url}" loading="lazy" alt="${nm}"><div class="nm">${nm} <span class="first">gap</span></div><div class="ct">${r.count.toLocaleString()} nearby</div></a>`;}).join('')+'</div>';
     }
     // surface the actionable gap right on the map popup -- no panel scroll needed
