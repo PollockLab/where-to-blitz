@@ -372,8 +372,9 @@ function renderCellTable(){
   el.querySelectorAll('tr[data-la]').forEach(tr=>{const go=()=>{const la=+tr.dataset.la,lo=+tr.dataset.lo;map.setView([la,lo],9);state.view==='plan'?setStart(la,lo):exploreCell(la,lo);};tr.onclick=go;tr.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}};});
 }
 function recolour(){
+  const cov=document.getElementById('tgCoverage')&&document.getElementById('tgCoverage').checked;
   const vals=markers.map(m=>impact(m.r));const lo=Math.min(...vals),hi=Math.max(...vals),rng=(hi-lo)||1;
-  markers.forEach((m,i)=>{const t=(vals[i]-lo)/rng;m.t=t;m.mk.setStyle({fillColor:colour(t),fillOpacity:0.1+0.62*t});
+  markers.forEach((m,i)=>{const t=(vals[i]-lo)/rng;m.t=t;m.mk.setStyle({fillColor:colour(t),fillOpacity:cov?0:0.1+0.62*t});
     m.mk.bindTooltip(`<b>${(t*100|0)}/100</b> impact for your mix<br><span style="color:#46606f;font-size:11px">driven by: ${contribStr(m.r)}</span><br><span style="color:#8aa;font-size:10px">tap to start a trip here</span>`,{sticky:true,opacity:.97});});
   renderCellTable();
 }
@@ -411,7 +412,7 @@ function setCoverage(){
   covLayer=L.tileLayer('https://tiler.biodiversite-quebec.ca/cog/tiles/{z}/{x}/{y}?url='+encodeURIComponent(cog)+'&rescale=0,10&colormap_name=magma&resampling=cubic',
     {opacity:0.75,maxZoom:14,zIndex:250,attribution:'iNaturalist density &copy; Biodiversit\u00e9 Qu\u00e9bec'}).addTo(map);
 }
-document.getElementById('tgCoverage').addEventListener('change',setCoverage);
+document.getElementById('tgCoverage').addEventListener('change',()=>{setCoverage();recolour();});
 document.getElementById('baseop').addEventListener('input',e=>{baseOpacity=parseFloat(e.target.value);if(baseLayer&&baseLayer.setOpacity)baseLayer.setOpacity(baseOpacity);else if(glBase&&glBase.getCanvas())glBase.getCanvas().style.opacity=baseOpacity;document.getElementById('bopv').textContent=Math.round(baseOpacity*100)+'%';});
 ['tgRoads','tgLabels'].forEach(id=>document.getElementById(id).addEventListener('change',applyLayerToggles));
 document.getElementById('maxleg').addEventListener('change',e=>{state.maxLeg=parseFloat(e.target.value);replan();});
