@@ -154,12 +154,14 @@ details.adv>summary:hover{color:var(--ink)}
   #map{height:50vh;flex:none}
   #viewtoggle{left:50%;top:auto;bottom:12px}
   #insights{left:0;top:0;height:100%;padding:54px 12px 24px}
+  .infobtn{width:24px;height:24px;line-height:22px;font-size:13px}
+  .langtoggle button{padding:7px 13px}
 }
 #maplegend{position:fixed;bottom:14px;left:372px;z-index:1050;background:rgba(255,255,255,.93);border-radius:9px;padding:8px 11px;box-shadow:0 2px 10px rgba(0,0,0,.22);font-size:12px;color:#16233a;max-width:212px;line-height:1.3}
 #maplegend .lt{font-weight:700;font-size:12.5px}
 #maplegend .ramp{height:9px;border-radius:5px;background:linear-gradient(90deg,#ffffd9,#c7e9b4,#41b6c4,#225ea8,#081d58);margin:4px 0 2px}
-#maplegend .lab{display:flex;justify-content:space-between;font-size:10.5px;color:#5a6b7a}
-#maplegend .hint{margin-top:4px;color:#5a6b7a;font-size:10.5px}
+#maplegend .lab{display:flex;justify-content:space-between;font-size:10.5px;color:#46566a}
+#maplegend .hint{margin-top:4px;color:#46566a;font-size:10.5px}
 @media(max-width:640px){#maplegend{left:auto;right:8px;bottom:auto;top:calc(50vh + 8px);max-width:158px;padding:6px 8px}}
 #loading{position:fixed;left:calc(360px + (100% - 360px)/2);top:46%;transform:translate(-50%,-50%);z-index:1200;background:rgba(255,255,255,.96);border-radius:10px;padding:11px 17px;box-shadow:0 3px 14px rgba(0,0,0,.25);font-size:14px;font-weight:600;color:#1b2a3a}
 @media(max-width:640px){#loading{left:50%;top:74vh}}
@@ -202,14 +204,14 @@ details.adv>summary:hover{color:var(--ink)}
   <div id="modewhy" style="color:var(--mut);font-size:11px;margin:2px 0 0"></div>
   <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
     <span style="font-size:13.5px" data-i18n="time">Time</span>
-    <select id="unit"><option value="Minutes" data-i18n="unit_minutes">Minutes</option><option value="Hours" selected data-i18n="unit_hours">Hours</option><option value="Days" data-i18n="unit_days">Days</option></select>
+    <select id="unit" aria-label="Time unit"><option value="Minutes" data-i18n="unit_minutes">Minutes</option><option value="Hours" selected data-i18n="unit_hours">Hours</option><option value="Days" data-i18n="unit_days">Days</option></select>
     <span class="v" id="budv" style="margin-left:auto;color:var(--gold);font-weight:700">5h</span>
   </div>
   <input type="range" id="budget" min="1" max="14" step="0.5" value="5" aria-label="Time budget" style="margin-top:6px">
   <details class="adv"><summary data-i18n="more_options">More options</summary>
     <div style="display:flex;gap:8px;align-items:center;margin:4px 0 8px">
       <span style="font-size:13.5px" data-i18n="max_travel">Max travel each way</span>
-      <select id="maxleg" style="margin-left:auto">
+      <select id="maxleg" aria-label="Max travel each way" style="margin-left:auto">
         <option value="0" selected data-i18n="no_limit">No limit</option>
         <option value="0.25">15 min</option><option value="0.5">30 min</option>
         <option value="1">1h</option><option value="1.5">1h 30</option>
@@ -220,7 +222,7 @@ details.adv>summary:hover{color:var(--ink)}
     </div>
     <div style="display:flex;gap:8px;align-items:center;margin:2px 0 6px">
       <span style="font-size:13.5px" data-i18n="worth_drive">Worth the drive</span>
-      <select id="minratio" style="margin-left:auto">
+      <select id="minratio" aria-label="Worth the drive" style="margin-left:auto">
         <option value="0" data-i18n="ratio_any">Any trip</option>
         <option value="0.5" selected data-i18n="ratio_half">Record ≥ ½ the round trip</option>
         <option value="1" data-i18n="ratio_one">Record ≥ the round trip</option>
@@ -238,7 +240,7 @@ details.adv>summary:hover{color:var(--ink)}
   <div id="prospects" data-idle="1"><div class="hd" style="margin-top:10px" data-i18n="prospects_idle">🔭 Tap a cell (or plan a trip) to see what to record there.</div></div>
 
   <details class="adv"><summary data-i18n="map_style">Map style</summary>
-    <select id="basemap" class="full" style="margin-top:4px"></select>
+    <select id="basemap" class="full" aria-label="Map style" style="margin-top:4px"></select>
     <div id="layertoggles" style="display:none;margin-top:8px">
       <label class="toggle" style="margin:4px 0"><input type="checkbox" id="tgRoads" checked> <span data-i18n="roads">Roads</span></label>
       <label class="toggle" style="margin:4px 0"><input type="checkbox" id="tgLabels" checked> <span data-i18n="labels_places">Labels &amp; places</span></label>
@@ -260,8 +262,8 @@ details.adv>summary:hover{color:var(--ink)}
   <details class="adv" ontoggle="renderCellTable()"><summary data-i18n="top_cells">♿ Top cells (accessible list)</summary><div id="celltable"></div></details>
 </div>
 <div id="map" role="application" aria-label="Interactive priority map (screen-reader users: use the Top cells list)"></div>
-<div id="viewtoggle" role="navigation" aria-label="Map views"><button id="vexplore" class="on" data-i18n="view_explore">🗺 Explore</button><button id="vplan" data-i18n="view_plan">🧭 Plan a trip</button><button id="vcompare" data-i18n="view_compare">📊 Compare goals</button></div>
-<div id="loading" data-i18n="loading">🍃 Loading the map…</div>
+<div id="viewtoggle" role="group" aria-label="Map view"><button id="vexplore" class="on" aria-pressed="true" data-i18n="view_explore">🗺 Explore</button><button id="vplan" aria-pressed="false" data-i18n="view_plan">🧭 Plan a trip</button><button id="vcompare" aria-pressed="false" data-i18n="view_compare">📊 Compare goals</button></div>
+<div id="loading" role="status" aria-live="polite" data-i18n="loading">🍃 Loading the map…</div>
 <div id="maplegend" role="region" aria-label="Map legend"><div class="lt" data-i18n="legend_title">Where to blitz</div><div class="ramp"></div><div class="lab"><span data-i18n="legend_low">well-sampled</span><span data-i18n="legend_high">biggest gaps</span></div><div class="hint" data-i18n-html="legend_hint">Darker = higher priority. <span id="legendtap">Tap a cell to see what to record.</span></div></div>
 <div id="insights"></div>
 </div>
@@ -1085,14 +1087,14 @@ function exploreCell(lat,lon){
     const gid='gegap'+(++geGapSeq), near=nearestStrongGap(dest[0],dest[1]);
     body=`${t('pop_low_gap')} <span style="color:#889">(${score}/100)</span>`
       +`<div id="${gid}" style="margin-top:3px">${geGapPhrase(dest[0],dest[1])}</div>`
-      +(near?`<div style="margin-top:3px">${t('pop_nearest_gap',Math.round(near.km))} <a href="#" onclick="exploreToPlan(${dest[0]},${dest[1]});return false;" style="color:#1f6fe0">${t('pop_find_gaps')}</a></div>`:'');
+      +(near?`<div style="margin-top:3px">${t('pop_nearest_gap',Math.round(near.km))} <a href="#" role="button" onclick="exploreToPlan(${dest[0]},${dest[1]});return false;" style="color:#1f6fe0">${t('pop_find_gaps')}</a></div>`:'');
     if(!GE_LOADED)loadGE().then(()=>{const el=document.getElementById(gid);if(el)el.innerHTML=geGapPhrase(dest[0],dest[1]);}).catch(()=>{});
   } else {
     body=`${t('pop_impact')} <b>${score}/100</b> · ${contribStr(o.r)}`;
     const why=whyMatters(o.r); if(why) body+=`<div style="margin-top:3px;color:#9fb0c0">${why}</div>`;
   }
   destMarker=L.marker(dest,{icon:destIcon,zIndexOffset:900}).addTo(map)
-    .bindPopup(`${geLine}<b>${t('pop_explore_title')}</b> ${t('pop_explore_sub')}<br><span style="color:#667">${t('pop_centre')} ${dest[0].toFixed(2)}, ${dest[1].toFixed(2)}</span><br>${body}<br><a href="#" onclick="navigator.clipboard&&navigator.clipboard.writeText(location.href);this.textContent=t('copied');return false;" style="color:#1f6fe0;font-size:12px">${t('share_link')}</a>`).openPopup();
+    .bindPopup(`${geLine}<b>${t('pop_explore_title')}</b> ${t('pop_explore_sub')}<br><span style="color:#667">${t('pop_centre')} ${dest[0].toFixed(2)}, ${dest[1].toFixed(2)}</span><br>${body}<br><a href="#" role="button" onclick="if(navigator.clipboard){navigator.clipboard.writeText(location.href);this.textContent=t('copied');}return false;" style="color:#1f6fe0;font-size:12px">${t('share_link')}</a>`).openPopup();
   fetchProspects(dest[0],dest[1],'destination');
 }
 function setView(v){
@@ -1101,9 +1103,7 @@ function setView(v){
   const ml=document.getElementById('maplegend');if(ml)ml.style.display=v==='compare'?'none':'block';
   const lt=document.getElementById('legendtap');if(lt)lt.textContent=t(legendTapKey());
   document.getElementById('tripui').style.display=v==='plan'?'':'none';
-  document.getElementById('vexplore').classList.toggle('on',v==='explore');
-  document.getElementById('vplan').classList.toggle('on',v==='plan');
-  document.getElementById('vcompare').classList.toggle('on',v==='compare');
+  for(const [id,vv] of [['vexplore','explore'],['vplan','plan'],['vcompare','compare']]){const b=document.getElementById(id);b.classList.toggle('on',v===vv);b.setAttribute('aria-pressed',v===vv);}
   if(v!=='plan')clearRoute();
   if(v==='compare')renderInsights(); else map.invalidateSize();
 }
