@@ -112,6 +112,7 @@ details.adv>summary:hover{color:var(--ink)}
 #insights .ctrls .lbl{color:var(--mut);font-weight:700;text-transform:uppercase;font-size:11.5px;letter-spacing:.05em;margin-right:3px}
 #insights .chip{background:#10203044;border:1px solid #2a3a4d;border-radius:13px;padding:4px 11px;cursor:pointer;user-select:none}
 #insights .chip.on{background:var(--acc);border-color:var(--acc);color:#fff}
+#insights .chip:focus-visible,.infobtn:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 #insights .matrix{display:grid;gap:10px;max-width:1200px;margin:0 auto;align-items:start}
 #insights .gh{font-weight:700;font-size:14.5px;text-align:center;align-self:end;padding-bottom:3px}
 #insights .gh .gq{color:var(--mut);font-size:11.5px;font-weight:400;line-height:1.2;display:block;margin-top:1px}
@@ -136,7 +137,7 @@ details.adv>summary:hover{color:var(--ink)}
   <h1>Where to <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--gd);text-decoration:underline">Blitz the Gap</a></h1>
   <p class="sub">Pick what counts as <b>impact</b> and how much time you have — the map finds the best spot you can reach and get back from.</p>
 
-  <div class="sechd"><span class="sec">Life group & goal</span><span class="infobtn" title="Where do these scores come from?" onclick="document.getElementById('taxinfo').classList.toggle('open')">i</span></div>
+  <div class="sechd"><span class="sec">Life group & goal</span><span class="infobtn" title="Where do these scores come from?" role="button" tabindex="0" aria-label="About the data" aria-expanded="false" onclick="const b=document.getElementById('taxinfo').classList.toggle('open');this.setAttribute('aria-expanded',b)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">i</span></div>
   <div class="infobox" id="taxinfo">
     <b>Where the scores come from.</b> Real <a href="https://www.inaturalist.org" target="_blank" rel="noopener" style="color:var(--acc)">iNaturalist</a> observations in B.C., binned to ~25&nbsp;km cells.
     <ul>
@@ -170,7 +171,7 @@ details.adv>summary:hover{color:var(--ink)}
     <select id="unit"><option>Minutes</option><option selected>Hours</option><option>Days</option></select>
     <span class="v" id="budv" style="margin-left:auto;color:var(--gold);font-weight:700">5h</span>
   </div>
-  <input type="range" id="budget" min="1" max="14" step="0.5" value="5" style="margin-top:6px">
+  <input type="range" id="budget" min="1" max="14" step="0.5" value="5" aria-label="Time budget" style="margin-top:6px">
   <details class="adv"><summary>More options</summary>
     <div style="display:flex;gap:8px;align-items:center;margin:4px 0 8px">
       <span style="font-size:13.5px">Max travel each way</span>
@@ -210,7 +211,7 @@ details.adv>summary:hover{color:var(--ink)}
       <div style="color:var(--mut);font-size:11px;line-height:1.4">Vector basemap — toggle layers like Maputnik. Other styles are raster (roads baked in).</div>
     </div>
     <div style="display:flex;justify-content:space-between;margin:9px 0 0"><span style="font-size:13px">Map brightness</span><span class="v" id="bopv" style="color:var(--acc)">100%</span></div>
-    <input type="range" id="baseop" min="0.25" max="1" step="0.05" value="1">
+    <input type="range" id="baseop" min="0.25" max="1" step="0.05" value="1" aria-label="Map brightness">
   </details>
 
   <details class="adv"><summary>How impact is scored & data sources</summary>
@@ -382,7 +383,7 @@ taxonSel.value=state.taxon; taxonSel.onchange=()=>{state.taxon=taxonSel.value;bu
 const objsDiv=document.getElementById('objs');
 OBJ.forEach(o=>{const d=document.createElement('div');d.className='obj';
   d.innerHTML=`<div class="top"><span class="nm">${o.name}</span><span class="v" id="v_${o.key}">${state.w[o.key].toFixed(2)}</span></div>
-    <div class="q">${o.q}</div><input type="range" id="s_${o.key}" min="0" max="1" step="0.05" value="${state.w[o.key]}">`;
+    <div class="q">${o.q}</div><input type="range" id="s_${o.key}" min="0" max="1" step="0.05" value="${state.w[o.key]}" aria-label="${o.name} weight">`;
   objsDiv.appendChild(d);
   d.querySelector('input').addEventListener('input',e=>{state.w[o.key]=parseFloat(e.target.value);
     document.getElementById('v_'+o.key).textContent=state.w[o.key].toFixed(2);markPreset(null);recolour();replan();});});
@@ -565,8 +566,8 @@ function renderInsights(){
   const goalsOn=OBJ.map((o,i)=>i).filter(i=>state.insGoals.includes(i));
   const rowsTaxa=state.insTaxa.length?state.insTaxa:[taxa[0]];
   let html='<div class="ihd"><b>The same place — different goals, different life groups.</b> Each map shades every B.C. cell by one goal (<b>darker = go there</b>). The hot zones shift between goals (a value choice) and between groups (different species fill different gaps). Pick the rows &amp; columns; tap any map to open it in the planner.</div>';
-  html+='<div class="ctrls"><div class="grp"><span class="lbl">Groups (rows)</span>'+taxa.map(t=>`<span class="chip ${state.insTaxa.includes(t)?'on':''}" data-tx="${t}">${TAXLBL[t]||t}</span>`).join('')+'</div>';
-  html+='<div class="grp"><span class="lbl">Goals (columns)</span>'+OBJ.map((o,i)=>`<span class="chip ${state.insGoals.includes(i)?'on':''}" data-gl="${i}">${o.name}</span>`).join('')+'</div></div>';
+  html+='<div class="ctrls"><div class="grp"><span class="lbl">Groups (rows)</span>'+taxa.map(t=>`<span class="chip ${state.insTaxa.includes(t)?'on':''}" role="button" tabindex="0" aria-pressed="${state.insTaxa.includes(t)}" data-tx="${t}">${TAXLBL[t]||t}</span>`).join('')+'</div>';
+  html+='<div class="grp"><span class="lbl">Goals (columns)</span>'+OBJ.map((o,i)=>`<span class="chip ${state.insGoals.includes(i)?'on':''}" role="button" tabindex="0" aria-pressed="${state.insGoals.includes(i)}" data-gl="${i}">${o.name}</span>`).join('')+'</div></div>';
   html+=`<div class="matrix" style="grid-template-columns:100px repeat(${goalsOn.length},1fr)"><div></div>`;
   goalsOn.forEach(gi=>html+=`<div class="gh">${OBJ[gi].name}<span class="gq">${OBJ[gi].q}</span></div>`);
   rowsTaxa.forEach(t=>{html+=`<div class="rl">${TAXLBL[t]||t}</div>`;goalsOn.forEach(gi=>html+=`<div class="cell" data-tx="${t}" data-gl="${gi}"><canvas width="220" height="170"></canvas></div>`);});
@@ -574,8 +575,8 @@ function renderInsights(){
   ins.innerHTML=html;
   ins.querySelectorAll('.cell').forEach(c=>{drawMini(c.querySelector('canvas'),DATA[c.dataset.tx],+c.dataset.gl);
     c.onclick=()=>{const t=c.dataset.tx,gi=+c.dataset.gl;taxonSel.value=t;state.taxon=t;buildMarkers();applyWeights(OBJ.map((_,i)=>i===gi?1:0),OBJ[gi].name);setView('plan');};});
-  ins.querySelectorAll('.chip[data-tx]').forEach(ch=>ch.onclick=()=>{const t=ch.dataset.tx,i=state.insTaxa.indexOf(t);if(i>=0){if(state.insTaxa.length>1)state.insTaxa.splice(i,1);}else state.insTaxa.push(t);renderInsights();});
-  ins.querySelectorAll('.chip[data-gl]').forEach(ch=>ch.onclick=()=>{const g=+ch.dataset.gl,i=state.insGoals.indexOf(g);if(i>=0){if(state.insGoals.length>1)state.insGoals.splice(i,1);}else state.insGoals.push(g);state.insGoals.sort((x,y)=>x-y);renderInsights();});
+  ins.querySelectorAll('.chip[data-tx]').forEach(ch=>{ch.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();ch.click();}};ch.onclick=()=>{const t=ch.dataset.tx,i=state.insTaxa.indexOf(t);if(i>=0){if(state.insTaxa.length>1)state.insTaxa.splice(i,1);}else state.insTaxa.push(t);renderInsights();};});
+  ins.querySelectorAll('.chip[data-gl]').forEach(ch=>{ch.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();ch.click();}};ch.onclick=()=>{const g=+ch.dataset.gl,i=state.insGoals.indexOf(g);if(i>=0){if(state.insGoals.length>1)state.insGoals.splice(i,1);}else state.insGoals.push(g);state.insGoals.sort((x,y)=>x-y);renderInsights();};});
   const disVals=rowsTaxa.map(t=>{const base=DATA[t].filter(r=>r[8]>0),b=base.length>=20?base:DATA[t];return {t,rho:spear(b.map(r=>r[2]),b.map(r=>r[3]))};});
   const dis=disVals.map(d=>`${TAXLBL[d.t]||d.t} <b>${d.rho.toFixed(2)}</b>`).join(' · ');
   const neg=disVals.filter(d=>d.rho<0).length, n=disVals.length;   // verdict follows the actual signs, not a hardcoded claim
