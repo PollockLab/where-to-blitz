@@ -215,7 +215,7 @@ details.adv>summary:hover{color:var(--ink)}
 </div>
 <div id="map"></div>
 <div id="viewtoggle"><button id="vexplore" class="on">🗺 Explore</button><button id="vplan">🧭 Plan a trip</button><button id="vcompare">📊 Compare goals</button></div>
-<div id="maplegend"><div class="lt">Where to blitz</div><div class="ramp"></div><div class="lab"><span>well-sampled</span><span>biggest gaps</span></div><div class="hint">Darker = higher priority. Tap a cell to see what to record.</div></div>
+<div id="maplegend"><div class="lt">Where to blitz</div><div class="ramp"></div><div class="lab"><span>well-sampled</span><span>biggest gaps</span></div><div class="hint">Darker = higher priority. <span id="legendtap">Tap a cell to see what to record.</span></div></div>
 <div id="insights"></div>
 </div>
 
@@ -629,6 +629,7 @@ function setView(v){
   state.view=v;
   document.getElementById('insights').style.display=v==='compare'?'block':'none';
   const ml=document.getElementById('maplegend');if(ml)ml.style.display=v==='compare'?'none':'block';
+  const lt=document.getElementById('legendtap');if(lt)lt.textContent=v==='plan'?'Tap the map to set your start.':'Tap a cell to see what to record.';
   document.getElementById('tripui').style.display=v==='plan'?'':'none';
   document.getElementById('vexplore').classList.toggle('on',v==='explore');
   document.getElementById('vplan').classList.toggle('on',v==='plan');
