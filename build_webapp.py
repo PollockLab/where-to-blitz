@@ -1096,7 +1096,7 @@ function exploreCell(lat,lon){
     const why=whyMatters(o.r); if(why) body+=`<div style="margin-top:3px;color:#9fb0c0">${why}</div>`;
   }
   destMarker=L.marker(dest,{icon:destIcon,zIndexOffset:900}).addTo(map)
-    .bindPopup(`${geLine}<b>${t('pop_explore_title')}</b> ${t('pop_explore_sub')}<br><span style="color:#667">${t('pop_centre')} ${dest[0].toFixed(2)}, ${dest[1].toFixed(2)}</span><br>${body}<br><a href="#" role="button" onclick="if(navigator.clipboard){navigator.clipboard.writeText(location.href);this.textContent=t('copied');}return false;" style="color:#1f6fe0;font-size:12px">${t('share_link')}</a>`).openPopup();
+    .bindPopup(`${geLine}<b>${t('pop_explore_title')}</b> ${t('pop_explore_sub')}<br><span style="color:#667">${t('pop_centre')} ${dest[0].toFixed(2)}, ${dest[1].toFixed(2)}</span><br>${body}<br><a href="#" role="button" onclick="if(navigator.clipboard){navigator.clipboard.writeText(location.href).then(()=>{this.textContent=t('copied');}).catch(()=>{});}return false;" style="color:#1f6fe0;font-size:12px">${t('share_link')}</a>`).openPopup();
   fetchProspects(dest[0],dest[1],'destination');
 }
 function setView(v){
