@@ -341,8 +341,8 @@ const I18N={
     inat_caveat:"Counts are iNaturalist observations — what people have logged, not a complete species census.",
     worldwide:n=>`${n} on iNaturalist`,
     explore_all:"Explore all on iNaturalist →", log_sighting:"＋ Log a sighting", for_challenge:"for this challenge",
-    fill_gap_surveyed:`🎯 <b style="color:var(--ink)">Fill the gap</b> — common nearby, missing from this well-recorded cell:`,
-    fill_gap_under:`🎯 <b style="color:var(--ink)">Undersampled here</b> — barely recorded; any of these (common nearby) helps:`,
+    fill_gap_surveyed:(cellN,M)=>`🎯 <b style="color:var(--ink)">Fill the gap</b> — this cell has <b>${cellN}</b> species recorded; ~<b>${M}</b> have been seen in the surrounding ~50&nbsp;km. Common ones still missing here:`,
+    fill_gap_under:(cellN,M)=>`🎯 <b style="color:var(--ink)">Undersampled here</b> — only <b>${cellN}</b> species recorded here vs ~<b>${M}</b> seen nearby; any of these (common nearby) helps:`,
     nearby_count:n=>`${n} nearby`,
     gap_popup:"🎯 Fill the gap — log these here:",
     join:"join →",
@@ -453,8 +453,8 @@ const I18N={
     inat_caveat:"Les nombres sont des observations iNaturalist — ce qui a été noté, pas un inventaire complet des espèces.",
     worldwide:n=>`${n} sur iNaturalist`,
     explore_all:"Tout explorer sur iNaturalist →", log_sighting:"＋ Noter une observation", for_challenge:"pour ce défi",
-    fill_gap_surveyed:`🎯 <b style="color:var(--ink)">Combler la lacune</b> — commun à proximité, absent de cette cellule bien documentée :`,
-    fill_gap_under:`🎯 <b style="color:var(--ink)">Sous-échantillonné ici</b> — peu documenté; chacune de celles-ci (commune à proximité) aide :`,
+    fill_gap_surveyed:(cellN,M)=>`🎯 <b style="color:var(--ink)">Combler la lacune</b> — cette cellule a <b>${cellN}</b> espèces notées; ~<b>${M}</b> ont été vues dans les ~50&nbsp;km autour. Espèces communes encore absentes :`,
+    fill_gap_under:(cellN,M)=>`🎯 <b style="color:var(--ink)">Sous-échantillonné ici</b> — seulement <b>${cellN}</b> espèces notées ici contre ~<b>${M}</b> vues à proximité; chacune de celles-ci (commune à proximité) aide :`,
     nearby_count:n=>`${n} à proximité`,
     gap_popup:"🎯 Combler la lacune — notez-les ici :",
     join:"se joindre →",
@@ -592,7 +592,7 @@ async function fetchProspects(lat,lon,whereKey){
     // "Fill the gap": species common in the ~50 km neighbourhood but missing from THIS cell's
     // research-grade records (cell query widened to 500 to keep the absence honest). Framed as
     // "missing from this cell", not "nobody has seen it here" -- records-based, not absolute.
-    const firsts=await fetchFirsts(lat,lon,ic,cellIds);
+    const firstsR=await fetchFirsts(lat,lon,ic,cellIds),firsts=firstsR.list;
     if(myseq!==prospectSeq) return;
     // well-surveyed cell -> a missing common species is a real gap; barely-surveyed cell ->
     // almost everything is "missing", so any record helps (don't overclaim a "gap").
@@ -600,7 +600,7 @@ async function fetchProspects(lat,lon,whereKey){
     const surveyed=nt>=40;
     const fe=document.getElementById('firsts');
     if(fe && firsts.length){
-      fe.innerHTML=`<div class="hd" style="margin-top:11px">${surveyed?t('fill_gap_surveyed'):t('fill_gap_under')}</div>`+
+      fe.innerHTML=`<div class="hd" style="margin-top:11px">${surveyed?t('fill_gap_surveyed',firstsR.cellN,firstsR.M):t('fill_gap_under',firstsR.cellN,firstsR.M)}</div>`+
         '<div class="prospects">'+firsts.map(r=>{const tx=r.taxon,nm=tx.preferred_common_name||tx.name;return `<a class="sp" href="https://www.inaturalist.org/taxa/${tx.id}" target="_blank" rel="noopener" title="${tx.name}"><img src="${tx.default_photo.square_url}" loading="lazy" alt="${nm}"><div class="nm">${nm} <span class="first">${L_gap}</span></div><div class="ct">${T_nb(r.count.toLocaleString(LANG==='fr'?'fr-CA':'en-CA'))}</div></a>`;}).join('')+'</div>';
     }
     // surface the actionable gap right on the map popup -- no panel scroll needed
@@ -610,12 +610,17 @@ async function fetchProspects(lat,lon,whereKey){
     }
   }catch(e){pr.innerHTML='<div class="hd">'+t('prospects_err')+'</div>';}
 }
+// round-robin across iconic taxa so picks aren't 6 of the same group (coverage, not raw-abundance rank)
+function spreadByTaxon(arr){const by={};arr.forEach(r=>{const k=(r.taxon.iconic_taxon_name)||'?';(by[k]=by[k]||[]).push(r);});const ks=Object.keys(by),out=[];let guard=0;while(out.length<arr.length&&guard++<arr.length*(ks.length+1)){for(const k of ks){if(by[k].length){out.push(by[k].shift());if(out.length>=arr.length)break;}}}return out;}
 async function fetchFirsts(lat,lon,ic,cellIds){
   const R=0.5;   // ~50 km neighbourhood -- same habitat zone, not a different ecoregion
   const u=`https://api.inaturalist.org/v1/observations/species_counts?swlat=${lat-R}&nelat=${lat+R}&swlng=${lon-R}&nelng=${lon+R}&quality_grade=research&taxon_geoprivacy=open&threatened=false&per_page=200&order_by=count`+(ic?`&iconic_taxa=${ic}`:'');
   try{const j=await fetch(u).then(r=>r.json());
-    return (j.results||[]).filter(r=>r.taxon&&r.taxon.default_photo&&!cellIds.has(r.taxon.id)&&r.count>=10&&(r.taxon.observations_count||0)>40).slice(0,6);
-  }catch(e){return [];}
+    const all=(j.results||[]).filter(r=>r.taxon&&r.taxon.default_photo);
+    const M=j.total_results||all.length;                  // TRUE neighbourhood richness (uncapped), not the top-200 page
+    const miss=spreadByTaxon(all.filter(r=>!cellIds.has(r.taxon.id)&&r.count>=10&&(r.taxon.observations_count||0)>40)).slice(0,6);
+    return {list:miss,M,cellN:cellIds.size};              // cellN = species recorded in this cell (honest contrast vs neighbourhood, no false completeness)
+  }catch(e){return {list:[],M:0,have:0};}
 }
 const showProspects=debounce((lat,lon)=>fetchProspects(lat,lon,'around_start'),500);
 
