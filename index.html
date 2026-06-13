@@ -503,7 +503,7 @@ async function fetchProspects(lat,lon,whereKey){
   const pr=document.getElementById('prospects'); pr.dataset.idle='0'; pr.innerHTML='<div class="hd">'+t('prospects_lookup')+'</div>';
   // labels needed inside taxon-shadowed (.map(r=>{const t=r.taxon...})) closures
   const L_rare=t('rare'),L_unc=t('uncommon'),L_gap=t('gap'),L_nearby=t('nearby_lbl');
-  const T_here=n=>t('here_count',n),T_world=g=>t('worldwide',g.toLocaleString()),T_nb=n=>t('nearby_count',n);
+  const T_here=n=>t('here_count',n),T_world=g=>t('worldwide',g.toLocaleString(LANG==='fr'?'fr-CA':'en-CA')),T_nb=n=>t('nearby_count',n);
   const ic=ICONIC[state.taxon]||'', HH=0.125;
   const q=(h)=>`https://api.inaturalist.org/v1/observations/species_counts?swlat=${lat-h}&nelat=${lat+h}&swlng=${lon-h}&nelng=${lon+h}&quality_grade=research&taxon_geoprivacy=open&per_page=500&order_by=count`+(ic?`&iconic_taxa=${ic}`:'');
   try{
@@ -523,7 +523,7 @@ async function fetchProspects(lat,lon,whereKey){
     res.sort((a,b)=>(a.taxon.observations_count||1e12)-(b.taxon.observations_count||1e12)); // globally rarest, but present here
     res=res.slice(0,6);
     const ex=`https://www.inaturalist.org/observations?subview=map&swlat=${lat-HH}&nelat=${lat+HH}&swlng=${lon-HH}&nelng=${lon+HH}&quality_grade=research`;
-    pr.innerHTML=`<div class="hd">${t('prospects_hd','<b style="color:var(--ink)">'+(where||t('here'))+'</b>',total.toLocaleString(),nearby)}</div>`+
+    pr.innerHTML=`<div class="hd">${t('prospects_hd','<b style="color:var(--ink)">'+(where||t('here'))+'</b>',total.toLocaleString(LANG==='fr'?'fr-CA':'en-CA'),nearby)}</div>`+
       '<div class="prospects">'+res.map(r=>{const tx=r.taxon,g=tx.observations_count||0,rare=g<1500,unc=g<7000;
         return `<a class="sp" href="https://www.inaturalist.org/taxa/${tx.id}" target="_blank" rel="noopener" title="${tx.name}"><img src="${tx.default_photo.square_url}" loading="lazy" alt=""><div class="nm">${r._here?'':'✦ '}${tx.preferred_common_name||tx.name}${rare?` <span class="rare">${L_rare}</span>`:(unc?` <span class="unc">${L_unc}</span>`:'')}</div><div class="ct">${r._here?T_here(r.count):L_nearby} · ${T_world(g)}</div></a>`;}).join('')+'</div>'+'<div id="firsts"></div>'+
       `<div style="margin-top:7px;font-size:11.5px"><a href="${ex}" target="_blank" rel="noopener" style="color:var(--acc)">${t('explore_all')}</a> &nbsp;·&nbsp; <a href="https://www.inaturalist.org/observations/new" target="_blank" rel="noopener" style="color:var(--gd)">${t('log_sighting')}</a> &nbsp;·&nbsp; <a href="https://www.inaturalist.org/projects/${state.project}" target="_blank" rel="noopener" style="color:var(--mut)">${t('for_challenge')}</a></div>`;
@@ -539,7 +539,7 @@ async function fetchProspects(lat,lon,whereKey){
     const fe=document.getElementById('firsts');
     if(fe && firsts.length){
       fe.innerHTML=`<div class="hd" style="margin-top:11px">${surveyed?t('fill_gap_surveyed'):t('fill_gap_under')}</div>`+
-        '<div class="prospects">'+firsts.map(r=>{const tx=r.taxon,nm=tx.preferred_common_name||tx.name;return `<a class="sp" href="https://www.inaturalist.org/taxa/${tx.id}" target="_blank" rel="noopener" title="${tx.name}"><img src="${tx.default_photo.square_url}" loading="lazy" alt="${nm}"><div class="nm">${nm} <span class="first">${L_gap}</span></div><div class="ct">${T_nb(r.count.toLocaleString())}</div></a>`;}).join('')+'</div>';
+        '<div class="prospects">'+firsts.map(r=>{const tx=r.taxon,nm=tx.preferred_common_name||tx.name;return `<a class="sp" href="https://www.inaturalist.org/taxa/${tx.id}" target="_blank" rel="noopener" title="${tx.name}"><img src="${tx.default_photo.square_url}" loading="lazy" alt="${nm}"><div class="nm">${nm} <span class="first">${L_gap}</span></div><div class="ct">${T_nb(r.count.toLocaleString(LANG==='fr'?'fr-CA':'en-CA'))}</div></a>`;}).join('')+'</div>';
     }
     // surface the actionable gap right on the map popup -- no panel scroll needed
     if(whereKey==='destination' && destMarker && destMarker.getPopup() && firsts.length){
