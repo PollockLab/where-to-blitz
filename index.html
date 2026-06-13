@@ -210,6 +210,8 @@ details.adv>summary:hover{color:var(--ink)}
     </div>
     <label class="toggle" style="margin:8px 0 2px"><input type="checkbox" id="tgCoverage"> <span data-i18n="inat_coverage">🛰 iNaturalist coverage</span></label>
     <div style="color:var(--mut);font-size:11px;line-height:1.4" data-i18n="coverage_hint">Where data already is (bright = well-sampled, dark = gaps) — the official "light up the map" layer, for the current group.</div>
+    <label class="toggle" style="margin:8px 0 2px"><input type="checkbox" id="tgGettingEven"> <span data-i18n="getting_even">⚖️ Getting Even — which group to record</span></label>
+    <div style="color:var(--mut);font-size:11px;line-height:1.4" data-i18n="ge_hint">Each cell is coloured by the most under-represented taxonomic group there (birds excluded — already well covered by eBird) — our finer-resolution take on the official "Getting Even" challenge. From iNaturalist observation density: a sample, not a census.</div>
     <div style="display:flex;justify-content:space-between;margin:9px 0 0"><span style="font-size:13px" data-i18n="map_brightness">Map brightness</span><span class="v" id="bopv" style="color:var(--acc)">100%</span></div>
     <input type="range" id="baseop" min="0.25" max="1" step="0.05" value="1" aria-label="Map brightness">
   </details>
@@ -276,6 +278,11 @@ const I18N={
     vector_hint:"Vector basemap — toggle layers like Maputnik. Other styles are raster (roads baked in).",
     inat_coverage:"🛰 iNaturalist coverage",
     coverage_hint:`Where data already is (bright = well-sampled, dark = gaps) — the official "light up the map" layer, for the current group.`,
+    getting_even:"⚖️ Getting Even — which group to record",
+    ge_hint:`Each cell is coloured by the most under-represented taxonomic group there (birds excluded — already well covered by eBird) — our finer-resolution take on the official "Getting Even" challenge. From iNaturalist observation density: a sample, not a census.`,
+    ge_cats:["Fishes","Fungi","Reptiles & Amphibians","Invertebrates","Mammals","Plants"],
+    ge_all:"All groups under-sampled",
+    ge_most:"⚖️ Most under-represented here:",
     map_brightness:"Map brightness",
     how_scored:"How impact is scored & data sources",
     skip:"skip", go_here:"go here",
@@ -383,6 +390,11 @@ const I18N={
     vector_hint:"Fond vectoriel — activez les couches comme dans Maputnik. Les autres styles sont matriciels (routes intégrées).",
     inat_coverage:"🛰 Couverture iNaturalist",
     coverage_hint:`Où les données existent déjà (clair = bien échantillonné, foncé = lacunes) — la couche officielle « illuminer la carte », pour le groupe actuel.`,
+    getting_even:"⚖️ Combler l'écart — quel groupe noter",
+    ge_hint:`Chaque cellule est colorée selon le groupe taxonomique le plus sous-représenté (oiseaux exclus — déjà bien couverts par eBird) — notre version à plus fine résolution du défi officiel « Combler l'écart ». Selon la densité d'observations iNaturalist : un échantillon, pas un inventaire.`,
+    ge_cats:["Poissons","Champignons","Reptiles et amphibiens","Invertébrés","Mammifères","Plantes"],
+    ge_all:"Tous sous-échantillonnés",
+    ge_most:"⚖️ Le plus sous-représenté ici :",
     map_brightness:"Luminosité de la carte",
     how_scored:"Calcul de l'impact et sources de données",
     skip:"à éviter", go_here:"y aller",
@@ -484,6 +496,8 @@ function relabelDynamic(){
   if(typeof refreshBudget==='function')refreshBudget();
   // legend "tap" hint follows current view
   const lt=document.getElementById('legendtap');if(lt)lt.textContent=t(state&&state.view==='plan'?'legendtap_plan':'legendtap_explore');
+  // re-render Getting Even categorical legend in the new language (no-op when inactive)
+  if(typeof updateLegend==='function'&&typeof geActive==='function'&&geActive())updateLegend();
   // start-place prospects idle text (only if untouched)
   const pr=document.getElementById('prospects');
   if(pr&&pr.dataset.idle==='1')pr.innerHTML='<div class="hd" style="margin-top:10px" data-i18n="prospects_idle">'+t('prospects_idle')+'</div>';
@@ -493,6 +507,14 @@ function setLang(l){if(l!==LANG){LANG=l;try{localStorage.setItem('wtb_lang',l);}
 
 const DATA={}, DATA_DIR='cluster_results/ca/';
 async function loadGroup(g){if(DATA[g])return;const r=await fetch(DATA_DIR+FILES[g]);Object.assign(DATA,await r.json());}
+// Getting Even: most under-represented taxonomic group per cell. CVD-safe Paul Tol Bright palette (index matches ge_cats order); -1 -> grey "all under-sampled".
+const GE={}, GE_PAL=['#4477AA','#EE6677','#AA3377','#CCBB44','#66CCEE','#228833'], GE_ALL='#BBBBBB';
+const gekey=(lat,lon)=>lat.toFixed(3)+','+lon.toFixed(3);
+let GE_LOADED=false;
+async function loadGE(){if(GE_LOADED)return;const r=await fetch(DATA_DIR+'webapp_data_gettingeven.json'),j=await r.json();
+  for(const e of j.gettingeven)GE[gekey(e[0],e[1])]=[e[2],e[3]];GE_LOADED=true;}
+function geActive(){const e=document.getElementById('tgGettingEven');return!!(e&&e.checked);}
+function geColour(m){const v=GE[gekey(m.r[0],m.r[1])];if(!v)return GE_ALL;return v[0]<0?GE_ALL:(GE_PAL[v[0]]||GE_ALL);}
 const IDX={discover:2,conservation:3,env:4,staleness:5,urgency:6}, TT=7, NTR=8;
 const OSRM_BASE="https://routing.openstreetmap.de/";   // FOSSGIS public OSRM (car/bike/foot, CORS-enabled)
 const MODES={Walk:{host:'routed-foot',kmh:5,emit:0,icon:'🚶'},Cycle:{host:'routed-bike',kmh:14,emit:0,icon:'🚲'},Drive:{host:'routed-car',kmh:60,emit:0.18,icon:'🚗'}};
@@ -659,6 +681,11 @@ function renderCellTable(){
 }
 function recolour(){
   const cov=document.getElementById('tgCoverage')&&document.getElementById('tgCoverage').checked;
+  if(geActive()){
+    // Categorical layer: colour by most under-represented group (no magnitude). Flat opacity; stroke matches fill so cells tile seamlessly.
+    markers.forEach(m=>{const c=geColour(m);m.mk.setStyle({fillColor:c,color:c,weight:1,opacity:0.62,fillOpacity:0.62});});
+    renderCellTable();return;
+  }
   const vals=markers.map(m=>impact(m.r));
   // Percentile-rank, not min-max: a few Arctic super-gaps (max discover + rare climate)
   // otherwise dominate the scale and crush every reachable cell to ~0/100. Rank spreads it evenly.
@@ -671,6 +698,20 @@ function recolour(){
   // stroke matches fill (same colour+opacity) so adjacent canvas rectangles tile seamlessly -- without it, anti-alias gaps stripe the map at low zoom (worse for narrow high-latitude cells)
   markers.forEach((m,i)=>{const t=flat?0:rank[i]/n1;m.t=t;const o=cov?0:0.25+0.5*t,c=colour(t);m.mk.setStyle({fillColor:c,color:c,weight:1,opacity:o,fillOpacity:o});});
   renderCellTable();
+}
+// Swap #maplegend between the priority ramp (default) and a categorical Getting Even legend. Pale swatches get a 1px #ccc border.
+let GE_PRIORITY_LEGEND=null;
+function updateLegend(){
+  const ml=document.getElementById('maplegend');if(!ml)return;
+  if(GE_PRIORITY_LEGEND===null)GE_PRIORITY_LEGEND=ml.innerHTML;   // capture the as-built priority legend once
+  if(geActive()){
+    const sw=(c,lab)=>`<div style="display:flex;align-items:center;gap:6px;margin:2px 0"><span style="width:13px;height:13px;border-radius:3px;background:${c};border:1px solid #ccc;flex:none"></span><span>${lab}</span></div>`;
+    ml.innerHTML='<div class="lt">'+t('getting_even')+'</div>'+
+      t('ge_cats').map((nm,i)=>sw(GE_PAL[i],nm)).join('')+sw(GE_ALL,t('ge_all'));
+  }else{
+    ml.innerHTML=GE_PRIORITY_LEGEND;
+    const lt=document.getElementById('legendtap');if(lt)lt.textContent=t(state&&state.view==='plan'?'legendtap_plan':'legendtap_explore');
+  }
 }
 
 // controls
@@ -717,7 +758,8 @@ function setCoverage(){
   covLayer=L.tileLayer('https://tiler.biodiversite-quebec.ca/cog/tiles/{z}/{x}/{y}?url='+encodeURIComponent(cog)+'&rescale=0,10&colormap_name=magma&resampling=cubic',
     {opacity:0.75,maxZoom:14,zIndex:250,attribution:'iNaturalist density &copy; Biodiversit\u00e9 Qu\u00e9bec'}).addTo(map);
 }
-document.getElementById('tgCoverage').addEventListener('change',()=>{setCoverage();recolour();});
+document.getElementById('tgCoverage').addEventListener('change',e=>{if(e.target.checked)document.getElementById('tgGettingEven').checked=false;updateLegend();setCoverage();recolour();});
+document.getElementById('tgGettingEven').addEventListener('change',e=>{if(e.target.checked)document.getElementById('tgCoverage').checked=false;loadGE().then(()=>{setCoverage();updateLegend();recolour();});});
 document.getElementById('baseop').addEventListener('input',e=>{baseOpacity=parseFloat(e.target.value);if(baseLayer&&baseLayer.setOpacity)baseLayer.setOpacity(baseOpacity);else if(glBase&&glBase.getCanvas())glBase.getCanvas().style.opacity=baseOpacity;document.getElementById('bopv').textContent=Math.round(baseOpacity*100)+'%';});
 ['tgRoads','tgLabels'].forEach(id=>document.getElementById(id).addEventListener('change',applyLayerToggles));
 document.getElementById('maxleg').addEventListener('change',e=>{state.maxLeg=parseFloat(e.target.value);replan();});
@@ -914,10 +956,11 @@ async function renderInsights(){
 function exploreCell(lat,lon){
   let best=markers[0],bd=1e9;for(const m of markers){const d=Math.abs(m.r[0]-lat)+Math.abs(m.r[1]-lon);if(d<bd){bd=d;best=m;}}
   const o=best,dest=[o.r[0],o.r[1]];clearRoute();
+  let geLine='';if(geActive()){const v=GE[gekey(dest[0],dest[1])];geLine='<div style="margin-bottom:4px">'+t('ge_most')+' <b>'+(!v||v[0]<0?t('ge_all'):t('ge_cats')[v[0]])+'</b></div>';}
   try{history.replaceState(null,'','?at='+dest[0].toFixed(3)+','+dest[1].toFixed(3)+'&g='+encodeURIComponent(state.taxon));}catch(e){}
   destCell=L.rectangle([[dest[0]-0.125,dest[1]-0.125],[dest[0]+0.125,dest[1]+0.125]],{color:'#1b7837',weight:2,dashArray:'5 5',fillColor:'#74c476',fillOpacity:0.16,interactive:false}).addTo(map);
   destMarker=L.marker(dest,{icon:destIcon,zIndexOffset:900}).addTo(map)
-    .bindPopup(`<b>${t('pop_explore_title')}</b> ${t('pop_explore_sub')}<br><span style="color:#667">${t('pop_centre')} ${dest[0].toFixed(2)}, ${dest[1].toFixed(2)}</span><br>${t('pop_impact')} <b>${(o.t*100|0)}/100</b> · ${contribStr(o.r)}<br><a href="#" onclick="navigator.clipboard&&navigator.clipboard.writeText(location.href);this.textContent=t('copied');return false;" style="color:#1f6fe0;font-size:12px">${t('share_link')}</a>`).openPopup();
+    .bindPopup(`${geLine}<b>${t('pop_explore_title')}</b> ${t('pop_explore_sub')}<br><span style="color:#667">${t('pop_centre')} ${dest[0].toFixed(2)}, ${dest[1].toFixed(2)}</span><br>${t('pop_impact')} <b>${(o.t*100|0)}/100</b> · ${contribStr(o.r)}<br><a href="#" onclick="navigator.clipboard&&navigator.clipboard.writeText(location.href);this.textContent=t('copied');return false;" style="color:#1f6fe0;font-size:12px">${t('share_link')}</a>`).openPopup();
   fetchProspects(dest[0],dest[1],'destination');
 }
 function setView(v){
