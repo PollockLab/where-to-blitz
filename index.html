@@ -159,9 +159,9 @@ details.adv>summary:hover{color:var(--ink)}
   <div id="tripui">
   <div class="sec" data-i18n="your_trip">Your trip</div>
   <div style="position:relative">
-    <input id="placeSearch" type="text" placeholder="🔍 Search a town or address" data-i18n-ph="search_ph" autocomplete="off" aria-label="Search for a start place"
+    <input id="placeSearch" type="text" placeholder="🔍 Search a town or address" data-i18n-ph="search_ph" autocomplete="off" aria-label="Search for a start place" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="searchResults" aria-autocomplete="list"
       style="width:100%;padding:8px 9px;background:#0e1722;color:var(--ink);border:1px solid #2a3a4d;border-radius:7px;font-size:14px">
-    <div id="searchResults"></div>
+    <div id="searchResults" role="listbox" aria-label="Search results"></div>
   </div>
   <div class="startrow" style="margin-top:6px">
     <button id="setMe" data-i18n="my_location">📍 Locate me</button>
@@ -849,20 +849,20 @@ function applyAutoMode(mode){state.mode=mode;markModeBtn();setModeWhy(t('mode_wh
 
 // type a town/address -> Nominatim forward geocoding (biased to BC/Canada), pick from a dropdown
 const psEl=document.getElementById('placeSearch'), srEl=document.getElementById('searchResults');
-function closeResults(){srEl.classList.remove('open');srEl.innerHTML='';}
+function closeResults(){srEl.classList.remove('open');srEl.innerHTML='';psEl.setAttribute('aria-expanded','false');}
 const doSearch=debounce(async q=>{
   if(q.trim().length<3){closeResults();return;}
   try{
     const u=`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&countrycodes=ca&viewbox=-141,84,-52,41&q=${encodeURIComponent(q)}`;
     const r=await fetch(u,{headers:{'Accept-Language':'en'}}).then(r=>r.json());
     if(psEl.value.trim()!==q.trim())return;                       // stale
-    if(!r.length){const d=document.createElement('div');d.className='res';d.style.cssText='color:var(--mut);cursor:default';d.textContent='No places found';srEl.replaceChildren(d);srEl.classList.add('open');return;}
+    if(!r.length){const d=document.createElement('div');d.className='res';d.style.cssText='color:var(--mut);cursor:default';d.textContent='No places found';srEl.replaceChildren(d);psEl.setAttribute('aria-expanded','true');srEl.classList.add('open');return;}
     srEl.replaceChildren(...r.map(p=>{const parts=p.display_name.split(', '),head=parts[0],sub=parts.slice(1,4).join(', ');
-      const d=document.createElement('div');d.className='res';d.dataset.lat=p.lat;d.dataset.lon=p.lon;
+      const d=document.createElement('div');d.className='res';d.setAttribute('role','option');d.dataset.lat=p.lat;d.dataset.lon=p.lon;
       const b=document.createElement('b');b.textContent=head;const sb=document.createElement('div');sb.className='sub';sb.textContent=sub;d.append(b,sb);
       d.onclick=()=>{map.setView([+p.lat,+p.lon],10);setStart(+p.lat,+p.lon,head);psEl.value=head;closeResults();};
       return d;}));
-    srEl.classList.add('open');
+    psEl.setAttribute('aria-expanded','true');srEl.classList.add('open');
   }catch(e){closeResults();}
 },450);
 psEl.addEventListener('input',e=>doSearch(e.target.value));
