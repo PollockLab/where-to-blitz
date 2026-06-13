@@ -138,6 +138,13 @@ details.adv>summary:hover{color:var(--ink)}
 .infobox b{color:var(--ink)}
 .infobox ul{margin:5px 0 0;padding-left:15px}
 .infobox li{margin:3px 0}
+@media(max-width:640px){
+  #app{flex-direction:column}
+  #panel{width:100%;min-width:0;height:auto;max-height:50vh;border-right:0;border-bottom:1px solid #0a1119}
+  #map{height:50vh;flex:none}
+  #viewtoggle{left:50%;top:auto;bottom:12px}
+  #insights{left:0;top:0;height:100%;padding:54px 12px 24px}
+}
 </style></head>
 <body><div id="app">
 <div id="panel">
