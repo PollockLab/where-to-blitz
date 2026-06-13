@@ -608,6 +608,10 @@ async function renderInsights(){
     c.onclick=()=>{const t=c.dataset.tx,gi=+c.dataset.gl;taxonSel.value=t;state.taxon=t;loadGroup(t).then(()=>{buildMarkers();applyWeights(OBJ.map((_,i)=>i===gi?1:0),OBJ[gi].name);setView('plan');});};});
   ins.querySelectorAll('.chip[data-tx]').forEach(ch=>{ch.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();ch.click();}};ch.onclick=()=>{const t=ch.dataset.tx,i=state.insTaxa.indexOf(t);if(i>=0){if(state.insTaxa.length>1)state.insTaxa.splice(i,1);}else state.insTaxa.push(t);renderInsights();};});
   ins.querySelectorAll('.chip[data-gl]').forEach(ch=>{ch.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();ch.click();}};ch.onclick=()=>{const g=+ch.dataset.gl,i=state.insGoals.indexOf(g);if(i>=0){if(state.insGoals.length>1)state.insGoals.splice(i,1);}else state.insGoals.push(g);state.insGoals.sort((x,y)=>x-y);renderInsights();};});
+  // If the conservation axis is degenerate (constant -- e.g. the national placeholder is 0
+  // everywhere), Spearman is undefined and would falsely read as "they agree". Say so honestly.
+  const consVaries=rowsTaxa.some(t=>{const base=DATA[t].filter(r=>r[8]>0),b=base.length>=20?base:DATA[t];let mn=1e9,mx=-1e9;for(const r of b){if(r[3]<mn)mn=r[3];if(r[3]>mx)mx=r[3];}return mx>mn;});
+  if(!consVaries){document.getElementById('idis').innerHTML=`<b>Discover vs. find-rare-species</b> \u2014 the rare-species (conservation) layer isn't available nationally yet (it needs per-record species history), so this comparison is on hold. <b>Discover</b>, <b>climate-coverage</b> and <b>forest-loss</b> are the live national goals.`;return;}
   const disVals=rowsTaxa.map(t=>{const base=DATA[t].filter(r=>r[8]>0),b=base.length>=20?base:DATA[t];return {t,rho:spear(b.map(r=>r[2]),b.map(r=>r[3]))};});
   const dis=disVals.map(d=>`${TAXLBL[d.t]||d.t} <b>${d.rho.toFixed(2)}</b>`).join(' · ');
   const neg=disVals.filter(d=>d.rho<0).length, n=disVals.length;   // verdict follows the actual signs, not a hardcoded claim
