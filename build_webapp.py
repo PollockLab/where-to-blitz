@@ -171,9 +171,9 @@ details.adv>summary:hover{color:var(--ink)}
   <div class="infobox" id="taxinfo" data-i18n-html="taxinfo">
     <b>Where the scores come from.</b> Canada-wide, on a 0.25° (~25&nbsp;km) grid.
     <ul>
-      <li><b>Nationally, the real signal is <span style="color:var(--ink)">under-sampling</span> (“Discover the most species”) + <span style="color:var(--ink)">climate-coverage</span> (“Cover every habitat”).</b> These two axes are computed from real data (<a href="https://www.inaturalist.org" target="_blank" rel="noopener" style="color:var(--acc)">iNaturalist</a> density + CHELSA climate); travel time is real too.</li>
-      <li><b>Find rare species, Freshest gaps and Sample-before-it's-lost are approximate / being improved</b> — there's no national rarity, per-record date or forest-loss join yet, so those axes are placeholders (staleness ≈ inverse density; conservation/urgency ≈ 0).</li>
-      <li>The original <b>B.C. pilot had all five axes from real iNat history</b>; the national rollout starts with the two robust signals and fills in the rest.</li>
+      <li><b>Nationally the real signals are <span style="color:var(--ink)">under-sampling</span> (“Discover the most species”), <span style="color:var(--ink)">climate-coverage</span> (“Cover every habitat”) and <span style="color:var(--ink)">recent forest loss</span> (“Sample before it’s lost”).</b> Computed from real data (<a href="https://www.inaturalist.org" target="_blank" rel="noopener" style="color:var(--acc)">iNaturalist</a> density + CHELSA climate + Hansen forest loss); travel time is real too.</li>
+      <li><b>Find rare species and Freshest gaps are approximate / being improved</b> — there’s no national rarity layer or per-record dates yet, so those are placeholders (conservation ≈ 0; staleness ≈ inverse density).</li>
+      <li>The original <b>B.C. pilot had all five axes from real iNat history</b>; the national rollout has four of five real and is filling in the last (rare species).</li>
       <li><b>“All biodiversity”</b> averages 7 life groups (amphibians, birds, fungi, insects, mammals, plants, reptiles).</li>
     </ul>
     A planning aid, not ground truth — please obscure sensitive species and respect Indigenous data sovereignty. <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">How Blitz the Gap works →</a>
@@ -275,9 +275,9 @@ const I18N={
     info_btn:"Where do these scores come from?",
     taxinfo:`<b>Where the scores come from.</b> Canada-wide, on a 0.25° (~25&nbsp;km) grid.
       <ul>
-      <li><b>Nationally, the real signal is <span style="color:var(--ink)">under-sampling</span> (“Discover the most species”) + <span style="color:var(--ink)">climate-coverage</span> (“Cover every habitat”).</b> These two axes are computed from real data (<a href="https://www.inaturalist.org" target="_blank" rel="noopener" style="color:var(--acc)">iNaturalist</a> density + CHELSA climate); travel time is real too.</li>
-      <li><b>Find rare species, Freshest gaps and Sample-before-it's-lost are approximate / being improved</b> — there's no national rarity, per-record date or forest-loss join yet, so those axes are placeholders (staleness ≈ inverse density; conservation/urgency ≈ 0).</li>
-      <li>The original <b>B.C. pilot had all five axes from real iNat history</b>; the national rollout starts with the two robust signals and fills in the rest.</li>
+      <li><b>Nationally the real signals are <span style="color:var(--ink)">under-sampling</span> (“Discover the most species”), <span style="color:var(--ink)">climate-coverage</span> (“Cover every habitat”) and <span style="color:var(--ink)">recent forest loss</span> (“Sample before it’s lost”).</b> Computed from real data (<a href="https://www.inaturalist.org" target="_blank" rel="noopener" style="color:var(--acc)">iNaturalist</a> density + CHELSA climate + Hansen forest loss); travel time is real too.</li>
+      <li><b>Find rare species and Freshest gaps are approximate / being improved</b> — there’s no national rarity layer or per-record dates yet, so those are placeholders (conservation ≈ 0; staleness ≈ inverse density).</li>
+      <li>The original <b>B.C. pilot had all five axes from real iNat history</b>; the national rollout has four of five real and is filling in the last (rare species).</li>
       <li><b>“All biodiversity”</b> averages 7 life groups (amphibians, birds, fungi, insects, mammals, plants, reptiles).</li>
       </ul>
       A planning aid, not ground truth — please obscure sensitive species and respect Indigenous data sovereignty. <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">How Blitz the Gap works →</a>`,
@@ -379,9 +379,9 @@ const I18N={
     info_btn:"D'où viennent ces scores?",
     taxinfo:`<b>D'où viennent les scores.</b> À l'échelle du Canada, sur une grille de 0,25° (~25&nbsp;km).
       <ul>
-      <li><b>À l'échelle nationale, le vrai signal est la <span style="color:var(--ink)">sous-représentation</span> (« Découvrir le plus d'espèces ») + la <span style="color:var(--ink)">couverture climatique</span> (« Couvrir chaque habitat »).</b> Ces deux axes sont calculés à partir de données réelles (densité <a href="https://www.inaturalist.org" target="_blank" rel="noopener" style="color:var(--acc)">iNaturalist</a> + climat CHELSA); le temps de déplacement est réel aussi.</li>
-      <li><b>Trouver des espèces rares, Lacunes les plus fraîches et Échantillonner avant qu'il soit trop tard sont approximatifs / en cours d'amélioration</b> — il n'y a pas encore de couche nationale de rareté, de date par observation ni de jointure avec la perte forestière, donc ces axes sont des valeurs provisoires (fraîcheur ≈ densité inverse; conservation/urgence ≈ 0).</li>
-      <li>Le <b>projet pilote en C.-B. comportait les cinq axes tirés de l'historique iNaturalist</b>; le déploiement national commence par les deux signaux robustes et complète le reste.</li>
+      <li><b>À l'échelle nationale, les vrais signaux sont la <span style="color:var(--ink)">sous-représentation</span> (« Découvrir le plus d'espèces »), la <span style="color:var(--ink)">couverture climatique</span> (« Couvrir chaque habitat ») et la <span style="color:var(--ink)">perte forestière récente</span> (« Échantillonner avant qu'il soit trop tard »).</b> Calculés à partir de données réelles (densité <a href="https://www.inaturalist.org" target="_blank" rel="noopener" style="color:var(--acc)">iNaturalist</a> + climat CHELSA + perte forestière Hansen); le temps de déplacement est réel aussi.</li>
+      <li><b>Trouver des espèces rares et Lacunes les plus fraîches sont approximatifs / en cours d'amélioration</b> — il n'y a pas encore de couche nationale de rareté ni de dates par observation, donc ces axes sont provisoires (conservation ≈ 0; fraîcheur ≈ densité inverse).</li>
+      <li>Le <b>projet pilote en C.-B. comportait les cinq axes tirés de l'historique iNaturalist</b>; le déploiement national en compte quatre sur cinq et complète le dernier (espèces rares).</li>
       <li><b>« Toute la biodiversité »</b> fait la moyenne de 7 groupes (amphibiens, oiseaux, champignons, insectes, mammifères, plantes, reptiles).</li>
       </ul>
       Un outil de planification, pas une vérité absolue — veuillez masquer les espèces sensibles et respecter la souveraineté des données autochtones. <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">Fonctionnement de Blitz the Gap →</a>`,
