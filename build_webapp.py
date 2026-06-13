@@ -94,6 +94,13 @@ input[type=range]{width:100%;accent-color:var(--acc);margin:0}
 .legend{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;color:var(--mut)}
 .bar{height:11px;flex:1;border-radius:6px;background:linear-gradient(90deg,#f7fcf5,#e5f5e0,#c7e9c0,#a1d99b,#74c476,#41ab5d,#238b45,#006d2c,#00441b)}
 .foot{color:var(--mut);font-size:12.5px;line-height:1.5;margin-top:8px}
+#celltable{max-height:300px;overflow:auto;margin-top:6px}
+#celltable table{width:100%;border-collapse:collapse;font-size:12px}
+#celltable caption{text-align:left;color:var(--mut);font-size:11px;margin-bottom:5px;caption-side:top}
+#celltable th,#celltable td{text-align:left;padding:3px 6px;border-bottom:1px solid #243446}
+#celltable th{color:var(--mut);font-weight:700}
+#celltable tbody tr{cursor:pointer}
+#celltable tbody tr:hover,#celltable tbody tr:focus-visible{background:#16263a;outline:2px solid var(--acc);outline-offset:-2px}
 details.adv{border-top:1px solid #243446;margin-top:8px}
 details.adv>summary{cursor:pointer;list-style:none;padding:10px 0 5px;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);font-weight:700;display:flex;align-items:center;gap:7px}
 details.adv>summary::-webkit-details-marker{display:none}
@@ -219,6 +226,7 @@ details.adv>summary:hover{color:var(--ink)}
     <div style="color:var(--mut);font-size:11px;line-height:1.45;margin-top:7px">Each cell's <b style="color:var(--ink)">impact 0–100</b> is your goal mix, relative to the best cell shown. Hover a cell to see which goals drive it.</div>
     <p class="foot"><b style="color:var(--ink)">How it works:</b> <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">Blitz the Gap</a> is a B.C.-wide bioblitz — head to a high-priority spot, record what you see on <a href="https://www.inaturalist.org" target="_blank" rel="noopener" style="color:var(--acc)">iNaturalist</a>, and your research-grade sightings flow into the <a href="https://www.inaturalist.org/projects/blitz-the-gap-2026-general" target="_blank" rel="noopener" style="color:var(--acc)">2026 project</a>, filling the map's gaps.<br><br>Scores from real iNaturalist observations (BC), tested by holding back later sightings. Drive/cycle/walk routes from OSRM (FOSSGIS); climate from CHELSA; forest loss from Hansen GFC. Driving CO₂ ≈ 0.18 kg/km; cycling/walking zero. A planning aid — obscure sensitive-species locations and respect Indigenous data-sovereignty before any public release.<br><br>This map spans many <b style="color:var(--ink)">Indigenous territories</b> — see whose at <a href="https://native-land.ca" target="_blank" rel="noopener" style="color:var(--acc)">native-land.ca</a>, and seek consent before recording on their lands.</p>
   </details>
+  <details class="adv" ontoggle="renderCellTable()"><summary>♿ Top cells (accessible list)</summary><div id="celltable"></div></details>
 </div>
 <div id="map"></div>
 <div id="viewtoggle"><button id="vexplore" class="on">🗺 Explore</button><button id="vplan">🧭 Plan a trip</button><button id="vcompare">📊 Compare goals</button></div>
@@ -377,10 +385,18 @@ function buildMarkers(){
     mk.addTo(map);markers.push({mk,r});}
   recolour();
 }
+function renderCellTable(){
+  const el=document.getElementById('celltable');if(!el||!el.closest('details').open)return;
+  const top=markers.map(m=>({r:m.r,t:m.t||0})).sort((a,b)=>b.t-a.t).slice(0,40);
+  el.innerHTML='<table><caption>Top 40 cells for your goal mix &amp; group, highest first. Tap a row to open it.</caption><thead><tr><th scope="col">#</th><th scope="col">Lat, lon</th><th scope="col">Score</th></tr></thead><tbody>'+
+    top.map((o,i)=>`<tr tabindex="0" role="button" data-la="${o.r[0]}" data-lo="${o.r[1]}" aria-label="Rank ${i+1}: latitude ${o.r[0].toFixed(2)}, longitude ${o.r[1].toFixed(2)}, score ${(o.t*100|0)} of 100"><td>${i+1}</td><td>${o.r[0].toFixed(2)}, ${o.r[1].toFixed(2)}</td><td>${(o.t*100|0)}/100</td></tr>`).join('')+'</tbody></table>';
+  el.querySelectorAll('tr[data-la]').forEach(tr=>{const go=()=>{const la=+tr.dataset.la,lo=+tr.dataset.lo;map.setView([la,lo],9);state.view==='plan'?setStart(la,lo):exploreCell(la,lo);};tr.onclick=go;tr.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}};});
+}
 function recolour(){
   const vals=markers.map(m=>impact(m.r));const lo=Math.min(...vals),hi=Math.max(...vals),rng=(hi-lo)||1;
   markers.forEach((m,i)=>{const t=(vals[i]-lo)/rng;m.t=t;m.mk.setStyle({fillColor:colour(t),fillOpacity:0.1+0.62*t});
     m.mk.bindTooltip(`<b>${(t*100|0)}/100</b> impact for your mix<br><span style="color:#46606f;font-size:11px">driven by: ${contribStr(m.r)}</span><br><span style="color:#8aa;font-size:10px">tap to start a trip here</span>`,{sticky:true,opacity:.97});});
+  renderCellTable();
 }
 
 // controls
