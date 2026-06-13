@@ -354,6 +354,7 @@ const I18N={
     pop_round:"round trip", pop_estimated:"(estimated)",
     pop_over_budget:bud=>`round trip — over your ${bud}`,
     pop_explore_title:"This area", pop_explore_sub:"— anywhere in the highlighted ~25 km cell",
+    share_link:"🔗 Copy link to this spot", copied:"✓ Copied!",
     car_free:"car-free 🌿",
     table_caption:"Top 40 cells for your goal mix & group, highest first. Tap a row to open it.",
     table_rank:"#", table_latlon:"Lat, lon", table_score:"Score",
@@ -458,6 +459,7 @@ const I18N={
     pop_round:"aller-retour", pop_estimated:"(estimé)",
     pop_over_budget:bud=>`aller-retour — au-delà de votre ${bud}`,
     pop_explore_title:"Cette zone", pop_explore_sub:"— n'importe où dans la cellule de ~25 km en surbrillance",
+    share_link:"🔗 Copier le lien", copied:"✓ Copié !",
     car_free:"sans voiture 🌿",
     table_caption:"40 meilleures cellules pour votre combinaison d'objectifs et votre groupe, du plus élevé au plus bas. Touchez une ligne pour l'ouvrir.",
     table_rank:"#", table_latlon:"Lat, lon", table_score:"Score",
@@ -938,9 +940,10 @@ async function renderInsights(){
 function exploreCell(lat,lon){
   let best=markers[0],bd=1e9;for(const m of markers){const d=Math.abs(m.r[0]-lat)+Math.abs(m.r[1]-lon);if(d<bd){bd=d;best=m;}}
   const o=best,dest=[o.r[0],o.r[1]];clearRoute();
+  try{history.replaceState(null,'','?at='+dest[0].toFixed(3)+','+dest[1].toFixed(3));}catch(e){}
   destCell=L.rectangle([[dest[0]-0.125,dest[1]-0.125],[dest[0]+0.125,dest[1]+0.125]],{color:'#1b7837',weight:2,dashArray:'5 5',fillColor:'#74c476',fillOpacity:0.16,interactive:false}).addTo(map);
   destMarker=L.marker(dest,{icon:destIcon,zIndexOffset:900}).addTo(map)
-    .bindPopup(`<b>${t('pop_explore_title')}</b> ${t('pop_explore_sub')}<br><span style="color:#667">${t('pop_centre')} ${dest[0].toFixed(2)}, ${dest[1].toFixed(2)}</span><br>${t('pop_impact')} <b>${(o.t*100|0)}/100</b> · ${contribStr(o.r)}`).openPopup();
+    .bindPopup(`<b>${t('pop_explore_title')}</b> ${t('pop_explore_sub')}<br><span style="color:#667">${t('pop_centre')} ${dest[0].toFixed(2)}, ${dest[1].toFixed(2)}</span><br>${t('pop_impact')} <b>${(o.t*100|0)}/100</b> · ${contribStr(o.r)}<br><a href="#" onclick="navigator.clipboard&&navigator.clipboard.writeText(location.href);this.textContent=t('copied');return false;" style="color:#1f6fe0;font-size:12px">${t('share_link')}</a>`).openPopup();
   fetchProspects(dest[0],dest[1],'destination');
 }
 function setView(v){
@@ -966,7 +969,8 @@ document.getElementById('lang-en').onclick=()=>setLang('en');
 document.getElementById('lang-fr').onclick=()=>setLang('fr');
 applyI18N();   // paint static chrome + set <html lang> for the seeded language
 
-loadGroup(state.taxon).then(()=>{buildMarkers();setView('explore');showLoading(false);});
+loadGroup(state.taxon).then(()=>{buildMarkers();setView('explore');showLoading(false);
+  try{const at=new URLSearchParams(location.search).get('at');if(at){const p=at.split(',').map(Number);if(p.length===2&&isFinite(p[0])&&isFinite(p[1])){map.setView([p[0],p[1]],8);exploreCell(p[0],p[1]);}}}catch(e){}});
 </script></body></html>"""
 
 out = (HTML.replace("__FILES__", json.dumps(FILES, separators=(",", ":")))
