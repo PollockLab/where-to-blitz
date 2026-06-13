@@ -351,6 +351,7 @@ const I18N={
     // OBJ / PRESET / group display names (indexed)
     obj_name:["Discover the most species","Find rare species","Cover every habitat","Freshest gaps","Sample before it's lost"],
     obj_q:["go where few people have looked","⚠ placeholder — the national rarity layer isn't available yet, so this goal has no effect","go where the climate is under-sampled","⚠ placeholder — no per-record dates nationally; currently mirrors 'Discover', so don't weight both","go where forest cover was recently lost (logging, fire, dieback)"],
+    why_axis:["Few people have recorded here — what you find genuinely adds to the map.","Range-restricted species live here — your records support conservation.","This climate & habitat type is under-sampled — records here fill a real gap.","Overlooked lately — a fresh record here is overdue.","Forest cover changed here recently — recording now tracks what's shifting."],
     preset_name:["Biodiversity impact","The Other 99%","Most Wanted","Too Hot to Handle","Climate Gap","Revisit the Past"],
     preset_blurb:["Under-sampling + climate gaps — the strongest signal nationwide.","Skip the busy 1% — record in Canada's under-sampled 99%.","Range-restricted, at-risk species — national rarity layer still in progress.","Climate-exposed species in the fastest-warming areas.","Visit under-sampled climate & habitat types.","Cells overlooked lately — staleness is approximate nationally."],
     group:{Amphibia:"Amphibians",Aves:"Birds",Insecta:"Insects",Mammalia:"Mammals",Reptilia:"Reptiles",Plantae:"Plants",Fungi:"Fungi",Actinopterygii:"Fishes",Arachnida:"Arachnids",Mollusca:"Molluscs","All biodiversity":"All biodiversity"},
@@ -468,6 +469,7 @@ const I18N={
     ins_v_some:(neg,n)=>`Ils pointent vers des lieux différents dans <b>${neg} des ${n}</b> groupes affichés — quantité et rareté divergent souvent, mais pas toujours.`,
     obj_name:["Découvrir le plus d'espèces","Trouver des espèces rares","Couvrir chaque habitat","Lacunes les plus fraîches","Échantillonner avant qu'il soit trop tard"],
     obj_q:["allez où peu de gens ont cherché","⚠ provisoire — la couche nationale de rareté n'est pas disponible, ce critère n'a aucun effet","allez où le climat est sous-échantillonné","⚠ provisoire — pas de dates par observation; reflète « Découvrir », ne pondérez pas les deux","allez où le couvert forestier a été récemment perdu (coupe, feu, dépérissement)"],
+    why_axis:["Peu de gens ont observé ici — ce que vous trouvez enrichit vraiment la carte.","Des espèces à aire restreinte vivent ici — vos observations soutiennent la conservation.","Ce type de climat et d'habitat est sous-échantillonné — observer ici comble une vraie lacune.","Négligé récemment — une observation fraîche ici se fait attendre.","Le couvert forestier a changé ici récemment — observer maintenant suit ces changements."],
     preset_name:["Impact sur la biodiversité","Les autres 99 %","Les plus recherchées","Trop chaud pour durer","Lacune climatique","Revisiter le passé"],
     preset_blurb:["Sous-représentation + lacunes climatiques — le signal le plus fort au pays.","Évitez le 1 % achalandé — observez dans le 99 % sous-échantillonné du Canada.","Espèces à aire restreinte et en péril — couche nationale de rareté encore en cours.","Espèces exposées au climat dans les zones qui se réchauffent le plus vite.","Visitez les types de climat et d'habitat sous-échantillonnés.","Cellules négligées récemment — la fraîcheur est approximative à l'échelle nationale."],
     group:{Amphibia:"Amphibiens",Aves:"Oiseaux",Insecta:"Insectes",Mammalia:"Mammifères",Reptilia:"Reptiles",Plantae:"Plantes",Fungi:"Champignons",Actinopterygii:"Poissons",Arachnida:"Arachnides",Mollusca:"Mollusques","All biodiversity":"Toute la biodiversité"},
@@ -690,6 +692,9 @@ function rows(){return DATA[state.taxon]||[];}
 function impact(r){let s=0;for(const o of OBJ)s+=state.w[o.key]*(r[IDX[o.key]]||0);return s;}
 function contribs(r){return OBJ.map((o,i)=>({nm:objName(i),c:state.w[o.key]*(r[IDX[o.key]]||0),raw:r[IDX[o.key]]||0})).filter(x=>x.c>0).sort((a,b)=>b.c-a.c);}
 function contribStr(r){const c=contribs(r).slice(0,3).map(x=>x.nm.toLowerCase()+' '+(x.raw*100|0)); return c.length?c.join(' · '):'—';}
+// Plain-language reason this cell is worth a visit, from its single dominant (weighted) signal.
+// Intrinsic-motivation framing; honest because it names the axis actually driving the score.
+function whyMatters(r){let bi=-1,bv=0;OBJ.forEach((o,i)=>{const v=state.w[o.key]*(r[IDX[o.key]]||0);if(v>bv){bv=v;bi=i;}});return bi<0?'':(t('why_axis')[bi]||'');}
 
 const HALF=0.125;   // half a 0.25-deg cell
 function buildMarkers(){
@@ -1037,6 +1042,7 @@ function exploreCell(lat,lon){
     if(!GE_LOADED)loadGE().then(()=>{const el=document.getElementById(gid);if(el)el.innerHTML=geGapPhrase(dest[0],dest[1]);}).catch(()=>{});
   } else {
     body=`${t('pop_impact')} <b>${score}/100</b> · ${contribStr(o.r)}`;
+    const why=whyMatters(o.r); if(why) body+=`<div style="margin-top:3px;color:#9fb0c0">${why}</div>`;
   }
   destMarker=L.marker(dest,{icon:destIcon,zIndexOffset:900}).addTo(map)
     .bindPopup(`${geLine}<b>${t('pop_explore_title')}</b> ${t('pop_explore_sub')}<br><span style="color:#667">${t('pop_centre')} ${dest[0].toFixed(2)}, ${dest[1].toFixed(2)}</span><br>${body}<br><a href="#" onclick="navigator.clipboard&&navigator.clipboard.writeText(location.href);this.textContent=t('copied');return false;" style="color:#1f6fe0;font-size:12px">${t('share_link')}</a>`).openPopup();
