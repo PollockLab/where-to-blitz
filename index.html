@@ -312,6 +312,7 @@ const I18N={
     load_error:"⚠ Couldn't load the map — check your connection.",
     retry:"↻ Retry",
     legend_title:"Where to blitz", legend_low:"well-sampled", legend_high:"biggest gaps",
+    axis_legend:[["well-sampled","biggest gaps"],["no species at risk","many at risk"],["climate well-covered","climate under-sampled"],["recently recorded","long overdue"],["stable","recently changed"]],
     legend_hint:`Darker = higher priority. <span id="legendtap">Tap a cell to see what to record.</span>`,
     // dynamic
     legendtap_explore:"Tap a cell to see what to record.",
@@ -433,6 +434,7 @@ const I18N={
     load_error:"⚠ Impossible de charger la carte — vérifiez votre connexion.",
     retry:"↻ Réessayer",
     legend_title:"Où aller", legend_low:"bien échantillonné", legend_high:"plus grandes lacunes",
+    axis_legend:[["bien échantillonné","plus grandes lacunes"],["aucune espèce en péril","beaucoup en péril"],["climat bien couvert","climat sous-échantillonné"],["observé récemment","en retard depuis longtemps"],["stable","changé récemment"]],
     legend_hint:`Plus foncé = priorité plus élevée. <span id="legendtap">Touchez une cellule pour voir quoi observer.</span>`,
     // dynamic
     legendtap_explore:"Touchez une cellule pour voir quoi observer.",
@@ -768,6 +770,13 @@ function recolour(){
 }
 // Swap #maplegend between the priority ramp (default) and a categorical Getting Even legend. Pale swatches get a 1px #ccc border.
 let GE_PRIORITY_LEGEND=null;
+// Legend low/high labels follow the dominant goal so they stay accurate per preset
+// (e.g. Most Wanted -> "no at-risk .. many at-risk", Revisit -> "recently recorded .. long overdue").
+function updateLegendLabels(){const ml=document.getElementById('maplegend');if(!ml||geActive())return;
+  const cov=document.getElementById('tgCoverage');if(cov&&cov.checked)return;
+  let bi=0,bv=-1;OBJ.forEach((o,i)=>{const v=state.w[o.key]||0;if(v>bv){bv=v;bi=i;}});
+  const lab=(t('axis_legend')||[])[bi];const sp=ml.querySelectorAll('.lab span');
+  if(lab&&sp.length>=2){sp[0].textContent=lab[0];sp[1].textContent=lab[1];}}
 function updateLegend(){
   const ml=document.getElementById('maplegend');if(!ml)return;
   if(GE_PRIORITY_LEGEND===null)GE_PRIORITY_LEGEND=ml.innerHTML;   // capture the as-built priority legend once
@@ -776,7 +785,7 @@ function updateLegend(){
     ml.innerHTML='<div class="lt">'+t('getting_even')+'</div>'+
       t('ge_cats').map((nm,i)=>sw(GE_PAL[i],nm)).join('')+sw(GE_ALL,t('ge_all'));
   }else{
-    ml.innerHTML=GE_PRIORITY_LEGEND;
+    ml.innerHTML=GE_PRIORITY_LEGEND;updateLegendLabels();
     const lt=document.getElementById('legendtap');if(lt)lt.textContent=t(legendTapKey());
   }
 }
@@ -803,7 +812,7 @@ function rebuildObjs(){objsDiv.innerHTML='';
     d.querySelector('input').addEventListener('input',e=>{state.w[o.key]=parseFloat(e.target.value);
       document.getElementById('v_'+o.key).textContent=state.w[o.key].toFixed(2);markPreset(null);recolour();replan();});});}
 rebuildObjs();
-function applyWeights(arr,name){OBJ.forEach((o,i)=>{state.w[o.key]=arr[i];document.getElementById('s_'+o.key).value=arr[i];document.getElementById('v_'+o.key).textContent=arr[i].toFixed(2);});markPreset(name);recolour();replan();}
+function applyWeights(arr,name){OBJ.forEach((o,i)=>{state.w[o.key]=arr[i];document.getElementById('s_'+o.key).value=arr[i];document.getElementById('v_'+o.key).textContent=arr[i].toFixed(2);});markPreset(name);recolour();updateLegendLabels();replan();}
 const presetsDiv=document.getElementById('presets');
 function markPreset(name){[...presetsDiv.children].forEach(b=>b.classList.toggle('on',b.textContent===name));}
 function rebuildPresets(){presetsDiv.innerHTML='';
