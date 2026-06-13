@@ -408,10 +408,13 @@ function renderCellTable(){
 }
 function recolour(){
   const cov=document.getElementById('tgCoverage')&&document.getElementById('tgCoverage').checked;
-  const vals=markers.map(m=>impact(m.r));const lo=Math.min(...vals),hi=Math.max(...vals),rng=(hi-lo)||1;
+  const vals=markers.map(m=>impact(m.r));
+  // Percentile-rank, not min-max: a few Arctic super-gaps (max discover + rare climate)
+  // otherwise dominate the scale and crush every reachable cell to ~0/100. Rank spreads it evenly.
+  const ord=vals.map((v,i)=>[v,i]).sort((a,b)=>a[0]-b[0]);const rank=new Array(vals.length);ord.forEach((p,k)=>rank[p[1]]=k);const n1=Math.max(vals.length-1,1);
   // No per-cell tooltip: at ~38k cells binding one tooltip each tanks pan/zoom.
   // Cells stay clickable -- the click popup already shows the cell's score & drivers.
-  markers.forEach((m,i)=>{const t=(vals[i]-lo)/rng;m.t=t;m.mk.setStyle({fillColor:colour(t),fillOpacity:cov?0:0.1+0.62*t});});
+  markers.forEach((m,i)=>{const t=rank[i]/n1;m.t=t;m.mk.setStyle({fillColor:colour(t),fillOpacity:cov?0:0.1+0.62*t});});
   renderCellTable();
 }
 
