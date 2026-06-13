@@ -217,6 +217,8 @@ details.adv>summary:hover{color:var(--ink)}
       <label class="toggle" style="margin:4px 0"><input type="checkbox" id="tgLabels" checked> Labels &amp; places</label>
       <div style="color:var(--mut);font-size:11px;line-height:1.4">Vector basemap — toggle layers like Maputnik. Other styles are raster (roads baked in).</div>
     </div>
+    <label class="toggle" style="margin:8px 0 2px"><input type="checkbox" id="tgCoverage"> 🛰 iNaturalist coverage</label>
+    <div style="color:var(--mut);font-size:11px;line-height:1.4">Where data already is (bright = well-sampled, dark = gaps) — the official "light up the map" layer, for the current group.</div>
     <div style="display:flex;justify-content:space-between;margin:9px 0 0"><span style="font-size:13px">Map brightness</span><span class="v" id="bopv" style="color:var(--acc)">100%</span></div>
     <input type="range" id="baseop" min="0.25" max="1" step="0.05" value="1" aria-label="Map brightness">
   </details>
@@ -402,7 +404,7 @@ function recolour(){
 // controls
 const taxonSel=document.getElementById('taxon');
 Object.keys(DATA).forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=TAXLBL[t]||t;taxonSel.appendChild(o);});
-taxonSel.value=state.taxon; taxonSel.onchange=()=>{state.taxon=taxonSel.value;buildMarkers();if(document.getElementById('insights').style.display==='block')renderInsights();};
+taxonSel.value=state.taxon; taxonSel.onchange=()=>{state.taxon=taxonSel.value;buildMarkers();setCoverage();if(document.getElementById('insights').style.display==='block')renderInsights();};
 
 const objsDiv=document.getElementById('objs');
 OBJ.forEach(o=>{const d=document.createElement('div');d.className='obj';
@@ -422,6 +424,17 @@ applyChallenge(PRESETS[0]);
 const bmSel=document.getElementById('basemap');
 Object.keys(BASEMAPS).forEach(n=>{const o=document.createElement('option');o.value=o.textContent=n;bmSel.appendChild(o);});
 bmSel.value='Light & muted'; bmSel.onchange=()=>setBase(bmSel.value);
+let covLayer=null;
+const COVTAXA={Plantae:'Plantae',Aves:'Aves',Mammalia:'Mammalia',Insecta:'Insecta',Amphibia:'Amphibia'};   // COGs available per taxon (others -> All)
+function setCoverage(){
+  if(covLayer){map.removeLayer(covLayer);covLayer=null;}
+  if(!document.getElementById('tgCoverage').checked)return;
+  const ct=COVTAXA[state.taxon]||'All';
+  const cog='https://object-arbutus.cloud.computecanada.ca/bq-io/io/inat_canada_heatmaps/'+ct+'_density_inat_1km.tif';
+  covLayer=L.tileLayer('https://tiler.biodiversite-quebec.ca/cog/tiles/{z}/{x}/{y}?url='+encodeURIComponent(cog)+'&rescale=0,10&colormap_name=magma&resampling=cubic',
+    {opacity:0.75,maxZoom:14,zIndex:250,attribution:'iNaturalist density &copy; Biodiversit\u00e9 Qu\u00e9bec'}).addTo(map);
+}
+document.getElementById('tgCoverage').addEventListener('change',setCoverage);
 document.getElementById('baseop').addEventListener('input',e=>{baseOpacity=parseFloat(e.target.value);if(baseLayer&&baseLayer.setOpacity)baseLayer.setOpacity(baseOpacity);else if(glBase&&glBase.getCanvas())glBase.getCanvas().style.opacity=baseOpacity;document.getElementById('bopv').textContent=Math.round(baseOpacity*100)+'%';});
 ['tgRoads','tgLabels'].forEach(id=>document.getElementById(id).addEventListener('change',applyLayerToggles));
 document.getElementById('maxleg').addEventListener('change',e=>{state.maxLeg=parseFloat(e.target.value);replan();});
