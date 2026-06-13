@@ -66,7 +66,7 @@ input[type=range]{width:100%;accent-color:var(--acc);margin:0}
 #searchResults .res:hover,#searchResults .res.on{background:#16263a}
 #searchResults .res .sub{color:var(--mut);font-size:11px}
 .legend{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;color:var(--mut)}
-.bar{height:11px;flex:1;border-radius:6px;background:linear-gradient(90deg,#f7fcf5,#e5f5e0,#c7e9c0,#a1d99b,#74c476,#41ab5d,#238b45,#006d2c,#00441b)}
+.bar{height:11px;flex:1;border-radius:6px;background:linear-gradient(90deg,#ffffd9,#edf8b1,#c7e9b4,#7fcdbb,#41b6c4,#1d91c0,#225ea8,#253494,#081d58)}
 .foot{color:var(--mut);font-size:12.5px;line-height:1.5;margin-top:8px}
 #celltable{max-height:300px;overflow:auto;margin-top:6px}
 #celltable table{width:100%;border-collapse:collapse;font-size:12px}
@@ -121,7 +121,7 @@ details.adv>summary:hover{color:var(--ink)}
 }
 #maplegend{position:fixed;bottom:14px;left:372px;z-index:1050;background:rgba(255,255,255,.93);border-radius:9px;padding:8px 11px;box-shadow:0 2px 10px rgba(0,0,0,.22);font-size:12px;color:#16233a;max-width:212px;line-height:1.3}
 #maplegend .lt{font-weight:700;font-size:12.5px}
-#maplegend .ramp{height:9px;border-radius:5px;background:linear-gradient(90deg,#f7fcf5,#c7e9c0,#74c476,#238b45,#00441b);margin:4px 0 2px}
+#maplegend .ramp{height:9px;border-radius:5px;background:linear-gradient(90deg,#ffffd9,#c7e9b4,#41b6c4,#225ea8,#081d58);margin:4px 0 2px}
 #maplegend .lab{display:flex;justify-content:space-between;font-size:10.5px;color:#5a6b7a}
 #maplegend .hint{margin-top:4px;color:#5a6b7a;font-size:10.5px}
 @media(max-width:640px){#maplegend{left:8px;bottom:auto;top:calc(50vh + 8px);max-width:158px;padding:6px 8px}}
@@ -586,7 +586,7 @@ async function fetchFirsts(lat,lon,ic,cellIds){
 }
 const showProspects=debounce((lat,lon)=>fetchProspects(lat,lon,'around_start'),500);
 
-const RAMP=[[247,252,245],[229,245,224],[199,233,192],[161,217,155],[116,196,118],[65,171,93],[35,139,69],[0,109,44],[0,68,27]]; // Greens: pale=skip, deep green=GO (traffic-light intuitive, calm)
+const RAMP=[[255,255,217],[237,248,177],[199,233,180],[127,205,187],[65,182,196],[29,145,192],[34,94,168],[37,52,148],[8,29,88]]; // YlGnBu (ColorBrewer, CVD-safe): pale yellow=well-sampled, dark navy=biggest gaps
 function colour(t){t=Math.max(0,Math.min(1,t));const x=t*(RAMP.length-1),i=Math.floor(x),f=x-i;const a=RAMP[i],b=RAMP[Math.min(i+1,RAMP.length-1)];return `rgb(${Math.round(a[0]+(b[0]-a[0])*f)},${Math.round(a[1]+(b[1]-a[1])*f)},${Math.round(a[2]+(b[2]-a[2])*f)})`;}
 function fmth(h){if(h>=24){const d=Math.floor(h/24),hr=Math.round(h%24);return d+'d'+(hr?(' '+hr+'h'):'');}const m=Math.round(h*60);return m>=60?Math.floor(m/60)+'h'+String(m%60).padStart(2,'0'):m+' min';}
 function haversine(a,b,c,d){const R=6371,r=Math.PI/180,x=(c-a)*r,y=(d-b)*r,h=Math.sin(x/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin(y/2)**2;return 2*R*Math.asin(Math.sqrt(h));}
