@@ -40,11 +40,11 @@ input[type=range]{width:100%;accent-color:var(--acc);margin:0}
 #plan:hover{filter:brightness(1.08)}
 #trips{margin-top:10px;font-size:15px}
 #trips .hd{color:var(--mut);font-size:13px;margin:6px 0 4px}
-#trips .row{padding:8px 9px;border-radius:7px;background:#0e1722;margin:6px 0;cursor:pointer;border:1px solid #20303f}
+#trips .row{padding:6px 9px;border-radius:7px;background:#0e1722;margin:5px 0;cursor:pointer;border:1px solid #20303f}
 #trips .row:hover,#trips .row.sel{border-color:var(--gold)}
 #trips .row .t1{display:flex;justify-content:space-between;font-weight:650}
 #trips .row .imp{color:var(--gold)}
-#trips .row .t2{color:var(--mut);font-size:13px;margin-top:3px}
+#trips .row .t2{color:var(--mut);font-size:14px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #prospects{margin-top:8px}
 #prospects .hd{color:var(--mut);font-size:13px;margin:6px 0 5px}
 .prospects{display:flex;gap:7px;overflow-x:auto;padding-bottom:4px}
@@ -195,7 +195,7 @@ async function fetchProspects(lat,lon,where){
   const myseq=++prospectSeq;
   const pr=document.getElementById('prospects'); pr.innerHTML='<div class="hd">🔭 Looking up what lives here…</div>';
   const ic=ICONIC[state.taxon]||'', HH=0.125;
-  const q=(h)=>`https://api.inaturalist.org/v1/observations/species_counts?swlat=${lat-h}&nelat=${lat+h}&swlng=${lon-h}&nelng=${lon+h}&quality_grade=research&per_page=200&order_by=count`+(ic?`&iconic_taxa=${ic}`:'');
+  const q=(h)=>`https://api.inaturalist.org/v1/observations/species_counts?swlat=${lat-h}&nelat=${lat+h}&swlng=${lon-h}&nelng=${lon+h}&quality_grade=research&per_page=500&order_by=count`+(ic?`&iconic_taxa=${ic}`:'');
   try{
     const j=await fetch(q(HH)).then(r=>r.json());
     const total=j.total_results||0;
@@ -217,23 +217,26 @@ async function fetchProspects(lat,lon,where){
       '<div class="prospects">'+res.map(r=>{const t=r.taxon,g=t.observations_count||0,rare=g<1500,unc=g<7000;
         return `<a class="sp" href="https://www.inaturalist.org/taxa/${t.id}" target="_blank" rel="noopener" title="${t.name}"><img src="${t.default_photo.square_url}" loading="lazy" alt=""><div class="nm">${r._here?'':'✦ '}${t.preferred_common_name||t.name}${rare?' <span class="rare">rare</span>':(unc?' <span class="unc">uncommon</span>':'')}</div><div class="ct">${r._here?r.count+' here':'nearby'} · ${g.toLocaleString()} worldwide</div></a>`;}).join('')+'</div>'+'<div id="firsts"></div>'+
       `<div style="margin-top:7px;font-size:11.5px"><a href="${ex}" target="_blank" rel="noopener" style="color:var(--acc)">Explore all on iNaturalist →</a> &nbsp;·&nbsp; <a href="https://www.inaturalist.org/observations/new" target="_blank" rel="noopener" style="color:var(--gd)">＋ Log a sighting</a> &nbsp;·&nbsp; <a href="https://www.inaturalist.org/projects/blitz-the-gap-2026-general" target="_blank" rel="noopener" style="color:var(--mut)">for Blitz the Gap</a></div>`;
-    if(where==='Your destination' && destMarker && destMarker.getPopup()){
-      const thumbs='<div style="font-size:11px;color:#557;margin:9px 0 4px">Recorded in this area — tap a photo for details:</div><div style="display:flex;gap:6px">'+res.slice(0,4).map(r=>{const t=r.taxon,nm=t.preferred_common_name||t.name;return `<a href="https://www.inaturalist.org/taxa/${t.id}" target="_blank" rel="noopener" style="width:62px;text-decoration:none;color:#0a2a44" title="${t.name} — open on iNaturalist"><img src="${t.default_photo.square_url}" style="width:62px;height:62px;object-fit:cover;border-radius:7px;border:1px solid #cdd;display:block"><div style="font-size:10px;line-height:1.15;margin-top:3px;height:24px;overflow:hidden">${nm}</div></a>`;}).join('')+'</div>';
-      destMarker.setPopupContent(destMarker.getPopup().getContent()+thumbs); destMarker.openPopup();
-    }
-    // "Fill the gap": species recorded in the ~50 km neighbourhood but with no research-grade
-    // record in THIS cell. Honest, records-based -- not a claim about true presence/absence.
+    // "Fill the gap": species common in the ~50 km neighbourhood but missing from THIS cell's
+    // research-grade records (cell query widened to 500 to keep the absence honest). Framed as
+    // "missing from this cell", not "nobody has seen it here" -- records-based, not absolute.
     const firsts=await fetchFirsts(lat,lon,ic,cellIds);
+    if(myseq!==prospectSeq) return;
     const fe=document.getElementById('firsts');
-    if(myseq===prospectSeq && fe && firsts.length){
-      fe.innerHTML=`<div class="hd" style="margin-top:11px">🎯 <b style="color:var(--ink)">Fill the gap</b> — common nearby, no record in this cell yet:</div>`+
-        '<div class="prospects">'+firsts.map(r=>{const t=r.taxon;return `<a class="sp" href="https://www.inaturalist.org/taxa/${t.id}" target="_blank" rel="noopener" title="${t.name} — recorded nearby but not in this cell; a gap to fill"><img src="${t.default_photo.square_url}" loading="lazy" alt=""><div class="nm">${t.preferred_common_name||t.name} <span class="first">new here</span></div><div class="ct">${r.count.toLocaleString()} nearby</div></a>`;}).join('')+'</div>';
+    if(fe && firsts.length){
+      fe.innerHTML=`<div class="hd" style="margin-top:11px">🎯 <b style="color:var(--ink)">Fill the gap</b> — common nearby, missing from this cell:</div>`+
+        '<div class="prospects">'+firsts.map(r=>{const t=r.taxon,nm=t.preferred_common_name||t.name;return `<a class="sp" href="https://www.inaturalist.org/taxa/${t.id}" target="_blank" rel="noopener" title="${t.name} — common nearby but missing from this cell's records"><img src="${t.default_photo.square_url}" loading="lazy" alt="${nm}"><div class="nm">${nm} <span class="first">gap</span></div><div class="ct">${r.count.toLocaleString()} nearby</div></a>`;}).join('')+'</div>';
+    }
+    // surface the actionable gap right on the map popup -- no panel scroll needed
+    if(where==='Your destination' && destMarker && destMarker.getPopup() && firsts.length){
+      const gapThumbs='<div style="font-size:11.5px;color:#1b7837;font-weight:700;margin:9px 0 4px">🎯 Fill the gap — log these here:</div><div style="display:flex;gap:6px">'+firsts.slice(0,4).map(r=>{const t=r.taxon,nm=t.preferred_common_name||t.name;return `<a href="https://www.inaturalist.org/taxa/${t.id}" target="_blank" rel="noopener" style="width:62px;text-decoration:none;color:#0a2a44" title="${t.name}"><img src="${t.default_photo.square_url}" style="width:62px;height:62px;object-fit:cover;border-radius:7px;border:1px solid #cdd;display:block"><div style="font-size:10px;line-height:1.15;margin-top:3px;height:24px;overflow:hidden">${nm}</div></a>`;}).join('')+'</div>';
+      destMarker.setPopupContent(destMarker.getPopup().getContent()+gapThumbs); destMarker.openPopup();
     }
   }catch(e){pr.innerHTML='<div class="hd">🔭 Couldn’t load species for this spot.</div>';}
 }
 async function fetchFirsts(lat,lon,ic,cellIds){
   const R=0.5;   // ~50 km neighbourhood -- same habitat zone, not a different ecoregion
-  const u=`https://api.inaturalist.org/v1/observations/species_counts?swlat=${lat-R}&nelat=${lat+R}&swlng=${lon-R}&nelng=${lon+R}&quality_grade=research&per_page=100&order_by=count`+(ic?`&iconic_taxa=${ic}`:'');
+  const u=`https://api.inaturalist.org/v1/observations/species_counts?swlat=${lat-R}&nelat=${lat+R}&swlng=${lon-R}&nelng=${lon+R}&quality_grade=research&per_page=200&order_by=count`+(ic?`&iconic_taxa=${ic}`:'');
   try{const j=await fetch(u).then(r=>r.json());
     return (j.results||[]).filter(r=>r.taxon&&r.taxon.default_photo&&!cellIds.has(r.taxon.id)&&(r.taxon.observations_count||0)>40).slice(0,6);
   }catch(e){return [];}
@@ -376,7 +379,7 @@ document.getElementById('setMe').onclick=()=>{setStartLabel('locating…');
 function ipLoc(ok){fetch('https://ipapi.co/json/').then(r=>r.json()).then(j=>{if(j&&j.latitude)ok(j.latitude,j.longitude,'my area (from IP)');else setStartLabel('location unavailable');}).catch(()=>setStartLabel('location unavailable'));}
 
 // the trip planner
-document.getElementById('plan').onclick=planTrip;
+document.getElementById('plan').onclick=async()=>{await planTrip();const t=document.getElementById('trips');if(t)t.scrollIntoView({behavior:'smooth',block:'start'});};
 async function planTrip(){
   planned=true;
   const trips=document.getElementById('trips');const [slat,slon]=state.start,budget=state.budget,M=MODES[state.mode];
@@ -414,7 +417,7 @@ function tripRow(trips,o,id,num){
   const title=o.here?np+'Right where you are':np+o.m.r[0].toFixed(2)+', '+o.m.r[1].toFixed(2);
   const line2=o.here
     ?`📍 no extra travel — record the cell you're already in`
-    :`${MODES[state.mode].icon} ${fmth(o.oneH)} each way · ${o.fieldH>=MIN_FIELD_H?fmth(o.fieldH)+' in the field':fmth(2*o.oneH)+' round trip · over '+budvEl.textContent} · ${co2lbl(o.co2)}`;
+    :`${MODES[state.mode].icon} ${fmth(o.oneH)} each way · ${o.fieldH>=MIN_FIELD_H?fmth(o.fieldH)+' field':fmth(2*o.oneH)+' round · over '+budvEl.textContent} · ${co2lbl(o.co2)}`;
   div.innerHTML=`<div class="t1"><span>${title}</span><span class="imp">${(o.m.t*100|0)}/100</span></div><div class="t2">${line2}</div>`;
   div.onclick=()=>selectTrip(o);trips.appendChild(div);
 }
