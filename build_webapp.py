@@ -675,7 +675,7 @@ function buildMarkers(){
   // switch only swaps each cell's data row + restyles -- no 3478-rectangle teardown/rebuild.
   if(markers.length===rs.length){markers.forEach((m,i)=>m.r=rs[i]);recolour();return;}
   markers.forEach(m=>map.removeLayer(m.mk));markers=[];
-  for(const r of rs){const mk=L.rectangle([[r[0]-HALF,r[1]-HALF],[r[0]+HALF,r[1]+HALF]],{stroke:false,fillOpacity:.5});
+  for(const r of rs){const mk=L.rectangle([[r[0]-HALF,r[1]-HALF],[r[0]+HALF,r[1]+HALF]],{stroke:true,weight:1,fillOpacity:.5});
     mk.on('click',e=>{state.view==='explore'?exploreCell(r[0],r[1]):setStart(e.latlng.lat,e.latlng.lng);});   // r[0],r[1] are invariant across taxa
     mk.addTo(map);markers.push({mk,r});}
   recolour();
@@ -698,7 +698,8 @@ function recolour(){
   const flat=ord.length>0&&(ord[ord.length-1][0]-ord[0][0])<1e-9;   // guard empty markers (recolour runs during init before data loads)
   // No per-cell tooltip: at ~38k cells binding one tooltip each tanks pan/zoom.
   // Cells stay clickable -- the click popup already shows the cell's score & drivers.
-  markers.forEach((m,i)=>{const t=flat?0:rank[i]/n1;m.t=t;m.mk.setStyle({fillColor:colour(t),fillOpacity:cov?0:0.1+0.62*t});});
+  // stroke matches fill (same colour+opacity) so adjacent canvas rectangles tile seamlessly -- without it, anti-alias gaps stripe the map at low zoom (worse for narrow high-latitude cells)
+  markers.forEach((m,i)=>{const t=flat?0:rank[i]/n1;m.t=t;const o=cov?0:0.25+0.5*t,c=colour(t);m.mk.setStyle({fillColor:c,color:c,weight:1,opacity:o,fillOpacity:o});});
   renderCellTable();
 }
 

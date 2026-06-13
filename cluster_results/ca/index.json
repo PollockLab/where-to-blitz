@@ -2,9 +2,12 @@
   "groups": [
     "Amphibia",
     "Aves",
+    "Actinopterygii",
+    "Arachnida",
     "Fungi",
     "Insecta",
     "Mammalia",
+    "Mollusca",
     "Plantae",
     "Reptilia",
     "All biodiversity"
@@ -17,7 +20,10 @@
     "Mammalia": "webapp_data_Mammalia.json",
     "Plantae": "webapp_data_Plantae.json",
     "Reptilia": "webapp_data_Reptilia.json",
-    "All biodiversity": "webapp_data_All_biodiversity.json"
+    "All biodiversity": "webapp_data_All_biodiversity.json",
+    "Actinopterygii": "webapp_data_Actinopterygii.json",
+    "Arachnida": "webapp_data_Arachnida.json",
+    "Mollusca": "webapp_data_Mollusca.json"
   },
   "n_cells": 32643,
   "bbox": [
@@ -59,5 +65,18 @@
   },
   "land_mask": "Natural Earth 50m admin_0; kept Canada + United States land; dropped ocean (Hudson/Baffin Bay) + Greenland",
   "discover_method": "under-sampling rank (fewer obs=higher); zero-obs ties broken by climate distinctiveness (env). Replaces saturating norm(1/density).",
-  "staleness_method": "proxy = de-saturated discover (no national per-record dates); down-weighted in national presets"
+  "staleness_method": "proxy = de-saturated discover (no national per-record dates); down-weighted in national presets",
+  "real_groups": "Amphibia,Aves,Actinopterygii,Arachnida,Fungi,Insecta,Mammalia,Mollusca,Plantae,Reptilia (all real per-taxon iNat density COGs; Fungi+Reptilia no longer All-proxy)",
+  "gettingeven": {
+    "file": "webapp_data_gettingeven.json",
+    "cats": [
+      "Fishes",
+      "Fungi",
+      "Reptiles & Amphibians",
+      "Invertebrates",
+      "Mammals",
+      "Plants"
+    ],
+    "method": "per-cell most under-represented group by RELATIVE deficit (1 - local_share/expected_share); birds excluded; -1=all under-sampled (zero obs)"
+  }
 }
