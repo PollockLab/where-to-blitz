@@ -159,8 +159,7 @@ details.adv>summary:hover{color:var(--ink)}
     <div id="searchResults"></div>
   </div>
   <div class="startrow" style="margin-top:6px">
-    <button id="setMe" data-i18n="my_location">📍 My location</button>
-    <button id="setVan" data-i18n="vancouver">Vancouver</button>
+    <button id="setMe" data-i18n="my_location">📍 Locate me</button>
   </div>
   <div style="color:var(--mut);font-size:11.5px;margin:4px 0 7px" data-i18n-html="start_hint">Start: <b id="startlbl">Vancouver</b> · <b style="color:var(--gd)">tap the map</b> to move it.</div>
   <div class="startrow" id="modes"></div>
@@ -254,9 +253,9 @@ const I18N={
     finetune:"Fine-tune the five goals",
     your_trip:"Your trip",
     search_ph:"🔍 Search a town or address",
-    my_location:"📍 My location",
+    my_location:"📍 Locate me",
     vancouver:"Vancouver",
-    start_hint:`Start: <b id="startlbl">Vancouver</b> · <b style="color:var(--gd)">tap the map</b> to move it.`,
+    start_hint:`Start: <b id="startlbl">—</b> · <b style="color:var(--gd)">tap the map</b>, search, or 📍 to set it.`,
     time:"Time",
     unit_minutes:"Minutes", unit_hours:"Hours", unit_days:"Days",
     more_options:"More options",
@@ -366,9 +365,9 @@ const I18N={
     finetune:"Ajuster les cinq objectifs",
     your_trip:"Votre sortie",
     search_ph:"🔍 Rechercher une ville ou une adresse",
-    my_location:"📍 Ma position",
+    my_location:"📍 Me localiser",
     vancouver:"Vancouver",
-    start_hint:`Départ : <b id="startlbl">Vancouver</b> · <b style="color:var(--gd)">touchez la carte</b> pour le déplacer.`,
+    start_hint:`Départ : <b id="startlbl">—</b> · <b style="color:var(--gd)">touchez la carte</b>, cherchez, ou 📍 pour le définir.`,
     time:"Durée",
     unit_minutes:"Minutes", unit_hours:"Heures", unit_days:"Jours",
     more_options:"Plus d'options",
@@ -781,7 +780,6 @@ function rebuildModes(){modesDiv.innerHTML='';
   [...modesDiv.children].forEach(x=>x.classList.toggle('on',x.dataset.m===state.mode));}
 rebuildModes();
 
-document.getElementById('setVan').onclick=()=>{map.panTo(VAN);setStart(VAN[0],VAN[1],'Vancouver');};
 // type a town/address -> Nominatim forward geocoding (biased to BC/Canada), pick from a dropdown
 const psEl=document.getElementById('placeSearch'), srEl=document.getElementById('searchResults');
 function closeResults(){srEl.classList.remove('open');srEl.innerHTML='';}
@@ -803,10 +801,11 @@ const doSearch=debounce(async q=>{
 psEl.addEventListener('input',e=>doSearch(e.target.value));
 psEl.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();const f=srEl.querySelector('.res[data-lat]');if(f)f.click();}else if(e.key==='Escape')closeResults();});
 document.addEventListener('click',e=>{if(!srEl.contains(e.target)&&e.target!==psEl)closeResults();});
-document.getElementById('setMe').onclick=()=>{setStartLabel(t('locating'));
-  const ok=(lat,lon,how)=>{map.panTo([lat,lon]);setStart(lat,lon,how);};
+function locateMe(){setStartLabel(t('locating'));
+  const ok=(lat,lon,how)=>{map.setView([lat,lon],8);setStart(lat,lon,how);};
   let done=false;
-  if(navigator.geolocation){navigator.geolocation.getCurrentPosition(p=>{done=true;ok(p.coords.latitude,p.coords.longitude,t('my_loc_short'));},()=>{if(!done)ipLoc(ok);},{timeout:6000});setTimeout(()=>{if(!done)ipLoc(ok);},6500);}else ipLoc(ok);};
+  if(navigator.geolocation){navigator.geolocation.getCurrentPosition(p=>{done=true;ok(p.coords.latitude,p.coords.longitude,t('my_loc_short'));},()=>{if(!done)ipLoc(ok);},{timeout:6000});setTimeout(()=>{if(!done)ipLoc(ok);},6500);}else ipLoc(ok);}
+document.getElementById('setMe').onclick=locateMe;
 function ipLoc(ok){fetch('https://ipapi.co/json/').then(r=>r.json()).then(j=>{if(j&&j.latitude)ok(j.latitude,j.longitude,t('my_area_ip'));else setStartLabel(t('loc_unavail'));}).catch(()=>setStartLabel(t('loc_unavail')));}
 
 // the trip planner
@@ -990,5 +989,6 @@ loadGroup(state.taxon).then(()=>{buildMarkers();setView('explore');showLoading(f
   try{const u=new URLSearchParams(location.search),at=u.get('at'),g=u.get('g');
     const go=()=>{if(at){const p=at.split(',').map(Number);if(p.length===2&&isFinite(p[0])&&isFinite(p[1])){map.setView([p[0],p[1]],8);exploreCell(p[0],p[1]);}}};
     if(g&&FILES[g]&&g!==state.taxon){state.taxon=g;taxonSel.value=g;loadGroup(g).then(()=>{buildMarkers();go();});}else{go();}
+    if(!at)locateMe();   // default Explore to the user's location (no shared cell to restore)
   }catch(e){}});
 </script></body></html>
