@@ -2,6 +2,19 @@
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Where to Blitz the Gap</title>
+<meta name="description" content="Find Canada's biodiversity gaps — head to an under-sampled spot, record what you see on iNaturalist, and fill the map. A companion planning tool for the Blitz the Gap bioblitz.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='88'%3E🍃%3C/text%3E%3C/svg%3E">
+<meta name="theme-color" content="#0f1620">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Where to Blitz the Gap">
+<meta property="og:description" content="Find Canada's biodiversity gaps and plan a low-carbon trip to the best spot you can reach and get back from.">
+<meta property="og:url" content="https://wietzesuijker.github.io/where-to-blitz/">
+<meta property="og:image" content="https://wietzesuijker.github.io/where-to-blitz/og-image.png">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Where to Blitz the Gap">
+<meta name="twitter:description" content="Find Canada's biodiversity gaps and plan a trip to the best spot you can reach.">
+<meta name="twitter:image" content="https://wietzesuijker.github.io/where-to-blitz/og-image.png">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
   integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
@@ -296,6 +309,8 @@ const I18N={
     top_cells:"♿ Top cells (accessible list)",
     view_explore:"🗺 Explore", view_plan:"🧭 Plan a trip", view_compare:"📊 Compare goals",
     loading:"🍃 Loading the map…",
+    load_error:"⚠ Couldn't load the map — check your connection.",
+    retry:"↻ Retry",
     legend_title:"Where to blitz", legend_low:"well-sampled", legend_high:"biggest gaps",
     legend_hint:`Darker = higher priority. <span id="legendtap">Tap a cell to see what to record.</span>`,
     // dynamic
@@ -415,6 +430,8 @@ const I18N={
     top_cells:"♿ Meilleures cellules (liste accessible)",
     view_explore:"🗺 Explorer", view_plan:"🧭 Planifier une sortie", view_compare:"📊 Comparer les objectifs",
     loading:"🍃 Chargement de la carte…",
+    load_error:"⚠ Impossible de charger la carte — vérifiez votre connexion.",
+    retry:"↻ Réessayer",
     legend_title:"Où aller", legend_low:"bien échantillonné", legend_high:"plus grandes lacunes",
     legend_hint:`Plus foncé = priorité plus élevée. <span id="legendtap">Touchez une cellule pour voir quoi observer.</span>`,
     // dynamic
@@ -1087,10 +1104,12 @@ document.getElementById('lang-en').onclick=()=>setLang('en');
 document.getElementById('lang-fr').onclick=()=>setLang('fr');
 applyI18N();   // paint static chrome + set <html lang> for the seeded language
 
-loadGroup(state.taxon).then(()=>{buildMarkers();setView('explore');showLoading(false);
+function bootSeq(){return loadGroup(state.taxon).then(()=>{buildMarkers();setView('explore');showLoading(false);
   try{const u=new URLSearchParams(location.search),at=u.get('at'),g=u.get('g');
     const go=()=>{if(at){const p=at.split(',').map(Number);if(p.length===2&&isFinite(p[0])&&isFinite(p[1])&&p[0]>=BB.minlat&&p[0]<=BB.maxlat&&p[1]>=BB.minlon&&p[1]<=BB.maxlon){map.setView([p[0],p[1]],8);exploreCell(p[0],p[1]);}}};
     if(g&&FILES[g]&&g!==state.taxon){state.taxon=g;taxonSel.value=g;loadGroup(g).then(()=>{buildMarkers();go();}).catch(()=>{});}else{go();}
     if(!at)locateMe();   // default Explore to the user's location (no shared cell to restore)
-  }catch(e){}}).catch(()=>showLoading(false));
+  }catch(e){}}).catch(()=>{const el=document.getElementById('loading');if(el){el.style.display='block';el.innerHTML=t('load_error')+' <a href="#" onclick="bootRetry();return false;" style="color:#7fd1ff">'+t('retry')+'</a>';}});}
+function bootRetry(){const el=document.getElementById('loading');if(el){el.style.display='block';el.textContent=t('loading');}bootSeq();}
+bootSeq();
 </script></body></html>
