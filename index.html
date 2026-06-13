@@ -148,6 +148,7 @@ details.adv>summary:hover{color:var(--ink)}
   <select id="taxon" class="full" style="margin-bottom:8px"></select>
   <div class="presets" id="presets"></div>
   <div id="challengeBlurb" style="color:var(--mut);font-size:11.5px;line-height:1.4;margin:5px 0 2px"></div>
+  <div style="font-size:11px;margin:1px 0 3px"><a href="https://pollocklab.github.io/blitz-the-gap/" target="_blank" rel="noopener" data-i18n="more_challenges" style="color:var(--mut)">+ see all official challenges →</a></div>
   <details class="adv"><summary data-i18n="finetune">Fine-tune the five goals</summary><div id="objs"></div></details>
 
   <div id="tripui">
@@ -305,6 +306,7 @@ const I18N={
     nearby_count:n=>`${n} nearby`,
     gap_popup:"🎯 Fill the gap — log these here:",
     join:"join →",
+    more_challenges:"+ see all official challenges →",
     finding_routes:m=>`Finding real ${m} routes…`,
     best_trips:(bud,lowc,est)=>`Best trips within ${bud} — most <b style="color:var(--ink)">impact × time you'd get to record</b>${lowc?', per kg CO₂':''}${est?' (some times estimated)':''}:`,
     or_skip:"Or skip the drive:",
@@ -410,6 +412,7 @@ const I18N={
     nearby_count:n=>`${n} à proximité`,
     gap_popup:"🎯 Combler la lacune — notez-les ici :",
     join:"se joindre →",
+    more_challenges:"+ voir tous les défis officiels →",
     finding_routes:m=>`Recherche d'itinéraires ${m} réels…`,
     best_trips:(bud,lowc,est)=>`Meilleures sorties en ${bud} — le plus d'<b style="color:var(--ink)">impact × temps pour observer</b>${lowc?', par kg de CO₂':''}${est?' (certains temps estimés)':''} :`,
     or_skip:"Ou évitez le déplacement :",
