@@ -136,7 +136,7 @@ details.adv>summary:hover{color:var(--ink)}
 
   <div class="sechd"><span class="sec" data-i18n="sec_group">Life group & goal</span><span class="infobtn" data-i18n-title="info_btn" title="Where do these scores come from?" role="button" tabindex="0" aria-label="About the data" aria-expanded="false" onclick="const b=document.getElementById('taxinfo').classList.toggle('open');this.setAttribute('aria-expanded',b)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">i</span></div>
   <div class="infobox" id="taxinfo" data-i18n-html="taxinfo">
-    <b>Where the scores come from.</b> Canada-wide, on a 0.25° (~25&nbsp;km) grid.
+    <b>Where the scores come from.</b> <b style="color:var(--ink)">Higher priority = a spot where a new sighting adds more to what we know.</b> Canada-wide, on a 0.25° (~25&nbsp;km) grid.
     <ul>
       <li><b>Nationally the real signals are <span style="color:var(--ink)">under-sampling</span> (“Discover the most species”), <span style="color:var(--ink)">climate-coverage</span> (“Cover every habitat”) and <span style="color:var(--ink)">recent forest loss</span> (“Sample before it’s lost”).</b> Computed from real data (<a href="https://www.inaturalist.org" target="_blank" rel="noopener" style="color:var(--acc)">iNaturalist</a> density + CHELSA climate + Hansen forest loss); travel time is real too.</li>
       <li><b>Find rare species and Freshest gaps are approximate / being improved</b> — there’s no national rarity layer or per-record dates yet, so those are placeholders (conservation ≈ 0; staleness ≈ inverse density).</li>
@@ -240,7 +240,7 @@ const I18N={
     sub:"Choose what counts as <b>impact</b>, then <b>explore</b> the priority map — or <b>plan a trip</b> to the best spot you can reach and get back from.",
     sec_group:"Life group & goal",
     info_btn:"Where do these scores come from?",
-    taxinfo:`<b>Where the scores come from.</b> Canada-wide, on a 0.25° (~25&nbsp;km) grid.
+    taxinfo:`<b>Where the scores come from.</b> <b style="color:var(--ink)">Higher priority = a spot where a new sighting adds more to what we know.</b> Canada-wide, on a 0.25° (~25&nbsp;km) grid.
       <ul>
       <li><b>Nationally the real signals are <span style="color:var(--ink)">under-sampling</span> (“Discover the most species”), <span style="color:var(--ink)">climate-coverage</span> (“Cover every habitat”) and <span style="color:var(--ink)">recent forest loss</span> (“Sample before it’s lost”).</b> Computed from real data (<a href="https://www.inaturalist.org" target="_blank" rel="noopener" style="color:var(--acc)">iNaturalist</a> density + CHELSA climate + Hansen forest loss); travel time is real too.</li>
       <li><b>Find rare species and Freshest gaps are approximate / being improved</b> — there’s no national rarity layer or per-record dates yet, so those are placeholders (conservation ≈ 0; staleness ≈ inverse density).</li>
@@ -345,7 +345,7 @@ const I18N={
     sub:"Choisissez ce qui compte comme <b>impact</b>, puis <b>explorez</b> la carte des priorités — ou <b>planifiez une sortie</b> vers le meilleur endroit que vous pouvez atteindre et d'où vous pouvez revenir.",
     sec_group:"Groupe d'espèces et objectif",
     info_btn:"D'où viennent ces scores?",
-    taxinfo:`<b>D'où viennent les scores.</b> À l'échelle du Canada, sur une grille de 0,25° (~25&nbsp;km).
+    taxinfo:`<b>D'où viennent les scores.</b> <b style="color:var(--ink)">Priorité élevée = un endroit où une nouvelle observation ajoute le plus à nos connaissances.</b> À l'échelle du Canada, sur une grille de 0,25° (~25&nbsp;km).
       <ul>
       <li><b>À l'échelle nationale, les vrais signaux sont la <span style="color:var(--ink)">sous-représentation</span> (« Découvrir le plus d'espèces »), la <span style="color:var(--ink)">couverture climatique</span> (« Couvrir chaque habitat ») et la <span style="color:var(--ink)">perte forestière récente</span> (« Échantillonner avant qu'il soit trop tard »).</b> Calculés à partir de données réelles (densité <a href="https://www.inaturalist.org" target="_blank" rel="noopener" style="color:var(--acc)">iNaturalist</a> + climat CHELSA + perte forestière Hansen); le temps de déplacement est réel aussi.</li>
       <li><b>Trouver des espèces rares et Lacunes les plus fraîches sont approximatifs / en cours d'amélioration</b> — il n'y a pas encore de couche nationale de rareté ni de dates par observation, donc ces axes sont provisoires (conservation ≈ 0; fraîcheur ≈ densité inverse).</li>
