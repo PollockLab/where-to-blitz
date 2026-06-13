@@ -363,8 +363,8 @@ const I18N={
     table_rank:"#", table_latlon:"Lat, lon", table_score:"Score",
     ins_hd:`<b>The same place — different goals, different life groups.</b> Each map shades every Canadian cell by one goal (<b>darker = go there</b>). The hot zones shift between goals (a value choice) and between groups (different species fill different gaps). Pick the rows & columns; tap any map to open it in the planner.`,
     ins_groups:"Groups (rows)", ins_goals:"Goals (columns)",
-    ins_onhold:`<b>Discover vs. find species at risk</b> — for the groups shown the at-risk-species layer has no variation here, so this comparison is on hold. <b>Discover</b>, <b>climate-coverage</b> and <b>forest-loss</b> are the other live national goals.`,
-    ins_spearman:(dis,verdict)=>`<b>Discover vs. find species at risk</b> — Spearman ρ between cell rankings (across all cells; negative = opposite places): ${dis}. ${verdict}`,
+    ins_onhold:`<b>Comparison on hold</b> — one of the two selected goals has no variation across the groups shown, so a correlation isn't meaningful here. Pick two goals that both vary.`,
+    ins_spearman:(g1,g2,dis,verdict)=>`<b>${g1} vs ${g2}</b> — Spearman ρ between cell rankings (across all cells; negative = opposite places): ${dis}. ${verdict}`,
     ins_v_all_diff:"The two goals point to <b>different places in every group shown</b> — the most under-sampled cells are not where the species at risk are.",
     ins_v_agree:"For the groups shown, the two goals mostly <b>agree</b> here.",
     ins_v_some:(neg,n)=>`They point to different places in <b>${neg} of ${n}</b> groups shown — under-sampling and at-risk species often diverge, but not always.`,
@@ -484,8 +484,8 @@ const I18N={
     table_rank:"#", table_latlon:"Lat, lon", table_score:"Score",
     ins_hd:`<b>Le même lieu — objectifs différents, groupes différents.</b> Chaque carte teinte chaque cellule canadienne selon un objectif (<b>plus foncé = y aller</b>). Les zones chaudes changent selon l'objectif (un choix de valeurs) et selon le groupe (des espèces différentes comblent des lacunes différentes). Choisissez les lignes et colonnes; touchez une carte pour l'ouvrir dans le planificateur.`,
     ins_groups:"Groupes (lignes)", ins_goals:"Objectifs (colonnes)",
-    ins_onhold:`<b>Découvrir vs trouver des espèces en péril</b> — pour les groupes affichés, la couche des espèces en péril n'a aucune variation ici, donc cette comparaison est en attente. <b>Découvrir</b>, <b>couverture climatique</b> et <b>perte forestière</b> sont les autres objectifs nationaux actifs.`,
-    ins_spearman:(dis,verdict)=>`<b>Découvrir vs trouver des espèces en péril</b> — ρ de Spearman entre les classements des cellules (sur toutes les cellules; négatif = lieux opposés) : ${dis}. ${verdict}`,
+    ins_onhold:`<b>Comparaison en attente</b> — l'un des deux objectifs sélectionnés ne varie pas dans les groupes affichés, donc une corrélation n'a pas de sens ici. Choisissez-en deux qui varient.`,
+    ins_spearman:(g1,g2,dis,verdict)=>`<b>${g1} vs ${g2}</b> — ρ de Spearman entre les classements des cellules (sur toutes les cellules; négatif = lieux opposés) : ${dis}. ${verdict}`,
     ins_v_all_diff:"Les deux objectifs pointent vers des <b>lieux différents dans chaque groupe affiché</b> — les cellules les plus sous-représentées ne sont pas là où sont les espèces en péril.",
     ins_v_agree:"Pour les groupes affichés, les deux objectifs <b>concordent</b> surtout ici.",
     ins_v_some:(neg,n)=>`Ils pointent vers des lieux différents dans <b>${neg} des ${n}</b> groupes affichés — sous-représentation et espèces en péril divergent souvent, mais pas toujours.`,
@@ -1047,15 +1047,17 @@ async function renderInsights(){
     c.onclick=()=>{const tx=c.dataset.tx,gi=+c.dataset.gl;taxonSel.value=tx;state.taxon=tx;loadGroup(tx).then(()=>{buildMarkers();applyWeights(OBJ.map((_,i)=>i===gi?1:0),objName(gi));setView('plan');});};c.onkeydown=ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();c.click();}};});
   ins.querySelectorAll('.chip[data-tx]').forEach(ch=>{ch.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();ch.click();}};ch.onclick=()=>{const t=ch.dataset.tx,i=state.insTaxa.indexOf(t);if(i>=0){if(state.insTaxa.length>1)state.insTaxa.splice(i,1);}else state.insTaxa.push(t);renderInsights();};});
   ins.querySelectorAll('.chip[data-gl]').forEach(ch=>{ch.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();ch.click();}};ch.onclick=()=>{const g=+ch.dataset.gl,i=state.insGoals.indexOf(g);if(i>=0){if(state.insGoals.length>1)state.insGoals.splice(i,1);}else state.insGoals.push(g);state.insGoals.sort((x,y)=>x-y);renderInsights();};});
-  if(!state.insGoals.includes(0)||!state.insGoals.includes(1)){document.getElementById('idis').innerHTML='';return;}   // verdict names Discover & rare-species; show only when both are in the matrix
-  // If the conservation axis is degenerate (constant -- e.g. the national placeholder is 0
-  // everywhere), Spearman is undefined and would falsely read as "they agree". Say so honestly.
-  const disVals=rowsTaxa.map(tx=>{const base=DATA[tx].filter(r=>r[8]>0),b=base.length>=20?base:DATA[tx];let mn=1e9,mx=-1e9;for(const r of b){if(r[3]<mn)mn=r[3];if(r[3]>mx)mx=r[3];}return mx>mn?{tx,rho:spear(b.map(r=>r[2]),b.map(r=>r[3]))}:null;}).filter(Boolean);
+  // Correlate the FIRST TWO selected goals across cells. Every axis is real now, so any pair works
+  // -- the comparison follows the user's goal selection instead of being hardcoded to two axes.
+  const gs=state.insGoals; if(gs.length<2){document.getElementById('idis').innerHTML='';return;}
+  const gi=gs[0],gj=gs[1],ci=2+gi,cj=2+gj;
+  const varies=(b,c)=>{let mn=1e9,mx=-1e9;for(const r of b){if(r[c]<mn)mn=r[c];if(r[c]>mx)mx=r[c];}return mx>mn;};
+  const disVals=rowsTaxa.map(tx=>{const b=DATA[tx];return (varies(b,ci)&&varies(b,cj))?{tx,rho:spear(b.map(r=>r[ci]),b.map(r=>r[cj]))}:null;}).filter(Boolean);
   if(!disVals.length){document.getElementById('idis').innerHTML=t('ins_onhold');return;}
   const dis=disVals.map(d=>`${groupName(d.tx)} <b>${d.rho.toFixed(2)}</b>`).join(' · ');
-  const neg=disVals.filter(d=>d.rho<0).length, n=disVals.length;   // verdict follows the actual signs, not a hardcoded claim
+  const neg=disVals.filter(d=>d.rho<0).length, n=disVals.length;   // verdict follows the actual signs
   const verdict = neg===n ? t('ins_v_all_diff') : neg===0 ? t('ins_v_agree') : t('ins_v_some',neg,n);
-  document.getElementById('idis').innerHTML=t('ins_spearman',dis,verdict);
+  document.getElementById('idis').innerHTML=t('ins_spearman',objName(gi),objName(gj),dis,verdict);
 }
 // Explore mode: tap a cell to see its score + what to record there (no trip planning).
 function exploreCell(lat,lon){
