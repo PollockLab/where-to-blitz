@@ -45,15 +45,16 @@ beat (Sener & Savarese 2018, CoreSet; Rauch 2025, *No Free Lunch in Active Learn
 be conditional, not a blanket yes.
 
 **The headline, stated up front and checked below (across eight taxa, 36 → 518 species):**
-1. **Embedding-acquisition benefit generally rises with species richness — but is gated by embedding quality (No
-   Free Lunch on *two* axes).** It is ~zero or negative for species-poor taxa (Amphibia 36, Reptilia 53) and very
-   large for species-rich ones (Aves 246, Insecta 392, Fungi 317, Plantae 518). The exception is the proof:
-   **Arachnida (160 spp) is strongly negative** — DINOv2 embeds spider photos poorly (tiny, camouflaged,
-   web-context), so the embedding chases bad-photo outliers instead of new species. The payoff needs *both* many
-   species to find *and* an embedding that can tell them apart.
+1. **Embedding-acquisition benefit rises with species richness** (Spearman ρ = +0.79 over the eight taxa). It is
+   ~zero or negative for species-poor taxa (Amphibia 36, Reptilia 53) and very large for species-rich ones
+   (Aves 246, Insecta 392, Fungi 317, Plantae 518). The natural mechanism guess — "it's gated by how well the
+   backbone embeds the taxon" — was **tested and not supported**: per-taxon kNN separability does *not* predict the
+   benefit (ρ = −0.07, confounded with richness), and the one negative outlier, **Arachnida (160 spp)**, is *not*
+   the worst-embedded taxon (Insecta has lower separability yet a large positive benefit). Richness is the
+   predictor; the Arachnida exception is real but **unexplained** (its spatial signal is unusually strong — the
+   largest haversine-over-raw gap of any taxon — which may crowd out the embedding).
 2. **A combined spatial+embedding objective beats the best spatial baseline for 7 of 8 taxa** — a good default for a
-   multi-taxon planner, but not unconditional: it fails worst exactly where the embedding it leans on is bad
-   (Arachnida).
+   multi-taxon planner, but not unconditional (it fails on Arachnida).
 3. **The best geographic distance metric is taxon-dependent, not universal.** Raw lat/lon (which over-weights
    longitude) out-discovers great-circle distance for amphibians, but great-circle wins for most other taxa — so
    "weight longitude" is an amphibian quirk, *not* a general law. (An earlier amphibian-only read of this
@@ -185,15 +186,16 @@ md(r"""## Verdict — honest, and actionable for Blitz the Gap
 
 Reading the amphibian deep-dive (above) together with the cross-taxon generalization (table below):
 
-1. **Embedding-acquisition benefit rises with species richness — but is gated by embedding quality (No Free Lunch
-   on two axes).** Across eight taxa it climbs from ~zero/negative at low richness (Amphibia 36 spp, Reptilia
-   53 spp) to very large at high richness (Aves 246: +9.69; Insecta 392: +13.07; Plantae 518: +48.67; Fungi 317:
-   +53.73 sp). The clean exception — **Arachnida (160 spp), strongly negative** — shows the second axis: when the
-   backbone embeds a taxon poorly (spiders), more species to find does *not* help. Both conditions are required.
+1. **Embedding-acquisition benefit rises with species richness** (Spearman ρ = +0.79 across eight taxa). It climbs
+   from ~zero/negative at low richness (Amphibia 36 spp, Reptilia 53 spp) to very large at high richness (Aves 246:
+   +9.69; Insecta 392: +13.07; Plantae 518: +48.67; Fungi 317: +53.73 sp). **A "gated by embedding quality" second
+   axis was hypothesised and refuted** (separability cell below): per-taxon kNN separability doesn't predict benefit
+   (ρ = −0.07) and Arachnida (the lone negative outlier, 160 spp) is not even the worst-embedded taxon. So the clean
+   driver is richness; the Arachnida exception is real but **mechanistically open**.
 
 2. **A combined spatial+embedding objective beats the best spatial baseline for 7 of 8 taxa** — a good default, not
-   an unconditional one. It wins everywhere except Arachnida (−5.75), failing worst exactly where the embedding it
-   leans on is bad. So "combine the two axes" is a strong heuristic that still inherits the embedding's quality.
+   an unconditional one. It wins everywhere except Arachnida (−5.75). "Combine the two axes" is a strong heuristic
+   with one known failure on this data.
 
 3. **The best geographic distance metric is taxon-dependent — there is no universal "weight longitude."** Raw
    lat/lon out-discovers great-circle for amphibians (+1.31) but great-circle wins for most other taxa. An earlier
@@ -216,12 +218,10 @@ The experiment was repeated on richer Canada-wide taxa (DINOv2, iNat research-gr
 
 - **Metric lever flips.** `haversine − raw` is *negative* for amphibians (raw wins) but mostly *positive* for the
   other taxa (great-circle wins). Longitude-overweighting is amphibian-specific, not a law.
-- **Embedding benefit rises with richness, gated by embedding quality.** `bestEmb − bestSpatial` climbs from
-  negative at low richness to very large at high richness — **except Arachnida (160 spp), strongly negative**: a
-  taxon DINOv2 embeds poorly. So the benefit needs both many species and a usable embedding (No Free Lunch on two
-  axes).
-- **Combined wins for 7 of 8 taxa.** `combined − bestSpatial` is positive everywhere except Arachnida — a strong
-  default that still inherits the embedding's quality.""")
+- **Embedding benefit rises with richness** (ρ = +0.79). `bestEmb − bestSpatial` climbs from negative at low
+  richness to very large at high richness — **except Arachnida (160 spp), strongly negative**. The "it's gated by
+  embedding quality" guess is tested and refuted in the separability cell below.
+- **Combined wins for 7 of 8 taxa.** `combined − bestSpatial` is positive everywhere except Arachnida.""")
 
 co(r"""# Cross-taxon generalization (cluster_results/generalization/<taxon>/), if present.
 import glob, json, pandas as pd
@@ -275,6 +275,28 @@ if len(pts) >= 2:
     print("Above 0 = the strategy beats the best simple spatial baseline.")
 else:
     print("Need >=2 taxa for the trend plot.")""")
+
+md(r"""## A hypothesis tested and refuted: does embedding *quality* explain the exceptions?
+
+The natural follow-up to "benefit rises with richness" is "...but only when the backbone embeds the taxon well" —
+which would make Arachnida's failure a low-quality-embedding story. We tested it directly: per-taxon **1-NN
+leave-one-out species accuracy** (a standard separability metric) on the same DINOv2 embeddings, correlated with the
+observed benefit. It **does not hold** — separability is confounded with richness and does not predict the benefit,
+and Arachnida is not even the worst-embedded taxon. Reported here rather than hidden, because a refuted clean story
+is part of an honest result.""")
+
+co(r"""import json
+s = json.load(open('cluster_results/generalization/separability_dinov2.json'))
+import pandas as pd
+rows = [{'taxon': t, 'n_species': v['n_species'], 'kNN-LOO sep': v['knn_loo_sep'],
+         'bestEmb−bestSpatial': v['best_emb_minus_best_spatial']}
+        for t, v in sorted(s['per_taxon'].items(), key=lambda kv: kv[1]['n_species'])]
+print("Spearman ρ:")
+print(f"  separability vs embedding-benefit = {s['spearman']['sep_vs_embBenefit']:+.2f}  (≈0 — does NOT predict)")
+print(f"  richness     vs embedding-benefit = {s['spearman']['richness_vs_embBenefit']:+.2f}  (the real driver)")
+print(f"  separability vs richness          = {s['spearman']['sep_vs_richness']:+.2f}  (confounded)")
+print("\n" + s['conclusion'])
+pd.DataFrame(rows).set_index('taxon')""")
 
 md(r"""## Cross-cluster reproduction
 

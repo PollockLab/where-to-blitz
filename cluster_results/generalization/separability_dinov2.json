@@ -1,0 +1,59 @@
+{
+  "metric": "1-NN leave-one-out species accuracy (cosine, DINOv2 ViT-S/14)",
+  "per_taxon": {
+    "Amphibia": {
+      "n_species": 36,
+      "knn_loo_sep": 0.5775,
+      "best_emb_minus_best_spatial": -1.0,
+      "combined_minus_best_spatial": 0.525
+    },
+    "Reptilia": {
+      "n_species": 53,
+      "knn_loo_sep": 0.6467,
+      "best_emb_minus_best_spatial": -0.435,
+      "combined_minus_best_spatial": 1.535
+    },
+    "Mammalia": {
+      "n_species": 79,
+      "knn_loo_sep": 0.635,
+      "best_emb_minus_best_spatial": 1.16,
+      "combined_minus_best_spatial": 2.685
+    },
+    "Arachnida": {
+      "n_species": 160,
+      "knn_loo_sep": 0.4533,
+      "best_emb_minus_best_spatial": -1.665,
+      "combined_minus_best_spatial": -5.745
+    },
+    "Aves": {
+      "n_species": 246,
+      "knn_loo_sep": 0.5292,
+      "best_emb_minus_best_spatial": 9.685,
+      "combined_minus_best_spatial": 4.295
+    },
+    "Fungi": {
+      "n_species": 317,
+      "knn_loo_sep": 0.6017,
+      "best_emb_minus_best_spatial": 53.735,
+      "combined_minus_best_spatial": 29.545
+    },
+    "Insecta": {
+      "n_species": 392,
+      "knn_loo_sep": 0.3858,
+      "best_emb_minus_best_spatial": 13.075,
+      "combined_minus_best_spatial": 3.135
+    },
+    "Plantae": {
+      "n_species": 518,
+      "knn_loo_sep": 0.5058,
+      "best_emb_minus_best_spatial": 48.67,
+      "combined_minus_best_spatial": 23.595
+    }
+  },
+  "spearman": {
+    "sep_vs_embBenefit": -0.071,
+    "richness_vs_embBenefit": 0.786,
+    "sep_vs_richness": -0.595
+  },
+  "conclusion": "Richness predicts embedding benefit (rho=+0.79); per-taxon kNN separability does NOT (rho=-0.07, confounded with richness). The Arachnida anomaly is NOT explained by low separability (Insecta has lower separability yet large positive benefit). The \"embedding quality gates benefit\" second-axis hypothesis is NOT supported by this check; Arachnida mechanism remains open."
+}
