@@ -126,13 +126,26 @@ def _load_clip(device):
             return model.encode_image(x)
     return _Vis(), preprocess, "clip_vit_b32"
 
+def _load_bioclip(device):
+    # Domain-specific embedding: BioCLIP, trained on the TreeOfLife-10M species images.
+    # Tests the No-Free-Lunch prediction that a taxon-aware embedding helps more.
+    import open_clip
+    model, _, preprocess = open_clip.create_model_and_transforms("hf-hub:imageomics/bioclip")
+    model = model.to(device).eval()
+    class _Vis:
+        def __call__(self, x):
+            return model.encode_image(x)
+    return _Vis(), preprocess, "bioclip"
+
 
 def embed_images(records, device, want="auto", batch=64, use_cache=True):
     """Vision embeddings. Loads images from local_path if present, else fetches URL."""
     import torch
     order = {"auto": ["dinov2", "resnet50"], "dinov2": ["dinov2"],
-             "resnet50": ["resnet50"], "clip": ["clip", "resnet50"]}[want]
-    loaders = {"dinov2": _load_dinov2, "resnet50": _load_resnet50, "clip": _load_clip}
+             "resnet50": ["resnet50"], "clip": ["clip", "resnet50"],
+             "bioclip": ["bioclip"]}[want]
+    loaders = {"dinov2": _load_dinov2, "resnet50": _load_resnet50,
+               "clip": _load_clip, "bioclip": _load_bioclip}
     model = tf = backbone = None
     for name in order:
         try:
@@ -181,7 +194,7 @@ def embed_images(records, device, want="auto", batch=64, use_cache=True):
 
 # resolved backbone name per --backbone choice (cache files are keyed by this).
 ARG_TO_BACKBONE = {"dinov2": "dinov2_vits14", "resnet50": "resnet50_imagenet",
-                   "clip": "clip_vit_b32"}
+                   "clip": "clip_vit_b32", "bioclip": "bioclip"}
 
 # ---- discovery simulation --------------------------------------------------
 STRATEGIES = ("random", "spatial_coverage", "spatial_coverage_raw",
@@ -333,7 +346,7 @@ def main():
     ap.add_argument("--budget", type=int, default=300)
     ap.add_argument("--seeds", type=int, default=20)
     ap.add_argument("--backbone", default="auto",
-                    choices=["auto", "dinov2", "resnet50", "clip"])
+                    choices=["auto", "dinov2", "resnet50", "clip", "bioclip"])
     ap.add_argument("--taxon", default="Amphibia",
                     help="iconic_taxa filter (e.g. Amphibia, Reptilia, Aves) for generalization.")
     ap.add_argument("--project", type=int, default=PROJECT,

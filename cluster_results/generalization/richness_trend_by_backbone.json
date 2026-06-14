@@ -1,8 +1,49 @@
 {
+  "bioclip": {
+    "n_taxa": 8,
+    "rho_richness_bestEmb": 0.905,
+    "rho_richness_combined": 0.833,
+    "n_taxa_embedding_beats_spatial": 8,
+    "points": [
+      [
+        36,
+        0.27
+      ],
+      [
+        55,
+        1.55
+      ],
+      [
+        81,
+        3.0
+      ],
+      [
+        159,
+        19.78
+      ],
+      [
+        244,
+        10.86
+      ],
+      [
+        312,
+        53.55
+      ],
+      [
+        389,
+        56.55
+      ],
+      [
+        536,
+        37.17
+      ]
+    ]
+  },
   "dinov2_vits14": {
     "n_taxa": 8,
     "rho_richness_bestEmb": 0.786,
     "rho_richness_combined": 0.738,
+    "n_taxa_embedding_beats_spatial": 5,
     "points": [
       [
         36,
@@ -42,6 +83,7 @@
     "n_taxa": 8,
     "rho_richness_bestEmb": 0.548,
     "rho_richness_combined": 0.357,
+    "n_taxa_embedding_beats_spatial": 4,
     "points": [
       [
         36,
@@ -81,6 +123,7 @@
     "n_taxa": 7,
     "rho_richness_bestEmb": 0.607,
     "rho_richness_combined": 0.214,
+    "n_taxa_embedding_beats_spatial": 3,
     "points": [
       [
         36,
