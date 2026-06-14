@@ -1,0 +1,37 @@
+[
+  {
+    "taxon": "Amphibia",
+    "n": 305,
+    "frac_above_species": 0.5081967213114754,
+    "rho_coarseness_wait": -0.12681165043893544,
+    "rho_coarseness_unengaged": -0.38212993959686575
+  },
+  {
+    "taxon": "Aves",
+    "n": 6030,
+    "frac_above_species": 0.3417910447761194,
+    "rho_coarseness_wait": -0.13874100247416604,
+    "rho_coarseness_unengaged": -0.3221416366114638
+  },
+  {
+    "taxon": "Insecta",
+    "n": 5847,
+    "frac_above_species": 0.6923208482982727,
+    "rho_coarseness_wait": 0.03922801130509536,
+    "rho_coarseness_unengaged": -0.11041252365877606
+  },
+  {
+    "taxon": "Mammalia",
+    "n": 3892,
+    "frac_above_species": 0.4023638232271326,
+    "rho_coarseness_wait": -0.10676506143934276,
+    "rho_coarseness_unengaged": -0.20396269789162985
+  },
+  {
+    "taxon": "Reptilia",
+    "n": 411,
+    "frac_above_species": 0.3722627737226277,
+    "rho_coarseness_wait": -0.03322488865333533,
+    "rho_coarseness_unengaged": -0.3134028930586701
+  }
+]
