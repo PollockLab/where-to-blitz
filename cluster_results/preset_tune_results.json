@@ -1,0 +1,65 @@
+{
+  "per_dataset": [
+    {
+      "dataset": "bc:Amphibia",
+      "current_default": 0.4219268067274975,
+      "discover_only": 0.47907388147494473,
+      "balanced_proposal": 0.5137193435120039
+    },
+    {
+      "dataset": "bc:Aves",
+      "current_default": 0.24178521387701138,
+      "discover_only": 0.6131749226966025,
+      "balanced_proposal": 0.5246575032841151
+    },
+    {
+      "dataset": "bc:Insecta",
+      "current_default": 0.2148963401809034,
+      "discover_only": 0.5267024804223208,
+      "balanced_proposal": 0.42739850277095587
+    },
+    {
+      "dataset": "bc:Mammalia",
+      "current_default": 0.3009496899832532,
+      "discover_only": 0.6095593569528612,
+      "balanced_proposal": 0.5237211176433988
+    },
+    {
+      "dataset": "bc:Reptilia",
+      "current_default": 0.5180985270802692,
+      "discover_only": 0.6502218220789213,
+      "balanced_proposal": 0.6293931167526144
+    },
+    {
+      "dataset": "east:Aves",
+      "current_default": 0.37407381813426915,
+      "discover_only": 0.5810371033499018,
+      "balanced_proposal": 0.5165491265159345
+    },
+    {
+      "dataset": "east:Insecta",
+      "current_default": 0.2979529008662822,
+      "discover_only": 0.4711808671731219,
+      "balanced_proposal": 0.41661715932857546
+    },
+    {
+      "dataset": "east:Mammalia",
+      "current_default": 0.5210579237541707,
+      "discover_only": 0.6878392187836855,
+      "balanced_proposal": 0.629082718169915
+    }
+  ],
+  "mean_rho": {
+    "current_default": 0.36134265257545706,
+    "discover_only": 0.577348706616545,
+    "balanced_proposal": 0.5226423234971892
+  },
+  "n_datasets": 8,
+  "wins": {
+    "current_default": 0,
+    "discover_only": 7,
+    "balanced_proposal": 1
+  },
+  "lift_discoveronly_vs_default": 0.21600605404108797,
+  "lift_proposal_vs_default": 0.16129967092173214
+}
