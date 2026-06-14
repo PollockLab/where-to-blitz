@@ -343,6 +343,7 @@ rows = [{'taxon': t, 'n_rare': v['n_rare'], 'spatial': v['spatial'], 'DINOv2_nov
         for t, v in sorted(r['per_taxon'].items(), key=lambda kv: kv[1]['n_species'])]
 print(r['summary'])
 print("(Generic DINOv2-novelty is frequently *below* spatial for rare species — a generic embedding can hurt.)")
+if 'threshold_robustness' in r: print("\nRobustness:", r['threshold_robustness'])
 pd.DataFrame(rows).set_index('taxon')""")
 
 md(r"""## Reproducibility — deterministic *and* cross-cluster

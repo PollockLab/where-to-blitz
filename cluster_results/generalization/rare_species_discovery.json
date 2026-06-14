@@ -90,5 +90,6 @@
       "p_perm": 0.0
     }
   },
-  "summary": "BioCLIP-novelty significantly beats spatial coverage at RARE-species discovery in 7/8 taxa (paired perm p<0.05)."
+  "summary": "BioCLIP-novelty significantly beats spatial coverage at RARE-species discovery in 7/8 taxa (paired perm p<0.05).",
+  "threshold_robustness": "BioCLIP-novelty minus spatial @300 stays positive across rarity thresholds <=2/<=3/<=5/<=10 for all 5 rich taxa (e.g. Insecta +46/+53/+57/+57; Fungi +42/+46/+53/+54; margins grow or hold as the threshold widens) - not a single-threshold artifact (40 seeds)."
 }
