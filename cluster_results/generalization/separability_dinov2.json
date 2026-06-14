@@ -1,59 +1,68 @@
 {
-  "metric": "1-NN leave-one-out species accuracy (cosine, DINOv2 ViT-S/14)",
+  "metric": "1-NN leave-one-out species accuracy on DINOv2 embeddings (cosine) vs geography (haversine)",
   "per_taxon": {
     "Amphibia": {
       "n_species": 36,
-      "knn_loo_sep": 0.5775,
-      "best_emb_minus_best_spatial": -1.0,
-      "combined_minus_best_spatial": 0.525
+      "emb_sep": 0.5775,
+      "geo_sep": 0.4317,
+      "emb_minus_geo_sep": 0.1458,
+      "best_emb_minus_best_spatial": -1.0
     },
     "Reptilia": {
       "n_species": 53,
-      "knn_loo_sep": 0.6467,
-      "best_emb_minus_best_spatial": -0.435,
-      "combined_minus_best_spatial": 1.535
+      "emb_sep": 0.6467,
+      "geo_sep": 0.3575,
+      "emb_minus_geo_sep": 0.2892,
+      "best_emb_minus_best_spatial": -0.435
     },
     "Mammalia": {
       "n_species": 79,
-      "knn_loo_sep": 0.635,
-      "best_emb_minus_best_spatial": 1.16,
-      "combined_minus_best_spatial": 2.685
+      "emb_sep": 0.635,
+      "geo_sep": 0.2625,
+      "emb_minus_geo_sep": 0.3725,
+      "best_emb_minus_best_spatial": 1.16
     },
     "Arachnida": {
       "n_species": 160,
-      "knn_loo_sep": 0.4533,
-      "best_emb_minus_best_spatial": -1.665,
-      "combined_minus_best_spatial": -5.745
+      "emb_sep": 0.4533,
+      "geo_sep": 0.1942,
+      "emb_minus_geo_sep": 0.2592,
+      "best_emb_minus_best_spatial": -1.665
     },
     "Aves": {
       "n_species": 246,
-      "knn_loo_sep": 0.5292,
-      "best_emb_minus_best_spatial": 9.685,
-      "combined_minus_best_spatial": 4.295
+      "emb_sep": 0.5292,
+      "geo_sep": 0.0617,
+      "emb_minus_geo_sep": 0.4675,
+      "best_emb_minus_best_spatial": 9.685
     },
     "Fungi": {
       "n_species": 317,
-      "knn_loo_sep": 0.6017,
-      "best_emb_minus_best_spatial": 53.735,
-      "combined_minus_best_spatial": 29.545
+      "emb_sep": 0.6017,
+      "geo_sep": 0.1975,
+      "emb_minus_geo_sep": 0.4042,
+      "best_emb_minus_best_spatial": 53.735
     },
     "Insecta": {
       "n_species": 392,
-      "knn_loo_sep": 0.3858,
-      "best_emb_minus_best_spatial": 13.075,
-      "combined_minus_best_spatial": 3.135
+      "emb_sep": 0.3858,
+      "geo_sep": 0.1158,
+      "emb_minus_geo_sep": 0.27,
+      "best_emb_minus_best_spatial": 13.075
     },
     "Plantae": {
       "n_species": 518,
-      "knn_loo_sep": 0.5058,
-      "best_emb_minus_best_spatial": 48.67,
-      "combined_minus_best_spatial": 23.595
+      "emb_sep": 0.5058,
+      "geo_sep": 0.0583,
+      "emb_minus_geo_sep": 0.4475,
+      "best_emb_minus_best_spatial": 48.67
     }
   },
   "spearman": {
-    "sep_vs_embBenefit": -0.071,
-    "richness_vs_embBenefit": 0.786,
-    "sep_vs_richness": -0.595
+    "richness_vs_benefit": 0.786,
+    "emb_sep_vs_benefit": -0.071,
+    "geo_sep_vs_benefit": -0.524,
+    "emb_minus_geo_sep_vs_benefit": 0.69
   },
-  "conclusion": "Richness predicts embedding benefit (rho=+0.79); per-taxon kNN separability does NOT (rho=-0.07, confounded with richness). The Arachnida anomaly is NOT explained by low separability (Insecta has lower separability yet large positive benefit). The \"embedding quality gates benefit\" second-axis hypothesis is NOT supported by this check; Arachnida mechanism remains open."
+  "conclusion": "Richness is the strongest single predictor of embedding benefit (rho=+0.79). The embedding-minus-geographic separability GAP is a usable, interpretable correlate (rho=+0.69; geo_sep alone rho=-0.52 -- the embedding helps less when geography already separates species), but it is confounded with richness and does NOT cleanly add an independent signal. Neither embedding separability, geographic separability, nor their gap explains the Arachnida anomaly: Arachnida has a normal positive emb-geo gap (+0.26) yet a negative benefit (-1.67). Two separability-based mechanism hypotheses for Arachnida have now been tested and refuted; the anomaly is open."
 }

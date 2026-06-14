@@ -280,25 +280,32 @@ print("Above 0 = pure embedding beats the best simple spatial baseline.")
 print("Mid-richness Aves (~240 spp) wins on DINOv2 but loses on CLIP/ResNet50 = the threshold shift.")
 print("Arachnida (160 spp) is negative on every backbone = a robust taxon-specific anomaly.")""")
 
-md(r"""## A hypothesis tested and refuted: does embedding *quality* explain the exceptions?
+md(r"""## Mechanism: does the embedding help when it out-separates geography?
 
-The natural follow-up to "benefit rises with richness" is "...but only when the backbone embeds the taxon well" —
-which would make Arachnida's failure a low-quality-embedding story. We tested it directly: per-taxon **1-NN
-leave-one-out species accuracy** (a standard separability metric) on the same DINOv2 embeddings, correlated with the
-observed benefit. It **does not hold** — separability is confounded with richness and does not predict the benefit,
-and Arachnida is not even the worst-embedded taxon. Reported here rather than hidden, because a refuted clean story
-is part of an honest result.""")
+Beyond "more species ⇒ more benefit", a sharper, *actionable* question: should you trust the embedding for a taxon?
+We measured two **1-NN leave-one-out species separabilities** on the same data — one in DINOv2 embedding space
+(cosine), one in geographic space (haversine) — and compared their **gap** to the observed benefit. The intuition:
+the embedding earns its keep only when it separates species *better than location already does*.
 
-co(r"""import json
+- The **emb−geo separability gap** is an interpretable correlate of the benefit (ρ ≈ +0.69), and **geo_sep alone is
+  negative** (ρ ≈ −0.52): when geography already tells species apart, the embedding is redundant.
+- But it is **confounded with richness** (still the strongest single predictor, ρ ≈ +0.79) and does **not** add a
+  clean independent signal.
+- It does **not** rescue the **Arachnida** anomaly: spiders have a *normal* positive emb−geo gap yet a negative
+  benefit. Two separability-based mechanisms (embedding-quality, geography-out-separates) have now been tested and
+  **refuted**; the Arachnida exception is genuinely open. Reported, not hidden.""")
+
+co(r"""import json, pandas as pd
 s = json.load(open('cluster_results/generalization/separability_dinov2.json'))
-import pandas as pd
-rows = [{'taxon': t, 'n_species': v['n_species'], 'kNN-LOO sep': v['knn_loo_sep'],
-         'bestEmb−bestSpatial': v['best_emb_minus_best_spatial']}
+rows = [{'taxon': t, 'n_species': v['n_species'], 'emb_sep': v['emb_sep'], 'geo_sep': v['geo_sep'],
+         'emb−geo': v['emb_minus_geo_sep'], 'bestEmb−bestSpatial': v['best_emb_minus_best_spatial']}
         for t, v in sorted(s['per_taxon'].items(), key=lambda kv: kv[1]['n_species'])]
-print("Spearman ρ:")
-print(f"  separability vs embedding-benefit = {s['spearman']['sep_vs_embBenefit']:+.2f}  (≈0 — does NOT predict)")
-print(f"  richness     vs embedding-benefit = {s['spearman']['richness_vs_embBenefit']:+.2f}  (the real driver)")
-print(f"  separability vs richness          = {s['spearman']['sep_vs_richness']:+.2f}  (confounded)")
+sp = s['spearman']
+print("Spearman ρ vs embedding-benefit:")
+print(f"  richness            = {sp['richness_vs_benefit']:+.2f}  (strongest single predictor)")
+print(f"  emb_sep − geo_sep   = {sp['emb_minus_geo_sep_vs_benefit']:+.2f}  (interpretable correlate, richness-confounded)")
+print(f"  geo_sep             = {sp['geo_sep_vs_benefit']:+.2f}  (geography redundant-izes the embedding)")
+print(f"  emb_sep             = {sp['emb_sep_vs_benefit']:+.2f}  (no signal alone)")
 print("\n" + s['conclusion'])
 pd.DataFrame(rows).set_index('taxon')""")
 
