@@ -45,14 +45,15 @@ beat (Sener & Savarese 2018, CoreSet; Rauch 2025, *No Free Lunch in Active Learn
 be conditional, not a blanket yes.
 
 **The headline, stated up front and checked below (across eight taxa, 36 → 518 species):**
-1. **Embedding-acquisition benefit rises with species richness** (Spearman ρ = +0.79 over the eight taxa). It is
-   ~zero or negative for species-poor taxa (Amphibia 36, Reptilia 53) and very large for species-rich ones
-   (Aves 246, Insecta 392, Fungi 317, Plantae 518). The natural mechanism guess — "it's gated by how well the
-   backbone embeds the taxon" — was **tested and not supported**: per-taxon kNN separability does *not* predict the
-   benefit (ρ = −0.07, confounded with richness), and the one negative outlier, **Arachnida (160 spp)**, is *not*
-   the worst-embedded taxon (Insecta has lower separability yet a large positive benefit). Richness is the
-   predictor; the Arachnida exception is real but **unexplained** (its spatial signal is unusually strong — the
-   largest haversine-over-raw gap of any taxon — which may crowd out the embedding).
+1. **Embedding-acquisition benefit rises with species richness — on every backbone** (Spearman ρ = +0.79 DINOv2,
+   +0.55 CLIP, +0.61 ResNet50 across eight taxa). It is ~zero/negative for species-poor taxa (Amphibia 36,
+   Reptilia 53) and very large for species-rich ones (Insecta 392, Fungi 317, Plantae 518). **Backbone quality sets
+   the richness *threshold*:** mid-richness birds (~240 spp) benefit on the strong DINOv2 (+9.7) but *not* on
+   CLIP/ResNet50 (−3.2/−7.4) — a weaker embedding needs more species before it pays off. Two things this is *not*:
+   (a) a per-taxon embedding-quality effect — kNN separability does not predict the benefit (ρ=−0.07, see below);
+   (b) explained for **Arachnida (160 spp)**, which is negative on *all three* backbones — a robust taxon-specific
+   anomaly (its spatial signal is unusually strong, the largest haversine-over-raw gap of any taxon — a lead, not a
+   verified cause).
 2. **A combined spatial+embedding objective beats the best spatial baseline for 7 of 8 taxa** — a good default for a
    multi-taxon planner, but not unconditional (it fails on Arachnida).
 3. **The best geographic distance metric is taxon-dependent, not universal.** Raw lat/lon (which over-weights
@@ -186,12 +187,12 @@ md(r"""## Verdict — honest, and actionable for Blitz the Gap
 
 Reading the amphibian deep-dive (above) together with the cross-taxon generalization (table below):
 
-1. **Embedding-acquisition benefit rises with species richness** (Spearman ρ = +0.79 across eight taxa). It climbs
-   from ~zero/negative at low richness (Amphibia 36 spp, Reptilia 53 spp) to very large at high richness (Aves 246:
-   +9.69; Insecta 392: +13.07; Plantae 518: +48.67; Fungi 317: +53.73 sp). **A "gated by embedding quality" second
-   axis was hypothesised and refuted** (separability cell below): per-taxon kNN separability doesn't predict benefit
-   (ρ = −0.07) and Arachnida (the lone negative outlier, 160 spp) is not even the worst-embedded taxon. So the clean
-   driver is richness; the Arachnida exception is real but **mechanistically open**.
+1. **Embedding-acquisition benefit rises with species richness — robustly, on all three backbones** (Spearman ρ =
+   +0.79 DINOv2 / +0.55 CLIP / +0.61 ResNet50). The *strength* and the *richness threshold* track backbone quality:
+   the strong DINOv2 starts helping at moderate richness (birds, ~240 spp, +9.69), while CLIP/ResNet50 need very
+   high richness (birds flip negative on them; only Fungi/Insecta/Plantae win). **A per-taxon "gated by embedding
+   quality" axis was hypothesised and refuted** (separability cell below: ρ = −0.07). And **Arachnida is negative on
+   every backbone** — a robust taxon-specific anomaly, mechanistically open.
 
 2. **A combined spatial+embedding objective beats the best spatial baseline for 7 of 8 taxa** — a good default, not
    an unconditional one. It wins everywhere except Arachnida (−5.75). "Combine the two axes" is a strong heuristic
@@ -223,9 +224,9 @@ The experiment was repeated on richer Canada-wide taxa (DINOv2, iNat research-gr
   embedding quality" guess is tested and refuted in the separability cell below.
 - **Combined wins for 7 of 8 taxa.** `combined − bestSpatial` is positive everywhere except Arachnida.""")
 
-co(r"""# Cross-taxon generalization (cluster_results/generalization/<taxon>/), if present.
+co(r"""# Cross-taxon generalization (DINOv2; the multi-backbone view is the trend figure below).
 import glob, json, pandas as pd
-gpaths = sorted(glob.glob('cluster_results/generalization/*/exp_discovery_results*.json'))
+gpaths = sorted(glob.glob('cluster_results/generalization/*/exp_discovery_results_dinov2_vits14.json'))
 if not gpaths:
     print("No generalization runs present (cluster_results/generalization/). Amphibia only.")
 else:
@@ -251,30 +252,33 @@ else:
     print("bestEmb−bestSpatial rises with n_species => the embedding's value scales with species richness.")
     display(pd.DataFrame(rows).set_index(['taxon','backbone']))""")
 
-co(r"""# The trend, as a picture: embedding-acquisition benefit vs species richness (DINOv2).
-import glob, json, matplotlib.pyplot as plt
-pts = []
-for p in (glob.glob('cluster_results/mila/exp_discovery_results_dinov2_vits14.json')
-          + glob.glob('cluster_results/generalization/*/exp_discovery_results_dinov2_vits14.json')):
-    d = json.load(open(p)); m = d['meta']; c = d['contrasts']
-    pts.append((m['n_species'], c['best_embedding_vs_best_spatial']['mean_diff'],
-                c['combined_vs_best_spatial']['mean_diff'], m.get('taxon', '?')))
-pts = sorted(set(pts))
-if len(pts) >= 2:
-    ns = [p[0] for p in pts]; be = [p[1] for p in pts]; cb = [p[2] for p in pts]
-    fig, ax = plt.subplots(figsize=(7.5, 5))
-    ax.axhline(0, color='#999', lw=1, ls='--')
-    ax.plot(ns, be, 'o-', label='pure embedding − best spatial', color='#1f77b4')
-    ax.plot(ns, cb, 's-', label='combined − best spatial', color='#d62728')
-    for n, b, _c, t in pts:
-        ax.annotate(t, (n, b), fontsize=8, xytext=(4, 4), textcoords='offset points')
-    ax.set_xscale('log'); ax.set_xlabel('species richness  (n_species in the 1200-obs pool, log scale)')
-    ax.set_ylabel('Δ species@budget vs best spatial baseline')
-    ax.set_title('Embedding-acquisition benefit rises with species richness (DINOv2, 200 seeds)')
-    ax.legend(); plt.tight_layout(); plt.show()
-    print("Above 0 = the strategy beats the best simple spatial baseline.")
-else:
-    print("Need >=2 taxa for the trend plot.")""")
+co(r"""# The trend, as a picture: pure-embedding benefit vs species richness, ACROSS backbones.
+import glob, json, numpy as np, matplotlib.pyplot as plt
+BBS = [('dinov2_vits14','DINOv2','#1f77b4'), ('clip_vit_b32','CLIP','#2ca02c'),
+       ('resnet50_imagenet','ResNet50','#d62728')]
+def rho(a,b):
+    a=np.array(a,float); b=np.array(b,float)
+    ra=np.argsort(np.argsort(a)); rb=np.argsort(np.argsort(b)); return float(np.corrcoef(ra,rb)[0,1])
+fig, ax = plt.subplots(figsize=(8, 5)); ax.axhline(0, color='#999', lw=1, ls='--')
+for bb, lbl, col in BBS:
+    pts = []
+    for p in (glob.glob('cluster_results/mila/exp_discovery_results_%s.json' % bb)
+              + glob.glob('cluster_results/generalization/*/exp_discovery_results_%s.json' % bb)):
+        d = json.load(open(p)); m = d['meta']
+        pts.append((m['n_species'], d['contrasts']['best_embedding_vs_best_spatial']['mean_diff'], m.get('taxon','?')))
+    pts = sorted(set(pts))
+    if len(pts) < 2: continue
+    ns = [p[0] for p in pts]; be = [p[1] for p in pts]
+    ax.plot(ns, be, 'o-', color=col, label='%s  (Spearman ρ=%+.2f)' % (lbl, rho(ns, be)))
+    if bb == 'dinov2_vits14':
+        for n, b, t in pts: ax.annotate(t, (n, b), fontsize=7, xytext=(4,3), textcoords='offset points')
+ax.set_xscale('log'); ax.set_xlabel('species richness  (n_species in the 1200-obs pool, log scale)')
+ax.set_ylabel('pure-embedding Δ species@budget vs best spatial')
+ax.set_title('Embedding-acquisition benefit rises with richness on every backbone;\nthe richness threshold to "help" rises as the backbone weakens')
+ax.legend(); plt.tight_layout(); plt.show()
+print("Above 0 = pure embedding beats the best simple spatial baseline.")
+print("Mid-richness Aves (~240 spp) wins on DINOv2 but loses on CLIP/ResNet50 = the threshold shift.")
+print("Arachnida (160 spp) is negative on every backbone = a robust taxon-specific anomaly.")""")
 
 md(r"""## A hypothesis tested and refuted: does embedding *quality* explain the exceptions?
 
