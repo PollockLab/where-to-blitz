@@ -302,14 +302,15 @@ print(f"  separability vs richness          = {s['spearman']['sep_vs_richness']:
 print("\n" + s['conclusion'])
 pd.DataFrame(rows).set_index('taxon')""")
 
-md(r"""## Reproducibility
+md(r"""## Reproducibility — deterministic *and* cross-cluster
 
-Two layers of reproducibility. **Determinism:** the strategy sweep is pure NumPy with fixed seeds, so it reproduces
-exactly — re-running it locally from the cluster's cached embeddings gave byte-identical `species@budget` to the
-mila V100 run. **Independent embeddings:** a cross-cluster rerun on DRAC (rorqual, CPU, its own embeddings) was
-queued to confirm the verdict survives a different machine + a different image-embedding pass; at write time rorqual's
-nodes were drained and it had not started, so the table below shows the mila runs only. The per-backbone headlines
-are each run's self-recorded verdict, read from JSON.""")
+Two layers. **Determinism:** the strategy sweep is pure NumPy with fixed seeds, so it reproduces exactly —
+re-running it locally from the cluster's cached embeddings gave byte-identical `species@budget` to the mila V100 run.
+**Independent embeddings, second cluster:** the amphibian experiment was re-run on **DRAC's fir cluster** (CPU,
+torch 2.12, its own image-embedding pass), independent of the mila V100 run. The verdict reproduces — `combined`
+beats the best spatial baseline and raw lat/lon beats great-circle on both clusters, with `species@budget` agreeing
+to within ~0.5 species (the residual is a different iNat snapshot + GPU-vs-CPU numerics). The table below shows
+`species@budget` per backbone per cluster; the headlines are each run's self-recorded verdict, read from JSON.""")
 
 co(r"""# Per-cluster comparison: same methodology everywhere (guarded at build time).
 import pandas as pd, glob, json
