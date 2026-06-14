@@ -1,0 +1,62 @@
+[
+  {
+    "taxon": "Amphibia",
+    "n_needsid_obs": 305,
+    "n_research_obs": 4955,
+    "n_cells_scored": 185,
+    "overall_backlog_frac": 0.05798479087452472,
+    "median_wait_days_all": 322.01409722222223,
+    "frac_unengaged_all": 0.7836065573770492,
+    "cell_backlog_frac_median": 0.0,
+    "spearman_backlog_vs_discover": -0.2327525087995702,
+    "spearman_backlog_vs_density": 0.25238511035030564
+  },
+  {
+    "taxon": "Aves",
+    "n_needsid_obs": 6058,
+    "n_research_obs": 12768,
+    "n_cells_scored": 340,
+    "overall_backlog_frac": 0.32178901519175607,
+    "median_wait_days_all": 318.98876157407403,
+    "frac_unengaged_all": 0.9158137999339716,
+    "cell_backlog_frac_median": 0.3333333333333333,
+    "spearman_backlog_vs_discover": 0.017785896259349433,
+    "spearman_backlog_vs_density": -0.09935991535032343
+  },
+  {
+    "taxon": "Insecta",
+    "n_needsid_obs": 6400,
+    "n_research_obs": 12764,
+    "n_cells_scored": 265,
+    "overall_backlog_frac": 0.3339595074097266,
+    "median_wait_days_all": 148.1901736111111,
+    "frac_unengaged_all": 0.9346875,
+    "cell_backlog_frac_median": 0.13513513513513514,
+    "spearman_backlog_vs_discover": 0.0821761347548722,
+    "spearman_backlog_vs_density": 0.15266097655646907
+  },
+  {
+    "taxon": "Mammalia",
+    "n_needsid_obs": 4021,
+    "n_research_obs": 10664,
+    "n_cells_scored": 372,
+    "overall_backlog_frac": 0.2738168198842356,
+    "median_wait_days_all": 305.0720486111111,
+    "frac_unengaged_all": 0.9380751056951008,
+    "cell_backlog_frac_median": 0.2631578947368421,
+    "spearman_backlog_vs_discover": 0.053039358551526083,
+    "spearman_backlog_vs_density": 0.005230932959168689
+  },
+  {
+    "taxon": "Reptilia",
+    "n_needsid_obs": 411,
+    "n_research_obs": 3044,
+    "n_cells_scored": 108,
+    "overall_backlog_frac": 0.11895803183791606,
+    "median_wait_days_all": 327.10265046296297,
+    "frac_unengaged_all": 0.8369829683698297,
+    "cell_backlog_frac_median": 0.09901960784313726,
+    "spearman_backlog_vs_discover": -0.22728931633801375,
+    "spearman_backlog_vs_density": 0.10508910840733203
+  }
+]
