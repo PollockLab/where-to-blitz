@@ -44,16 +44,19 @@ one — pick the observation farthest away in *geographic space*? The literature
 beat (Sener & Savarese 2018, CoreSet; Rauch 2025, *No Free Lunch in Active Learning*), so the answer is expected to
 be conditional, not a blanket yes.
 
-**The headline, stated up front and checked below (across three taxa):**
-1. **A pure embedding's value scales with species richness.** It *loses* to geographic coverage for species-poor
-   amphibians (36 spp) and reptiles (53 spp), but *wins decisively* for species-rich birds (246 spp). When there
-   are many visually-distinct species to find, embedding-novelty captures them; when few, geographic spread is as
-   good or better.
-2. **A combined spatial+embedding objective robustly beats the best spatial baseline across all three taxa** — the
-   safe default for a multi-taxon planner.
+**The headline, stated up front and checked below (across eight taxa, 36 → 518 species):**
+1. **Embedding-acquisition benefit generally rises with species richness — but is gated by embedding quality (No
+   Free Lunch on *two* axes).** It is ~zero or negative for species-poor taxa (Amphibia 36, Reptilia 53) and very
+   large for species-rich ones (Aves 246, Insecta 392, Fungi 317, Plantae 518). The exception is the proof:
+   **Arachnida (160 spp) is strongly negative** — DINOv2 embeds spider photos poorly (tiny, camouflaged,
+   web-context), so the embedding chases bad-photo outliers instead of new species. The payoff needs *both* many
+   species to find *and* an embedding that can tell them apart.
+2. **A combined spatial+embedding objective beats the best spatial baseline for 7 of 8 taxa** — a good default for a
+   multi-taxon planner, but not unconditional: it fails worst exactly where the embedding it leans on is bad
+   (Arachnida).
 3. **The best geographic distance metric is taxon-dependent, not universal.** Raw lat/lon (which over-weights
-   longitude) out-discovers great-circle distance for amphibians, but great-circle wins for reptiles and birds —
-   so "weight longitude" is an amphibian quirk, *not* a general law. (An earlier amphibian-only read of this
+   longitude) out-discovers great-circle distance for amphibians, but great-circle wins for most other taxa — so
+   "weight longitude" is an amphibian quirk, *not* a general law. (An earlier amphibian-only read of this
    experiment over-generalised that quirk; the multi-taxon run below corrects it.)
 
 **Method.** Pull research-grade amphibian observations (photo + species label + coords) from project 228908 over
@@ -182,20 +185,20 @@ md(r"""## Verdict — honest, and actionable for Blitz the Gap
 
 Reading the amphibian deep-dive (above) together with the cross-taxon generalization (table below):
 
-1. **A pure embedding's value scales with species richness — this is the generalizable finding.** Pure embedding
-   *loses* to the best spatial baseline for amphibians (36 spp) and reptiles (53 spp) but *wins decisively* for
-   birds (246 spp, +9.69 sp, p<0.001). With many visually-distinct species, embedding-novelty surfaces them; with
-   few, geographic spread is as good or better. This is design-04's *humility-with-a-test* made precise: the
-   embedding pays off **conditionally**, and the condition is how much taxonomic diversity there is to discover.
+1. **Embedding-acquisition benefit rises with species richness — but is gated by embedding quality (No Free Lunch
+   on two axes).** Across eight taxa it climbs from ~zero/negative at low richness (Amphibia 36 spp, Reptilia
+   53 spp) to very large at high richness (Aves 246: +9.69; Insecta 392: +13.07; Plantae 518: +48.67; Fungi 317:
+   +53.73 sp). The clean exception — **Arachnida (160 spp), strongly negative** — shows the second axis: when the
+   backbone embeds a taxon poorly (spiders), more species to find does *not* help. Both conditions are required.
 
-2. **A combined spatial+embedding objective is the robust default.** It beats the best spatial baseline for *every*
-   taxon tested (Amphibia +0.53 on DINOv2, Reptilia +1.53, Aves +4.29, all p<0.001). For a multi-taxon planner
-   that can't know the richness regime in advance, `combined` is the safe choice.
+2. **A combined spatial+embedding objective beats the best spatial baseline for 7 of 8 taxa** — a good default, not
+   an unconditional one. It wins everywhere except Arachnida (−5.75), failing worst exactly where the embedding it
+   leans on is bad. So "combine the two axes" is a strong heuristic that still inherits the embedding's quality.
 
 3. **The best geographic distance metric is taxon-dependent — there is no universal "weight longitude."** Raw
-   lat/lon out-discovers great-circle for amphibians (+1.31) but great-circle wins for reptiles (+1.10) and birds
-   (+3.42). An earlier amphibian-only read of this experiment promoted the longitude-overweighting quirk to a
-   headline; the multi-taxon run **retracts** that generalization — it is amphibian-specific.
+   lat/lon out-discovers great-circle for amphibians (+1.31) but great-circle wins for most other taxa. An earlier
+   amphibian-only read of this experiment promoted the longitude-overweighting quirk to a headline; the multi-taxon
+   run **retracts** that generalization — it is amphibian-specific.
 
 4. **For amphibians specifically (the BTG worked example), backbone quality gates the combined win.** Combined
    beats the best spatial baseline on DINOv2 but not on CLIP/ResNet50 — exactly No-Free-Lunch (Rauch 2025). And
@@ -207,16 +210,18 @@ taxa use a Canada-bbox pull (no project filter) so the sampling universe differs
 (project-228908) run — the *within-taxon* contrasts are unaffected. Claims are scoped to "which acquisition order
 rediscovers known species fastest on this sample."
 
-## Does it generalize beyond amphibians? Two things change, one holds
+## Does it generalize beyond amphibians? Across eight taxa (36 → 518 species)
 
-The experiment was repeated on richer Canada-wide taxa (DINOv2, iNat research-grade, project-free bbox). Two of the
-amphibian read-outs **do not** generalize, and the most useful one **does**:
+The experiment was repeated on richer Canada-wide taxa (DINOv2, iNat research-grade, project-free bbox):
 
-- **Metric lever flips.** `haversine − raw` is *negative* for amphibians (raw wins) but *positive* for reptiles
-  and birds (great-circle wins). So longitude-overweighting is amphibian-specific, not a law.
-- **Pure embedding scales with richness.** `bestEmb − bestSpatial` goes from negative (Amphibia 36 spp, Reptilia
-  53 spp) to strongly positive (Aves 246 spp) — the embedding earns its keep once there are many species to find.
-- **Combined holds.** `combined − bestSpatial` is positive for every taxon — the robust default.""")
+- **Metric lever flips.** `haversine − raw` is *negative* for amphibians (raw wins) but mostly *positive* for the
+  other taxa (great-circle wins). Longitude-overweighting is amphibian-specific, not a law.
+- **Embedding benefit rises with richness, gated by embedding quality.** `bestEmb − bestSpatial` climbs from
+  negative at low richness to very large at high richness — **except Arachnida (160 spp), strongly negative**: a
+  taxon DINOv2 embeds poorly. So the benefit needs both many species and a usable embedding (No Free Lunch on two
+  axes).
+- **Combined wins for 7 of 8 taxa.** `combined − bestSpatial` is positive everywhere except Arachnida — a strong
+  default that still inherits the embedding's quality.""")
 
 co(r"""# Cross-taxon generalization (cluster_results/generalization/<taxon>/), if present.
 import glob, json, pandas as pd
@@ -245,6 +250,31 @@ else:
     print("haversine−raw: <0 = raw/longitude-weighted wins (amphibians only); >0 = great-circle wins.")
     print("bestEmb−bestSpatial rises with n_species => the embedding's value scales with species richness.")
     display(pd.DataFrame(rows).set_index(['taxon','backbone']))""")
+
+co(r"""# The trend, as a picture: embedding-acquisition benefit vs species richness (DINOv2).
+import glob, json, matplotlib.pyplot as plt
+pts = []
+for p in (glob.glob('cluster_results/mila/exp_discovery_results_dinov2_vits14.json')
+          + glob.glob('cluster_results/generalization/*/exp_discovery_results_dinov2_vits14.json')):
+    d = json.load(open(p)); m = d['meta']; c = d['contrasts']
+    pts.append((m['n_species'], c['best_embedding_vs_best_spatial']['mean_diff'],
+                c['combined_vs_best_spatial']['mean_diff'], m.get('taxon', '?')))
+pts = sorted(set(pts))
+if len(pts) >= 2:
+    ns = [p[0] for p in pts]; be = [p[1] for p in pts]; cb = [p[2] for p in pts]
+    fig, ax = plt.subplots(figsize=(7.5, 5))
+    ax.axhline(0, color='#999', lw=1, ls='--')
+    ax.plot(ns, be, 'o-', label='pure embedding − best spatial', color='#1f77b4')
+    ax.plot(ns, cb, 's-', label='combined − best spatial', color='#d62728')
+    for n, b, _c, t in pts:
+        ax.annotate(t, (n, b), fontsize=8, xytext=(4, 4), textcoords='offset points')
+    ax.set_xscale('log'); ax.set_xlabel('species richness  (n_species in the 1200-obs pool, log scale)')
+    ax.set_ylabel('Δ species@budget vs best spatial baseline')
+    ax.set_title('Embedding-acquisition benefit rises with species richness (DINOv2, 200 seeds)')
+    ax.legend(); plt.tight_layout(); plt.show()
+    print("Above 0 = the strategy beats the best simple spatial baseline.")
+else:
+    print("Need >=2 taxa for the trend plot.")""")
 
 md(r"""## Cross-cluster reproduction
 
