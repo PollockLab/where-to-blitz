@@ -34,21 +34,27 @@ cells = []
 md = lambda s: cells.append(nbf.v4.new_markdown_cell(s))
 co = lambda s: cells.append(nbf.v4.new_code_cell(s))
 
-md(r"""# What actually drives species discovery: the distance metric, not the embedding
+md(r"""# When does an embedding beat geographic coverage for species discovery? It scales with species richness
 
-**A multi-backbone experiment on real Blitz the Gap (iNaturalist 228908) amphibian data.**
+**A multi-backbone, multi-taxon experiment on real Blitz the Gap / iNaturalist data over Canada.**
 
 This tests the central, honest claim of [design-04](../2026-06-11-design-04-discovery-acquisition.md): is a fancier
 acquisition function — pick the observation whose *vision embedding* is most novel — actually better than a simple
 one — pick the observation farthest away in *geographic space*? The literature says geographic coverage is hard to
-beat (Sener & Savarese 2018, CoreSet; Rauch 2025, *No Free Lunch in Active Learning*), so a null result for the
-embedding is a real, publishable finding, not a failure.
+beat (Sener & Savarese 2018, CoreSet; Rauch 2025, *No Free Lunch in Active Learning*), so the answer is expected to
+be conditional, not a blanket yes.
 
-**The headline, stated up front and checked below:** geographic coverage is hard to beat — and the single biggest
-lever is *which geographic distance you use*. A **deliberately "wrong" raw-lat/lon metric out-discovers the
-geographically-correct great-circle distance**, because over-weighting longitude tracks Canada's east–west species
-turnover. A pure vision embedding does **not** beat the best spatial baseline on any backbone; only a **combined
-spatial+embedding** objective edges past it, and only with a strong backbone (DINOv2).
+**The headline, stated up front and checked below (across three taxa):**
+1. **A pure embedding's value scales with species richness.** It *loses* to geographic coverage for species-poor
+   amphibians (36 spp) and reptiles (53 spp), but *wins decisively* for species-rich birds (246 spp). When there
+   are many visually-distinct species to find, embedding-novelty captures them; when few, geographic spread is as
+   good or better.
+2. **A combined spatial+embedding objective robustly beats the best spatial baseline across all three taxa** — the
+   safe default for a multi-taxon planner.
+3. **The best geographic distance metric is taxon-dependent, not universal.** Raw lat/lon (which over-weights
+   longitude) out-discovers great-circle distance for amphibians, but great-circle wins for reptiles and birds —
+   so "weight longitude" is an amphibian quirk, *not* a general law. (An earlier amphibian-only read of this
+   experiment over-generalised that quirk; the multi-taxon run below corrects it.)
 
 **Method.** Pull research-grade amphibian observations (photo + species label + coords) from project 228908 over
 Canada. Extract vision embeddings, then simulate active species discovery from a random seed and measure the
@@ -88,7 +94,7 @@ co("import glob, json, os\n"
    "BACKBONE = {'dinov2_vits14': ('DINOv2 (ViT-S/14)', 0), 'clip_vit_b32': ('CLIP (ViT-B/32)', 1),\n"
    "            'resnet50_imagenet': ('ResNet50 (ImageNet)', 2)}\n"
    "STRATS = ['random','spatial_coverage','spatial_coverage_raw',\n"
-   "          'embedding_novelty','embedding_kmeanspp','combined']\n"
+   "          'embedding_novelty','embedding_kmeanspp','combined','combined_raw']\n"
    "runs = {}\n"
    "for p in sorted(glob.glob('cluster_results/*/exp_discovery_results*.json')):\n"
    "    d = json.load(open(p)); runs[d['meta']['backbone']] = d\n"
@@ -120,13 +126,14 @@ axes[0][0].set_ylabel("distinct species discovered")
 fig.suptitle("Species-discovery curves by acquisition strategy and backbone", y=1.02)
 plt.tight_layout(); plt.show()""")
 
-md(r"""## Lever #1 — the geographic distance metric (this is the surprise)
+md(r"""## Amphibian deep-dive, lever #1 — the geographic distance metric
 
-Before touching embeddings: **does it matter which geographic distance the coverage baseline uses?** A lot. The
-`haversine_vs_raw_spatial` contrast compares the two metrics on *identical* data. The geographically-correct
-great-circle distance **loses** to the naïve raw-lat/lon one — because raw Euclidean over-weights longitude, and
-Canada is far wider east–west than north–south with strong longitudinal species turnover. The "wrong" metric
-encodes a useful inductive bias. This single choice moves discovery more than the embedding does.""")
+Before touching embeddings: **does it matter which geographic distance the coverage baseline uses?** For amphibians,
+a lot. The `haversine_vs_raw_spatial` contrast compares the two metrics on *identical* data. The
+geographically-correct great-circle distance **loses** to the naïve raw-lat/lon one — raw Euclidean over-weights
+longitude, and Canadian amphibians turn over strongly east–west, so the "wrong" metric encodes a useful inductive
+bias. **Important caveat (see the generalization section): this flips for reptiles and birds** — it is
+amphibian-specific, not a general rule.""")
 
 co(r"""import pandas as pd
 rows = []
@@ -173,29 +180,73 @@ for bb, d in runs.items():
 
 md(r"""## Verdict — honest, and actionable for Blitz the Gap
 
-1. **Geographic coverage is hard to beat — the old conclusion holds.** A pure off-the-shelf vision embedding does
-   not beat the best simple spatial baseline on *any* backbone (see `best embedding − BEST spatial`, negative
-   everywhere). The embedding costs a GPU and, with a weaker backbone, actively hurts.
+Reading the amphibian deep-dive (above) together with the cross-taxon generalization (table below):
 
-2. **The real lever is the distance metric, not the embedding.** Over-weighting longitude (raw lat/lon) gains more
-   species than the geographically-"correct" great-circle distance — a bigger effect than anything the embedding
-   contributes. **For BTG this is the actionable finding:** the geographic-gap axis should weight longitude (or
-   east–west biogeographic turnover) explicitly, rather than use isotropic great-circle distance.
+1. **A pure embedding's value scales with species richness — this is the generalizable finding.** Pure embedding
+   *loses* to the best spatial baseline for amphibians (36 spp) and reptiles (53 spp) but *wins decisively* for
+   birds (246 spp, +9.69 sp, p<0.001). With many visually-distinct species, embedding-novelty surfaces them; with
+   few, geographic spread is as good or better. This is design-04's *humility-with-a-test* made precise: the
+   embedding pays off **conditionally**, and the condition is how much taxonomic diversity there is to discover.
 
-3. **A combined spatial+embedding objective can edge past the best spatial baseline — but only with a strong
-   backbone (DINOv2), not a weak one (ResNet50).** This is design-04's *humility-with-a-test*: the multi-axis "app"
-   objective is justified *if* it rides a strong embedding, exactly the No-Free-Lunch prediction (Rauch 2025).
+2. **A combined spatial+embedding objective is the robust default.** It beats the best spatial baseline for *every*
+   taxon tested (Amphibia +0.53 on DINOv2, Reptilia +1.53, Aves +4.29, all p<0.001). For a multi-taxon planner
+   that can't know the richness regime in advance, `combined` is the safe choice.
 
-4. **k-center (CoreSet) is outlier-prone; robust D²-coverage helps the weak backbone.** `kmeans++ − k-center` flips
-   sign by backbone — with ResNet50 the embedding chases blurry-photo outliers and the robust variant rescues it.
+3. **The best geographic distance metric is taxon-dependent — there is no universal "weight longitude."** Raw
+   lat/lon out-discovers great-circle for amphibians (+1.31) but great-circle wins for reptiles (+1.10) and birds
+   (+3.42). An earlier amphibian-only read of this experiment promoted the longitude-overweighting quirk to a
+   headline; the multi-taxon run **retracts** that generalization — it is amphibian-specific.
+
+4. **For amphibians specifically (the BTG worked example), backbone quality gates the combined win.** Combined
+   beats the best spatial baseline on DINOv2 but not on CLIP/ResNet50 — exactly No-Free-Lunch (Rauch 2025). And
+   k-center (CoreSet) is outlier-prone: robust D²-coverage (`kmeans++`) rescues the weak ResNet50 backbone.
 
 **What this does NOT claim:** it's a retrospective simulation over already-collected observations (not prospective
-field sampling), n is bounded, and the embeddings are off-the-shelf, not fine-tuned for this taxon or for
-geographic diversity. The longitude-overweighting result is specific to a wide, east–west-structured region like
-Canada and would not transfer to a compact one. Claims are scoped to "which acquisition order rediscovers known
-species fastest on this sample."
+field sampling), n is bounded (1200 obs/taxon, budget 300), the embeddings are off-the-shelf, and the generalization
+taxa use a Canada-bbox pull (no project filter) so the sampling universe differs slightly from the amphibian
+(project-228908) run — the *within-taxon* contrasts are unaffected. Claims are scoped to "which acquisition order
+rediscovers known species fastest on this sample."
 
-## Cross-cluster reproduction
+## Does it generalize beyond amphibians? Two things change, one holds
+
+The experiment was repeated on richer Canada-wide taxa (DINOv2, iNat research-grade, project-free bbox). Two of the
+amphibian read-outs **do not** generalize, and the most useful one **does**:
+
+- **Metric lever flips.** `haversine − raw` is *negative* for amphibians (raw wins) but *positive* for reptiles
+  and birds (great-circle wins). So longitude-overweighting is amphibian-specific, not a law.
+- **Pure embedding scales with richness.** `bestEmb − bestSpatial` goes from negative (Amphibia 36 spp, Reptilia
+  53 spp) to strongly positive (Aves 246 spp) — the embedding earns its keep once there are many species to find.
+- **Combined holds.** `combined − bestSpatial` is positive for every taxon — the robust default.""")
+
+co(r"""# Cross-taxon generalization (cluster_results/generalization/<taxon>/), if present.
+import glob, json, pandas as pd
+gpaths = sorted(glob.glob('cluster_results/generalization/*/exp_discovery_results*.json'))
+if not gpaths:
+    print("No generalization runs present (cluster_results/generalization/). Amphibia only.")
+else:
+    rows = []
+    for p in gpaths:
+        d = json.load(open(p)); m = d['meta']; c = d['contrasts']
+        rows.append({'taxon': m.get('taxon','?'), 'backbone': m['backbone'],
+                     'n_obs': m['n_obs'], 'n_species': m['n_species'],
+                     'haversine−raw': round(c['haversine_vs_raw_spatial']['mean_diff'],2),
+                     'p': round(c['haversine_vs_raw_spatial']['p_perm'],3),
+                     'bestEmb−bestSpatial': round(c['best_embedding_vs_best_spatial']['mean_diff'],2),
+                     'combined−bestSpatial': round(c['combined_vs_best_spatial']['mean_diff'],2)})
+    # include Amphibia (DINOv2) for side-by-side
+    amph = json.load(open('cluster_results/mila/exp_discovery_results_dinov2_vits14.json'))
+    cA = amph['contrasts']; mA = amph['meta']
+    rows.insert(0, {'taxon':'Amphibia','backbone':mA['backbone'],'n_obs':mA['n_obs'],
+                    'n_species':mA['n_species'],
+                    'haversine−raw':round(cA['haversine_vs_raw_spatial']['mean_diff'],2),
+                    'p':round(cA['haversine_vs_raw_spatial']['p_perm'],3),
+                    'bestEmb−bestSpatial':round(cA['best_embedding_vs_best_spatial']['mean_diff'],2),
+                    'combined−bestSpatial':round(cA['combined_vs_best_spatial']['mean_diff'],2)})
+    print("haversine−raw: <0 = raw/longitude-weighted wins (amphibians only); >0 = great-circle wins.")
+    print("bestEmb−bestSpatial rises with n_species => the embedding's value scales with species richness.")
+    display(pd.DataFrame(rows).set_index(['taxon','backbone']))""")
+
+md(r"""## Cross-cluster reproduction
 
 The same code was run on more than one cluster with independently-computed embeddings, as a reproduction. The
 verdict cell prints each run's self-recorded headline; the table prints `species@budget` per backbone per cluster.""")

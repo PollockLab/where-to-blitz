@@ -34,11 +34,13 @@ INAT = "https://api.inaturalist.org/v1/observations"
 PROJECT = 228908
 
 
-def pull_observations(n_target=1500, per_page=200):
-    params = {"project_id": PROJECT, "quality_grade": "research", "iconic_taxa": "Amphibia",
+def pull_observations(n_target=1500, per_page=200, taxon="Amphibia", project=PROJECT):
+    params = {"quality_grade": "research", "iconic_taxa": taxon,
               "per_page": per_page, "order_by": "id", "order": "desc",
               "photos": "true", "identified": "true",
               "swlat": 41, "swlng": -141, "nelat": 84, "nelng": -52}
+    if project:  # project 0/None => Canada-bbox only (for cross-taxon generalization)
+        params["project_id"] = project
     import requests
     out, id_below = [], None
     while len(out) < n_target:
@@ -183,7 +185,7 @@ ARG_TO_BACKBONE = {"dinov2": "dinov2_vits14", "resnet50": "resnet50_imagenet",
 
 # ---- discovery simulation --------------------------------------------------
 STRATEGIES = ("random", "spatial_coverage", "spatial_coverage_raw",
-              "embedding_novelty", "embedding_kmeanspp", "combined")
+              "embedding_novelty", "embedding_kmeanspp", "combined", "combined_raw")
 
 
 def _haversine_to(lat_rad, lon_rad, j):
@@ -229,8 +231,8 @@ def run_discovery(kind, lat, lon, E, species_ids, seed, budget):
     curve = [1]
 
     need_geo = kind in ("spatial_coverage", "combined")
-    need_geo_raw = kind == "spatial_coverage_raw"
-    need_emb = kind in ("embedding_novelty", "embedding_kmeanspp", "combined")
+    need_geo_raw = kind in ("spatial_coverage_raw", "combined_raw")
+    need_emb = kind in ("embedding_novelty", "embedding_kmeanspp", "combined", "combined_raw")
     mind_geo = _haversine_to(lat_rad, lon_rad, start) if need_geo else None
     mind_geo_raw = _raw_latlon_to(lat, lon, start) if need_geo_raw else None
     mind_emb = (1.0 - E @ E[start]) if need_emb else None  # cosine distance to seen
@@ -251,8 +253,11 @@ def run_discovery(kind, lat, lon, E, species_ids, seed, budget):
             s = w.sum()
             nxt = (int(rng.choice(n, p=w / s)) if s > 0
                    else int(rng.choice(np.flatnonzero(cand))))
-        elif kind == "combined":                   # z-scored spatial + embedding
+        elif kind == "combined":                   # z-scored haversine spatial + embedding
             score = _zscore_masked(mind_geo, cand) + _zscore_masked(mind_emb, cand)
+            nxt = int(np.argmax(score))
+        elif kind == "combined_raw":                # z-scored raw-lat/lon spatial + embedding
+            score = _zscore_masked(mind_geo_raw, cand) + _zscore_masked(mind_emb, cand)
             nxt = int(np.argmax(score))
         else:
             raise ValueError(kind)
@@ -315,8 +320,11 @@ def contrast(name_a, name_b, per_seed):
     return out
 
 
-def emb_cache_path(cache_dir, backbone):
-    return Path(cache_dir) / f"emb_{backbone}.npz" if cache_dir else None
+def emb_cache_path(cache_dir, backbone, taxon="Amphibia"):
+    if not cache_dir:
+        return None
+    tag = "" if taxon == "Amphibia" else f"{taxon}_"  # keep amphibian caches back-compatible
+    return Path(cache_dir) / f"emb_{tag}{backbone}.npz"
 
 
 def main():
@@ -326,6 +334,10 @@ def main():
     ap.add_argument("--seeds", type=int, default=20)
     ap.add_argument("--backbone", default="auto",
                     choices=["auto", "dinov2", "resnet50", "clip"])
+    ap.add_argument("--taxon", default="Amphibia",
+                    help="iconic_taxa filter (e.g. Amphibia, Reptilia, Aves) for generalization.")
+    ap.add_argument("--project", type=int, default=PROJECT,
+                    help="iNat project_id; 0 = Canada-bbox only (cross-taxon generalization).")
     ap.add_argument("--out", default=".")
     ap.add_argument("--image-cache", default=None,
                     help="Dir to read/write cached images + embeddings (offline mode).")
@@ -343,7 +355,7 @@ def main():
     # STAGE MODE: login node, needs internet
     if args.stage_only:
         print("[stage] pulling observations from iNaturalist...")
-        recs = pull_observations(args.n)
+        recs = pull_observations(args.n, taxon=args.taxon, project=args.project)
         print(f"[stage] got {len(recs)} obs ({len(set(r['species'] for r in recs))} species)")
         assert cache_dir, "--image-cache required for --stage-only"
         recs = stage_images(recs, cache_dir)
@@ -359,28 +371,31 @@ def main():
     # cache files are keyed by the *resolved* backbone name (e.g. dinov2_vits14),
     # so map the --backbone arg to that name for the lookup.
     resolved = ARG_TO_BACKBONE.get(args.backbone) if args.backbone != "auto" else None
-    cache_npz = emb_cache_path(cache_dir, resolved) if resolved else None
+    cache_npz = emb_cache_path(cache_dir, resolved, args.taxon) if resolved else None
     device = "cpu"
     gpu_name = "cpu"
+    emb_device = "cpu"
 
     if cache_npz and cache_npz.exists() and not args.no_emb_cache:
         print(f"[run] loading cached embeddings from {cache_npz}")
         z = np.load(cache_npz)  # self-written cache; plain arrays only, no pickle
         E = z["E"]; species = list(z["species"]); lat = z["lat"]; lon = z["lon"]
         backbone = str(z["backbone"])
+        emb_device = str(z["emb_device"]) if "emb_device" in z.files else "cached"
     else:
         import torch
         device = "cuda" if torch.cuda.is_available() else "cpu"
         gpu_name = torch.cuda.get_device_name(0) if torch.cuda.is_available() else "cpu"
+        emb_device = gpu_name  # where embeddings were actually computed
         print(f"device={device} cuda={torch.cuda.is_available()} name={gpu_name}")
         if obs_json and obs_json.exists():
             print(f"[run] loading obs from {obs_json}")
             with open(obs_json) as f:
                 recs = json.load(f)
         else:
-            print("[run] no obs cache, pulling from iNat (need internet)...")
-            recs = pull_observations(args.n)
-        print(f"pulled {len(recs)} amphibian obs w/ photo+species, "
+            print(f"[run] no obs cache, pulling {args.taxon} from iNat (need internet)...")
+            recs = pull_observations(args.n, taxon=args.taxon, project=args.project)
+        print(f"pulled {len(recs)} {args.taxon} obs w/ photo+species, "
               f"{len(set(r['species'] for r in recs))} distinct species")
         use_cache = cache_dir is not None
         E, keep, backbone = embed_images(recs, device, want=args.backbone, use_cache=use_cache)
@@ -390,10 +405,11 @@ def main():
         lon = np.array([r["lon"] for r in recs], float)
         print(f"embedded {len(recs)} images with {backbone}, dim={E.shape[1]} "
               f"in {time.time()-t0:.0f}s")
-        out_npz = emb_cache_path(cache_dir, backbone)
+        out_npz = emb_cache_path(cache_dir, backbone, args.taxon)
         if out_npz is not None:
+            out_npz.parent.mkdir(parents=True, exist_ok=True)
             np.savez_compressed(out_npz, E=E.astype(np.float32), species=np.array(species),
-                                lat=lat, lon=lon, backbone=backbone)
+                                lat=lat, lon=lon, backbone=backbone, emb_device=gpu_name)
             print(f"[cache] wrote embeddings -> {out_npz}")
 
     species = list(species)
@@ -444,6 +460,9 @@ def main():
         # the load-bearing comparison: best embedding / combined vs the BEST simple spatial baseline
         "best_embedding_vs_best_spatial": contrast(best_emb, best_spatial, per_seed_last),
         "combined_vs_best_spatial": contrast("combined", best_spatial, per_seed_last),
+        # does combining the embedding with the BETTER (raw/longitude-weighted) geo metric win overall?
+        "combined_raw_vs_best_spatial": contrast("combined_raw", best_spatial, per_seed_last),
+        "combined_raw_vs_combined": contrast("combined_raw", "combined", per_seed_last),
     }
 
     def verdict_line(label, c):
@@ -470,7 +489,9 @@ def main():
 
     out_data = {"meta": {"n_obs": n_obs, "n_species": n_species, "budget": budget,
                          "seeds": args.seeds, "backbone": backbone, "device": device,
-                         "gpu_name": gpu_name, "geo_distance": "haversine",
+                         "gpu_name": gpu_name, "emb_device": emb_device,
+                         "geo_distance": "haversine",
+                         "taxon": args.taxon, "project": args.project,
                          "runtime_s": round(time.time() - t0, 1)},
                 "results": results, "curves_mean": curves_mean,
                 "contrasts": contrasts, "headline": headline}
