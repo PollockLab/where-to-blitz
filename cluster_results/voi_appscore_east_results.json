@@ -1,0 +1,158 @@
+[
+  {
+    "taxon": "Aves",
+    "n_cells": 695,
+    "n_rarefied": 178,
+    "K": 5,
+    "perm_p_floor": 0.0005,
+    "total_new_species": 2291,
+    "scores": {
+      "app_leakfree": {
+        "spearman": 0.37407381813426915,
+        "perm_p": 0.0,
+        "eff_ratio_top_bottom": 1.260879811468971,
+        "new_at_K_top": 4.01275,
+        "new_at_K_bottom": 3.1824999999999997
+      },
+      "app_shipped": {
+        "spearman": 0.09203012188065353,
+        "perm_p": 0.222,
+        "eff_ratio_top_bottom": 1.0507635647094702,
+        "new_at_K_top": 3.7327500000000002,
+        "new_at_K_bottom": 3.5524166666666663
+      },
+      "discover_leakfree": {
+        "spearman": 0.5810371033499018,
+        "perm_p": 0.0,
+        "eff_ratio_top_bottom": 1.4163473148196755,
+        "new_at_K_top": 4.215625,
+        "new_at_K_bottom": 2.97640625
+      },
+      "env": {
+        "spearman": 0.0053895319666560195,
+        "perm_p": 0.936,
+        "eff_ratio_top_bottom": 1.025227274025907,
+        "new_at_K_top": 3.6767213114754096,
+        "new_at_K_bottom": 3.5862500000000006
+      },
+      "urgency": {
+        "spearman": 0.09565907568830635,
+        "perm_p": 0.199,
+        "eff_ratio_top_bottom": 1.0196494746479488,
+        "new_at_K_top": 3.712333333333333,
+        "new_at_K_bottom": 3.6407936507936505
+      },
+      "opportunistic_density": {
+        "spearman": -0.5810371033499018,
+        "perm_p": 0.0,
+        "eff_ratio_top_bottom": 0.7060415122312824,
+        "new_at_K_top": 2.97640625,
+        "new_at_K_bottom": 4.215625
+      }
+    }
+  },
+  {
+    "taxon": "Insecta",
+    "n_cells": 425,
+    "n_rarefied": 136,
+    "K": 5,
+    "perm_p_floor": 0.0005,
+    "total_new_species": 3494,
+    "scores": {
+      "app_leakfree": {
+        "spearman": 0.2979529008662822,
+        "perm_p": 0.0005,
+        "eff_ratio_top_bottom": 1.0206677265500799,
+        "new_at_K_top": 4.46608695652174,
+        "new_at_K_bottom": 4.375652173913043
+      },
+      "app_shipped": {
+        "spearman": -0.10567679260150471,
+        "perm_p": 0.237,
+        "eff_ratio_top_bottom": 0.9176186187609615,
+        "new_at_K_top": 4.208478260869566,
+        "new_at_K_bottom": 4.586304347826087
+      },
+      "discover_leakfree": {
+        "spearman": 0.4711808671731219,
+        "perm_p": 0.0,
+        "eff_ratio_top_bottom": 1.1384482618154608,
+        "new_at_K_top": 4.642641509433962,
+        "new_at_K_bottom": 4.078043478260869
+      },
+      "env": {
+        "spearman": -0.16763736405902765,
+        "perm_p": 0.06,
+        "eff_ratio_top_bottom": 0.9173922777391321,
+        "new_at_K_top": 4.245531914893618,
+        "new_at_K_bottom": 4.627826086956522
+      },
+      "urgency": {
+        "spearman": -0.2097320008133316,
+        "perm_p": 0.018,
+        "eff_ratio_top_bottom": 0.9093497752571015,
+        "new_at_K_top": 4.200108695652175,
+        "new_at_K_bottom": 4.618804347826087
+      },
+      "opportunistic_density": {
+        "spearman": -0.4711808671731219,
+        "perm_p": 0.0,
+        "eff_ratio_top_bottom": 0.8783886220752096,
+        "new_at_K_top": 4.078043478260869,
+        "new_at_K_bottom": 4.642641509433962
+      }
+    }
+  },
+  {
+    "taxon": "Mammalia",
+    "n_cells": 753,
+    "n_rarefied": 213,
+    "K": 5,
+    "perm_p_floor": 0.0005,
+    "total_new_species": 1037,
+    "scores": {
+      "app_leakfree": {
+        "spearman": 0.5210579237541707,
+        "perm_p": 0.0,
+        "eff_ratio_top_bottom": 2.358253673847909,
+        "new_at_K_top": 2.3280281690140843,
+        "new_at_K_bottom": 0.9871830985915495
+      },
+      "app_shipped": {
+        "spearman": 0.2838624578749478,
+        "perm_p": 0.0,
+        "eff_ratio_top_bottom": 1.5219417276870295,
+        "new_at_K_top": 2.0930985915492957,
+        "new_at_K_bottom": 1.3752816901408451
+      },
+      "discover_leakfree": {
+        "spearman": 0.6878392187836855,
+        "perm_p": 0.0,
+        "eff_ratio_top_bottom": 3.0143205613387005,
+        "new_at_K_top": 2.5006962025316457,
+        "new_at_K_bottom": 0.8296052631578947
+      },
+      "env": {
+        "spearman": 0.02529831915917427,
+        "perm_p": 0.7165,
+        "eff_ratio_top_bottom": 1.1064577233997255,
+        "new_at_K_top": 1.9331506849315065,
+        "new_at_K_bottom": 1.7471527777777778
+      },
+      "urgency": {
+        "spearman": 0.24857716789515397,
+        "perm_p": 0.0,
+        "eff_ratio_top_bottom": 1.464205255282494,
+        "new_at_K_top": 2.0289436619718306,
+        "new_at_K_bottom": 1.3856962025316455
+      },
+      "opportunistic_density": {
+        "spearman": -0.6878392187836855,
+        "perm_p": 0.0,
+        "eff_ratio_top_bottom": 0.33174971926538777,
+        "new_at_K_top": 0.8296052631578947,
+        "new_at_K_bottom": 2.5006962025316457
+      }
+    }
+  }
+]
