@@ -290,7 +290,7 @@ details.adv>summary:hover{color:var(--ink)}
     <div class="infobox" id="geinfo" data-i18n-html="ge_method"></div>
     <label class="toggle" style="margin:8px 0 2px"><input type="checkbox" id="tgCanadaOnly" checked> <span data-i18n="canada_only">🍁 Canada only</span></label>
     <div style="color:var(--mut);font-size:11px;line-height:1.4" data-i18n="canada_only_hint">Hides cells across the US border, where the bright band is a data edge (the Canadian layer stops at the border), not a real gap. Approximate boundary.</div>
-    <label class="toggle" style="margin:8px 0 2px"><input type="checkbox" id="tgZoomScale"> <span data-i18n="zoom_scale">🔍 Rescale colours to the current view</span></label>
+    <label class="toggle" style="margin:8px 0 2px"><input type="checkbox" id="tgZoomScale" checked> <span data-i18n="zoom_scale">🔍 Rescale colours to the current view</span></label>
     <div style="color:var(--mut);font-size:11px;line-height:1.4" data-i18n="zoom_scale_hint">Ranks cells against what's on screen, so local gaps stand out when you zoom in. Off = ranked across all of Canada (a dark cell means the same everywhere).</div>
     <div style="display:flex;justify-content:space-between;margin:9px 0 0"><span style="font-size:13px" data-i18n="map_brightness">Map brightness</span><span class="v" id="bopv" style="color:var(--acc)">100%</span></div>
     <input type="range" id="baseop" min="0.25" max="1" step="0.05" value="1" aria-label="Map brightness">
@@ -921,7 +921,8 @@ function recolour(){
   const rel=zoomScaleActive()&&!cov;
   document.getElementById('legendrel').style.display=rel?'block':'none';
   if(rel){
-    const b=map.getBounds(),inb=markers.filter(m=>b.contains([m.r[0],m.r[1]]));
+    const b=map.getBounds();let inb=markers.filter(m=>b.contains([m.r[0],m.r[1]]));
+    if(caOnlyActive()&&US_CELLS)inb=inb.filter(m=>!US_CELLS.has(gekey(m.r[0],m.r[1])));  // hidden US cells must not skew the in-view ranking (border zooms)
     const vv=inb.map(m=>impact(m.r));
     const od=vv.map((v,i)=>[v,i]).sort((a,b)=>a[0]-b[0]);const rk=new Array(vv.length);od.forEach((p,k)=>rk[p[1]]=k);const m1=Math.max(vv.length-1,1);
     const fl=od.length>0&&(od[od.length-1][0]-od[0][0])<1e-9;
