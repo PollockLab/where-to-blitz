@@ -914,22 +914,10 @@ function recolour(){
     markers.forEach(m=>{const c=geColour(m);m.mk.setStyle({fillColor:c,color:c,weight:1,opacity:0.62,fillOpacity:0.62});});
     applyCanadaMask();renderCellTable();return;
   }
-  // Viewport-relative ranking: rank cells only against what's currently on screen, so a
-  // Montrealer zoomed in sees local gaps instead of a uniformly low-priority map. Off-screen
-  // cells go faint (they recolour on moveend as they enter the view). Honest only with the
-  // legend note that colours aren't comparable across zoom levels (#1).
-  const rel=zoomScaleActive()&&!cov;
-  document.getElementById('legendrel').style.display=rel?'block':'none';
-  if(rel){
-    const b=map.getBounds();let inb=markers.filter(m=>b.contains([m.r[0],m.r[1]]));
-    if(caOnlyActive()&&US_CELLS)inb=inb.filter(m=>!US_CELLS.has(gekey(m.r[0],m.r[1])));  // hidden US cells must not skew the in-view ranking (border zooms)
-    const vv=inb.map(m=>impact(m.r));
-    const od=vv.map((v,i)=>[v,i]).sort((a,b)=>a[0]-b[0]);const rk=new Array(vv.length);od.forEach((p,k)=>rk[p[1]]=k);const m1=Math.max(vv.length-1,1);
-    const fl=od.length>0&&(od[od.length-1][0]-od[0][0])<1e-9;
-    const dim=colour(0);markers.forEach(m=>{m.t=0;m.mk.setStyle({fillColor:dim,color:dim,weight:1,opacity:.05,fillOpacity:.05});});
-    inb.forEach((m,i)=>{const t=fl?0:rk[i]/m1;m.t=t;const o=.25+.5*t,c=colour(t);m.mk.setStyle({fillColor:c,color:c,weight:1,opacity:o,fillOpacity:o});});
-    applyCanadaMask();renderCellTable();return;
-  }
+  // Decouple SCORE from COLOUR. m.t is always the stable NATIONAL percentile -- it drives the
+  // popup impact, low-gap messaging, nearestStrongGap and the accessible Top-cells list, none of
+  // which should change as you pan. Viewport-relative ranking (when on) recolours ONLY the fill so
+  // local gaps read at a glance, without redefining what a cell's score means (#1).
   const vals=markers.map(m=>impact(m.r));
   // Percentile-rank, not min-max: a few Arctic super-gaps (max discover + rare climate)
   // otherwise dominate the scale and crush every reachable cell to ~0/100. Rank spreads it evenly.
@@ -937,10 +925,24 @@ function recolour(){
   // If the chosen goal mix has no spatial signal (e.g. only a degenerate/placeholder axis like
   // national conservation=0), rank would paint a fake index gradient -- show a flat map instead.
   const flat=ord.length>0&&(ord[ord.length-1][0]-ord[0][0])<1e-9;   // guard empty markers (recolour runs during init before data loads)
-  // No per-cell tooltip: at tens of thousands of cells binding one tooltip each tanks pan/zoom.
-  // Cells stay clickable -- the click popup already shows the cell's score & drivers.
-  // stroke matches fill (same colour+opacity) so adjacent canvas rectangles tile seamlessly -- without it, anti-alias gaps stripe the map at low zoom (worse for narrow high-latitude cells)
-  markers.forEach((m,i)=>{const t=flat?0:rank[i]/n1;m.t=t;const o=cov?0:0.25+0.5*t,c=colour(t);m.mk.setStyle({fillColor:c,color:c,weight:1,opacity:o,fillOpacity:o});});
+  markers.forEach((m,i)=>{m.t=flat?0:rank[i]/n1;});   // national score, stable across pan/zoom
+  const rel=zoomScaleActive()&&!cov;
+  document.getElementById('legendrel').style.display=rel?'block':'none';
+  if(rel){
+    // Colour = rank within the current viewport so a Montrealer zoomed in sees local gaps; off-view
+    // cells go faint (they recolour on moveend). Hidden US cells excluded so border zooms aren't skewed.
+    const b=map.getBounds();let inb=markers.filter(m=>b.contains([m.r[0],m.r[1]]));
+    if(caOnlyActive()&&US_CELLS)inb=inb.filter(m=>!US_CELLS.has(gekey(m.r[0],m.r[1])));
+    const vv=inb.map(m=>impact(m.r));
+    const od=vv.map((v,i)=>[v,i]).sort((a,b)=>a[0]-b[0]);const rk=new Array(vv.length);od.forEach((p,k)=>rk[p[1]]=k);const m1=Math.max(vv.length-1,1);
+    const fl=od.length>0&&(od[od.length-1][0]-od[0][0])<1e-9;
+    const dim=colour(0);markers.forEach(m=>m.mk.setStyle({fillColor:dim,color:dim,weight:1,opacity:.05,fillOpacity:.05}));  // m.t (score) untouched
+    inb.forEach((m,i)=>{const ct=fl?0:rk[i]/m1,o=.25+.5*ct,c=colour(ct);m.mk.setStyle({fillColor:c,color:c,weight:1,opacity:o,fillOpacity:o});});
+  } else {
+    // No per-cell tooltip: at tens of thousands of cells binding one each tanks pan/zoom. Stroke
+    // matches fill so adjacent canvas rectangles tile seamlessly (else anti-alias gaps stripe at low zoom).
+    markers.forEach(m=>{const ct=m.t,o=cov?0:0.25+0.5*ct,c=colour(ct);m.mk.setStyle({fillColor:c,color:c,weight:1,opacity:o,fillOpacity:o});});
+  }
   applyCanadaMask();renderCellTable();
 }
 // Swap #maplegend between the priority ramp (default) and a categorical Getting Even legend. Pale swatches get a 1px #ccc border.
