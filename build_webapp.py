@@ -377,6 +377,8 @@ const I18N={
     ge_cats:["Fishes","Fungi","Reptiles & Amphibians","Invertebrates","Mammals","Plants"],
     ge_all:"All groups under-sampled",
     ge_most:"⚖️ Most under-represented here:",
+    more_presets:"More ▾",
+    fewer_presets:"Fewer ▴",
     methodology_link:"📖 Full methodology & data — trace every number →",
     hide_panel:"Hide the panel (more map)",
     show_panel:"Show the panel",
@@ -520,6 +522,8 @@ const I18N={
     ge_cats:["Poissons","Champignons","Reptiles et amphibiens","Invertébrés","Mammifères","Plantes"],
     ge_all:"Tous sous-échantillonnés",
     ge_most:"⚖️ Le plus sous-représenté ici :",
+    more_presets:"Plus ▾",
+    fewer_presets:"Moins ▴",
     methodology_link:"📖 Méthodologie complète et données — traçez chaque chiffre →",
     hide_panel:"Masquer le panneau (plus de carte)",
     show_panel:"Afficher le panneau",
@@ -974,10 +978,15 @@ rebuildObjs();
 function applyWeights(arr,name){OBJ.forEach((o,i)=>{state.w[o.key]=arr[i];document.getElementById('s_'+o.key).value=arr[i];document.getElementById('v_'+o.key).textContent=arr[i].toFixed(2);});markPreset(name);recolour();updateLegendLabels();replan();}
 const presetsDiv=document.getElementById('presets');
 function markPreset(name){[...presetsDiv.children].forEach(b=>b.classList.toggle('on',b.textContent===name));}
+// Jun-15 feedback: show a few broad presets, the rest behind "More" -- the meeting
+// wanted ~3 up front, not six, without losing any (#2). Nothing removed; just folded.
+const PRIMARY_PRESETS=3;let presetsExpanded=false;
 function rebuildPresets(){presetsDiv.innerHTML='';
-  PRESETS.forEach((p,i)=>{const b=document.createElement('button');b.textContent=presetName(i);b.title=presetBlurb(i);b.onclick=()=>applyChallenge(p);presetsDiv.appendChild(b);});}
+  PRESETS.forEach((p,i)=>{const b=document.createElement('button');b.textContent=presetName(i);b.title=presetBlurb(i);b.onclick=()=>applyChallenge(p);if(i>=PRIMARY_PRESETS&&!presetsExpanded)b.style.display='none';presetsDiv.appendChild(b);});
+  if(PRESETS.length>PRIMARY_PRESETS){const more=document.createElement('button');more.id='presetMore';more.textContent=presetsExpanded?t('fewer_presets'):t('more_presets');more.style.opacity='.75';more.onclick=()=>{presetsExpanded=!presetsExpanded;rebuildPresets();if(typeof window.__activePreset==='number')markPreset(presetName(window.__activePreset));};presetsDiv.appendChild(more);}}
 rebuildPresets();
 function applyChallenge(p){const i=PRESETS.indexOf(p);window.__activePreset=i;
+  if(i>=PRIMARY_PRESETS&&!presetsExpanded){presetsExpanded=true;rebuildPresets();}
   applyWeights(p.w,presetName(i));state.project=p.proj;
   document.getElementById('challengeBlurb').innerHTML=presetBlurb(i)+' <a href="https://www.inaturalist.org/projects/'+p.proj+'" target="_blank" rel="noopener" style="color:var(--acc);white-space:nowrap">'+t('join')+'</a>';}
 applyChallenge(PRESETS[0]);
