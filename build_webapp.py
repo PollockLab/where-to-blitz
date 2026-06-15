@@ -298,6 +298,7 @@ details.adv>summary:hover{color:var(--ink)}
     <div class="legend" style="margin-top:8px"><span data-i18n="skip">skip</span><div class="bar"></div><span data-i18n="go_here">go here</span></div>
     <div style="color:var(--mut);font-size:11px;line-height:1.45;margin-top:7px" data-i18n-html="impact_expl">Each goal is scored <b style="color:var(--ink)">0–1 per cell</b>; your slider weights combine them, then cells are <b style="color:var(--ink)">ranked against each other</b> and shown as <b style="color:var(--ink)">impact 0–100</b> (a percentile — 100 = top-priority cell shown). Hover a cell to see which goals drive it.</div>
     <div style="color:var(--mut);font-size:11px;line-height:1.5;margin-top:9px" data-i18n-html="axis_method"></div>
+    <div style="margin-top:9px"><a href="https://github.com/PollockLab/where-to-blitz/blob/main/where-to-blitz-walkthrough.ipynb" target="_blank" rel="noopener" style="color:var(--acc);font-size:12px;font-weight:600" data-i18n="methodology_link">📖 Full methodology &amp; data — trace every number →</a></div>
     <p class="foot" data-i18n-html="foot"><b style="color:var(--ink)">How it works:</b> <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">Blitz the Gap</a> is a Canada-wide bioblitz — head to a high-priority spot, record what you see on <a href="https://www.inaturalist.org" target="_blank" rel="noopener" style="color:var(--acc)">iNaturalist</a>, and your research-grade sightings flow into the <a href="https://www.inaturalist.org/projects/blitz-the-gap-2026-general" target="_blank" rel="noopener" style="color:var(--acc)">2026 project</a>, filling the map's gaps. Blitz the Gap is led by the <a href="https://pollocklab.github.io/blitz-the-gap/" target="_blank" rel="noopener" style="color:var(--acc)">Pollock Lab</a> at McGill University; this is a work-in-progress companion tool, not an official project page.<br><br>Nationally, the robust priority signal is <b style="color:var(--ink)">under-sampling</b> (iNaturalist density) + <b style="color:var(--ink)">climate coverage</b> (CHELSA); rarity and freshness are now real (rarity = COSEWIC/SARA species at risk via CAN-SAR + GBIF; freshness = iNaturalist recent vs all-time density). Drive/cycle/walk routes from OSRM (FOSSGIS); travel time from Weiss 2018. Driving CO₂ ≈ 0.18 kg/km; cycling/walking zero. A planning aid — obscure sensitive-species locations and respect Indigenous data-sovereignty before any public release.<br><br>This map spans many <b style="color:var(--ink)">Indigenous territories</b> — see whose at <a href="https://native-land.ca" target="_blank" rel="noopener" style="color:var(--acc)">native-land.ca</a>, and seek consent before recording on their lands.</p>
   </details>
   <details class="adv" ontoggle="renderCellTable()"><summary data-i18n="top_cells">Top cells (accessible list)</summary><div id="celltable"></div></details>
@@ -376,6 +377,7 @@ const I18N={
     ge_cats:["Fishes","Fungi","Reptiles & Amphibians","Invertebrates","Mammals","Plants"],
     ge_all:"All groups under-sampled",
     ge_most:"⚖️ Most under-represented here:",
+    methodology_link:"📖 Full methodology & data — trace every number →",
     hide_panel:"Hide the panel (more map)",
     show_panel:"Show the panel",
     zoom_scale:"🔍 Rescale colours to the current view",
@@ -518,6 +520,7 @@ const I18N={
     ge_cats:["Poissons","Champignons","Reptiles et amphibiens","Invertébrés","Mammifères","Plantes"],
     ge_all:"Tous sous-échantillonnés",
     ge_most:"⚖️ Le plus sous-représenté ici :",
+    methodology_link:"📖 Méthodologie complète et données — traçez chaque chiffre →",
     hide_panel:"Masquer le panneau (plus de carte)",
     show_panel:"Afficher le panneau",
     zoom_scale:"🔍 Recalibrer les couleurs sur la vue actuelle",
