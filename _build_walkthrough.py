@@ -252,11 +252,12 @@ print("→ density 0→thousands and zero-obs 95%→0% across the line = a data-
 
 # ---------------------------------------------------------------- the five axes, visual
 md(r"""
-## 3 · The five axes — what each one looks like over Canada
+## 3 · The five goals — what each one looks like over Canada
 
-Each axis is scored **0–1 per cell**. Before the formulas, here is the actual content:
-the five layers side by side. Read them as *"where does each goal send you?"* — they
-disagree, which is the whole point of letting the user weight them (Section 6).
+Every square is scored from **0 to 1** on five goals (we call them *axes* in the code). Here
+they are side by side — read each map as *"where would this goal send me?"* They send you to
+different places, which is exactly why you get to choose between them (§6). Each goal below
+opens with a one-line plain-English version, then the exact method and the design choice behind it.
 """)
 code(r"""
 titles = {
@@ -277,10 +278,13 @@ plt.tight_layout(); plt.show()
 md(r"""
 ### 3.1 · Discover — and the **de-saturation choice**
 
-**Measures:** how under-sampled a cell is. **Formula intent:** lower iNaturalist density →
-higher discover.
+> **In plain terms:** *go where few people have looked.* A square scores high if hardly anyone
+> has recorded there on iNaturalist.
 
-**The choice.** The obvious formula is `norm(1 / (density + ε))`. We *don't* ship it. On the
+**Measures:** how under-sampled a square is — fewer records, higher discover.
+
+**The choice (why it's a *ranking*, not just "1 ÷ records").** The obvious formula is
+`norm(1 / (density + ε))`. We *don't* ship it. On the
 real national density it is violently bimodal: ~half the cells have zero research-grade
 records and pin at 1.0, while every recorded cell collapses to near-zero — the map becomes a
 binary "recorded / not", with no gradient to plan a trip on. The shipped axis is instead a
@@ -309,6 +313,9 @@ plt.tight_layout(); plt.show()
 # ---- conservation
 md(r"""
 ### 3.2 · Find rare species — and the **dual-use safety choice**
+
+> **In plain terms:** *go where Canada's species-at-risk live.* A square scores high if many
+> threatened species have been recorded in the surrounding area.
 
 **Measures:** how many of Canada's at-risk species occur in a cell — "Canada's Most Wanted."
 **Formula:** per cell, sum status weights of at-risk species recorded there
@@ -347,16 +354,20 @@ print("Caveat: reflects ASSESSED species only (CAN-SAR ~2021); IUCN/COSEWIC unde
 
 # ---- env
 md(r"""
-### 3.3 · Cover every habitat — climate surprisal
+### 3.3 · Cover every habitat — climate "surprisal"
 
-**Measures:** how under-sampled a cell's *climate type* is (not its location).
-**Formula:** in 3-D CHELSA climate space (temperature, seasonality, precipitation), estimate
-how densely *recorded* places resemble this cell's climate via a density-weighted Gaussian
-kernel; `env = −log(weighted climate density)`, percentile-ranked 0–1.
+> **In plain terms:** *go where the climate itself is barely recorded.* Some climate types —
+> a particular cold, wet, coastal mix, say — are hardly sampled anywhere in Canada. A square
+> with such a climate scores high **even if it sits next to a city.**
 
-**The choice:** geographic gap ≠ environmental gap. A cell can be near a city yet sit in a
-climate type almost nobody records. Scoring "climate surprisal" rather than distance keeps the
-axis genuinely distinct from `discover` (we verify that distinctness in Section 6).
+**Measures:** how under-sampled a square's *climate type* is (not its location).
+**How:** we describe each square by three CHELSA numbers (temperature, how much it swings
+through the year, and rainfall), then ask "how many *already-recorded* places have a climate
+like this one?" Few similar recorded places → high score. (Technically: a density estimate in
+3-D climate space, ranked 0–1.)
+
+**The choice:** a geographic gap is not the same as a *climate* gap. Scoring climate rarity
+rather than distance keeps this goal genuinely different from "discover" — we check that in §6.
 """)
 code(r"""
 fig, axs = plt.subplots(1, 2, figsize=(12, 3.8))
@@ -370,9 +381,12 @@ plt.tight_layout(); plt.show()
 md(r"""
 ### 3.4 · Freshest gaps — and the **iNat-only data-integrity choice**
 
-**Measures:** cells well-recorded *historically* on iNaturalist but *quiet recently* — worth
-revisiting. **Formula:** for cells with ≥20 historical records,
-`staleness = (1 − n_recent/n_all) · log(1 + n_all)`, min–max 0–1.
+> **In plain terms:** *revisit places that were busy once but have gone quiet.* A square that
+> people recorded heavily years ago but barely touch now scores high — its picture is going stale.
+
+**Measures:** squares well-recorded *in the past* but *quiet lately*. **Formula:** for squares
+with ≥20 historical records, `staleness = (1 − recent/all-time) · log(1 + all-time records)`,
+scaled 0–1. Lots of old records + few recent ones → high.
 
 **The choice, caught by cross-validation.** An earlier version sourced this from GBIF density.
 But GBIF blends iNaturalist + eBird + museum specimens — eBird's recent bird volume and museums'
@@ -401,7 +415,10 @@ plt.tight_layout(); plt.show()
 md(r"""
 ### 3.5 · Sample before it's lost — recent habitat change
 
-**Measures:** recent forest-cover loss — record before it's gone. **Formula:**
+> **In plain terms:** *record it before it's gone.* A square scores high where forest cover
+> has recently been lost (logging, fire, dieback).
+
+**Measures:** recent forest-cover loss. **Formula:**
 `urgency = normalize(Hansen forest-loss fraction)`, 0–1. High = recent loss (logging, fire,
 dieback — Hansen measures loss of any cause, deliberately *not* labelled "deforestation").
 The Fort McMurray fire scar scores ~0.75; saturated southern cities ~0.
@@ -416,17 +433,25 @@ print(f"Fort McMurray-area cell urgency = {fm.urgency:.2f}  (vs national median 
 
 # ---------------------------------------------------------------- composite
 md(r"""
-## 4 · The composite "impact" — the **percentile-rank choice**
+## 4 · The score on the map — "impact 0–100"
 
-You set a weight 0–1 per axis; per cell `raw_impact = Σ wᵢ · axisᵢ`. The number shown is
-**not** that raw value — it's its **percentile rank** across the cells in view.
+> **In plain terms:** move the sliders to say how much each goal matters to you. Each square
+> then gets a single **0–100 score**, where **100 is the highest-priority square on the map**
+> for your current settings (and the chosen life group). It's a *ranking of all the squares
+> against each other* — not a raw total — so the colours always use the full scale.
 
-**Why this is the most important single choice in the app.** A handful of Arctic
-"super-gaps" (max discover *and* rare climate) have enormous raw impact. Under a min–max
-scale they stretch the colour ramp so every reachable southern cell collapses to ~0/100 —
-the map tells a planner "nowhere near you matters," which is both false and useless. A
-percentile rank spends the whole 0–100 range on the cells actually in view. The figure shows
-the same weighted impact under both scalings.
+**How it's built (two steps):**
+1. **Blend** — multiply each goal's 0–1 value by your slider weight and add them up
+   (`raw = w₁·discover + w₂·rare + …`). A square strong on the goals you care about gets a big raw number.
+2. **Rank** — line every square up by its blended number and show its *place in the line* as
+   0–100. Top square → 100, bottom → 0. (The ranking covers all squares of the selected life
+   group across Canada; it doesn't change when you pan or zoom.)
+
+**Why the ranking step matters (the key choice).** A few Arctic squares are off-the-charts
+gaps. If we coloured by the raw total, those few would stretch the scale so every other square —
+including everywhere you could *actually reach* — turns the same dull near-zero, and the map
+would tell you "nowhere matters," which is both false and useless. Ranking spreads the full
+0–100 range across all the squares. The figure shows the *same* blended score both ways.
 """)
 code(r"""
 DEFAULT_W = {"discover": 0.8, "conservation": 0.0, "env": 0.7, "staleness": 0.0, "urgency": 0.3}  # 'Biodiversity impact' preset
@@ -435,12 +460,12 @@ minmax = (raw - raw.min()) / (raw.max() - raw.min()) * 100
 order = raw.argsort(); pct = np.empty_like(raw); pct[order] = np.linspace(0, 100, len(raw))
 
 fig, axs = plt.subplots(2, 2, figsize=(12, 7.4))
-canada_map(axs[0,0], minmax, "min–max scaled impact", cmap="magma", vmax=100)
-canada_map(axs[0,1], pct,    "percentile-rank impact (shipped)", cmap="magma", vmax=100)
-axs[1,0].hist(minmax, bins=60, color="#c0392b"); axs[1,0].set_title("min–max: Arctic super-gaps crush everything to ~0"); axs[1,0].set_xlabel("impact 0–100"); axs[1,0].set_ylabel("cells")
-axs[1,1].hist(pct, bins=60, color="#27ae60"); axs[1,1].set_title("percentile: full range usable for planning"); axs[1,1].set_xlabel("impact 0–100")
+canada_map(axs[0,0], minmax, "If we coloured by the RAW total", cmap="magma", vmax=100)
+canada_map(axs[0,1], pct,    "What the app shows: a RANKING", cmap="magma", vmax=100)
+axs[1,0].hist(minmax, bins=60, color="#c0392b"); axs[1,0].set_title("Raw total: a few Arctic gaps crush everything to ~0"); axs[1,0].set_xlabel("score 0–100"); axs[1,0].set_ylabel("squares")
+axs[1,1].hist(pct, bins=60, color="#27ae60"); axs[1,1].set_title("Ranking: full 0–100 range, usable for planning"); axs[1,1].set_xlabel("score 0–100")
 crushed = (minmax < 5).mean()
-fig.suptitle(f"Same weighted score, two scalings — min–max pins {crushed*100:.0f}% of cells below 5/100", y=1.0)
+fig.suptitle(f"Same blended score, two ways to colour it — the raw total pins {crushed*100:.0f}% of squares below 5/100", y=1.0)
 plt.tight_layout(); plt.show()
 """)
 
@@ -479,15 +504,19 @@ plt.tight_layout(); plt.show()
 
 # ---------------------------------------------------------------- disagreement
 md(r"""
-## 6 · Do the axes actually disagree? (Why multi-objective is honest)
+## 6 · Do the goals actually point to different places?
 
-If the five axes were near-duplicates, the sliders would be theatre. They aren't. Below is
-the Spearman rank-correlation between axes **computed over recorded cells only** (`n_train > 0`).
+> **In plain terms:** if the five goals all sent you to the same squares, the sliders would be
+> for show. They don't. The grid below measures *how much any two goals agree on where to go*:
+> **+1 = the same places, 0 = unrelated, −1 = opposite places.** Most pairs are near 0 or
+> negative — they're genuinely different goals, which is why it's worth choosing between them.
 
-> A verification catch worth flagging: computed over the *full* grid, discover and env
-> correlate ~0.9 — an artifact, because ~half the cells are zero-observation gaps that pin
-> discover at its max, so it can't vary. Restricting to recorded cells gives the honest,
-> negative relationship. The number you compute depends on the cells you include.
+(Computed over squares that actually have records, `n_train > 0`.)
+
+> A verification catch worth flagging: over the *full* grid, discover and habitat-coverage look
+> ~0.9 "agree" — an artifact, because ~half the squares are empty gaps that pin discover at its
+> max, so it can't vary. Restricting to recorded squares gives the honest, near-zero/negative
+> picture. The number depends on which squares you include.
 """)
 code(r"""
 rec = ALL[ALL["n_train"] > 0]
@@ -500,46 +529,59 @@ for i in range(5):
     for j in range(5):
         ax.text(j, i, f"{M.iloc[i,j]:+.2f}", ha="center", va="center",
                 color="white" if abs(M.iloc[i,j])>0.5 else "black", fontsize=9)
-ax.set_title(f"Axis Spearman ρ over {len(rec):,} recorded cells\n(off-diagonal near 0 / negative = genuinely different goals)")
+ax.set_title(f"How much each pair of goals agrees on where to go\n(+1 same places · 0 unrelated · −1 opposite; over {len(rec):,} recorded squares)")
 fig.colorbar(im, fraction=0.046, pad=0.04); plt.tight_layout(); plt.show()
 """)
 
 # ---------------------------------------------------------------- trip planner
 md(r"""
-## 7 · From map to trip — the planning choices
+## 7 · From map to trip — how navigation works
 
-The map answers *where*; the planner answers *where can I actually get to and back, greenest*.
-The choices here are about **cost and carbon, never about boosting the score**:
+> **In plain terms:** the map tells you *where* the good squares are; the planner tells you
+> *which one you can actually get to and back from* in the time you have — by the greenest way
+> that still works. You give it your start and a time budget (say "Vancouver, 5 hours"); it
+> finds the highest-impact square you can round-trip, picks walk/bike/drive for you, and draws
+> the real route.
 
-- **Accessibility is a cost denominator, not a booster.** Trips rank by `impact × field-time`,
-  and travel time only ever *divides* — so the planner never re-creates roadside sampling bias
-  by rewarding easy-to-reach cells. Remote gaps stay high-priority; they just cost more to reach.
-- **Adaptive greenest mode.** The default travel mode is the greenest (Walk > Cycle > Drive)
-  that can still reach a gap within your time budget — chosen from your start, not assumed.
-- **Real routes, honest fallback.** Walk/Cycle/Drive routes come from OSRM; when a route can't
-  be fetched it falls back to a straight-line estimate (×1.35 road factor) and the trip is
-  *flagged as estimated*. Driving ≈ 0.18 kg CO₂/km; cycling/walking zero.
-- **"Worth the drive."** A field:travel ratio floor (record ≥ half the time you drive) keeps the
-  default trip from being 4 h of driving for 1 h of recording.
+**The choices that keep it honest:**
 
-There is no figure here because this is interaction, not data — but it is the same discipline:
-every default is a defensible choice, and the estimated cases are labelled as such.
+- **Travel only ever *costs* you — it never raises a square's score.** A trip is ranked by
+  *how good the square is × how long you'd get to record there*. Closer squares win partly
+  because you spend less time travelling and more time recording — but being easy to reach
+  never makes a square "better." That's deliberate: otherwise everyone gets sent to the same
+  roadside spots and the gaps never get filled.
+- **Greenest mode that fits.** It defaults to the greenest option — **walk, then bike, then
+  drive** — that can still reach the square within your budget, decided from *your* start.
+- **Real routes, honest fallback.** Walk/bike/drive routes come from real road data
+  (OpenStreetMap routing). If a route can't be fetched, it falls back to a straight-line
+  estimate and **says so**. Driving counts ≈ 0.18 kg CO₂ per km; walking and cycling, zero.
+- **"Worth the drive."** By default a trip must let you record for at least *half* as long as
+  you travel — so you don't get a 4-hour drive for 1 hour in the field.
+
+(No figure here — this is interaction, not data — but it's the same discipline: every default
+is a defensible choice, and any estimated route is labelled.)
 """)
 
 # ---------------------------------------------------------------- validation
 md(r"""
-## 8 · Does the central choice hold up? — directed beats opportunistic
+## 8 · Does the core idea actually work? — we tested it like a forecast
 
-The app's core bet is that **directing people to under-sampled cells discovers more new
-species than letting them go where it's already busy.** That is a *prediction*, and it is
-backtestable on public data alone — no need for the private parquet.
+> **In plain terms:** the whole tool bets that **sending people to under-recorded squares turns
+> up more new species than sending them where it's already busy.** We didn't just assert that —
+> we checked it against a real bioblitz, like grading a weather forecast after the fact.
 
-**Design of the test** (`backtest_appscore.py`, leakage-free): take the 2025 BC pilot
-(iNat project 228908), split each cell's records at a date `T`. Build the priority axes from
-**train-only** observations; score the outcome as **new-to-cell species** from **test-only**
-observations. To kill the species-accumulation confound, rarefy every cell to a fixed `K = 5`
-test observations. A positive Spearman ρ between an axis and post-split discovery means that
-axis sends you to genuinely productive cells.
+**How the test works** (on the real 2025 BC pilot, iNat project 228908):
+
+1. **Hide the future.** Split each square's records in time. Build the map using **only the
+   earlier** records.
+2. **Score against what happened next.** Count how many **species new to that square** showed
+   up in the **later** records — the part the map never saw.
+3. **Compare fairly.** Check the same fixed number of later visits per square, so a square
+   doesn't look better just because more people happened to go there.
+
+If the map's high-priority squares are the ones that later turned up new species, the core idea
+holds. The bars below show the agreement (again: **+1 = it nailed it, 0 = no better than chance,
+−1 = exactly wrong**).
 """)
 code(r"""
 app = json.load(open(RES / "voi_appscore_results.json"))
@@ -555,15 +597,15 @@ bt = pd.DataFrame(rows).set_index("taxon")
 fig, ax = plt.subplots(figsize=(9.5, 4.4))
 bt.plot.bar(ax=ax, color=["#27ae60", "#2980b9", "#c0392b"], width=0.8)
 ax.axhline(0, color="k", lw=0.8)
-ax.set_ylabel("Spearman ρ  (priority vs post-split new-to-cell species)")
-ax.set_title("Directed gap-filling discovers more; going where it's busy discovers less (exact mirror)")
+ax.set_ylabel("Agreement with what was discovered next\n(+1 nailed it · 0 chance · −1 exactly wrong)")
+ax.set_title("Sending people to gaps finds more new species; sending them where it's busy finds fewer (mirror image)")
 ax.legend(loc="lower right", fontsize=9); ax.set_xlabel("")
 plt.xticks(rotation=0); plt.tight_layout(); plt.show()
 
 m_app  = bt["app (gap-filling)"].mean()
 m_busy = bt["go-where-busy"].mean()
-print(f"Mean ρ — app gap-filling priority : {m_app:+.2f}  (positive on {bt['app (gap-filling)'].gt(0).sum()}/{len(bt)} taxa)")
-print(f"Mean ρ — go-where-it's-busy       : {m_busy:+.2f}  (the near-exact negative mirror)")
+print(f"Average agreement — app's gap-filling map : {m_app:+.2f}  (correct on {bt['app (gap-filling)'].gt(0).sum()}/{len(bt)} animal groups)")
+print(f"Average agreement — 'go where it's busy'  : {m_busy:+.2f}  (the near-exact opposite)")
 """)
 md(r"""
 **Two honest findings to highlight:**
