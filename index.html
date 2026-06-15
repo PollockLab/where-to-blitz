@@ -255,6 +255,8 @@ details.adv>summary:hover{color:var(--ink)}
     <label class="toggle" style="margin:8px 0 2px"><input type="checkbox" id="tgGettingEven"> <span data-i18n="getting_even">⚖️ Getting Even — which group to record</span></label><span class="infobtn" data-i18n-title="ge_info_btn" title="How is the recommended group worked out?" role="button" tabindex="0" aria-label="How the recommended group is worked out" aria-expanded="false" style="margin-left:6px;vertical-align:middle" onclick="const b=document.getElementById('geinfo').classList.toggle('open');this.setAttribute('aria-expanded',b)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">i</span>
     <div style="color:var(--mut);font-size:11px;line-height:1.4" data-i18n="ge_hint">Each cell is coloured by the most under-represented taxonomic group there (birds excluded — already well covered by eBird) — our finer-resolution take on the official "Getting Even" challenge. From iNaturalist observation density: a sample, not a census.</div>
     <div class="infobox" id="geinfo" data-i18n-html="ge_method"></div>
+    <label class="toggle" style="margin:8px 0 2px"><input type="checkbox" id="tgCanadaOnly"> <span data-i18n="canada_only">🍁 Canada only</span></label>
+    <div style="color:var(--mut);font-size:11px;line-height:1.4" data-i18n="canada_only_hint">Hides cells across the US border, where the bright band is a data edge (the Canadian layer stops at the border), not a real gap. Approximate boundary.</div>
     <label class="toggle" style="margin:8px 0 2px"><input type="checkbox" id="tgZoomScale"> <span data-i18n="zoom_scale">🔍 Rescale colours to the current view</span></label>
     <div style="color:var(--mut);font-size:11px;line-height:1.4" data-i18n="zoom_scale_hint">Ranks cells against what's on screen, so local gaps stand out when you zoom in. Off = ranked across all of Canada (a dark cell means the same everywhere).</div>
     <div style="display:flex;justify-content:space-between;margin:9px 0 0"><span style="font-size:13px" data-i18n="map_brightness">Map brightness</span><span class="v" id="bopv" style="color:var(--acc)">100%</span></div>
@@ -344,6 +346,8 @@ const I18N={
     ge_cats:["Fishes","Fungi","Reptiles & Amphibians","Invertebrates","Mammals","Plants"],
     ge_all:"All groups under-sampled",
     ge_most:"⚖️ Most under-represented here:",
+    canada_only:"🍁 Canada only",
+    canada_only_hint:"Hides cells across the US border, where the bright band is a data edge (the Canadian layer stops at the border), not a real gap. Approximate boundary.",
     more_presets:"More ▾",
     fewer_presets:"Fewer ▴",
     methodology_link:"📖 Full methodology & data — trace every number →",
@@ -489,6 +493,8 @@ const I18N={
     ge_cats:["Poissons","Champignons","Reptiles et amphibiens","Invertébrés","Mammifères","Plantes"],
     ge_all:"Tous sous-échantillonnés",
     ge_most:"⚖️ Le plus sous-représenté ici :",
+    canada_only:"🍁 Canada seulement",
+    canada_only_hint:"Masque les cellules au sud de la frontière, où la bande vive est une limite de données (la couche canadienne s'arrête à la frontière), pas une vraie lacune. Frontière approximative.",
     more_presets:"Plus ▾",
     fewer_presets:"Moins ▴",
     methodology_link:"📖 Méthodologie complète et données — traçez chaque chiffre →",
@@ -631,6 +637,11 @@ async function loadGE(){if(GE_LOADED)return;const r=await fetchT(DATA_DIR+'webap
   for(const e of j.gettingeven)GE[gekey(e[0],e[1])]=[e[2],e[3]];GE_LOADED=true;}
 function geActive(){const e=document.getElementById('tgGettingEven');return!!(e&&e.checked);}
 function zoomScaleActive(){const e=document.getElementById('tgZoomScale');return!!(e&&e.checked);}
+function caOnlyActive(){const e=document.getElementById('tgCanadaOnly');return!!(e&&e.checked);}
+// US-side cells (approx, lazy-loaded): hidden when "Canada only" is on -- the cross-border band is a data edge, not a real gap (#5).
+let US_CELLS=null;
+async function loadUS(){if(US_CELLS)return;try{const r=await fetchT(DATA_DIR+'us_cells.json',8000);US_CELLS=new Set((await r.json()).us_cells||[]);}catch(e){US_CELLS=new Set();}}
+function applyCanadaMask(){if(!caOnlyActive()||!US_CELLS)return;markers.forEach(m=>{if(US_CELLS.has(gekey(m.r[0],m.r[1])))m.mk.setStyle({opacity:0,fillOpacity:0});});}
 function geColour(m){const v=GE[gekey(m.r[0],m.r[1])];if(!v)return GE_ALL;return v[0]<0?GE_ALL:(GE_PAL[v[0]]||GE_ALL);}
 // A cell in the bottom band of the national gap ranking (e.g. well-sampled cities) is a low
 // priority for the all-taxa mission -- but it's not worthless. Surface the two honest reasons
@@ -852,7 +863,7 @@ function buildMarkers(){
   if(markers.length===rs.length){markers.forEach((m,i)=>m.r=rs[i]);recolour();return;}
   markers.forEach(m=>map.removeLayer(m.mk));markers=[];
   for(const r of rs){const mk=L.rectangle([[r[0]-HALF,r[1]-HALF],[r[0]+HALF,r[1]+HALF]],{stroke:true,weight:1,fillOpacity:.5});
-    mk.on('click',e=>{state.view==='explore'?exploreCell(r[0],r[1]):planTap(r[0],r[1]);});   // r[0],r[1] are invariant across taxa
+    mk.on('click',e=>{if(caOnlyActive()&&US_CELLS&&US_CELLS.has(gekey(r[0],r[1])))return;state.view==='explore'?exploreCell(r[0],r[1]):planTap(r[0],r[1]);});   // r[0],r[1] are invariant across taxa
     mk.addTo(map);markers.push({mk,r});}
   recolour();
 }
@@ -868,7 +879,7 @@ function recolour(){
   if(geActive()){
     // Categorical layer: colour by most under-represented group (no magnitude). Flat opacity; stroke matches fill so cells tile seamlessly.
     markers.forEach(m=>{const c=geColour(m);m.mk.setStyle({fillColor:c,color:c,weight:1,opacity:0.62,fillOpacity:0.62});});
-    renderCellTable();return;
+    applyCanadaMask();renderCellTable();return;
   }
   // Viewport-relative ranking: rank cells only against what's currently on screen, so a
   // Montrealer zoomed in sees local gaps instead of a uniformly low-priority map. Off-screen
@@ -883,7 +894,7 @@ function recolour(){
     const fl=od.length>0&&(od[od.length-1][0]-od[0][0])<1e-9;
     const dim=colour(0);markers.forEach(m=>{m.t=0;m.mk.setStyle({fillColor:dim,color:dim,weight:1,opacity:.05,fillOpacity:.05});});
     inb.forEach((m,i)=>{const t=fl?0:rk[i]/m1;m.t=t;const o=.25+.5*t,c=colour(t);m.mk.setStyle({fillColor:c,color:c,weight:1,opacity:o,fillOpacity:o});});
-    renderCellTable();return;
+    applyCanadaMask();renderCellTable();return;
   }
   const vals=markers.map(m=>impact(m.r));
   // Percentile-rank, not min-max: a few Arctic super-gaps (max discover + rare climate)
@@ -896,7 +907,7 @@ function recolour(){
   // Cells stay clickable -- the click popup already shows the cell's score & drivers.
   // stroke matches fill (same colour+opacity) so adjacent canvas rectangles tile seamlessly -- without it, anti-alias gaps stripe the map at low zoom (worse for narrow high-latitude cells)
   markers.forEach((m,i)=>{const t=flat?0:rank[i]/n1;m.t=t;const o=cov?0:0.25+0.5*t,c=colour(t);m.mk.setStyle({fillColor:c,color:c,weight:1,opacity:o,fillOpacity:o});});
-  renderCellTable();
+  applyCanadaMask();renderCellTable();
 }
 // Swap #maplegend between the priority ramp (default) and a categorical Getting Even legend. Pale swatches get a 1px #ccc border.
 let GE_PRIORITY_LEGEND=null;
@@ -975,6 +986,7 @@ function setCoverage(){
 document.getElementById('tgCoverage').addEventListener('change',e=>{if(e.target.checked)document.getElementById('tgGettingEven').checked=false;updateLegend();setCoverage();recolour();});
 document.getElementById('tgGettingEven').addEventListener('change',e=>{if(e.target.checked)document.getElementById('tgCoverage').checked=false;loadGE().then(()=>{setCoverage();updateLegend();recolour();});});
 document.getElementById('tgZoomScale').addEventListener('change',recolour);
+document.getElementById('tgCanadaOnly').addEventListener('change',()=>{loadUS().then(recolour);});
 // Re-rank against the new viewport only while view-relative colouring is on (avoids the per-pan cost otherwise).
 map.on('moveend',()=>{if(zoomScaleActive()&&!geActive())recolour();});
 // Collapse the side panel for a near-full-width map (Strava-clean) -- additive, reversible. invalidateSize after the layout settles.
