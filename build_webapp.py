@@ -276,8 +276,9 @@ details.adv>summary:hover{color:var(--ink)}
     </div>
     <label class="toggle" style="margin:8px 0 2px"><input type="checkbox" id="tgCoverage"> <span data-i18n="inat_coverage">🛰 iNaturalist coverage</span></label>
     <div style="color:var(--mut);font-size:11px;line-height:1.4" data-i18n="coverage_hint">Where data already is (bright = well-sampled, dark = gaps) — the official "light up the map" layer, for the current group.</div>
-    <label class="toggle" style="margin:8px 0 2px"><input type="checkbox" id="tgGettingEven"> <span data-i18n="getting_even">⚖️ Getting Even — which group to record</span></label>
+    <label class="toggle" style="margin:8px 0 2px"><input type="checkbox" id="tgGettingEven"> <span data-i18n="getting_even">⚖️ Getting Even — which group to record</span></label><span class="infobtn" data-i18n-title="ge_info_btn" title="How is the recommended group worked out?" role="button" tabindex="0" aria-label="How the recommended group is worked out" aria-expanded="false" style="margin-left:6px;vertical-align:middle" onclick="const b=document.getElementById('geinfo').classList.toggle('open');this.setAttribute('aria-expanded',b)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">i</span>
     <div style="color:var(--mut);font-size:11px;line-height:1.4" data-i18n="ge_hint">Each cell is coloured by the most under-represented taxonomic group there (birds excluded — already well covered by eBird) — our finer-resolution take on the official "Getting Even" challenge. From iNaturalist observation density: a sample, not a census.</div>
+    <div class="infobox" id="geinfo" data-i18n-html="ge_method"></div>
     <div style="display:flex;justify-content:space-between;margin:9px 0 0"><span style="font-size:13px" data-i18n="map_brightness">Map brightness</span><span class="v" id="bopv" style="color:var(--acc)">100%</span></div>
     <input type="range" id="baseop" min="0.25" max="1" step="0.05" value="1" aria-label="Map brightness">
   </details>
@@ -353,6 +354,13 @@ const I18N={
     coverage_hint:`Where data already is (bright = well-sampled, dark = gaps) — an iNaturalist-density "light up the map" layer (Biodiversité Québec), for the current group.`,
     getting_even:"⚖️ Getting Even — which group to record",
     ge_hint:`Each cell is coloured by the most under-represented taxonomic group there (birds excluded — already well covered by eBird) — our finer-resolution take on the official "Getting Even" challenge. From iNaturalist observation density: a sample, not a census.`,
+    ge_info_btn:"How is the recommended group worked out?",
+    ge_method:`<b>How "which group to record" is worked out.</b> Tap any cell and the app asks iNaturalist, live, for each group of life (birds excluded — eBird already covers them):
+      <ul>
+      <li>how many distinct research-grade species are recorded <b style="color:var(--ink)">in this cell</b>, versus</li>
+      <li>how many exist in the <b style="color:var(--ink)">~50&nbsp;km around it</b>.</li>
+      </ul>
+      A group's coverage is the first divided by the second, then divided by the cell's overall recording rate — so an average group sits at <b style="color:var(--ink)">1</b>. Groups well below 1 are under-recorded relative to their neighbours and rise to the top, <b style="color:var(--ink)">biggest relative gap first</b>. That normalising step surfaces the real gaps even where everything is under-recorded (one cell can't hold a whole region's diversity). The map colours each cell by its single worst group; tap for the full ranked tree, tap a group to map it. iNaturalist density — a sample, not a census.`,
     ge_cats:["Fishes","Fungi","Reptiles & Amphibians","Invertebrates","Mammals","Plants"],
     ge_all:"All groups under-sampled",
     ge_most:"⚖️ Most under-represented here:",
@@ -483,6 +491,13 @@ const I18N={
     coverage_hint:`Où les données existent déjà (clair = bien échantillonné, foncé = lacunes) — une couche de densité iNaturalist « illuminer la carte » (Biodiversité Québec), pour le groupe actuel.`,
     getting_even:"⚖️ Combler l'écart — quel groupe noter",
     ge_hint:`Chaque cellule est colorée selon le groupe taxonomique le plus sous-représenté (oiseaux exclus — déjà bien couverts par eBird) — notre version à plus fine résolution du défi officiel « Combler l'écart ». Selon la densité d'observations iNaturalist : un échantillon, pas un inventaire.`,
+    ge_info_btn:"Comment le groupe recommandé est-il déterminé ?",
+    ge_method:`<b>Comment « quel groupe noter » est déterminé.</b> Touchez une cellule et l'application interroge iNaturalist, en direct, pour chaque groupe du vivant (oiseaux exclus — déjà couverts par eBird) :
+      <ul>
+      <li>combien d'espèces distinctes de qualité recherche sont notées <b style="color:var(--ink)">dans cette cellule</b>, par rapport à</li>
+      <li>combien existent dans les <b style="color:var(--ink)">~50&nbsp;km autour</b>.</li>
+      </ul>
+      La couverture d'un groupe est la première divisée par la seconde, puis divisée par le taux d'enregistrement global de la cellule — un groupe moyen vaut donc <b style="color:var(--ink)">1</b>. Les groupes bien en dessous de 1 sont sous-documentés par rapport à leurs voisins et remontent en tête, <b style="color:var(--ink)">plus grande lacune relative d'abord</b>. Cette normalisation fait ressortir les vraies lacunes même là où tout est sous-documenté (une cellule ne peut contenir toute la diversité d'une région). La carte colore chaque cellule selon son groupe le plus faible ; touchez pour l'arbre complet classé, touchez un groupe pour le cartographier. Densité iNaturalist : un échantillon, pas un inventaire.`,
     ge_cats:["Poissons","Champignons","Reptiles et amphibiens","Invertébrés","Mammifères","Plantes"],
     ge_all:"Tous sous-échantillonnés",
     ge_most:"⚖️ Le plus sous-représenté ici :",
