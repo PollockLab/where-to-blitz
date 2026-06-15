@@ -255,7 +255,7 @@ details.adv>summary:hover{color:var(--ink)}
     <label class="toggle" style="margin:8px 0 2px"><input type="checkbox" id="tgGettingEven"> <span data-i18n="getting_even">⚖️ Getting Even — which group to record</span></label><span class="infobtn" data-i18n-title="ge_info_btn" title="How is the recommended group worked out?" role="button" tabindex="0" aria-label="How the recommended group is worked out" aria-expanded="false" style="margin-left:6px;vertical-align:middle" onclick="const b=document.getElementById('geinfo').classList.toggle('open');this.setAttribute('aria-expanded',b)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">i</span>
     <div style="color:var(--mut);font-size:11px;line-height:1.4" data-i18n="ge_hint">Each cell is coloured by the most under-represented taxonomic group there (birds excluded — already well covered by eBird) — our finer-resolution take on the official "Getting Even" challenge. From iNaturalist observation density: a sample, not a census.</div>
     <div class="infobox" id="geinfo" data-i18n-html="ge_method"></div>
-    <label class="toggle" style="margin:8px 0 2px"><input type="checkbox" id="tgCanadaOnly"> <span data-i18n="canada_only">🍁 Canada only</span></label>
+    <label class="toggle" style="margin:8px 0 2px"><input type="checkbox" id="tgCanadaOnly" checked> <span data-i18n="canada_only">🍁 Canada only</span></label>
     <div style="color:var(--mut);font-size:11px;line-height:1.4" data-i18n="canada_only_hint">Hides cells across the US border, where the bright band is a data edge (the Canadian layer stops at the border), not a real gap. Approximate boundary.</div>
     <label class="toggle" style="margin:8px 0 2px"><input type="checkbox" id="tgZoomScale"> <span data-i18n="zoom_scale">🔍 Rescale colours to the current view</span></label>
     <div style="color:var(--mut);font-size:11px;line-height:1.4" data-i18n="zoom_scale_hint">Ranks cells against what's on screen, so local gaps stand out when you zoom in. Off = ranked across all of Canada (a dark cell means the same everywhere).</div>
@@ -641,7 +641,7 @@ function caOnlyActive(){const e=document.getElementById('tgCanadaOnly');return!!
 // US-side cells (approx, lazy-loaded): hidden when "Canada only" is on -- the cross-border band is a data edge, not a real gap (#5).
 let US_CELLS=null;
 async function loadUS(){if(US_CELLS)return;try{const r=await fetchT(DATA_DIR+'us_cells.json',8000);US_CELLS=new Set((await r.json()).us_cells||[]);}catch(e){US_CELLS=new Set();}}
-function applyCanadaMask(){if(!caOnlyActive()||!US_CELLS)return;markers.forEach(m=>{if(US_CELLS.has(gekey(m.r[0],m.r[1])))m.mk.setStyle({opacity:0,fillOpacity:0});});}
+function applyCanadaMask(){if(!caOnlyActive())return;if(!US_CELLS){loadUS().then(recolour);return;}markers.forEach(m=>{if(US_CELLS.has(gekey(m.r[0],m.r[1])))m.mk.setStyle({opacity:0,fillOpacity:0});});}
 function geColour(m){const v=GE[gekey(m.r[0],m.r[1])];if(!v)return GE_ALL;return v[0]<0?GE_ALL:(GE_PAL[v[0]]||GE_ALL);}
 // A cell in the bottom band of the national gap ranking (e.g. well-sampled cities) is a low
 // priority for the all-taxa mission -- but it's not worthless. Surface the two honest reasons
