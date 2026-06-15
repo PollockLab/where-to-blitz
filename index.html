@@ -36,6 +36,15 @@ html,body{margin:0;height:100%;font-family:-apple-system,Segoe UI,Roboto,Helveti
 #app{display:flex;height:calc(100% - var(--bh));margin-top:var(--bh)}
 #panel{width:360px;min-width:360px;height:100%;overflow-y:auto;background:var(--panel);padding:16px 16px 28px;border-right:1px solid #0a1119}
 #map{flex:1;height:100%}
+#panelToggle{position:fixed;top:calc(var(--bh) + 12px);left:360px;transform:translateX(-50%);z-index:1300;width:28px;height:28px;border-radius:50%;background:var(--panel);color:var(--ink);border:1px solid #2a3a4d;cursor:pointer;font-size:16px;line-height:26px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.3);padding:0}
+#panelToggle:hover{border-color:var(--acc);color:var(--acc)}
+#panelToggle:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+body.panel-collapsed #panel{display:none}
+body.panel-collapsed #panelToggle{left:8px;transform:none}
+body.panel-collapsed #map{flex:1;height:100%}
+body.panel-collapsed #viewtoggle{left:50%}
+body.panel-collapsed #maplegend{left:12px}
+body.panel-collapsed #loading{left:50%}
 h1{font-size:20.5px;margin:0 0 2px}
 .sub{color:var(--mut);font-size:14.5px;line-height:1.45;margin:0 0 8px}
 .sec{font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin:18px 0 8px;font-weight:700}
@@ -260,6 +269,7 @@ details.adv>summary:hover{color:var(--ink)}
   </details>
   <details class="adv" ontoggle="renderCellTable()"><summary data-i18n="top_cells">Top cells (accessible list)</summary><div id="celltable"></div></details>
 </div>
+<button id="panelToggle" type="button" aria-label="Hide the panel" title="Hide the panel">‹</button>
 <div id="map" role="application" aria-label="Interactive priority map (screen-reader users: use the Top cells list)"></div>
 <div id="viewtoggle" role="navigation" aria-label="Map view"><button id="vexplore" class="on" aria-pressed="true" data-i18n="view_explore">🗺 Explore</button><button id="vplan" aria-pressed="false" data-i18n="view_plan">🧭 Plan a trip</button><button id="vcompare" aria-pressed="false" data-i18n="view_compare">📊 Compare goals</button></div>
 <div id="loading" role="status" aria-live="polite" data-i18n="loading">🍃 Loading the map…</div>
@@ -333,6 +343,8 @@ const I18N={
     ge_cats:["Fishes","Fungi","Reptiles & Amphibians","Invertebrates","Mammals","Plants"],
     ge_all:"All groups under-sampled",
     ge_most:"⚖️ Most under-represented here:",
+    hide_panel:"Hide the panel (more map)",
+    show_panel:"Show the panel",
     zoom_scale:"🔍 Rescale colours to the current view",
     zoom_scale_hint:`Ranks cells against what's on screen, so local gaps stand out when you zoom in. Off = ranked across all of Canada (a dark cell means the same everywhere).`,
     legend_rel:"⚖ Colours rescaled to this view — not comparable to other zoom levels.",
@@ -473,6 +485,8 @@ const I18N={
     ge_cats:["Poissons","Champignons","Reptiles et amphibiens","Invertébrés","Mammifères","Plantes"],
     ge_all:"Tous sous-échantillonnés",
     ge_most:"⚖️ Le plus sous-représenté ici :",
+    hide_panel:"Masquer le panneau (plus de carte)",
+    show_panel:"Afficher le panneau",
     zoom_scale:"🔍 Recalibrer les couleurs sur la vue actuelle",
     zoom_scale_hint:`Classe les cellules par rapport à ce qui est à l'écran, pour faire ressortir les lacunes locales en zoomant. Désactivé = classement sur tout le Canada (une cellule foncée signifie la même chose partout).`,
     legend_rel:"⚖ Couleurs recalibrées sur cette vue — non comparables aux autres niveaux de zoom.",
@@ -951,6 +965,11 @@ document.getElementById('tgGettingEven').addEventListener('change',e=>{if(e.targ
 document.getElementById('tgZoomScale').addEventListener('change',recolour);
 // Re-rank against the new viewport only while view-relative colouring is on (avoids the per-pan cost otherwise).
 map.on('moveend',()=>{if(zoomScaleActive()&&!geActive())recolour();});
+// Collapse the side panel for a near-full-width map (Strava-clean) -- additive, reversible. invalidateSize after the layout settles.
+(function(){const tog=document.getElementById('panelToggle');if(!tog)return;
+  const setAria=c=>{const lab=t(c?'show_panel':'hide_panel');tog.setAttribute('aria-label',lab);tog.title=lab;tog.textContent=c?'›':'‹';};
+  setAria(false);
+  tog.addEventListener('click',()=>{const c=document.body.classList.toggle('panel-collapsed');setAria(c);setTimeout(()=>{try{map.invalidateSize();}catch(e){}},220);});})();
 document.getElementById('baseop').addEventListener('input',e=>{baseOpacity=parseFloat(e.target.value);if(baseLayer&&baseLayer.setOpacity)baseLayer.setOpacity(baseOpacity);else if(glBase&&glBase.getCanvas())glBase.getCanvas().style.opacity=baseOpacity;document.getElementById('bopv').textContent=Math.round(baseOpacity*100)+'%';});
 ['tgRoads','tgLabels'].forEach(id=>document.getElementById(id).addEventListener('change',applyLayerToggles));
 document.getElementById('maxleg').addEventListener('change',e=>{state.maxLeg=parseFloat(e.target.value);replan();});
