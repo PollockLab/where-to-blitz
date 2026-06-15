@@ -213,6 +213,14 @@ but the overwhelming majority of US cells sit **outside** the Canadian recording
 they read as "gaps" largely because *the Canadian density layer stops at the border*, not
 because they are genuinely under-recorded. (The team already dropped 839 *deep*-US cells that
 were entirely outside the COG.) The figure quantifies it.
+
+**The sharp horizontal seam along ~49°N is this, made visible — it's a data-footprint edge,
+not ecology.** North of the border the Canadian density COG has records, so cells score on
+real data (varied, mostly well-sampled). South of it the COG is empty, so every US cell
+defaults into the same max-under-sampling bucket (differentiated only by climate) — a flat
+band with a hard top edge. The transect below confirms it: density jumps from ~0 to thousands
+and zero-observation cells go 95% → 0% across 48–49°N. A clip to the Canada polygon removes
+both the US band and the seam in one move.
 """)
 code(r"""
 us_west = (ALL["lon"] < -95) & (ALL["lat"] < 49.0)         # clearly-US band (W of -95, S of the 49th-parallel border)
@@ -228,9 +236,17 @@ ax.legend(loc="lower left", fontsize=9, markerscale=4)
 ax.set_title(f"{n_us:,} cells (~{us_west.mean()*100:.0f}%) are clearly US — but only {n_us_rec} carry iNaturalist records")
 plt.tight_layout(); plt.show()
 print(f"Clearly-US cells: {n_us:,}  ·  of those with real iNat records: {n_us_rec}")
-print("→ Most US cells are gaps only because the Canadian density COG stops at the border.")
-print("→ A one-line political clip to the Canada polygon would make it Canada-only — a product")
-print("  decision (the campaign + presets are Canadian), surfaced here, not auto-applied.")
+print("→ Most US cells are gaps only because the Canadian density COG stops at the border.\n")
+
+# Transect across the western border (lon -125..-100): the seam at ~49°N is the COG edge.
+band = (ALL.lon > -125) & (ALL.lon < -100)
+print("Transect across the 49°N border (the visible seam):")
+print(f"{'lat':>6} {'n_train':>9} {'%zero-obs':>10} {'discover':>9}")
+for lo in [47.5, 48.0, 48.5, 49.0, 49.5]:
+    m = band & (ALL.lat >= lo) & (ALL.lat < lo + 0.5)
+    side = "US " if lo < 49 else "CA "
+    print(f"{side}{lo:5.1f} {ALL.n_train[m].mean():9.0f} {(ALL.n_train[m]==0).mean()*100:9.0f}% {ALL.discover[m].mean():9.2f}")
+print("→ density 0→thousands and zero-obs 95%→0% across the line = a data-footprint edge, not ecology.")
 """)
 
 # ---------------------------------------------------------------- the five axes, visual
