@@ -746,7 +746,7 @@ async function fetchGapTree(lat,lon){
   el.innerHTML='<div class="hd" style="margin-top:11px">'+t('gaptree_lookup')+'</div>';
   const HH=0.125,R=0.5,GR=t('group'),groups=Object.keys(ICONIC);
   const box=(h)=>`swlat=${lat-h}&nelat=${lat+h}&swlng=${lon-h}&nelng=${lon+h}`;
-  const base='https://api.inaturalist.org/v1/observations/species_counts?quality_grade=research&taxon_geoprivacy=open&order_by=count';
+  const base='https://api.inaturalist.org/v1/observations/species_counts?quality_grade=research&taxon_geoprivacy=open&threatened=false&order_by=count';
   try{
     // cell numerator: one uncapped page aggregated by group; neighbourhood denominator:
     // accurate distinct-species count per group via total_results (per_page page-cap would
