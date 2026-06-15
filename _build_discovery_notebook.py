@@ -39,7 +39,7 @@ md(r"""# When does an embedding beat geographic coverage for species discovery? 
 
 **A multi-backbone, multi-taxon experiment on real Blitz the Gap / iNaturalist data over Canada.**
 
-This tests the central, honest claim of [design-04](../2026-06-11-design-04-discovery-acquisition.md): is a fancier
+This tests the central, honest claim of design-04: is a fancier
 acquisition function — pick the observation whose *vision embedding* is most novel — actually better than a simple
 one — pick the observation farthest away in *geographic space*? The literature says geographic coverage is hard to
 beat (Sener & Savarese 2018, CoreSet; Rauch 2025, *No Free Lunch in Active Learning*), so the answer is expected to

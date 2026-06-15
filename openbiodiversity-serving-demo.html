@@ -7802,8 +7802,8 @@ a.anchor-link {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="openbiodiversity.ca-%E2%80%94-proving-the-serving-thesis-on-real-data">openbiodiversity.ca — proving the serving thesis on real data<a class="anchor-link" href="#openbiodiversity.ca-%E2%80%94-proving-the-serving-thesis-on-real-data">¶</a></h1><p><strong>Wietze Suijker · IVADO / R7-Environment · Blitz the Gap</strong></p>
-<p>This notebook is the runnable proof behind the <a href="../2026-06-11-design-01-sdm-serving-stac.md">SDM-serving design</a>.
+<h1 id="openbiodiversity.ca-%E2%80%94-proving-the-serving-thesis-on-real-data">openbiodiversity.ca — proving the serving thesis on real data<a class="anchor-link" href="#openbiodiversity.ca-%E2%80%94-proving-the-serving-thesis-on-real-data">¶</a></h1>
+<p>This notebook is the runnable proof behind the SDM-serving design.
 It demonstrates the two data-engineering moves that differentiate openbiodiversity.ca, <strong>on live public data, with every number traceable</strong>:</p>
 <ol>
 <li><strong>Render-from-metadata</strong> <em>(design-01)</em> — compute each layer's display ceiling <strong>once at ingest</strong> and store it as STAC metadata, instead of hand-tuning a <code>rescale</code> per layer in the frontend. This is the fix for what Pollock named the core problem: <em>"Most of the work going into this will be figuring out how to scale the SDMs. It's just like scaling a legend really."</em></li>

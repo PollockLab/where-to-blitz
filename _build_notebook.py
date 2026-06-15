@@ -10,9 +10,8 @@ co = lambda s: cells.append(nbf.v4.new_code_cell(s))
 
 md(r"""# openbiodiversity.ca — proving the serving thesis on real data
 
-**Wietze Suijker · IVADO / R7-Environment · Blitz the Gap**
 
-This notebook is the runnable proof behind the [SDM-serving design](../2026-06-11-design-01-sdm-serving-stac.md).
+This notebook is the runnable proof behind the SDM-serving design.
 It demonstrates the two data-engineering moves that differentiate openbiodiversity.ca, **on live public data, with every number traceable**:
 
 1. **Render-from-metadata** *(design-01)* — compute each layer's display ceiling **once at ingest** and store it as STAC metadata, instead of hand-tuning a `rescale` per layer in the frontend. This is the fix for what Pollock named the core problem: *"Most of the work going into this will be figuring out how to scale the SDMs. It's just like scaling a legend really."*

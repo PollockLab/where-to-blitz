@@ -13,9 +13,8 @@ co = lambda s: cells.append(nbf.v4.new_code_cell(s))
 
 md(r"""# Does "where should I go?" actually work? — a leakage-free backtest
 
-**Wietze Suijker · IVADO / R7-Environment · Blitz the Gap**
 
-The [north-star doc](../2026-06-11-sota-north-star.md) sets five falsifiable bars for openbiodiversity.ca. Four are proven in the [serving notebook](openbiodiversity-serving-demo.ipynb). The fifth is the hard one:
+The north-star doc sets five falsifiable bars for openbiodiversity.ca. Four are proven in the [serving notebook](openbiodiversity-serving-demo.ipynb). The fifth is the hard one:
 
 > **Bar #4 — VOI is *validated*, not asserted.** *"We can show that cells we flagged high-priority on early data actually added species when later sampled. Check: pre/post backtest, reported as a number, not a vibe."*
 

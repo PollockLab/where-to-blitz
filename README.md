@@ -5,10 +5,10 @@ A trip planner for **[Blitz the Gap](https://blitzthegap.org)**, the Canada-wide
 see where a new observation adds most to what we know about Canadian biodiversity,
 and plan a trip to the best spot you can reach and get back from.
 
-**Live:** https://wietzesuijker.github.io/where-to-blitz/
+**Live:** https://pollocklab.github.io/where-to-blitz/
 
-A companion planning tool to the [Pollock Lab](https://pollocklab.github.io/blitz-the-gap/)
-campaign at McGill — not affiliated, not ground truth.
+A companion planning tool for the [Pollock Lab](https://pollocklab.github.io/blitz-the-gap/)
+Blitz the Gap campaign at McGill — a planning aid, not ground truth.
 
 ## What it does
 

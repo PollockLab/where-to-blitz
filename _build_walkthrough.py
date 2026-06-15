@@ -23,7 +23,7 @@ md(r"""
 
 *What is in the tool, and why is it built the way it is.*
 
-[Where to Blitz the Gap](https://wietzesuijker.github.io/where-to-blitz/) is a companion
+[Where to Blitz the Gap](https://pollocklab.github.io/where-to-blitz/) is a companion
 planning tool for the Canada-wide [Blitz the Gap](https://blitzthegap.org) iNaturalist
 bioblitz. It turns one question — *"where should I go to record biodiversity so my
 observation adds the most to what we know about the natural world?"* — into a map you can weight,
@@ -32,7 +32,7 @@ explore, and plan a real low-carbon trip on.
 If you build, score, or run the campaign — this is the methodology and the data underneath it,
 laid out so you can check every choice and reproduce every number.
 
-> It is a **work-in-progress prototype, not an official Blitz the Gap tool, and not ground truth.**
+> It is a **work-in-progress prototype and a planning aid, not ground truth.**
 > It is a *planning aid*. The responsible-use guardrails are part of the design, not an afterthought (last section).
 
 This walkthrough is **not** about the modelling pipeline in the abstract. The moat is the
@@ -710,8 +710,8 @@ except Exception as e:
 md(r"""
 ---
 *Built deterministically by `_build_walkthrough.py` from the committed where-to-blitz build.
-Every number traces to a file in `cluster_results/`; nothing is from memory. Prototype, not
-official, not ground truth.*
+Every number traces to a file in `cluster_results/`; nothing is from memory. Prototype and
+planning aid, not ground truth.*
 """)
 
 nb = new_notebook(cells=cells, metadata={
