@@ -852,7 +852,9 @@ function fmth(h){if(h>=24){const d=Math.floor(h/24),hr=Math.round(h%24);return d
 function haversine(a,b,c,d){const R=6371,r=Math.PI/180,x=(c-a)*r,y=(d-b)*r,h=Math.sin(x/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin(y/2)**2;return 2*R*Math.asin(Math.sqrt(h));}
 
 const map=L.map('map',{zoomControl:true,preferCanvas:true}).setView([58,-96],4);
-let _ppf=null;map.on('popupopen',()=>{_ppf=document.activeElement;});map.on('popupclose',()=>{try{if(_ppf&&_ppf.focus)_ppf.focus();}catch(e){}_ppf=null;});
+let _ppf=null;map.on('popupopen',()=>{_ppf=document.activeElement;});map.on('popupclose',()=>{try{if(_ppf&&_ppf.focus)_ppf.focus();}catch(e){}_ppf=null;
+  if(!_reselect&&state.view==='explore'&&(destMarker||destCell))clearSelection();});   // closing the cell popup deselects (issue #16)
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&state.view==='explore'&&(destMarker||destCell)){map.closePopup();clearSelection();}});
 const ATTR='&copy; OpenStreetMap contributors · routing &copy; OSRM';
 const BASEMAPS={
   "OpenStreetMap":{url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png',opt:{maxZoom:19}},
@@ -1228,6 +1230,12 @@ function rankAndRender(){
   }
 }
 function clearRoute(){[routeLine,destMarker,destCell].forEach(l=>{if(l)map.removeLayer(l);});routeLine=destMarker=destCell=null;}
+// Issue #16: deselect a cell and return to the "nothing selected" home state without editing the URL.
+let _reselect=false;   // true only while exploreCell swaps one selection for another (suppress the close-driven clear)
+function clearSelection(){clearRoute();
+  const pr=document.getElementById('prospects');if(pr){pr.dataset.idle='1';pr.innerHTML='<div class="hd" style="margin-top:10px" data-i18n="prospects_idle">'+t('prospects_idle')+'</div>';}
+  const gt=document.getElementById('gaptree');if(gt)gt.innerHTML='';
+  try{history.replaceState(null,'',location.pathname);}catch(e){}}
 function selectTrip(o){clearRoute();const dest=[o.m.r[0],o.m.r[1]];
   destCell=L.rectangle([[dest[0]-0.125,dest[1]-0.125],[dest[0]+0.125,dest[1]+0.125]],{color:'#1b7837',weight:2,dashArray:'5 5',fillColor:'#74c476',fillOpacity:0.16,interactive:false}).addTo(map);
   if(o.here){
@@ -1308,6 +1316,7 @@ async function renderInsights(){
 // Explore mode: tap a cell to see its score + what to record there (no trip planning).
 function exploreCell(lat,lon){
   if(!markers.length)return;   // map tapped before cell data loaded
+  _reselect=true;   // swapping selections: suppress the close-driven deselect until the new popup is open (issue #16)
   let best=markers[0],bd=1e9;for(const m of markers){const d=Math.abs(m.r[0]-lat)+Math.abs(m.r[1]-lon);if(d<bd){bd=d;best=m;}}
   const o=best,dest=[o.r[0],o.r[1]];clearRoute();
   let geLine='';if(geActive()){const v=GE[gekey(dest[0],dest[1])];geLine='<div style="margin-bottom:4px">'+t('ge_most')+' <b>'+(!v||v[0]<0?t('ge_all'):t('ge_cats')[v[0]])+'</b></div>';}
@@ -1329,6 +1338,7 @@ function exploreCell(lat,lon){
   }
   destMarker=L.marker(dest,{icon:destIcon,zIndexOffset:900}).addTo(map)
     .bindPopup(`${geLine}<b>${t('pop_explore_title')}</b> ${t('pop_explore_sub')}<br><span style="color:#667">${t('pop_centre')} ${dest[0].toFixed(2)}, ${dest[1].toFixed(2)}</span><br>${body}<br><a href="#" role="button" onclick="if(navigator.clipboard){navigator.clipboard.writeText(location.href).then(()=>{this.textContent=t('copied');}).catch(()=>{});}return false;" style="color:#1f6fe0;font-size:12px">${t('share_link')}</a>`).openPopup();
+  _reselect=false;
   fetchProspects(dest[0],dest[1],'destination');
 }
 function setView(v){
