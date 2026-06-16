@@ -357,6 +357,8 @@ const I18N={
     plan_trip:"Plan my trip →",
     prospects_idle:"🔭 Tap a cell (or plan a trip) to see what to record there.",
     gaptree_lookup:"🌿 Reading taxonomic coverage…",
+    gaptree_sparse:"🌿 Too few nearby records to rank groups here yet — every sighting helps fill the map.",
+    gaptree_err:"🌿 Couldn’t read coverage just now — tap the cell again.",
     gaptree_hd:"🌿 Coverage by group here — biggest gaps first",
     gt_gap:"gap", gt_partial:"partial", gt_ok:"well recorded",
     gt_count:(c,n)=>`${c} of ~${n} nearby`,
@@ -504,6 +506,8 @@ const I18N={
     plan_trip:"Planifier ma sortie →",
     prospects_idle:"🔭 Touchez une cellule (ou planifiez une sortie) pour voir quoi observer.",
     gaptree_lookup:"🌿 Lecture de la couverture taxonomique…",
+    gaptree_sparse:"🌿 Trop peu d’observations à proximité pour classer les groupes ici — chaque observation aide à combler la carte.",
+    gaptree_err:"🌿 Lecture de la couverture impossible pour l’instant — touchez la cellule à nouveau.",
     gaptree_hd:"🌿 Couverture par groupe ici — plus grandes lacunes d’abord",
     gt_gap:"lacune", gt_partial:"partielle", gt_ok:"bien documenté",
     gt_count:(c,n)=>`${c} sur ~${n} à proximité`,
@@ -661,6 +665,21 @@ function setLang(l){if(l!==LANG){LANG=l;try{localStorage.setItem('wtb_lang',l);}
 const DATA={}, DATA_DIR='cluster_results/ca/';
 // Bounded fetch: abort after `ms` so a hung request can't leave the UI stuck (spinner / "finding routes…") forever.
 function fetchT(url,ms){const c=new AbortController();const id=setTimeout(()=>c.abort(),ms||9000);return fetch(url,{signal:c.signal}).finally(()=>clearTimeout(id));}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+// Robust JSON GET: tapping a cell fans out ~12 iNaturalist calls at once, so under load the
+// public API's latency tail breaches the abort and the odd 429 slips through. Without this a
+// single slow/failed call silently blanked the gap tree. Retry once, honour Retry-After on
+// 429/503, and only ever return parsed JSON (never a non-ok body that decodes to garbage).
+async function jget(url,ms,tries){ms=ms||9000;tries=tries||2;let last;
+  for(let i=0;i<tries;i++){
+    try{const r=await fetchT(url,ms);
+      if((r.status===429||r.status===503)&&i<tries-1){const ra=Math.min(+(r.headers.get('retry-after'))||1,3);await sleep(ra*1000);last=new Error('HTTP '+r.status);continue;}
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      return await r.json();
+    }catch(e){last=e;if(i<tries-1)await sleep(400*(i+1));}
+  }
+  throw last;
+}
 async function loadGroup(g){if(DATA[g])return;const r=await fetchT(DATA_DIR+FILES[g],20000);if(!r.ok)throw new Error('HTTP '+r.status+' loading '+FILES[g]);Object.assign(DATA,await r.json());}
 // Getting Even: most under-represented taxonomic group per cell. CVD-safe Paul Tol Bright palette (index matches ge_cats order); -1 -> grey "all under-sampled".
 const GE={}, GE_PAL=['#4477AA','#EE6677','#AA3377','#CCBB44','#66CCEE','#228833'], GE_ALL='#BBBBBB';
@@ -711,14 +730,14 @@ async function fetchProspects(lat,lon,whereKey){
   const ic=ICONIC[state.taxon]||'', HH=0.125;
   const q=(h)=>`https://api.inaturalist.org/v1/observations/species_counts?swlat=${lat-h}&nelat=${lat+h}&swlng=${lon-h}&nelng=${lon+h}&quality_grade=research&taxon_geoprivacy=open&threatened=false&per_page=500&order_by=count`+(ic?`&iconic_taxa=${ic}`:'');
   try{
-    const j=await fetchT(q(HH)).then(r=>r.json());
+    const j=await jget(q(HH));
     if(myseq!==prospectSeq)return;
     const total=j.total_results||0;
     const cellIds=new Set((j.results||[]).map(r=>r.taxon&&r.taxon.id).filter(Boolean));   // everything already logged in this cell
     let res=(j.results||[]).filter(r=>r.count>=2 && r.taxon && r.taxon.default_photo).map(r=>({count:r.count,taxon:r.taxon,_here:true}));
     let nearby=false;
     if(res.length<4){
-      const k=await fetchT(q(3*HH)).then(r=>r.json());
+      const k=await jget(q(3*HH));
       if(myseq!==prospectSeq)return;
       const have=new Set(res.map(r=>r.taxon.id));
       const extra=(k.results||[]).filter(r=>r.taxon&&r.taxon.default_photo&&r.count>=3&&!have.has(r.taxon.id)).map(r=>({count:r.count,taxon:r.taxon,_here:false}));
@@ -760,7 +779,7 @@ function spreadByTaxon(arr){const by={};arr.forEach(r=>{const k=(r.taxon.iconic_
 async function fetchFirsts(lat,lon,ic,cellIds,cellN){
   const R=0.5;   // ~50 km neighbourhood -- same habitat zone, not a different ecoregion
   const u=`https://api.inaturalist.org/v1/observations/species_counts?swlat=${lat-R}&nelat=${lat+R}&swlng=${lon-R}&nelng=${lon+R}&quality_grade=research&taxon_geoprivacy=open&threatened=false&per_page=200&order_by=count`+(ic?`&iconic_taxa=${ic}`:'');
-  try{const j=await fetchT(u).then(r=>r.json());
+  try{const j=await jget(u);
     const all=(j.results||[]).filter(r=>r.taxon&&r.taxon.default_photo);
     const M=j.total_results||all.length;                  // TRUE neighbourhood richness (uncapped), not the top-200 page; same filters as the cell query (research/open/threatened=false)
     const miss=spreadByTaxon(all.filter(r=>!cellIds.has(r.taxon.id)&&r.count>=10&&(r.taxon.observations_count||0)>40)).slice(0,6);
@@ -772,9 +791,25 @@ const showProspects=debounce((lat,lon)=>fetchProspects(lat,lon,'around_start'),5
 // per iconic group vs the ~50km neighbourhood. A group rich nearby but sparse here = a real
 // recording gap. iconic_taxon_name == the app's group keys, so rows switch the map on click.
 let gapSeq=0;
+const GT_CACHE={};   // computed rows keyed by cell -- taxon-independent, so re-taps and taxon switches are instant and re-fire nothing
+const gtkey=(lat,lon)=>lat.toFixed(3)+','+lon.toFixed(3);
+// rows: [] -> too few nearby records to rank (honest, not a failure); null -> the lookup itself failed.
+function paintGapTree(el,rows){
+  if(rows===null){el.innerHTML='<div class="hd" style="margin-top:11px">'+t('gaptree_err')+'</div>';return;}
+  if(!rows.length){el.innerHTML='<div class="hd" style="margin-top:11px">'+t('gaptree_sparse')+'</div>';return;}
+  const lab=v=>v<0.2?t('gt_gap'):(v<0.6?t('gt_partial'):t('gt_ok'));
+  const cls=v=>v<0.2?'gt-gap':(v<0.6?'gt-part':'gt-ok');
+  el.innerHTML='<div class="hd" style="margin-top:11px">'+t('gaptree_hd')+'</div>'+
+    '<div class="gaptree">'+rows.map(r=>{const pct=Math.round(Math.min(1,r.cov)*100);
+      return `<button class="gtrow ${cls(r.cov)}" data-g="${esc(r.g)}" aria-label="${esc(groupName(r.g))}: ${t('gt_count',r.c,r.n)}, ${lab(r.cov)}. ${t('gt_switch',groupName(r.g))}"><span class="gtn">${esc(groupName(r.g))}</span><span class="gtbar"><span style="width:${pct}%"></span></span><span class="gtc">${t('gt_count',r.c,r.n)} · ${lab(r.cov)}</span></button>`;}).join('')+'</div>'+
+    '<div style="margin-top:6px;font-size:10.5px;color:var(--mut);line-height:1.35">'+t('gaptree_foot')+'</div>';
+  el.querySelectorAll('.gtrow').forEach(b=>b.onclick=()=>{const g=b.dataset.g;if(!FILES[g]||state.taxon===g)return;taxonSel.value=g;taxonSel.onchange();});
+}
 async function fetchGapTree(lat,lon){
   const myseq=++gapSeq;
   const el=document.getElementById('gaptree'); if(!el) return;
+  const ck=gtkey(lat,lon);
+  if(GT_CACHE[ck]!==undefined){paintGapTree(el,GT_CACHE[ck]);return;}
   el.innerHTML='<div class="hd" style="margin-top:11px">'+t('gaptree_lookup')+'</div>';
   const HH=0.125,R=0.5,GR=t('group'),groups=Object.keys(ICONIC);
   const box=(h)=>`swlat=${lat-h}&nelat=${lat+h}&swlng=${lon-h}&nelng=${lon+h}`;
@@ -783,10 +818,15 @@ async function fetchGapTree(lat,lon){
     // cell numerator: one uncapped page aggregated by group; neighbourhood denominator:
     // accurate distinct-species count per group via total_results (per_page page-cap would
     // truncate rich groups and make cell>nbhd, so query each group's true total separately).
-    const cellP=fetchT(`${base}&${box(HH)}&per_page=500`).then(r=>r.json());
-    const nbP=Promise.all(groups.map(g=>fetchT(`${base}&${box(R)}&iconic_taxa=${g}&per_page=1`).then(r=>r.json()).then(j=>[g,j.total_results||0]).catch(()=>[g,0])));
+    // Both legs swallow their own errors -> one slow/failed call degrades a single group (or the
+    // cell numerator) instead of blanking the whole tree the way an un-caught reject used to.
+    let cellFail=false,nbFail=0;
+    const cellP=jget(`${base}&${box(HH)}&per_page=500`).catch(()=>{cellFail=true;return{results:[]};});
+    const nbP=Promise.all(groups.map(g=>jget(`${base}&${box(R)}&iconic_taxa=${g}&per_page=1`).then(j=>[g,j.total_results||0]).catch(()=>{nbFail++;return[g,0];})));
     const [cj,nbArr]=await Promise.all([cellP,nbP]);
     if(myseq!==gapSeq)return;
+    // total outage (every call failed) -> "tap again", not a misleading "too few records here".
+    if(cellFail&&nbFail===groups.length){paintGapTree(el,null);return;}
     const cell={};(cj.results||[]).forEach(r=>{const g=r.taxon&&r.taxon.iconic_taxon_name;if(g)cell[g]=(cell[g]||0)+1;});
     const nbhd=Object.fromEntries(nbArr);
     const elig=groups.filter(g=>nbhd[g]>=3&&GR[g]);
@@ -794,15 +834,9 @@ async function fetchGapTree(lat,lon){
     const rate=sumC>0?sumC/sumN:0;   // this cell's overall coverage rate; normalise so an avg group sits at 1
     const rows=elig.map(g=>{const c=Math.min(cell[g]||0,nbhd[g]);return{g,c,n:nbhd[g],cov:rate>0?(c/nbhd[g])/rate:0};}).sort((a,b)=>a.cov-b.cov);
     if(myseq!==gapSeq)return;
-    if(!rows.length){el.innerHTML='';return;}
-    const lab=v=>v<0.2?t('gt_gap'):(v<0.6?t('gt_partial'):t('gt_ok'));
-    const cls=v=>v<0.2?'gt-gap':(v<0.6?'gt-part':'gt-ok');
-    el.innerHTML='<div class="hd" style="margin-top:11px">'+t('gaptree_hd')+'</div>'+
-      '<div class="gaptree">'+rows.map(r=>{const pct=Math.round(Math.min(1,r.cov)*100);
-        return `<button class="gtrow ${cls(r.cov)}" data-g="${esc(r.g)}" aria-label="${esc(groupName(r.g))}: ${t('gt_count',r.c,r.n)}, ${lab(r.cov)}. ${t('gt_switch',groupName(r.g))}"><span class="gtn">${esc(groupName(r.g))}</span><span class="gtbar"><span style="width:${pct}%"></span></span><span class="gtc">${t('gt_count',r.c,r.n)} · ${lab(r.cov)}</span></button>`;}).join('')+'</div>'+
-      '<div style="margin-top:6px;font-size:10.5px;color:var(--mut);line-height:1.35">'+t('gaptree_foot')+'</div>';
-    el.querySelectorAll('.gtrow').forEach(b=>b.onclick=()=>{const g=b.dataset.g;if(!FILES[g]||state.taxon===g)return;taxonSel.value=g;taxonSel.onchange();});
-  }catch(e){el.innerHTML='';}
+    GT_CACHE[ck]=rows;
+    paintGapTree(el,rows);
+  }catch(e){if(myseq===gapSeq)paintGapTree(el,null);}   // do not cache failures -- next tap retries
 }
 
 const RAMP=[[255,255,217],[237,248,177],[199,233,180],[127,205,187],[65,182,196],[29,145,192],[34,94,168],[37,52,148],[8,29,88]]; // YlGnBu (ColorBrewer, CVD-safe): pale yellow=well-sampled, dark navy=biggest gaps
