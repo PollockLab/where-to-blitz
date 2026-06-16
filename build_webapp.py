@@ -145,6 +145,7 @@ input[type=range]{width:100%;accent-color:var(--acc);margin:0}
 .legend{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;color:var(--mut)}
 .bar{height:11px;flex:1;border-radius:6px;background:linear-gradient(90deg,#ffffd9,#edf8b1,#c7e9b4,#7fcdbb,#41b6c4,#1d91c0,#225ea8,#253494,#081d58)}
 .foot{color:var(--mut);font-size:12.5px;line-height:1.5;margin-top:8px}
+.sronly{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 #celltable{max-height:300px;overflow:auto;margin-top:6px}
 #celltable table{width:100%;border-collapse:collapse;font-size:12px}
 #celltable caption{text-align:left;color:var(--mut);font-size:11px;margin-bottom:5px;caption-side:top}
@@ -206,13 +207,21 @@ details.adv>summary:hover{color:var(--ink)}
 @media(max-width:640px){#maplegend{left:auto;right:8px;bottom:auto;top:calc(50vh + 8px);max-width:158px;padding:6px 8px}}
 #loading{position:fixed;left:calc(360px + (100% - 360px)/2);top:46%;transform:translate(-50%,-50%);z-index:1200;background:rgba(255,255,255,.96);border-radius:10px;padding:11px 17px;box-shadow:0 3px 14px rgba(0,0,0,.25);font-size:14px;font-weight:600;color:#1b2a3a}
 @media(max-width:640px){#loading{left:50%;top:74vh}}
+#howbtn{position:fixed;right:14px;top:calc(12px + var(--bh));z-index:1200;display:flex;align-items:center;gap:6px;background:#fff;color:#1b2a3a;border:0;border-radius:9px;box-shadow:0 2px 9px rgba(0,0,0,.28);padding:7px 11px;font-size:12.5px;font-weight:650;cursor:pointer;max-width:260px}
+#howbtn:hover{color:var(--acc)}
+#howbtn:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+#howbtn .ic{font-size:14px}
+#howpanel{position:fixed;right:14px;top:calc(52px + var(--bh));z-index:1200;width:330px;max-width:calc(100vw - 28px);max-height:calc(100vh - 72px - var(--bh));overflow-y:auto;background:var(--panel);color:var(--mut);border:1px solid #2a3a4d;border-radius:10px;box-shadow:0 6px 22px rgba(0,0,0,.45);padding:30px 15px 14px;display:none;font-size:12px;line-height:1.5}
+#howpanel.open{display:block}
+#howpanel .foot{margin-top:10px;font-size:11px;color:#7e91a6}
+#howclose{position:absolute;top:6px;right:8px;background:transparent;border:0;color:var(--mut);font-size:20px;line-height:1;cursor:pointer;padding:2px 6px}
+#howclose:hover{color:var(--ink)}
+@media(max-width:640px){#howbtn{max-width:none;right:8px;font-size:12px}#howpanel{left:8px;right:8px;width:auto;top:calc(50vh + 44px);max-height:44vh}}
 </style></head>
 <body><div id="protobar" role="region" aria-label="Site notice"><span data-i18n="proto_banner">⚠ Work in progress — a planning aid, not ground truth</span><button id="protox" type="button" aria-label="Dismiss notice" title="Dismiss">×</button></div><div id="app">
 <div id="panel" role="main">
   <div class="langtoggle" role="group" aria-label="Language"><button id="lang-en" type="button">EN</button><button id="lang-fr" type="button">FR</button></div>
   <h1 data-i18n-html="title_full">Where to <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--gd);text-decoration:underline">Blitz the Gap</a></h1>
-  <p class="sub" data-i18n-html="sub">Choose what counts as <b>impact</b>, then <b>explore</b> the priority map — or <b>plan a trip</b> to the best spot you can reach and get back from.</p>
-
   <div class="sechd"><span class="sec" data-i18n="sec_group">Life group & goal</span><span class="infobtn" data-i18n-title="info_btn" title="Where do these scores come from?" role="button" tabindex="0" aria-label="About the data" aria-expanded="false" onclick="const b=document.getElementById('taxinfo').classList.toggle('open');this.setAttribute('aria-expanded',b)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">i</span></div>
   <div class="infobox" id="taxinfo" data-i18n-html="taxinfo">
     <b>Where the scores come from.</b> <b style="color:var(--ink)">Higher priority = a spot where a new sighting adds more to what we know.</b> Canada-wide, on a 0.25° (~25&nbsp;km) grid.
@@ -226,9 +235,6 @@ details.adv>summary:hover{color:var(--ink)}
   </div>
   <select id="taxon" class="full" aria-label="Life group" style="margin-bottom:8px"></select>
   <div class="presets" id="presets"></div>
-  <div id="challengeBlurb" style="color:var(--mut);font-size:11.5px;line-height:1.4;margin:5px 0 2px"></div>
-  <div style="font-size:11px;margin:1px 0 3px"><a href="https://pollocklab.github.io/blitz-the-gap/" target="_blank" rel="noopener" data-i18n="more_challenges" style="color:var(--mut)">+ see all official challenges →</a></div>
-  <details class="adv"><summary data-i18n="finetune">Fine-tune the five goals</summary><div id="objs"></div></details>
 
   <div id="tripui">
   <div class="sec" data-i18n="your_trip">Your trip</div>
@@ -293,28 +299,26 @@ details.adv>summary:hover{color:var(--ink)}
     <label class="toggle" style="margin:8px 0 2px"><input type="checkbox" id="tgGettingEven"> <span data-i18n="getting_even">⚖️ Getting Even — which group to record</span></label><span class="infobtn" data-i18n-title="ge_info_btn" title="How is the recommended group worked out?" role="button" tabindex="0" aria-label="How the recommended group is worked out" aria-expanded="false" style="margin-left:6px;vertical-align:middle" onclick="const b=document.getElementById('geinfo').classList.toggle('open');this.setAttribute('aria-expanded',b)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">i</span>
     <div style="color:var(--mut);font-size:11px;line-height:1.4" data-i18n="ge_hint">Each cell is coloured by the most under-represented taxonomic group there (birds excluded — already well covered by eBird) — our finer-resolution take on the official "Getting Even" challenge. From iNaturalist observation density: a sample, not a census.</div>
     <div class="infobox" id="geinfo" data-i18n-html="ge_method"></div>
-    <label class="toggle" style="margin:8px 0 2px"><input type="checkbox" id="tgCanadaOnly" checked> <span data-i18n="canada_only">🍁 Canada only</span></label>
-    <div style="color:var(--mut);font-size:11px;line-height:1.4" data-i18n="canada_only_hint">Hides cells across the US border, where the bright band is a data edge (the Canadian layer stops at the border), not a real gap. Approximate boundary.</div>
-    <label class="toggle" style="margin:8px 0 2px"><input type="checkbox" id="tgZoomScale" checked> <span data-i18n="zoom_scale">🔍 Rescale colours to the current view</span></label>
-    <div style="color:var(--mut);font-size:11px;line-height:1.4" data-i18n="zoom_scale_hint">Ranks cells against what's on screen, so local gaps stand out when you zoom in. Off = ranked across all of Canada (a dark cell means the same everywhere).</div>
     <div style="display:flex;justify-content:space-between;margin:9px 0 0"><span style="font-size:13px" data-i18n="map_brightness">Map brightness</span><span class="v" id="bopv" style="color:var(--acc)">100%</span></div>
     <input type="range" id="baseop" min="0.25" max="1" step="0.05" value="1" aria-label="Map brightness">
   </details>
 
-  <details class="adv"><summary data-i18n="how_scored">How impact is scored & data sources</summary>
-    <div class="legend" style="margin-top:8px"><span data-i18n="skip">skip</span><div class="bar"></div><span data-i18n="go_here">go here</span></div>
-    <div style="color:var(--mut);font-size:11px;line-height:1.45;margin-top:7px" data-i18n-html="impact_expl">Each goal is scored <b style="color:var(--ink)">0–1 per cell</b>; your slider weights combine them, then cells are <b style="color:var(--ink)">ranked against each other</b> and shown as <b style="color:var(--ink)">impact 0–100</b> (a percentile — 100 = top-priority cell shown). Hover a cell to see which goals drive it.</div>
-    <div style="color:var(--mut);font-size:11px;line-height:1.5;margin-top:9px" data-i18n-html="axis_method"></div>
-    <div style="margin-top:9px"><a href="https://github.com/PollockLab/where-to-blitz/blob/main/where-to-blitz-walkthrough.ipynb" target="_blank" rel="noopener" style="color:var(--acc);font-size:12px;font-weight:600" data-i18n="methodology_link">📖 Full methodology &amp; data — trace every number →</a></div>
-    <p class="foot" data-i18n-html="foot"><b style="color:var(--ink)">How it works:</b> <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">Blitz the Gap</a> is a Canada-wide bioblitz — head to a high-priority spot, record what you see on <a href="https://www.inaturalist.org" target="_blank" rel="noopener" style="color:var(--acc)">iNaturalist</a>, and your research-grade sightings flow into the <a href="https://www.inaturalist.org/projects/blitz-the-gap-2026-general" target="_blank" rel="noopener" style="color:var(--acc)">2026 project</a>, filling the map's gaps. Blitz the Gap is led by the <a href="https://pollocklab.github.io/blitz-the-gap/" target="_blank" rel="noopener" style="color:var(--acc)">Pollock Lab</a> at McGill University; this is a work-in-progress companion tool, not an official project page.<br><br>Nationally, the robust priority signal is <b style="color:var(--ink)">under-sampling</b> (iNaturalist density) + <b style="color:var(--ink)">climate coverage</b> (CHELSA); rarity and freshness are now real (rarity = COSEWIC/SARA species at risk via CAN-SAR + GBIF; freshness = iNaturalist recent vs all-time density). Drive/cycle/walk routes from OSRM (FOSSGIS); travel time from Weiss 2018. Driving CO₂ ≈ 0.18 kg/km; cycling/walking zero. A planning aid — obscure sensitive-species locations and respect Indigenous data-sovereignty before any public release.<br><br>This map spans many <b style="color:var(--ink)">Indigenous territories</b> — see whose at <a href="https://native-land.ca" target="_blank" rel="noopener" style="color:var(--acc)">native-land.ca</a>, and seek consent before recording on their lands.</p>
-  </details>
-  <details class="adv" ontoggle="renderCellTable()"><summary data-i18n="top_cells">Top cells (accessible list)</summary><div id="celltable"></div></details>
+  <div id="celltable" class="sronly" role="region" aria-label="Top cells (accessible list)"></div>
 </div>
 <button id="panelToggle" type="button" aria-label="Hide the panel" title="Hide the panel">‹</button>
 <div id="map" role="application" aria-label="Interactive priority map (screen-reader users: use the Top cells list)"></div>
 <div id="viewtoggle" role="navigation" aria-label="Map view"><button id="vexplore" class="on" aria-pressed="true" data-i18n="view_explore">🗺 Explore</button><button id="vplan" aria-pressed="false" data-i18n="view_plan">🧭 Plan a trip</button><button id="vcompare" aria-pressed="false" data-i18n="view_compare">📊 Compare goals</button></div>
 <div id="loading" role="status" aria-live="polite" data-i18n="loading">🍃 Loading the map…</div>
 <div id="maplegend" role="region" aria-label="Map legend"><div class="lt" data-i18n="legend_title">Where to blitz</div><div class="ramp"></div><div class="lab"><span data-i18n="legend_low">well-sampled</span><span data-i18n="legend_high">biggest gaps</span></div><div class="hint" data-i18n-html="legend_hint">Darker = higher priority. <span id="legendtap">Tap a cell to see what to record.</span></div><div class="hint" id="legendrel" style="display:none;color:#7a5b00" data-i18n="legend_rel">⚖ Colours rescaled to this view — not comparable to other zoom levels.</div></div>
+<button id="howbtn" type="button" aria-expanded="false" aria-controls="howpanel" data-i18n-title="how_scored" title="How impact is scored & data sources"><span class="ic" aria-hidden="true">ⓘ</span> <span data-i18n="how_scored">How impact is scored & data sources</span></button>
+<div id="howpanel" role="region" aria-label="How impact is scored & data sources">
+  <button id="howclose" type="button" aria-label="Close" title="Close">×</button>
+  <div class="legend" style="margin-top:2px"><span data-i18n="skip">skip</span><div class="bar"></div><span data-i18n="go_here">go here</span></div>
+  <div style="color:var(--mut);font-size:11px;line-height:1.45;margin-top:7px" data-i18n-html="impact_expl">Each goal is scored <b style="color:var(--ink)">0–1 per cell</b>; your slider weights combine them, then cells are <b style="color:var(--ink)">ranked against each other</b> and shown as <b style="color:var(--ink)">impact 0–100</b> (a percentile — 100 = top-priority cell shown). Hover a cell to see which goals drive it.</div>
+  <div style="color:var(--mut);font-size:11px;line-height:1.5;margin-top:9px" data-i18n-html="axis_method"></div>
+  <div style="margin-top:9px"><a href="https://github.com/PollockLab/where-to-blitz/blob/main/where-to-blitz-walkthrough.ipynb" target="_blank" rel="noopener" style="color:var(--acc);font-size:12px;font-weight:600" data-i18n="methodology_link">📖 Full methodology &amp; data — trace every number →</a></div>
+  <p class="foot" data-i18n-html="foot"><b style="color:var(--ink)">How it works:</b> <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">Blitz the Gap</a> is a Canada-wide bioblitz — head to a high-priority spot, record what you see on <a href="https://www.inaturalist.org" target="_blank" rel="noopener" style="color:var(--acc)">iNaturalist</a>, and your research-grade sightings flow into the <a href="https://www.inaturalist.org/projects/blitz-the-gap-2026-general" target="_blank" rel="noopener" style="color:var(--acc)">2026 project</a>, filling the map's gaps. Blitz the Gap is led by the <a href="https://pollocklab.github.io/blitz-the-gap/" target="_blank" rel="noopener" style="color:var(--acc)">Pollock Lab</a> at McGill University; this is a work-in-progress companion tool, not an official project page.<br><br>Nationally, the robust priority signal is <b style="color:var(--ink)">under-sampling</b> (iNaturalist density) + <b style="color:var(--ink)">climate coverage</b> (CHELSA); rarity and freshness are now real (rarity = COSEWIC/SARA species at risk via CAN-SAR + GBIF; freshness = iNaturalist recent vs all-time density). Drive/cycle/walk routes from OSRM (FOSSGIS); travel time from Weiss 2018. Driving CO₂ ≈ 0.18 kg/km; cycling/walking zero. A planning aid — obscure sensitive-species locations and respect Indigenous data-sovereignty before any public release.<br><br>This map spans many <b style="color:var(--ink)">Indigenous territories</b> — see whose at <a href="https://native-land.ca" target="_blank" rel="noopener" style="color:var(--acc)">native-land.ca</a>, and seek consent before recording on their lands.</p>
+</div>
 <div id="insights"></div>
 </div>
 
@@ -701,8 +705,8 @@ let GE_LOADED=false;
 async function loadGE(){if(GE_LOADED)return;const r=await fetchT(DATA_DIR+'webapp_data_gettingeven.json',15000),j=await r.json();
   for(const e of j.gettingeven)GE[gekey(e[0],e[1])]=[e[2],e[3]];GE_LOADED=true;}
 function geActive(){const e=document.getElementById('tgGettingEven');return!!(e&&e.checked);}
-function zoomScaleActive(){const e=document.getElementById('tgZoomScale');return!!(e&&e.checked);}
-function caOnlyActive(){const e=document.getElementById('tgCanadaOnly');return!!(e&&e.checked);}
+function zoomScaleActive(){const e=document.getElementById('tgZoomScale');return e?e.checked:true;}   // issue #20 removed the toggle; behaviour stays on by default
+function caOnlyActive(){const e=document.getElementById('tgCanadaOnly');return e?e.checked:true;}        // issue #20 removed the toggle; behaviour stays on by default
 // US-side cells (approx, lazy-loaded): hidden when "Canada only" is on -- the cross-border band is a data edge, not a real gap (#5).
 let US_CELLS=null;
 async function loadUS(){if(US_CELLS)return;try{const r=await fetchT(DATA_DIR+'us_cells.json',8000);US_CELLS=new Set((await r.json()).us_cells||[]);}catch(e){US_CELLS=new Set();}}
@@ -860,7 +864,9 @@ function haversine(a,b,c,d){const R=6371,r=Math.PI/180,x=(c-a)*r,y=(d-b)*r,h=Mat
 const map=L.map('map',{zoomControl:true,preferCanvas:true}).setView([58,-96],4);
 let _ppf=null;map.on('popupopen',()=>{_ppf=document.activeElement;});map.on('popupclose',()=>{try{if(_ppf&&_ppf.focus)_ppf.focus();}catch(e){}_ppf=null;
   if(!_reselect&&state.view==='explore'&&(destMarker||destCell))clearSelection();});   // closing the cell popup deselects (issue #16)
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&state.view==='explore'&&(destMarker||destCell)){map.closePopup();clearSelection();}});
+document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;
+  const hp=document.getElementById('howpanel');if(hp&&hp.classList.contains('open'))return;   // Esc closes the info panel first (handled below)
+  if(state.view==='explore'&&(destMarker||destCell)){map.closePopup();clearSelection();}});
 const ATTR='&copy; OpenStreetMap contributors · routing &copy; OSRM';
 const BASEMAPS={
   "OpenStreetMap":{url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png',opt:{maxZoom:19}},
@@ -950,7 +956,7 @@ function buildMarkers(){
   recolour();
 }
 function renderCellTable(){
-  const el=document.getElementById('celltable');if(!el||!el.closest('details').open)return;
+  const el=document.getElementById('celltable');if(!el)return;   // sr-only region: always populated for screen-reader users (issue #20 removed the visible list)
   const top=markers.map(m=>({r:m.r,t:m.t||0})).sort((a,b)=>b.t-a.t).slice(0,40);
   el.innerHTML='<table><caption>'+t('table_caption')+'</caption><thead><tr><th scope="col">'+t('table_rank')+'</th><th scope="col">'+t('table_latlon')+'</th><th scope="col">'+t('table_score')+'</th></tr></thead><tbody>'+
     top.map((o,i)=>`<tr tabindex="0" role="button" data-la="${o.r[0]}" data-lo="${o.r[1]}" aria-label="Rank ${i+1}: latitude ${o.r[0].toFixed(2)}, longitude ${o.r[1].toFixed(2)}, score ${(o.t*100|0)} of 100"><td>${i+1}</td><td>${o.r[0].toFixed(2)}, ${o.r[1].toFixed(2)}</td><td>${(o.t*100|0)}/100</td></tr>`).join('')+'</tbody></table>';
@@ -1030,7 +1036,7 @@ taxonSel.onchange=()=>{const prev=state.taxon;state.taxon=taxonSel.value;
     .finally(()=>{if(typeof showLoading==='function')showLoading(false);});};
 
 const objsDiv=document.getElementById('objs');
-function rebuildObjs(){objsDiv.innerHTML='';
+function rebuildObjs(){if(!objsDiv)return;objsDiv.innerHTML='';   // issue #20 removed the fine-tune sliders; presets are the criteria selector now
   OBJ.forEach((o,i)=>{const d=document.createElement('div');d.className='obj';
     d.innerHTML=`<div class="top"><span class="nm">${objName(i)}</span><span class="v" id="v_${o.key}">${state.w[o.key].toFixed(2)}</span></div>
       <div class="q">${objQ(i)}</div><input type="range" id="s_${o.key}" min="0" max="1" step="0.05" value="${state.w[o.key]}" aria-label="${objName(i)}">`;
@@ -1038,7 +1044,7 @@ function rebuildObjs(){objsDiv.innerHTML='';
     d.querySelector('input').addEventListener('input',e=>{state.w[o.key]=parseFloat(e.target.value);
       document.getElementById('v_'+o.key).textContent=state.w[o.key].toFixed(2);markPreset(null);recolour();replan();});});}
 rebuildObjs();
-function applyWeights(arr,name){OBJ.forEach((o,i)=>{state.w[o.key]=arr[i];document.getElementById('s_'+o.key).value=arr[i];document.getElementById('v_'+o.key).textContent=arr[i].toFixed(2);});markPreset(name);recolour();updateLegendLabels();replan();}
+function applyWeights(arr,name){OBJ.forEach((o,i)=>{state.w[o.key]=arr[i];const s=document.getElementById('s_'+o.key),v=document.getElementById('v_'+o.key);if(s)s.value=arr[i];if(v)v.textContent=arr[i].toFixed(2);});markPreset(name);recolour();updateLegendLabels();replan();}
 const presetsDiv=document.getElementById('presets');
 function markPreset(name){[...presetsDiv.children].forEach(b=>b.classList.toggle('on',b.textContent===name));}
 // Jun-15 feedback: show a few broad presets, the rest behind "More" -- the meeting
@@ -1051,7 +1057,7 @@ rebuildPresets();
 function applyChallenge(p){const i=PRESETS.indexOf(p);window.__activePreset=i;
   if(i>=PRIMARY_PRESETS&&!presetsExpanded){presetsExpanded=true;rebuildPresets();}
   applyWeights(p.w,presetName(i));state.project=p.proj;
-  document.getElementById('challengeBlurb').innerHTML=presetBlurb(i)+' <a href="https://www.inaturalist.org/projects/'+p.proj+'" target="_blank" rel="noopener" style="color:var(--acc);white-space:nowrap">'+t('join')+'</a>';}
+  const cb=document.getElementById('challengeBlurb');if(cb)cb.innerHTML=presetBlurb(i)+' <a href="https://www.inaturalist.org/projects/'+p.proj+'" target="_blank" rel="noopener" style="color:var(--acc);white-space:nowrap">'+t('join')+'</a>';}
 applyChallenge(PRESETS[0]);
 (function(){var b=document.getElementById('protobar'),x=document.getElementById('protox');if(!b)return;var off=function(){b.style.display='none';document.documentElement.style.setProperty('--bh','0px');if(window.map)setTimeout(function(){map.invalidateSize();},60);};try{if(localStorage.getItem('wtb_proto')==='hid')off();}catch(e){}if(x)x.onclick=function(){off();try{localStorage.setItem('wtb_proto','hid');}catch(e){}};})();
 
@@ -1074,10 +1080,16 @@ function setCoverage(){
 }
 document.getElementById('tgCoverage').addEventListener('change',e=>{if(e.target.checked)document.getElementById('tgGettingEven').checked=false;updateLegend();setCoverage();recolour();});
 document.getElementById('tgGettingEven').addEventListener('change',e=>{if(e.target.checked)document.getElementById('tgCoverage').checked=false;loadGE().then(()=>{setCoverage();updateLegend();recolour();});});
-document.getElementById('tgZoomScale').addEventListener('change',recolour);
-document.getElementById('tgCanadaOnly').addEventListener('change',()=>{loadUS().then(recolour);});
+{const z=document.getElementById('tgZoomScale');if(z)z.addEventListener('change',recolour);}
+{const c=document.getElementById('tgCanadaOnly');if(c)c.addEventListener('change',()=>{loadUS().then(recolour);});}
 // Re-rank against the new viewport only while view-relative colouring is on (avoids the per-pan cost otherwise).
 map.on('moveend',()=>{if(zoomScaleActive()&&!geActive())recolour();});
+// Issue #20: "How impact is scored & data sources" moved out of the sidebar to a floating map info button that expands a panel.
+(function(){const b=document.getElementById('howbtn'),p=document.getElementById('howpanel'),x=document.getElementById('howclose');if(!b||!p)return;
+  const set=open=>{p.classList.toggle('open',open);b.setAttribute('aria-expanded',open?'true':'false');};
+  b.addEventListener('click',()=>set(!p.classList.contains('open')));
+  if(x)x.addEventListener('click',()=>{set(false);b.focus();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&p.classList.contains('open')){set(false);b.focus();}});})();
 // Collapse the side panel for a near-full-width map (Strava-clean) -- additive, reversible. invalidateSize after the layout settles.
 (function(){const tog=document.getElementById('panelToggle');if(!tog)return;
   const setAria=c=>{const lab=t(c?'show_panel':'hide_panel');tog.setAttribute('aria-label',lab);tog.title=lab;tog.textContent=c?'›':'‹';};
