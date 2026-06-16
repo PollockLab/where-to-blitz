@@ -31,6 +31,11 @@ PRESETS = [
 ]
 DEFAULT = PRESETS[0]["w"]
 
+# Issue #17: the "Plan a trip" view (start point, travel budget, OSRM routing) is hidden for now —
+# the team wants a simple gap-visualisation tool, not a trip planner. The code stays in place and
+# dormant (flag flips it back) so a future "help plan a blitz" tool can reuse it.
+PLAN_ENABLED = False
+
 HTML = r"""<!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
@@ -273,7 +278,7 @@ details.adv>summary:hover{color:var(--ink)}
   <button id="plan" data-i18n="plan_trip">Plan my trip →</button>
   <div id="trips"></div>
   </div>
-  <div id="prospects" data-idle="1"><div class="hd" style="margin-top:10px" data-i18n="prospects_idle">🔭 Tap a cell (or plan a trip) to see what to record there.</div></div>
+  <div id="prospects" data-idle="1"><div class="hd" style="margin-top:10px" data-i18n="prospects_idle">🔭 Tap a cell to see what to record there.</div></div>
   <div id="gaptree"></div>
 
   <details class="adv"><summary data-i18n="map_style">Map style</summary>
@@ -315,6 +320,7 @@ details.adv>summary:hover{color:var(--ink)}
 
 <script>
 const FILES=__FILES__, OBJ=__OBJ__, PRESETS=__PRESETS__, DEFAULT=__DEFAULT__;
+const PLAN_ENABLED=__PLAN_ENABLED__||/[?&]plan=1/.test(location.search);   // issue #17: hidden by default; ?plan=1 is a no-clutter escape hatch for the team (no rebuild)
 
 // ---- i18n (EN / Canadian French) ----------------------------------------
 // Static UI chrome is keyed by string id and applied to [data-i18n*] nodes.
@@ -355,7 +361,7 @@ const I18N={
     lowc_hint:"Rank by impact per kg of travel CO₂.",
     startprosp:"🔭 Also show species around my start",
     plan_trip:"Plan my trip →",
-    prospects_idle:"🔭 Tap a cell (or plan a trip) to see what to record there.",
+    prospects_idle:"🔭 Tap a cell to see what to record there.",
     gaptree_lookup:"🌿 Reading taxonomic coverage…",
     gaptree_sparse:"🌿 Too few nearby records to rank groups here yet — every sighting helps fill the map.",
     gaptree_err:"🌿 Couldn’t read coverage just now — tap the cell again.",
@@ -504,7 +510,7 @@ const I18N={
     lowc_hint:"Classer par impact par kg de CO₂ de déplacement.",
     startprosp:"🔭 Montrer aussi les espèces près de mon départ",
     plan_trip:"Planifier ma sortie →",
-    prospects_idle:"🔭 Touchez une cellule (ou planifiez une sortie) pour voir quoi observer.",
+    prospects_idle:"🔭 Touchez une cellule pour voir quoi observer.",
     gaptree_lookup:"🌿 Lecture de la couverture taxonomique…",
     gaptree_sparse:"🌿 Trop peu d’observations à proximité pour classer les groupes ici — chaque observation aide à combler la carte.",
     gaptree_err:"🌿 Lecture de la couverture impossible pour l’instant — touchez la cellule à nouveau.",
@@ -710,7 +716,7 @@ const LOW_GAP_T=0.15, STRONG_GAP_T=0.5;
 let geGapSeq=0;
 function nearestStrongGap(lat,lon){let best=null,bd=1e9;for(const m of markers){if((m.t||0)<STRONG_GAP_T)continue;if(Math.abs(m.r[0]-lat)*111>=bd)continue;const d=haversine(lat,lon,m.r[0],m.r[1]);if(d>1&&d<bd){bd=d;best=m;}}return best?{m:best,km:bd}:null;}
 function geGapPhrase(lat,lon){if(!GE_LOADED)return '';const v=GE[gekey(lat,lon)];return(!v||v[0]<0)?'':t('pop_ge_gap',t('ge_cats')[v[0]]);}
-function exploreToPlan(lat,lon){setView('plan');setStart(lat,lon);planTrip();}
+function exploreToPlan(lat,lon){if(!PLAN_ENABLED)return;setView('plan');setStart(lat,lon);planTrip();}
 const IDX={discover:2,conservation:3,env:4,staleness:5,urgency:6}, TT=7, NTR=8;
 const OSRM_BASE="https://routing.openstreetmap.de/";   // FOSSGIS public OSRM (car/bike/foot, CORS-enabled)
 const MODES={Walk:{host:'routed-foot',kmh:5,emit:0,icon:'🚶'},Cycle:{host:'routed-bike',kmh:14,emit:0,icon:'🚲'},Drive:{host:'routed-car',kmh:60,emit:0.18,icon:'🚗'}};
@@ -1330,7 +1336,7 @@ function exploreCell(lat,lon){
     const gid='gegap'+(++geGapSeq), near=nearestStrongGap(dest[0],dest[1]);
     body=`${t('pop_low_gap')} <span style="color:#889">(${score}/100)</span>`
       +`<div id="${gid}" style="margin-top:3px">${geGapPhrase(dest[0],dest[1])}</div>`
-      +(near?`<div style="margin-top:3px">${t('pop_nearest_gap',Math.round(near.km))} <a href="#" role="button" onclick="exploreToPlan(${dest[0]},${dest[1]});return false;" style="color:#1f6fe0">${t('pop_find_gaps')}</a></div>`:'');
+      +(near?`<div style="margin-top:3px">${t('pop_nearest_gap',Math.round(near.km))}${PLAN_ENABLED?` <a href="#" role="button" onclick="exploreToPlan(${dest[0]},${dest[1]});return false;" style="color:#1f6fe0">${t('pop_find_gaps')}</a>`:''}</div>`:'');
     if(!GE_LOADED)loadGE().then(()=>{const el=document.getElementById(gid);if(el)el.innerHTML=geGapPhrase(dest[0],dest[1]);}).catch(()=>{});
   } else {
     body=`${t('pop_impact')} <b>${score}/100</b> · ${contribStr(o.r)}`;
@@ -1354,6 +1360,7 @@ function setView(v){
 document.getElementById('vexplore').onclick=()=>setView('explore');
 document.getElementById('vplan').onclick=()=>setView('plan');
 document.getElementById('vcompare').onclick=()=>setView('compare');
+if(!PLAN_ENABLED){const vp=document.getElementById('vplan');if(vp)vp.style.display='none';const tu=document.getElementById('tripui');if(tu)tu.style.display='none';}   // issue #17
 
 function showLoading(on){const el=document.getElementById('loading');if(el)el.style.display=on?'block':'none';}
 
@@ -1375,6 +1382,7 @@ bootSeq();
 out = (HTML.replace("__FILES__", json.dumps(FILES, separators=(",", ":")))
            .replace("__OBJ__", json.dumps(OBJ))
            .replace("__PRESETS__", json.dumps(PRESETS))
-           .replace("__DEFAULT__", json.dumps(DEFAULT)))
+           .replace("__DEFAULT__", json.dumps(DEFAULT))
+           .replace("__PLAN_ENABLED__", "true" if PLAN_ENABLED else "false"))
 open("index.html", "w").write(out)
 print("wrote index.html  ({:.0f} KB)".format(len(out) / 1024))
