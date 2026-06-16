@@ -633,16 +633,23 @@ const DATA={}, DATA_DIR='cluster_results/ca/';
 // Bounded fetch: abort after `ms` so a hung request can't leave the UI stuck (spinner / "finding routes…") forever.
 function fetchT(url,ms){const c=new AbortController();const id=setTimeout(()=>c.abort(),ms||9000);return fetch(url,{signal:c.signal}).finally(()=>clearTimeout(id));}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+// Session cache of successful iNaturalist GETs, keyed by the exact URL (so it's scoped to a
+// cell+taxon+box). These queries are idempotent within a session, so re-tapping a cell -- the
+// common interaction -- costs zero network and paints instantly. Bounded + insertion-order
+// evicted so a long pan across many cells can't grow it without limit. Failures are never
+// cached, so a cell that errored retries fresh on the next tap.
+const _jc=new Map(), JC_MAX=150;
+function _jcSet(url,val){if(_jc.size>=JC_MAX)_jc.delete(_jc.keys().next().value);_jc.set(url,val);}
 // Robust JSON GET: tapping a cell fans out ~12 iNaturalist calls at once, so under load the
 // public API's latency tail breaches the abort and the odd 429 slips through. Without this a
 // single slow/failed call silently blanked the gap tree. Retry once, honour Retry-After on
 // 429/503, and only ever return parsed JSON (never a non-ok body that decodes to garbage).
-async function jget(url,ms,tries){ms=ms||9000;tries=tries||2;let last;
+async function jget(url,ms,tries){if(_jc.has(url))return _jc.get(url);ms=ms||9000;tries=tries||2;let last;
   for(let i=0;i<tries;i++){
     try{const r=await fetchT(url,ms);
       if((r.status===429||r.status===503)&&i<tries-1){const ra=Math.min(+(r.headers.get('retry-after'))||1,3);await sleep(ra*1000);last=new Error('HTTP '+r.status);continue;}
       if(!r.ok)throw new Error('HTTP '+r.status);
-      return await r.json();
+      const j=await r.json();_jcSet(url,j);return j;
     }catch(e){last=e;if(i<tries-1)await sleep(400*(i+1));}
   }
   throw last;
@@ -1016,7 +1023,11 @@ function setCoverage(){
   if(covLayer){map.removeLayer(covLayer);covLayer=null;}
   if(!document.getElementById('tgCoverage').checked)return;
   const ct=COVTAXA[state.taxon]||'All';
-  const cog='https://object-arbutus.cloud.computecanada.ca/bq-io/io/inat_canada_heatmaps/'+ct+'_density_inat_1km.tif';
+  // Guillaume's Dec-2025 iNaturalist density heatmaps (issue #7), per group at 1 km.
+  // Fungi has no dec25 1 km COG yet -> keep its older per-taxon layer until one lands.
+  const cog = ct==='Fungi'
+    ? 'https://object-arbutus.cloud.computecanada.ca/bq-io/io/inat_canada_heatmaps/Fungi_density_inat_1km.tif'
+    : 'https://object-arbutus.alliancecan.ca/86e1f3d5df8442d39450533329f621ae:stac/inat_canada_heatmaps/'+ct+'_density_inat_dec25_1km.tif';
   covLayer=L.tileLayer('https://tiler.biodiversite-quebec.ca/cog/tiles/{z}/{x}/{y}?url='+encodeURIComponent(cog)+'&rescale=0,10&colormap_name=magma&resampling=cubic',
     {opacity:0.75,maxZoom:14,zIndex:250,attribution:'iNaturalist density &copy; Biodiversit\u00e9 Qu\u00e9bec'}).addTo(map);
 }
