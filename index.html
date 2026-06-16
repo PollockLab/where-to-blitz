@@ -240,7 +240,7 @@ details.adv>summary:hover{color:var(--ink)}
   <button id="plan" data-i18n="plan_trip">Plan my trip →</button>
   <div id="trips"></div>
   </div>
-  <div id="prospects" data-idle="1"><div class="hd" style="margin-top:10px" data-i18n="prospects_idle">🔭 Tap a cell (or plan a trip) to see what to record there.</div></div>
+  <div id="prospects" data-idle="1"><div class="hd" style="margin-top:10px" data-i18n="prospects_idle">🔭 Tap a cell to see what to record there.</div></div>
   <div id="gaptree"></div>
 
   <details class="adv"><summary data-i18n="map_style">Map style</summary>
@@ -282,6 +282,7 @@ details.adv>summary:hover{color:var(--ink)}
 
 <script>
 const FILES={"All biodiversity":"webapp_data_All_biodiversity.json","Plantae":"webapp_data_Plantae.json","Insecta":"webapp_data_Insecta.json","Aves":"webapp_data_Aves.json","Fungi":"webapp_data_Fungi.json","Mammalia":"webapp_data_Mammalia.json","Actinopterygii":"webapp_data_Actinopterygii.json","Reptilia":"webapp_data_Reptilia.json","Amphibia":"webapp_data_Amphibia.json","Arachnida":"webapp_data_Arachnida.json","Mollusca":"webapp_data_Mollusca.json"}, OBJ=[{"key": "discover", "name": "Discover the most species", "q": "go where few people have looked"}, {"key": "conservation", "name": "Find rare species", "q": "\u26a0 placeholder \u2014 the national rarity layer isn't available yet, so this goal has no effect"}, {"key": "env", "name": "Cover every habitat", "q": "go where the climate is under-sampled"}, {"key": "staleness", "name": "Freshest gaps", "q": "\u26a0 placeholder \u2014 no per-record dates nationally; currently mirrors 'Discover', so don't weight both"}, {"key": "urgency", "name": "Sample before it's lost", "q": "go where forest cover was recently lost (logging, fire, dieback)"}], PRESETS=[{"name": "Biodiversity impact", "w": [0.8, 0, 0.7, 0, 0.3], "proj": "blitz-the-gap-2026-general", "blurb": "Under-sampling + climate gaps \u2014 the strongest signal nationwide."}, {"name": "The Other 99%", "w": [1, 0, 0.3, 0, 0], "proj": "blitz-the-gap-the-other-99", "blurb": "Skip the busy 1% \u2014 record in Canada's under-sampled 99%."}, {"name": "Most Wanted", "w": [0.1, 1, 0, 0, 0.3], "proj": "blitz-the-gap-canada-s-most-wanted", "blurb": "Where COSEWIC/SARA species at risk concentrate (CAN-SAR + iNaturalist/GBIF records)."}, {"name": "Too Hot to Handle", "w": [0.2, 0, 0.2, 0, 1], "proj": "blitz-the-gap-too-hot-to-handle", "blurb": "Climate-exposed species in the fastest-warming areas."}, {"name": "Climate Gap", "w": [0.2, 0, 1, 0, 0], "proj": "blitz-the-gap-closing-the-climate-gap", "blurb": "Visit under-sampled climate & habitat types."}, {"name": "Revisit the Past", "w": [0.3, 0, 0, 1, 0], "proj": "blitz-the-gap-revisiting-the-past", "blurb": "Well-recorded long ago, quiet lately \u2014 revisit cells iNaturalist shows few recent records vs all-time."}], DEFAULT=[0.8, 0, 0.7, 0, 0.3];
+const PLAN_ENABLED=false||/[?&]plan=1/.test(location.search);   // issue #17: hidden by default; ?plan=1 is a no-clutter escape hatch for the team (no rebuild)
 
 // ---- i18n (EN / Canadian French) ----------------------------------------
 // Static UI chrome is keyed by string id and applied to [data-i18n*] nodes.
@@ -322,7 +323,7 @@ const I18N={
     lowc_hint:"Rank by impact per kg of travel CO₂.",
     startprosp:"🔭 Also show species around my start",
     plan_trip:"Plan my trip →",
-    prospects_idle:"🔭 Tap a cell (or plan a trip) to see what to record there.",
+    prospects_idle:"🔭 Tap a cell to see what to record there.",
     gaptree_lookup:"🌿 Reading taxonomic coverage…",
     gaptree_sparse:"🌿 Too few nearby records to rank groups here yet — every sighting helps fill the map.",
     gaptree_err:"🌿 Couldn’t read coverage just now — tap the cell again.",
@@ -471,7 +472,7 @@ const I18N={
     lowc_hint:"Classer par impact par kg de CO₂ de déplacement.",
     startprosp:"🔭 Montrer aussi les espèces près de mon départ",
     plan_trip:"Planifier ma sortie →",
-    prospects_idle:"🔭 Touchez une cellule (ou planifiez une sortie) pour voir quoi observer.",
+    prospects_idle:"🔭 Touchez une cellule pour voir quoi observer.",
     gaptree_lookup:"🌿 Lecture de la couverture taxonomique…",
     gaptree_sparse:"🌿 Trop peu d’observations à proximité pour classer les groupes ici — chaque observation aide à combler la carte.",
     gaptree_err:"🌿 Lecture de la couverture impossible pour l’instant — touchez la cellule à nouveau.",
@@ -677,7 +678,7 @@ const LOW_GAP_T=0.15, STRONG_GAP_T=0.5;
 let geGapSeq=0;
 function nearestStrongGap(lat,lon){let best=null,bd=1e9;for(const m of markers){if((m.t||0)<STRONG_GAP_T)continue;if(Math.abs(m.r[0]-lat)*111>=bd)continue;const d=haversine(lat,lon,m.r[0],m.r[1]);if(d>1&&d<bd){bd=d;best=m;}}return best?{m:best,km:bd}:null;}
 function geGapPhrase(lat,lon){if(!GE_LOADED)return '';const v=GE[gekey(lat,lon)];return(!v||v[0]<0)?'':t('pop_ge_gap',t('ge_cats')[v[0]]);}
-function exploreToPlan(lat,lon){setView('plan');setStart(lat,lon);planTrip();}
+function exploreToPlan(lat,lon){if(!PLAN_ENABLED)return;setView('plan');setStart(lat,lon);planTrip();}
 const IDX={discover:2,conservation:3,env:4,staleness:5,urgency:6}, TT=7, NTR=8;
 const OSRM_BASE="https://routing.openstreetmap.de/";   // FOSSGIS public OSRM (car/bike/foot, CORS-enabled)
 const MODES={Walk:{host:'routed-foot',kmh:5,emit:0,icon:'🚶'},Cycle:{host:'routed-bike',kmh:14,emit:0,icon:'🚲'},Drive:{host:'routed-car',kmh:60,emit:0.18,icon:'🚗'}};
@@ -1297,7 +1298,7 @@ function exploreCell(lat,lon){
     const gid='gegap'+(++geGapSeq), near=nearestStrongGap(dest[0],dest[1]);
     body=`${t('pop_low_gap')} <span style="color:#889">(${score}/100)</span>`
       +`<div id="${gid}" style="margin-top:3px">${geGapPhrase(dest[0],dest[1])}</div>`
-      +(near?`<div style="margin-top:3px">${t('pop_nearest_gap',Math.round(near.km))} <a href="#" role="button" onclick="exploreToPlan(${dest[0]},${dest[1]});return false;" style="color:#1f6fe0">${t('pop_find_gaps')}</a></div>`:'');
+      +(near?`<div style="margin-top:3px">${t('pop_nearest_gap',Math.round(near.km))}${PLAN_ENABLED?` <a href="#" role="button" onclick="exploreToPlan(${dest[0]},${dest[1]});return false;" style="color:#1f6fe0">${t('pop_find_gaps')}</a>`:''}</div>`:'');
     if(!GE_LOADED)loadGE().then(()=>{const el=document.getElementById(gid);if(el)el.innerHTML=geGapPhrase(dest[0],dest[1]);}).catch(()=>{});
   } else {
     body=`${t('pop_impact')} <b>${score}/100</b> · ${contribStr(o.r)}`;
@@ -1321,6 +1322,7 @@ function setView(v){
 document.getElementById('vexplore').onclick=()=>setView('explore');
 document.getElementById('vplan').onclick=()=>setView('plan');
 document.getElementById('vcompare').onclick=()=>setView('compare');
+if(!PLAN_ENABLED){const vp=document.getElementById('vplan');if(vp)vp.style.display='none';const tu=document.getElementById('tripui');if(tu)tu.style.display='none';}   // issue #17
 
 function showLoading(on){const el=document.getElementById('loading');if(el)el.style.display=on?'block':'none';}
 
