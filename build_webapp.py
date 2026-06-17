@@ -421,7 +421,6 @@ const I18N={
       A group's coverage is the first divided by the second, then divided by the cell's overall recording rate — so an average group sits at <b style="color:var(--ink)">1</b>. Groups well below 1 are under-recorded relative to their neighbours and rise to the top, <b style="color:var(--ink)">biggest relative gap first</b>. That normalising step surfaces the real gaps even where everything is under-recorded (one cell can't hold a whole region's diversity). The map colours each cell by its single worst group; tap for the full ranked tree, tap a group to map it. iNaturalist density — a sample, not a census.`,
     ge_cats:["Fishes","Fungi","Reptiles & Amphibians","Invertebrates","Mammals","Plants"],
     ge_all:"All groups under-sampled",
-    ge_most:"Most under-represented here:",
     canada_only:"Canada only",
     canada_only_hint:"Hides cells across the US border, where the bright band is a data edge (the Canadian layer stops at the border), not a real gap. Approximate boundary.",
     more_presets:"More ▾",
@@ -483,12 +482,6 @@ const I18N={
     pop_centre:"centre", pop_impact:"impact",
     pop_round:"round trip", pop_estimated:"(estimated)",
     pop_over_budget:bud=>`round trip — over your ${bud}`,
-    pop_explore_title:"This area", pop_explore_sub:"— anywhere in the highlighted ~25 km cell",
-    pop_low_gap:"Well-sampled — low gap here, but still worth a look:",
-    pop_ge_gap:g=>`Most under-recorded group here: <b>${g}</b> — record those.`,
-    pop_nearest_gap:km=>`Nearest strong gap ~${km} km away.`,
-    pop_find_gaps:"Find gaps reachable from here →",
-    share_link:"Copy link to this spot", copied:"✓ Copied!",
     car_free:"car-free",
     table_caption:"Top 40 cells for your goal mix & group, highest first. Tap a row to open it.",
     table_rank:"#", table_latlon:"Lat, lon", table_score:"Score",
@@ -502,7 +495,6 @@ const I18N={
     // OBJ / PRESET / group display names (indexed)
     obj_name:["Discover the most species","Find species at risk","Cover every habitat","Freshest gaps","Sample before it's lost"],
     obj_q:["go where few people have looked","go where COSEWIC/SARA species at risk concentrate","go where the climate is under-sampled","go where lots was recorded long ago but little lately (iNaturalist recent vs all-time density)","go where forest cover was recently lost (logging, fire, dieback)"],
-    why_axis:["Few people have recorded here — what you find genuinely adds to the map.","Species at risk are documented here — your records support their conservation.","This climate & habitat type is under-sampled — records here fill a real gap.","Overlooked lately — a fresh record here is overdue.","Forest cover changed here recently — recording now tracks what's shifting."],
     preset_name:["Spatial Gap","Species discovery","Conservation"],
     preset_blurb:["Under-recorded places and under-sampled climates (iNaturalist density + CHELSA climate gap).","Where new-to-the-record species are likeliest: under-sampling plus cells recorded long ago but quiet lately.","Where species at risk concentrate, weighted toward recently changed habitat (COSEWIC/SARA via CAN-SAR + GBIF)."],
     group:{Amphibia:"Amphibians",Aves:"Birds",Insecta:"Insects",Mammalia:"Mammals",Reptilia:"Reptiles",Plantae:"Plants",Fungi:"Fungi",Actinopterygii:"Fishes",Arachnida:"Arachnids",Mollusca:"Molluscs","All biodiversity":"All biodiversity"},
@@ -578,7 +570,6 @@ const I18N={
       La couverture d'un groupe est la première divisée par la seconde, puis divisée par le taux d'enregistrement global de la cellule — un groupe moyen vaut donc <b style="color:var(--ink)">1</b>. Les groupes bien en dessous de 1 sont sous-documentés par rapport à leurs voisins et remontent en tête, <b style="color:var(--ink)">plus grande lacune relative d'abord</b>. Cette normalisation fait ressortir les vraies lacunes même là où tout est sous-documenté (une cellule ne peut contenir toute la diversité d'une région). La carte colore chaque cellule selon son groupe le plus faible ; touchez pour l'arbre complet classé, touchez un groupe pour le cartographier. Densité iNaturalist : un échantillon, pas un inventaire.`,
     ge_cats:["Poissons","Champignons","Reptiles et amphibiens","Invertébrés","Mammifères","Plantes"],
     ge_all:"Tous sous-échantillonnés",
-    ge_most:"Le plus sous-représenté ici :",
     canada_only:"Canada seulement",
     canada_only_hint:"Masque les cellules au sud de la frontière, où la bande vive est une limite de données (la couche canadienne s'arrête à la frontière), pas une vraie lacune. Frontière approximative.",
     more_presets:"Plus ▾",
@@ -640,12 +631,6 @@ const I18N={
     pop_centre:"centre", pop_impact:"impact",
     pop_round:"aller-retour", pop_estimated:"(estimé)",
     pop_over_budget:bud=>`aller-retour — au-delà de votre ${bud}`,
-    pop_explore_title:"Cette zone", pop_explore_sub:"— n'importe où dans la cellule de ~25 km en surbrillance",
-    pop_low_gap:"Bien échantillonné — faible lacune ici, mais ça vaut le coup :",
-    pop_ge_gap:g=>`Groupe le plus sous-documenté ici : <b>${g}</b> — notez-les.`,
-    pop_nearest_gap:km=>`Lacune forte la plus proche à ~${km} km.`,
-    pop_find_gaps:"Trouver des lacunes accessibles d'ici →",
-    share_link:"Copier le lien", copied:"✓ Copié !",
     car_free:"sans voiture",
     table_caption:"40 meilleures cellules pour votre combinaison d'objectifs et votre groupe, du plus élevé au plus bas. Touchez une ligne pour l'ouvrir.",
     table_rank:"#", table_latlon:"Lat, lon", table_score:"Score",
@@ -658,7 +643,6 @@ const I18N={
     ins_v_some:(neg,n)=>`Ils pointent vers des lieux différents dans <b>${neg} des ${n}</b> groupes affichés — sous-représentation et espèces en péril divergent souvent, mais pas toujours.`,
     obj_name:["Découvrir le plus d'espèces","Trouver des espèces en péril","Couvrir chaque habitat","Lacunes les plus fraîches","Échantillonner avant qu'il soit trop tard"],
     obj_q:["allez où peu de gens ont cherché","allez où se concentrent les espèces en péril (COSEWIC/SARA)","allez où le climat est sous-échantillonné","allez où l'on a beaucoup observé autrefois mais peu récemment (densité iNaturalist récente vs historique)","allez où le couvert forestier a été récemment perdu (coupe, feu, dépérissement)"],
-    why_axis:["Peu de gens ont observé ici — ce que vous trouvez enrichit vraiment la carte.","Des espèces en péril sont documentées ici — vos observations soutiennent leur conservation.","Ce type de climat et d'habitat est sous-échantillonné — observer ici comble une vraie lacune.","Négligé récemment — une observation fraîche ici se fait attendre.","Le couvert forestier a changé ici récemment — observer maintenant suit ces changements."],
     preset_name:["Lacune spatiale","Découverte d'espèces","Conservation"],
     preset_blurb:["Lieux sous-observés et climats sous-échantillonnés (densité iNaturalist + lacune climatique CHELSA).","Là où de nouvelles espèces pour le registre sont les plus probables : sous-représentation et cellules observées autrefois mais calmes récemment.","Là où se concentrent les espèces en péril, pondéré vers les habitats récemment modifiés (COSEWIC/SARA; CAN-SAR + GBIF)."],
     group:{Amphibia:"Amphibiens",Aves:"Oiseaux",Insecta:"Insectes",Mammalia:"Mammifères",Reptilia:"Reptiles",Plantae:"Plantes",Fungi:"Champignons",Actinopterygii:"Poissons",Arachnida:"Arachnides",Mollusca:"Mollusques","All biodiversity":"Toute la biodiversité"},
@@ -762,10 +746,6 @@ function geColour(m){const v=GE[gekey(m.r[0],m.r[1])];if(!v)return GE_ALL;return
 // priority for the all-taxa mission -- but it's not worthless. Surface the two honest reasons
 // to still record here: the single most under-recorded group (Getting Even), and the nearest
 // cell that IS a strong gap. Never inflate the score to do it.
-const LOW_GAP_T=0.15, STRONG_GAP_T=0.5;
-let geGapSeq=0;
-function nearestStrongGap(lat,lon){let best=null,bd=1e9;for(const m of markers){if((m.t||0)<STRONG_GAP_T)continue;if(Math.abs(m.r[0]-lat)*111>=bd)continue;const d=haversine(lat,lon,m.r[0],m.r[1]);if(d>1&&d<bd){bd=d;best=m;}}return best?{m:best,km:bd}:null;}
-function geGapPhrase(lat,lon){if(!GE_LOADED)return '';const v=GE[gekey(lat,lon)];return(!v||v[0]<0)?'':t('pop_ge_gap',t('ge_cats')[v[0]]);}
 function exploreToPlan(lat,lon){if(!PLAN_ENABLED)return;setView('plan');setStart(lat,lon);planTrip();}
 const IDX={discover:2,conservation:3,env:4,staleness:5,urgency:6}, TT=7, NTR=8;
 const OSRM_BASE="https://routing.openstreetmap.de/";   // FOSSGIS public OSRM (car/bike/foot, CORS-enabled)
@@ -989,7 +969,6 @@ function contribs(r){return OBJ.map((o,i)=>({nm:objName(i),c:state.w[o.key]*(r[I
 function contribStr(r){const c=contribs(r).slice(0,3).map(x=>x.nm.toLowerCase()+' '+(x.raw*100|0)+'/100'); return c.length?c.join(' · '):'—';}
 // Plain-language reason this cell is worth a visit, from its single dominant (weighted) signal.
 // Intrinsic-motivation framing; honest because it names the axis actually driving the score.
-function whyMatters(r){let bi=-1,bv=0;OBJ.forEach((o,i)=>{const v=state.w[o.key]*(r[IDX[o.key]]||0);if(v>bv){bv=v;bi=i;}});return bi<0?'':(t('why_axis')[bi]||'');}
 
 const HALF=0.125;   // half a 0.25-deg cell
 function buildMarkers(){
@@ -1018,7 +997,7 @@ function recolour(){
     applyCanadaMask();renderCellTable();return;
   }
   // Decouple SCORE from COLOUR. m.t is always the stable NATIONAL percentile -- it drives the
-  // popup impact, low-gap messaging, nearestStrongGap and the accessible Top-cells list, none of
+  // popup impact and the accessible Top-cells list, neither of
   // which should change as you pan. Viewport-relative ranking (when on) recolours ONLY the fill so
   // local gaps read at a glance, without redefining what a cell's score means (#1).
   const vals=markers.map(m=>impact(m.r));
