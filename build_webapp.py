@@ -442,7 +442,7 @@ const I18N={
     prospects_where_start:"Around your start", pop_go_title2:"Your destination",
     prospects_lookup:"🔭 Looking up what lives here…",
     prospects_none:"🔭 No research-grade records here yet — you could be the first to document what lives here.",
-    prospects_err:"🔭 Couldn’t load species for this spot.",
+    prospects_err:"🔭 Couldn’t load species just now — tap the cell again.",
     prospects_hd:(where,n,nearby)=>`🔭 <b style="color:var(--ink)">${where}</b> · ${n} species recorded on iNaturalist. Worth looking for${nearby?' (✦ = nearby)':''}:`,
     rare:"rarely logged", uncommon:"few records", gap:"gap",
     here_count:n=>`${n} here`, nearby_lbl:"nearby",
@@ -603,7 +603,7 @@ const I18N={
     prospects_where_start:"Près de votre départ", pop_go_title2:"Votre destination",
     prospects_lookup:"🔭 Recherche de ce qui vit ici…",
     prospects_none:"🔭 Aucune observation de qualité recherche ici pour l'instant — vous pourriez être la première personne à documenter ce qui vit ici.",
-    prospects_err:"🔭 Impossible de charger les espèces pour cet endroit.",
+    prospects_err:"🔭 Impossible de charger les espèces pour l’instant — touchez la cellule à nouveau.",
     prospects_hd:(where,n,nearby)=>`🔭 <b style="color:var(--ink)">${where}</b> · ${n} espèces observées sur iNaturalist. À surveiller${nearby?' (✦ = à proximité)':''} :`,
     rare:"rarement noté", uncommon:"peu de données", gap:"lacune",
     here_count:n=>`${n} ici`, nearby_lbl:"à proximité",
@@ -796,10 +796,12 @@ async function fetchProspects(lat,lon,whereKey,opts){
     let res=(j.results||[]).filter(r=>r.count>=2 && r.taxon && r.taxon.default_photo).map(r=>({count:r.count,taxon:r.taxon,_here:true}));
     let nearby=false;
     if(res.length<4){
-      const k=await jget(q(3*HH));
+      // widening to ~30 km is a best-effort top-up, not core data: if it fails transiently,
+      // degrade to "just the cell's species" rather than blanking the panel the gap tree already filled.
+      const k=await jget(q(3*HH)).catch(()=>null);
       if(myseq!==prospectSeq)return;
       const have=new Set(res.map(r=>r.taxon.id));
-      const extra=(k.results||[]).filter(r=>r.taxon&&r.taxon.default_photo&&r.count>=3&&!have.has(r.taxon.id)).map(r=>({count:r.count,taxon:r.taxon,_here:false}));
+      const extra=((k&&k.results)||[]).filter(r=>r.taxon&&r.taxon.default_photo&&r.count>=3&&!have.has(r.taxon.id)).map(r=>({count:r.count,taxon:r.taxon,_here:false}));
       if(extra.length){res=res.concat(extra);nearby=true;}
     }
     if(!res.length){pr.innerHTML='<div class="hd">'+t('prospects_none')+'</div>';return;}
@@ -831,7 +833,15 @@ async function fetchProspects(lat,lon,whereKey,opts){
       const gapThumbs='<div style="font-size:11.5px;color:#1b7837;font-weight:700;margin:9px 0 4px">'+t('gap_popup')+'</div><div style="display:flex;gap:6px">'+firsts.slice(0,4).map(r=>{const tx=r.taxon,nm=tx.preferred_common_name||tx.name;return `<a href="https://www.inaturalist.org/taxa/${tx.id}" target="_blank" rel="noopener" style="width:62px;text-decoration:none;color:#0a2a44" title="${esc(tx.name)}"><img src="${safeImg(tx.default_photo.square_url)}" style="width:62px;height:62px;object-fit:cover;border-radius:7px;border:1px solid #cdd;display:block"><div style="font-size:10px;line-height:1.15;margin-top:3px;height:24px;overflow:hidden">${esc(nm)}</div></a>`;}).join('')+'</div>';
       destMarker.setPopupContent(destMarker.getPopup().getContent()+gapThumbs); destMarker.openPopup();
     }
-  }catch(e){pr.innerHTML='<div class="hd">'+t('prospects_err')+'</div>';}
+  }catch(e){
+    // Only the primary cell query (and any other un-isolated step) can land here -- the widening
+    // top-up and fetchFirsts swallow their own transient errors, so a single tail abort or 429 no
+    // longer blanks an otherwise-loadable cell. This IS a genuine load failure (not emptiness:
+    // empty cells render prospects_none above), so honour the stale-seq guard and offer a retry.
+    if(myseq!==prospectSeq)return;
+    pr.innerHTML='<div class="hd">'+t('prospects_err')+' <a href="#" data-prospect-retry="1" style="color:var(--acc)">'+t('retry')+'</a></div>';
+    const rl=pr.querySelector('[data-prospect-retry]'); if(rl)rl.onclick=ev=>{ev.preventDefault();fetchProspects(lat,lon,whereKey,opts);};
+  }
 }
 // round-robin across iconic taxa so picks aren't 6 of the same group (coverage, not raw-abundance rank)
 function spreadByTaxon(arr){const by={};arr.forEach(r=>{const k=(r.taxon.iconic_taxon_name)||'?';(by[k]=by[k]||[]).push(r);});const ks=Object.keys(by),out=[];let guard=0;while(out.length<arr.length&&guard++<arr.length*(ks.length+1)){for(const k of ks){if(by[k].length){out.push(by[k].shift());if(out.length>=arr.length)break;}}}return out;}
