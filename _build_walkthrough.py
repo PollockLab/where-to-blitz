@@ -9,10 +9,11 @@ needed (one optional live-iNat cell is guarded). Reproduce:
 
     .venv/bin/python _build_walkthrough.py
     .venv/bin/python -m nbconvert --to notebook --execute --inplace where-to-blitz-walkthrough.ipynb
-    .venv/bin/python -m nbconvert --to html --output where-to-blitz-walkthrough.html where-to-blitz-walkthrough.ipynb
+    .venv/bin/python render_walkthrough_html.py    # → where-to-blitz-walkthrough.html (with figure alt text)
 
 The HTML render is what the in-app "Full methodology" link points at (served on GitHub Pages);
-nbconvert 7.x renders the §0 mermaid diagram natively. Re-render it whenever the notebook changes.
+nbconvert 7.x renders the §0 mermaid diagram natively. render_walkthrough_html.py wraps nbconvert
+and adds alt text to the figures for screen-reader users. Re-render whenever the notebook changes.
 """
 import nbformat as nbf
 from nbformat.v4 import new_notebook, new_markdown_cell, new_code_cell
@@ -682,7 +683,7 @@ uv venv --python 3.11 .venv && uv pip install --python .venv/bin/python -r requi
 # 3. rebuild + execute THIS walkthrough, then render the HTML the in-app link points to
 .venv/bin/python _build_walkthrough.py
 .venv/bin/python -m nbconvert --to notebook --execute --inplace where-to-blitz-walkthrough.ipynb
-.venv/bin/python -m nbconvert --to html --output where-to-blitz-walkthrough.html where-to-blitz-walkthrough.ipynb
+.venv/bin/python render_walkthrough_html.py    # → where-to-blitz-walkthrough.html (adds figure alt text)
 ```
 
 The build is frozen by a manifest hash (printed in Section 1); the validation results read from
