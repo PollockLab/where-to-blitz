@@ -722,6 +722,10 @@ function co2lbl(kg){return (kg<=0&&MODES[state.mode].emit===0)?t('car_free'):'~'
 const ICONIC={Amphibia:'Amphibia',Aves:'Aves',Insecta:'Insecta',Mammalia:'Mammalia',Reptilia:'Reptilia',Plantae:'Plantae',Fungi:'Fungi',Actinopterygii:'Actinopterygii',Arachnida:'Arachnida',Mollusca:'Mollusca'};
 let prospectSeq=0;
 let _lastProspect=null;   // {lat,lon,whereKey} of the open cell panel, so a language switch can re-render it
+// iNaturalist returns common names per locale; ask for French names in FR mode (falls back to the
+// scientific name where no French common name exists). EN is iNat's default, so leave en URLs
+// untouched — keeps their cache keys and behaviour identical to before.
+const inatLocale=()=>LANG==='fr'?'&locale=fr':'';
 // whereKey is a stable sentinel ('around_start'|'right_here'|'destination'); the displayed
 // heading is translated from it so the gap-popup test stays language-independent.
 const WHERE_LBL={around_start:'prospects_where_start',right_here:'right_here',destination:'pop_go_title2'};
@@ -739,7 +743,7 @@ async function fetchProspects(lat,lon,whereKey,opts){
   const L_rare=t('rare'),L_unc=t('uncommon'),L_gap=t('gap'),L_nearby=t('nearby_lbl');
   const T_here=n=>t('here_count',n),T_world=g=>t('worldwide',g.toLocaleString(LANG==='fr'?'fr-CA':'en-CA')),T_nb=n=>t('nearby_count',n);
   const ic=ICONIC[state.taxon]||'', HH=0.125;
-  const q=(h)=>`https://api.inaturalist.org/v1/observations/species_counts?swlat=${lat-h}&nelat=${lat+h}&swlng=${lon-h}&nelng=${lon+h}&quality_grade=research&taxon_geoprivacy=open&threatened=false&per_page=500&order_by=count`+(ic?`&iconic_taxa=${ic}`:'');
+  const q=(h)=>`https://api.inaturalist.org/v1/observations/species_counts?swlat=${lat-h}&nelat=${lat+h}&swlng=${lon-h}&nelng=${lon+h}&quality_grade=research&taxon_geoprivacy=open&threatened=false&per_page=500&order_by=count`+(ic?`&iconic_taxa=${ic}`:'')+inatLocale();
   try{
     const j=await jget(q(HH));
     if(myseq!==prospectSeq)return;
@@ -789,7 +793,7 @@ async function fetchProspects(lat,lon,whereKey,opts){
 function spreadByTaxon(arr){const by={};arr.forEach(r=>{const k=(r.taxon.iconic_taxon_name)||'?';(by[k]=by[k]||[]).push(r);});const ks=Object.keys(by),out=[];let guard=0;while(out.length<arr.length&&guard++<arr.length*(ks.length+1)){for(const k of ks){if(by[k].length){out.push(by[k].shift());if(out.length>=arr.length)break;}}}return out;}
 async function fetchFirsts(lat,lon,ic,cellIds,cellN){
   const R=0.5;   // ~50 km neighbourhood -- same habitat zone, not a different ecoregion
-  const u=`https://api.inaturalist.org/v1/observations/species_counts?swlat=${lat-R}&nelat=${lat+R}&swlng=${lon-R}&nelng=${lon+R}&quality_grade=research&taxon_geoprivacy=open&threatened=false&per_page=200&order_by=count`+(ic?`&iconic_taxa=${ic}`:'');
+  const u=`https://api.inaturalist.org/v1/observations/species_counts?swlat=${lat-R}&nelat=${lat+R}&swlng=${lon-R}&nelng=${lon+R}&quality_grade=research&taxon_geoprivacy=open&threatened=false&per_page=200&order_by=count`+(ic?`&iconic_taxa=${ic}`:'')+inatLocale();
   try{const j=await jget(u);
     const all=(j.results||[]).filter(r=>r.taxon&&r.taxon.default_photo);
     const M=j.total_results||all.length;                  // TRUE neighbourhood richness (uncapped), not the top-200 page; same filters as the cell query (research/open/threatened=false)
