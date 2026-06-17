@@ -1037,19 +1037,38 @@ function recolour(){
   if(rel){
     // Colour = rank within the current viewport so a Montrealer zoomed in sees local gaps; off-view
     // cells go faint (they recolour on moveend). Hidden US cells excluded so border zooms aren't skewed.
-    const b=map.getBounds();let inb=markers.filter(m=>b.contains([m.r[0],m.r[1]]));
-    if(caOnlyActive()&&US_CELLS)inb=inb.filter(m=>!US_CELLS.has(gekey(m.r[0],m.r[1])));
-    const vv=inb.map(m=>impact(m.r));
-    const od=vv.map((v,i)=>[v,i]).sort((a,b)=>a[0]-b[0]);const rk=new Array(vv.length);od.forEach((p,k)=>rk[p[1]]=k);const m1=Math.max(vv.length-1,1);
-    const fl=od.length>0&&(od[od.length-1][0]-od[0][0])<1e-9;
+    const inb=viewportCells();
     const dim=colour(0);markers.forEach(m=>m.mk.setStyle({fillColor:dim,color:dim,weight:1,opacity:.05,fillOpacity:.05}));  // m.t (score) untouched
-    inb.forEach((m,i)=>{const ct=fl?0:rk[i]/m1,o=.25+.5*ct,c=colour(ct);m.mk.setStyle({fillColor:c,color:c,weight:1,opacity:o,fillOpacity:o});});
+    fillViewport(inb);
+    PREV_INB=new Set(inb);   // baseline for the incremental moveend path: everything else is already dim
   } else {
+    PREV_INB=null;
     // No per-cell tooltip: at tens of thousands of cells binding one each tanks pan/zoom. Stroke
     // matches fill so adjacent canvas rectangles tile seamlessly (else anti-alias gaps stripe at low zoom).
     markers.forEach(m=>{const ct=m.t,o=cov?0:0.25+0.5*ct,c=colour(ct);m.mk.setStyle({fillColor:c,color:c,weight:1,opacity:o,fillOpacity:o});});
   }
   applyCanadaMask();renderCellTable();
+}
+// Cells currently in view (US-side excluded when "Canada only" is on, so border zooms aren't skewed).
+function viewportCells(){const b=map.getBounds();let inb=markers.filter(m=>b.contains([m.r[0],m.r[1]]));
+  if(caOnlyActive()&&US_CELLS)inb=inb.filter(m=>!US_CELLS.has(gekey(m.r[0],m.r[1])));return inb;}
+// Colour the in-bounds cells by their rank WITHIN the viewport (same formula as the full path). m.t untouched.
+function fillViewport(inb){const vv=inb.map(m=>impact(m.r));
+  const od=vv.map((v,i)=>[v,i]).sort((a,b)=>a[0]-b[0]);const rk=new Array(vv.length);od.forEach((p,k)=>rk[p[1]]=k);const m1=Math.max(vv.length-1,1);
+  const fl=od.length>0&&(od[od.length-1][0]-od[0][0])<1e-9;
+  inb.forEach((m,i)=>{const ct=fl?0:rk[i]/m1,o=.25+.5*ct,c=colour(ct);m.mk.setStyle({fillColor:c,color:c,weight:1,opacity:o,fillOpacity:o});});}
+// In-bounds set from the last viewport-relative paint, so moveend only touches what changed (null = full repaint needed first).
+let PREV_INB=null;
+// Incremental moveend repaint: re-rank/re-colour only the in-view cells, dim only the cells that LEFT the
+// viewport since the last paint, and leave the national score (m.t), out-of-view cells and the cell table alone.
+function recolourViewport(){
+  if(PREV_INB===null){recolour();return;}   // no baseline yet (e.g. first paint, or a non-rel path ran): do the full establish
+  const inb=viewportCells(),now=new Set(inb);
+  const dim=colour(0);
+  PREV_INB.forEach(m=>{if(!now.has(m))m.mk.setStyle({fillColor:dim,color:dim,weight:1,opacity:.05,fillOpacity:.05});});  // cells that left view
+  fillViewport(inb);
+  PREV_INB=now;
+  applyCanadaMask();   // US cells that scrolled into view stay hidden; far cheaper than a full re-rank
 }
 // Swap #maplegend between the priority ramp (default) and a categorical Getting Even legend. Pale swatches get a 1px #ccc border.
 let GE_PRIORITY_LEGEND=null;
@@ -1183,7 +1202,7 @@ document.getElementById('tgGettingEven').addEventListener('change',e=>{if(e.targ
 {const z=document.getElementById('tgZoomScale');if(z)z.addEventListener('change',recolour);}
 {const c=document.getElementById('tgCanadaOnly');if(c)c.addEventListener('change',()=>{loadUS().then(recolour);});}
 // Re-rank against the new viewport only while view-relative colouring is on (avoids the per-pan cost otherwise).
-map.on('moveend',()=>{if(zoomScaleActive()&&!geActive())recolour();});
+map.on('moveend',()=>{if(zoomScaleActive()&&!geActive())recolourViewport();});
 // Issue #20: "How impact is scored & data sources" moved out of the sidebar to a floating map info button that expands a panel.
 (function(){const b=document.getElementById('howbtn'),p=document.getElementById('howpanel'),x=document.getElementById('howclose');if(!b||!p)return;
   const set=open=>{p.classList.toggle('open',open);b.setAttribute('aria-expanded',open?'true':'false');};
