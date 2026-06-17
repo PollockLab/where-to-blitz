@@ -189,7 +189,9 @@ details.adv>summary:hover{color:var(--ink)}
 <div id="panel" role="main"><div id="panelInner">
   <div class="langtoggle" role="group" data-i18n-aria="aria_language" aria-label="Language"><button id="lang-en" type="button">EN</button><button id="lang-fr" type="button">FR</button></div>
   <h1 data-i18n-html="title_full">Where to <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--gd);text-decoration:underline">Blitz the Gap</a></h1>
-  <div class="sechd"><span class="sec" data-i18n="sec_group">Life group & goal</span><span class="infobtn" data-i18n-title="info_btn" title="Where do these scores come from?" role="button" tabindex="0" data-i18n-aria="aria_about_data" aria-label="About the data" aria-expanded="false" onclick="const b=document.getElementById('taxinfo').classList.toggle('open');this.setAttribute('aria-expanded',b)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">i</span></div>
+  <div class="sechd"><span class="sec" data-i18n="sec_taxon">Taxon</span></div>
+  <select id="taxon" class="full" data-i18n-aria="aria_lifegroup" aria-label="Taxon" style="margin-bottom:8px"></select>
+  <div class="sechd"><span class="sec" data-i18n="sec_goal">Goal</span><span class="infobtn" data-i18n-title="info_btn" title="Where do these scores come from?" role="button" tabindex="0" data-i18n-aria="aria_about_data" aria-label="About the data" aria-expanded="false" onclick="const b=document.getElementById('taxinfo').classList.toggle('open');this.setAttribute('aria-expanded',b)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">i</span></div>
   <div class="infobox" id="taxinfo" data-i18n-html="taxinfo">
     <b>Where the scores come from.</b> <b style="color:var(--ink)">Higher priority = a spot where a new sighting adds more to what we know.</b> Canada-wide, on a 0.25° (~25&nbsp;km) grid.
     <ul>
@@ -200,7 +202,6 @@ details.adv>summary:hover{color:var(--ink)}
     </ul>
     A planning aid, not ground truth — please obscure sensitive species and respect Indigenous data sovereignty. <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">How Blitz the Gap works →</a>
   </div>
-  <select id="taxon" class="full" data-i18n-aria="aria_lifegroup" aria-label="Life group" style="margin-bottom:8px"></select>
   <select id="criteria" class="full" data-i18n-aria="aria_criteria" aria-label="Criteria" style="margin-bottom:8px"></select>
 
   <div id="tripui">
@@ -300,7 +301,7 @@ const I18N={
   en:{
     title_full:`Where to <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--gd);text-decoration:underline">Blitz the Gap</a>`,
     sub:"Choose what counts as <b>impact</b>, then <b>explore</b> the priority map — or <b>plan a trip</b> to the best spot you can reach and get back from.",
-    sec_group:"Life group & goal",
+    sec_group:"Life group & goal", sec_taxon:"Taxon", sec_goal:"Goal",
     info_btn:"Where do these scores come from?",
     taxinfo:`<b>Where the scores come from.</b> <b style="color:var(--ink)">Higher priority = a spot where a new sighting adds more to what we know.</b> Canada-wide, on a 0.25° (~25&nbsp;km) grid.
       <ul>
@@ -316,7 +317,7 @@ const I18N={
     my_location:"📍 Locate me",
     start_alt:"Trip start — drag to move", start_tip:"Start — drag me, or tap the map",
     aria_site_notice:"Site notice", aria_dismiss:"Dismiss notice", aria_dismiss_short:"Dismiss",
-    aria_language:"Language", aria_about_data:"About the data", aria_lifegroup:"Life group", aria_criteria:"Criteria",
+    aria_language:"Language", aria_about_data:"About the data", aria_lifegroup:"Taxon", aria_criteria:"Criteria",
     aria_search:"Search for a start place", aria_search_results:"Search results", aria_time_unit:"Time unit",
     aria_time_budget:"Time budget", aria_max_travel:"Max travel each way", aria_worth_drive:"Worth the drive",
     aria_map_style:"Map style", aria_map_brightness:"Map brightness", aria_data_opacity:"Density opacity", aria_top_cells:"Top cells (accessible list)",
@@ -462,7 +463,7 @@ const I18N={
   fr:{
     title_full:`Où aller pour <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--gd);text-decoration:underline">Blitz the Gap</a>`,
     sub:"Choisissez ce qui compte comme <b>impact</b>, puis <b>explorez</b> la carte des priorités — ou <b>planifiez une sortie</b> vers le meilleur endroit que vous pouvez atteindre et d'où vous pouvez revenir.",
-    sec_group:"Groupe d'espèces et objectif",
+    sec_group:"Groupe d'espèces et objectif", sec_taxon:"Taxon", sec_goal:"Objectif",
     info_btn:"D'où viennent ces scores?",
     taxinfo:`<b>D'où viennent les scores.</b> <b style="color:var(--ink)">Priorité élevée = un endroit où une nouvelle observation ajoute le plus à nos connaissances.</b> À l'échelle du Canada, sur une grille de 0,25° (~25&nbsp;km).
       <ul>
@@ -478,7 +479,7 @@ const I18N={
     my_location:"📍 Me localiser",
     start_alt:"Départ de la sortie — glissez pour déplacer", start_tip:"Départ — glissez-moi, ou touchez la carte",
     aria_site_notice:"Avis du site", aria_dismiss:"Fermer l'avis", aria_dismiss_short:"Fermer",
-    aria_language:"Langue", aria_about_data:"À propos des données", aria_lifegroup:"Groupe d'espèces", aria_criteria:"Critère",
+    aria_language:"Langue", aria_about_data:"À propos des données", aria_lifegroup:"Taxon", aria_criteria:"Critère",
     aria_search:"Rechercher un lieu de départ", aria_search_results:"Résultats de recherche", aria_time_unit:"Unité de temps",
     aria_time_budget:"Temps disponible", aria_max_travel:"Trajet max (aller)", aria_worth_drive:"Vaut le déplacement",
     aria_map_style:"Style de carte", aria_map_brightness:"Luminosité de la carte", aria_data_opacity:"Opacité des données", aria_top_cells:"Meilleures cellules (liste accessible)",
