@@ -19,15 +19,18 @@ OBJ = [
     {"key": "urgency",      "name": "Sample before it's lost",    "q": "go where forest cover was recently lost (logging, fire, dieback)"},
 ]
 # order matches OBJ: [discover, conservation, env, staleness, urgency]
-# Named Blitz the Gap challenges (real, verified iNaturalist sub-projects), each mapped
-# onto our 5 goal axes [discover, conservation, env, staleness, urgency].
+# Issue #49: the Goal selector is reduced to four central goals (Katherine/Maho). Their intended
+# inputs (Make a Splash, Missing Species in Canada, Too Hot to Handle, KBA-assessment lists) are
+# not all wired yet; until the lab finalises the calculation, each goal is a TEMPORARY combination
+# of the five real axes already computed [discover, conservation, env, staleness, urgency]:
+#   Spatial Gap       = iNaturalist density + CHELSA climate gap
+#   Species discovery = under-sampling + recent-vs-all-time density ("Revisit the Past")
+#   Conservation      = COSEWIC/SARA at risk + recently changed habitat ("Too Hot to Handle")
+# Getting Even is the separate categorical layer, added as the 'ge' option in the dropdown.
 PRESETS = [
-    {"name": "Biodiversity impact", "w": [1.0, 0, 0.2, 0, 0.1], "proj": "blitz-the-gap-2026-general",         "blurb": "Under-sampling + climate gaps — the strongest signal nationwide."},
-    {"name": "The Other 99%",       "w": [1, 0, 0.3, 0, 0],       "proj": "blitz-the-gap-the-other-99",          "blurb": "Skip the busy 1% — record in Canada's under-sampled 99%."},
-    {"name": "Most Wanted",         "w": [0.1, 1, 0, 0, 0.3],       "proj": "blitz-the-gap-canada-s-most-wanted",  "blurb": "Where COSEWIC/SARA species at risk concentrate (CAN-SAR + iNaturalist/GBIF records)."},
-    {"name": "Too Hot to Handle",   "w": [0.2, 0, 0.2, 0, 1],     "proj": "blitz-the-gap-too-hot-to-handle",     "blurb": "Climate-exposed species in the fastest-warming areas."},
-    {"name": "Climate Gap",         "w": [0.2, 0, 1, 0, 0],       "proj": "blitz-the-gap-closing-the-climate-gap","blurb": "Visit under-sampled climate & habitat types."},
-    {"name": "Revisit the Past",    "w": [0.3, 0, 0, 1, 0],       "proj": "blitz-the-gap-revisiting-the-past",   "blurb": "Well-recorded long ago, quiet lately — revisit cells iNaturalist shows few recent records vs all-time."},
+    {"name": "Spatial Gap",       "w": [1.0, 0, 0.5, 0, 0], "proj": "blitz-the-gap-2026-general",         "blurb": "Under-recorded places and under-sampled climates (iNaturalist density + CHELSA climate gap)."},
+    {"name": "Species discovery", "w": [1.0, 0, 0, 0.6, 0], "proj": "blitz-the-gap-revisiting-the-past",  "blurb": "Where new-to-the-record species are likeliest: under-sampling plus cells recorded long ago but quiet lately."},
+    {"name": "Conservation",      "w": [0, 1.0, 0, 0, 0.4], "proj": "blitz-the-gap-canada-s-most-wanted", "blurb": "Where species at risk concentrate, weighted toward recently changed habitat (COSEWIC/SARA via CAN-SAR + GBIF)."},
 ]
 DEFAULT = PRESETS[0]["w"]
 
@@ -492,8 +495,8 @@ const I18N={
     obj_name:["Discover the most species","Find species at risk","Cover every habitat","Freshest gaps","Sample before it's lost"],
     obj_q:["go where few people have looked","go where COSEWIC/SARA species at risk concentrate","go where the climate is under-sampled","go where lots was recorded long ago but little lately (iNaturalist recent vs all-time density)","go where forest cover was recently lost (logging, fire, dieback)"],
     why_axis:["Few people have recorded here — what you find genuinely adds to the map.","Species at risk are documented here — your records support their conservation.","This climate & habitat type is under-sampled — records here fill a real gap.","Overlooked lately — a fresh record here is overdue.","Forest cover changed here recently — recording now tracks what's shifting."],
-    preset_name:["Biodiversity impact","The Other 99%","Canada's Most Wanted","Too Hot to Handle","Closing the Climate Gap","Revisit the Past"],
-    preset_blurb:["Under-sampling + climate gaps — the strongest signal nationwide.","Skip the busy 1% — record in Canada's under-sampled 99%.","Where COSEWIC/SARA species at risk concentrate (CAN-SAR + iNaturalist/GBIF records).","Climate-exposed species in the fastest-warming areas.","Visit under-sampled climate & habitat types.","Well-recorded long ago, quiet lately — revisit cells iNaturalist shows few recent records vs all-time."],
+    preset_name:["Spatial Gap","Species discovery","Conservation"],
+    preset_blurb:["Under-recorded places and under-sampled climates (iNaturalist density + CHELSA climate gap).","Where new-to-the-record species are likeliest: under-sampling plus cells recorded long ago but quiet lately.","Where species at risk concentrate, weighted toward recently changed habitat (COSEWIC/SARA via CAN-SAR + GBIF)."],
     group:{Amphibia:"Amphibians",Aves:"Birds",Insecta:"Insects",Mammalia:"Mammals",Reptilia:"Reptiles",Plantae:"Plants",Fungi:"Fungi",Actinopterygii:"Fishes",Arachnida:"Arachnids",Mollusca:"Molluscs","All biodiversity":"All biodiversity"},
     modes:{Walk:"Walk",Cycle:"Cycle",Drive:"Drive"},
   },
@@ -653,8 +656,8 @@ const I18N={
     obj_name:["Découvrir le plus d'espèces","Trouver des espèces en péril","Couvrir chaque habitat","Lacunes les plus fraîches","Échantillonner avant qu'il soit trop tard"],
     obj_q:["allez où peu de gens ont cherché","allez où se concentrent les espèces en péril (COSEWIC/SARA)","allez où le climat est sous-échantillonné","allez où l'on a beaucoup observé autrefois mais peu récemment (densité iNaturalist récente vs historique)","allez où le couvert forestier a été récemment perdu (coupe, feu, dépérissement)"],
     why_axis:["Peu de gens ont observé ici — ce que vous trouvez enrichit vraiment la carte.","Des espèces en péril sont documentées ici — vos observations soutiennent leur conservation.","Ce type de climat et d'habitat est sous-échantillonné — observer ici comble une vraie lacune.","Négligé récemment — une observation fraîche ici se fait attendre.","Le couvert forestier a changé ici récemment — observer maintenant suit ces changements."],
-    preset_name:["Impact sur la biodiversité","L'autre 99 %","Les plus recherchées","Coup de chaleur","Combler l'écart climatique","Revisitez le passé"],
-    preset_blurb:["Sous-représentation + lacunes climatiques — le signal le plus fort au pays.","Évitez le 1 % achalandé — observez dans le 99 % sous-échantillonné du Canada.","Là où se concentrent les espèces en péril du Canada (COSEWIC/SARA; CAN-SAR + GBIF).","Espèces exposées au climat dans les zones qui se réchauffent le plus vite.","Visitez les types de climat et d'habitat sous-échantillonnés.","Bien observé autrefois, calme récemment — revisitez les cellules à peu d'observations récentes vs historiques."],
+    preset_name:["Lacune spatiale","Découverte d'espèces","Conservation"],
+    preset_blurb:["Lieux sous-observés et climats sous-échantillonnés (densité iNaturalist + lacune climatique CHELSA).","Là où de nouvelles espèces pour le registre sont les plus probables : sous-représentation et cellules observées autrefois mais calmes récemment.","Là où se concentrent les espèces en péril, pondéré vers les habitats récemment modifiés (COSEWIC/SARA; CAN-SAR + GBIF)."],
     group:{Amphibia:"Amphibiens",Aves:"Oiseaux",Insecta:"Insectes",Mammalia:"Mammifères",Reptilia:"Reptiles",Plantae:"Plantes",Fungi:"Champignons",Actinopterygii:"Poissons",Arachnida:"Arachnides",Mollusca:"Mollusques","All biodiversity":"Toute la biodiversité"},
     modes:{Walk:"Marche",Cycle:"Vélo",Drive:"Voiture"},
   }
@@ -1073,7 +1076,7 @@ function recolourViewport(){
 // Swap #maplegend between the priority ramp (default) and a categorical Getting Even legend. Pale swatches get a 1px #ccc border.
 let GE_PRIORITY_LEGEND=null;
 // Legend low/high labels follow the dominant goal so they stay accurate per preset
-// (e.g. Most Wanted -> "no at-risk .. many at-risk", Revisit -> "recently recorded .. long overdue").
+// (e.g. Conservation -> "no at-risk .. many at-risk", Species discovery -> "recently recorded .. long overdue").
 function updateLegendLabels(){const ml=document.getElementById('maplegend');if(!ml||geActive())return;
   const cov=document.getElementById('tgCoverage');if(cov&&cov.checked)return;
   let bi=0,bv=-1;OBJ.forEach((o,i)=>{const v=state.w[o.key]||0;if(v>bv){bv=v;bi=i;}});
