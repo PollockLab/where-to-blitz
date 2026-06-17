@@ -11,12 +11,50 @@ needed (one optional live-iNat cell is guarded). Reproduce:
     .venv/bin/python -m nbconvert --to notebook --execute --inplace where-to-blitz-walkthrough.ipynb
     .venv/bin/python render_walkthrough_html.py    # → where-to-blitz-walkthrough.html (with figure alt text)
 
-The HTML render is what the in-app "Full methodology" link points at (served on GitHub Pages);
-nbconvert 7.x renders the §0 mermaid diagram natively. render_walkthrough_html.py wraps nbconvert
-and adds alt text to the figures for screen-reader users. Re-render whenever the notebook changes.
+The HTML render is what the in-app "Full methodology" link points at (served on GitHub Pages).
+render_walkthrough_html.py wraps nbconvert and adds alt text to the figures for screen-reader users.
+Re-render whenever the notebook changes.
+
+NOTE: The §0 flowchart is rendered to a PNG file (where-to-blitz-zoomout.png) at build time via
+the kroki.io API and referenced with a relative markdown image link. This is required because
+GitHub's .ipynb viewer does not render ```mermaid``` fenced blocks in notebook markdown cells, and
+also strips data: URIs from <img src> in notebook markdown. A committed relative-path PNG file
+renders correctly on GitHub's notebook viewer and in the nbconvert HTML page (both at the repo/
+Pages root). The Mermaid source is preserved in a <details> block for editability and traceability.
 """
+import urllib.error
+import urllib.request
 import nbformat as nbf
 from nbformat.v4 import new_notebook, new_markdown_cell, new_code_cell
+
+_ZOOMOUT_PNG = "where-to-blitz-zoomout.png"
+
+
+def _render_mermaid_to_file(diagram: str, path: str) -> None:
+    """Render a Mermaid diagram to a PNG file via the kroki.io public API.
+
+    Writes raw PNG bytes to ``path``.  Raises RuntimeError on HTTP or network failure.
+    """
+    url = "https://kroki.io/mermaid/png"
+    req = urllib.request.Request(
+        url,
+        data=diagram.encode("utf-8"),
+        headers={
+            "Content-Type": "text/plain; charset=utf-8",
+            "User-Agent": "where-to-blitz/_build_walkthrough.py",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            png_bytes = resp.read()
+    except urllib.error.HTTPError as exc:
+        raise RuntimeError(f"kroki.io returned HTTP {exc.code}: {exc.reason}") from exc
+    except OSError as exc:
+        raise RuntimeError(f"kroki.io request failed: {exc}") from exc
+    with open(path, "wb") as f:
+        f.write(png_bytes)
+    print(f"  wrote {path} ({len(png_bytes)//1024} KB)")
 
 cells = []
 def md(t): cells.append(new_markdown_cell(t.strip("\n")))
@@ -48,14 +86,8 @@ from the committed build — re-execute top to bottom to reproduce every figure.
 """)
 
 # ---------------------------------------------------------------- zoom out
-md(r"""
-## 0 · Zoom out — the whole tool in one picture
-
-How a question becomes a map you can act on:
-
-```mermaid
-flowchart TB
-  Q(["🧭 <b>Where should I record wildlife<br/>so it does the most for biodiversity?</b>"])
+_ZOOM_OUT_MERMAID = r"""flowchart TB
+  Q(["<b>Where should I record wildlife<br/>so it does the most for biodiversity?</b>"])
   subgraph DATA["① Free, public data"]
     direction LR
     D1["iNaturalist sightings"]
@@ -66,22 +98,39 @@ flowchart TB
   end
   GOALS["② Split Canada into 25 km squares.<br/>Score each square on <b>5 goals</b> (0–1):<br/>find new species · find rare species ·<br/>cover every habitat · revisit quiet spots · beat habitat loss"]
   IMPACT["③ <b>You</b> choose how much each goal matters.<br/>→ one <b>0–100 'impact' score</b> per square"]
-  APP(["④ <b>The map</b><br/>🗺️ Explore  ·  🚗 Plan a trip  ·  📊 Compare goals"])
-  CHECK{{"✅ Reality-checked against a real bioblitz:<br/>do its top spots actually find more species? <b>Yes.</b>"}}
+  APP(["④ <b>The map</b><br/>Explore · Plan a trip · Compare goals"])
+  CHECK{{"Reality-checked against a real bioblitz:<br/>do its top spots actually find more species? <b>Yes.</b>"}}
 
   Q --> DATA --> GOALS --> IMPACT --> APP
   GOALS -. "validated" .-> CHECK
 
   style Q fill:#1b4965,color:#fff,stroke:#1b4965
   style APP fill:#2a9d4a,color:#fff,stroke:#2a9d4a
-  style CHECK fill:#eaf4ea,stroke:#2a9d4a
-```
+  style CHECK fill:#eaf4ea,stroke:#2a9d4a"""
+
+print("rendering §0 flowchart via kroki.io …")
+_render_mermaid_to_file(_ZOOM_OUT_MERMAID, _ZOOMOUT_PNG)
+
+md(f"""
+## 0 · Zoom out — the whole tool in one picture
+
+How a question becomes a map you can act on:
+
+![Flowchart: question → free public data → 5 goals per 25 km square → impact score → the map; validated against a real bioblitz]({_ZOOMOUT_PNG})
 
 **In one breath:** the tool turns six free, public datasets (no logins, no private files) into
 a score for every 25 km square of Canada, lets *you* weight what "worth visiting" means, and points you to the best
 spot you can actually reach — and its choices are checked against a real bioblitz, not just
 asserted. The rest of this notebook opens each box: what's in a square, why each goal is
 scored the way it is, and the evidence behind the headline.
+
+<details><summary>Mermaid source (diagram above)</summary>
+
+```mermaid
+{_ZOOM_OUT_MERMAID}
+```
+
+</details>
 
 <details><summary><b>Under the hood</b> — the modules a developer would touch</summary>
 

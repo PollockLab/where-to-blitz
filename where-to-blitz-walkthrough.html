@@ -7796,7 +7796,7 @@ a.anchor-link {
 <!-- End of mermaid configuration --></head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
 <main>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=7eb5008c">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=0efdc3a9">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7823,16 +7823,23 @@ from the committed build — re-execute top to bottom to reproduce every figure.
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=2ca1f614">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=2442c6b1">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <h2 id="0-%C2%B7-Zoom-out-%E2%80%94-the-whole-tool-in-one-picture">0 · Zoom out — the whole tool in one picture<a class="anchor-link" href="#0-%C2%B7-Zoom-out-%E2%80%94-the-whole-tool-in-one-picture">¶</a></h2><p>How a question becomes a map you can act on:</p>
+<p><img alt="Flowchart: question → free public data → 5 goals per 25 km square → impact score → the map; validated against a real bioblitz" src="where-to-blitz-zoomout.png"/></p>
+<p><strong>In one breath:</strong> the tool turns six free, public datasets (no logins, no private files) into
+a score for every 25 km square of Canada, lets <em>you</em> weight what "worth visiting" means, and points you to the best
+spot you can actually reach — and its choices are checked against a real bioblitz, not just
+asserted. The rest of this notebook opens each box: what's in a square, why each goal is
+scored the way it is, and the evidence behind the headline.</p>
+<details><summary>Mermaid source (diagram above)</summary>
 <div class="jp-Mermaid"><pre class="mermaid">
 flowchart TB
-  Q(["🧭 <b>Where should I record wildlife<br/>so it does the most for biodiversity?</b>"])
+  Q(["<b>Where should I record wildlife<br/>so it does the most for biodiversity?</b>"])
   subgraph DATA["① Free, public data"]
     direction LR
     D1["iNaturalist sightings"]
@@ -7843,8 +7850,8 @@ flowchart TB
   end
   GOALS["② Split Canada into 25 km squares.<br/>Score each square on <b>5 goals</b> (0–1):<br/>find new species · find rare species ·<br/>cover every habitat · revisit quiet spots · beat habitat loss"]
   IMPACT["③ <b>You</b> choose how much each goal matters.<br/>→ one <b>0–100 'impact' score</b> per square"]
-  APP(["④ <b>The map</b><br/>🗺️ Explore  ·  🚗 Plan a trip  ·  📊 Compare goals"])
-  CHECK{{"✅ Reality-checked against a real bioblitz:<br/>do its top spots actually find more species? <b>Yes.</b>"}}
+  APP(["④ <b>The map</b><br/>Explore · Plan a trip · Compare goals"])
+  CHECK{{"Reality-checked against a real bioblitz:<br/>do its top spots actually find more species? <b>Yes.</b>"}}
 
   Q --&gt; DATA --&gt; GOALS --&gt; IMPACT --&gt; APP
   GOALS -. "validated" .-&gt; CHECK
@@ -7852,11 +7859,7 @@ flowchart TB
   style Q fill:#1b4965,color:#fff,stroke:#1b4965
   style APP fill:#2a9d4a,color:#fff,stroke:#2a9d4a
   style CHECK fill:#eaf4ea,stroke:#2a9d4a
-</pre></div><p><strong>In one breath:</strong> the tool turns six free, public datasets (no logins, no private files) into
-a score for every 25 km square of Canada, lets <em>you</em> weight what "worth visiting" means, and points you to the best
-spot you can actually reach — and its choices are checked against a real bioblitz, not just
-asserted. The rest of this notebook opens each box: what's in a square, why each goal is
-scored the way it is, and the evidence behind the headline.</p>
+</pre></div></details>
 <details><summary><b>Under the hood</b> — the modules a developer would touch</summary>
 <table>
 <thead>
@@ -7896,7 +7899,7 @@ scored the way it is, and the evidence behind the headline.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=1d9568dc">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=9cf1e929">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8038,7 +8041,7 @@ loaded 31,804 cells × 9 columns for 'All biodiversity'
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=e7290192">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=ccae1e4c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8049,7 +8052,7 @@ loaded 31,804 cells × 9 columns for 'All biodiversity'
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=7c0eb547">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=908119ad">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8106,7 +8109,7 @@ Axis reality check (from the shipped data itself):
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=02130af2">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=ca0df16d">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8125,7 +8128,7 @@ live public copy, so it's the user's call, not auto-pushed.)</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f7ad6d08">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=0d49024c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8197,7 +8200,7 @@ false gaps. The grid is a <em>decision</em>, not a given.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f7ea17fc">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=712a611c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8231,7 +8234,7 @@ both the US band and the seam in one move.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=7f377dad">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=27dbb52c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8298,7 +8301,7 @@ CA  49.5      3261         0%      0.09
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=18582b52">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=04b90d07">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8348,7 +8351,7 @@ opens with a one-line plain-English version, then the exact method and the desig
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=2c6dd80e">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=8a74ea69">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8386,7 +8389,7 @@ opens with a one-line plain-English version, then the exact method and the desig
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=b2f3a491">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=db40290c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8407,7 +8410,7 @@ binary "recorded / not", with no gradient to plan a trip on. The shipped axis is
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=2dfbc4bb">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=0da4b741">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8449,7 +8452,7 @@ binary "recorded / not", with no gradient to plan a trip on. The shipped axis is
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=ee552ff0">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=e8ecb6f4">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8472,7 +8475,7 @@ mitigation, and they stay in force for any future finer layer.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=97e55dab">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=edde9671">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8528,7 +8531,7 @@ mitigation, and they stay in force for any future finer layer.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=079e5cc3">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f02fbfa2">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8550,7 +8553,7 @@ rather than distance keeps this goal genuinely different from "discover" — we 
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=3a376c26">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=50b06fcc">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8581,7 +8584,7 @@ rather than distance keeps this goal genuinely different from "discover" — we 
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=a9575a08">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=282b5acc">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8603,7 +8606,7 @@ un-validated layer is not trusted into the map.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=d4e0ca40">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=f7d72dec">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8642,7 +8645,7 @@ un-validated layer is not trusted into the map.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=920642b6">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=96c196e7">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8659,7 +8662,7 @@ The Fort McMurray fire scar scores ~0.75; saturated southern cities ~0.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=7acd9a39">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=e5f41c66">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8697,7 +8700,7 @@ The Fort McMurray fire scar scores ~0.75; saturated southern cities ~0.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=07cdd218">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=99fd4503">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8725,7 +8728,7 @@ would tell you "nowhere matters," which is both false and useless. Ranking sprea
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=671d646c">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=79e705d0">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8764,7 +8767,7 @@ would tell you "nowhere matters," which is both false and useless. Ranking sprea
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=aa4753b7">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=6b82c354">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8777,7 +8780,7 @@ Blitz the Gap iNaturalist sub-project</strong> so the planning tool and the camp
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=ae7e3aa9">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=63e8fba3">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8920,7 +8923,7 @@ Blitz the Gap iNaturalist sub-project</strong> so the planning tool and the camp
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=941a6abe">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=ff272037">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8942,7 +8945,7 @@ picture. The number depends on which squares you include.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=bebf54b2">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=947d4d47">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8980,7 +8983,7 @@ picture. The number depends on which squares you include.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=ff366599">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=27d98dc8">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -9014,7 +9017,7 @@ is a defensible choice, and any estimated route is labelled.)</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3ebceb99">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=6ad6ec49">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -9040,7 +9043,7 @@ holds. The bars below show the agreement (again: <strong>+1 = it nailed it, 0 = 
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=4ab04bc3">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=f379df8b">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -9096,7 +9099,7 @@ Average agreement — 'go where it's busy'  : -0.58  (the near-exact opposite)
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=766308bd">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=e41a323f">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -9115,7 +9118,7 @@ Maritimes) reproduces the directed &gt; opportunistic result — it is not a BC 
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=bfa43410">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=98d0ecac">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -9210,7 +9213,7 @@ Directed stays positive on 3/3 eastern taxa → not a regional artifact.
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=e965282f">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=0305c708">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -9235,7 +9238,7 @@ are sampling effort, not ground-truth abundance, and are labelled that way throu
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3b7c267d">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=a60cd51c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -9258,7 +9261,7 @@ below shows the <em>"tap a cell → what to record"</em> loop on today's iNatura
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=41bab917">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=944b0962">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -9317,7 +9320,7 @@ below shows the <em>"tap a cell → what to record"</em> loop on today's iNatura
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=d4f76e30">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=73c270f0">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
