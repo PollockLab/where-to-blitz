@@ -68,10 +68,12 @@ HTML = r"""<!doctype html>
   integrity="sha384-4CB9Vtol9LN6lGgBCvmPLbUEZwilrqIvPieSRurgAXAB7FVJaLS9n8WyAIA5wjQ+" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"
   integrity="sha384-QfbOCebHNw8pQiPAOd2IFee2v2A5VYZxBk0+JGZ5H+3mfzVIp6zsQNkTsfGJot93" crossorigin="anonymous"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0f1620;--panel:#172230;--ink:#e8eef5;--mut:#9fb2c6;--acc:#11a3ff;--gd:#22c55e;--gold:#f0a000}
+:root{--bg:#0f1620;--panel:#172230;--ink:#e8eef5;--mut:#9fb2c6;--acc:rgb(139,168,132);--gd:#22c55e;--gold:#f0a000}
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+html,body{margin:0;height:100%;font-family:'Inter',-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+h1,.sec,.sechd .sec,.popsec,#viewtoggle button,.langtoggle button{font-family:'Space Grotesk','Inter',sans-serif}
 :root{--bh:30px}
 #protobar{position:fixed;top:0;left:0;right:0;height:30px;z-index:3000;display:flex;align-items:center;justify-content:center;gap:10px;background:#e99002;color:#231900;font-size:12px;font-weight:600;padding:0 12px;white-space:nowrap;overflow:hidden;box-shadow:0 1px 5px rgba(0,0,0,.35)}
 #protobar button{background:rgba(0,0,0,.22);border:0;color:inherit;border-radius:5px;cursor:pointer;font-size:14px;line-height:1;padding:1px 7px;flex:none}
@@ -258,12 +260,12 @@ details.adv>summary:hover{color:var(--ink)}
   <div id="tripui">
   <div class="sec" data-i18n="your_trip">Your trip</div>
   <div style="position:relative">
-    <input id="placeSearch" type="text" placeholder="🔍 Search a town or address" data-i18n-ph="search_ph" autocomplete="off" data-i18n-aria="aria_search" aria-label="Search for a start place" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="searchResults" aria-autocomplete="list"
+    <input id="placeSearch" type="text" placeholder="Search a town or address" data-i18n-ph="search_ph" autocomplete="off" data-i18n-aria="aria_search" aria-label="Search for a start place" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="searchResults" aria-autocomplete="list"
       style="width:100%;padding:8px 9px;background:#0e1722;color:var(--ink);border:1px solid #2a3a4d;border-radius:7px;font-size:14px">
     <div id="searchResults" role="listbox" data-i18n-aria="aria_search_results" aria-label="Search results"></div>
   </div>
   <div class="startrow" style="margin-top:6px">
-    <button id="setMe" data-i18n="my_location">📍 Locate me</button>
+    <button id="setMe" data-i18n="my_location">Locate me</button>
   </div>
   <div style="color:var(--mut);font-size:11.5px;margin:4px 0 7px" data-i18n-html="start_hint">Start: <b id="startlbl">Vancouver</b> · <b style="color:var(--gd)">tap the map</b> to move it.</div>
   <div class="startrow" id="modes"></div>
@@ -296,9 +298,9 @@ details.adv>summary:hover{color:var(--ink)}
       </select>
     </div>
     <div style="color:var(--mut);font-size:11px;margin:0 0 8px" data-i18n-html="worth_hint">Drops mostly-driving trips. <b style="color:var(--ink)">Round trip = there and back</b> (both legs counted). Default: field time ≥ half your round-trip drive; pick "Any" for long hauls.</div>
-    <label class="toggle"><input type="checkbox" id="lowc"> <span data-i18n="lowc">♻︎ Prefer low-carbon trips</span></label>
+    <label class="toggle"><input type="checkbox" id="lowc"> <span data-i18n="lowc">Prefer low-carbon trips</span></label>
     <div style="color:var(--mut);font-size:11px;margin:0 0 5px" data-i18n="lowc_hint">Rank by impact per kg of travel CO₂.</div>
-    <label class="toggle"><input type="checkbox" id="startProsp"> <span data-i18n="startprosp">🔭 Also show species around my start</span></label>
+    <label class="toggle"><input type="checkbox" id="startProsp"> <span data-i18n="startprosp">Also show species around my start</span></label>
   </details>
   <button id="plan" data-i18n="plan_trip">Plan my trip →</button>
   <div id="trips"></div>
@@ -313,8 +315,8 @@ details.adv>summary:hover{color:var(--ink)}
       <label class="toggle" style="margin:4px 0"><input type="checkbox" id="tgLabels" checked> <span data-i18n="labels_places">Labels &amp; places</span></label>
       <div style="color:var(--mut);font-size:11px;line-height:1.4" data-i18n="vector_hint">Vector basemap — toggle layers like Maputnik. Other styles are raster (roads baked in).</div>
     </div>
-    <label class="toggle" style="display:none"><input type="checkbox" id="tgCoverage"> <span data-i18n="inat_coverage">🛰 iNaturalist coverage</span></label><!-- driven by the "iNaturalist sampling density" map style (#20) -->
-    <label class="toggle" style="display:none"><input type="checkbox" id="tgGettingEven"> <span data-i18n="getting_even">⚖️ Getting Even — which group to record</span></label><!-- driven by the "Getting Even" criterion (#20) -->
+    <label class="toggle" style="display:none"><input type="checkbox" id="tgCoverage"> <span data-i18n="inat_coverage">iNaturalist coverage</span></label><!-- driven by the "iNaturalist sampling density" map style (#20) -->
+    <label class="toggle" style="display:none"><input type="checkbox" id="tgGettingEven"> <span data-i18n="getting_even">Getting Even — which group to record</span></label><!-- driven by the "Getting Even" criterion (#20) -->
     <div style="display:none" data-i18n="ge_hint">Each cell is coloured by the most under-represented taxonomic group there (birds excluded — already well covered by eBird) — our finer-resolution take on the official "Getting Even" challenge. From iNaturalist observation density: a sample, not a census.</div>
     <div class="infobox" id="geinfo" data-i18n-html="ge_method"></div>
     <div style="display:flex;justify-content:space-between;margin:9px 0 0"><span id="bople" style="font-size:13px" data-i18n="map_brightness">Map brightness</span><span class="v" id="bopv" style="color:var(--acc)">100%</span></div>
@@ -325,16 +327,16 @@ details.adv>summary:hover{color:var(--ink)}
 </div></div>
 <button id="panelToggle" type="button" data-i18n-aria="hide_panel" data-i18n-title="hide_panel" aria-label="Hide the panel" title="Hide the panel">‹</button>
 <div id="map" role="application" data-i18n-aria="aria_map" aria-label="Interactive priority map (screen-reader users: use the Top cells list)"></div>
-<div id="viewtoggle" role="navigation" data-i18n-aria="aria_map_view" aria-label="Map view"><button id="vexplore" class="on" aria-pressed="true" data-i18n="view_explore">🗺 Explore</button><button id="vplan" aria-pressed="false" data-i18n="view_plan">🧭 Plan a trip</button><button id="vcompare" aria-pressed="false" data-i18n="view_compare">📊 Compare goals</button></div>
-<div id="loading" role="status" aria-live="polite" data-i18n="loading">🍃 Loading the map…</div>
-<div id="maplegend" role="region" data-i18n-aria="aria_map_legend" aria-label="Map legend"><div class="ramp"></div><div class="lab"><span data-i18n="legend_low">well-sampled</span><span data-i18n="legend_high">biggest gaps</span></div><div class="hint" id="legendrel" style="display:none;color:#7a5b00" data-i18n="legend_rel">⚖ Colours rescaled to this view — not comparable across zoom levels.</div></div>
-<button id="howbtn" type="button" aria-expanded="false" aria-controls="howpanel" data-i18n-title="how_scored" title="How impact is scored & data sources"><span class="ic" aria-hidden="true">ⓘ</span> <span data-i18n="how_scored">How impact is scored & data sources</span></button>
+<div id="viewtoggle" role="navigation" data-i18n-aria="aria_map_view" aria-label="Map view"><button id="vexplore" class="on" aria-pressed="true" data-i18n="view_explore">Explore</button><button id="vplan" aria-pressed="false" data-i18n="view_plan">Plan a trip</button><button id="vcompare" aria-pressed="false" data-i18n="view_compare">Compare goals</button></div>
+<div id="loading" role="status" aria-live="polite" data-i18n="loading">Loading the map…</div>
+<div id="maplegend" role="region" data-i18n-aria="aria_map_legend" aria-label="Map legend"><div class="ramp"></div><div class="lab"><span data-i18n="legend_low">well-sampled</span><span data-i18n="legend_high">biggest gaps</span></div><div class="hint" id="legendrel" style="display:none;color:#7a5b00" data-i18n="legend_rel">Colours rescaled to this view — not comparable across zoom levels.</div></div>
+<button id="howbtn" type="button" aria-expanded="false" aria-controls="howpanel" data-i18n-title="how_scored" title="How impact is scored & data sources"><span data-i18n="how_scored">How impact is scored & data sources</span></button>
 <div id="howpanel" role="region" data-i18n-aria="how_scored" aria-label="How impact is scored & data sources">
   <button id="howclose" type="button" data-i18n-aria="aria_close" data-i18n-title="aria_close" aria-label="Close" title="Close">×</button>
   <div class="legend" style="margin-top:2px"><span data-i18n="skip">skip</span><div class="bar"></div><span data-i18n="go_here">go here</span></div>
   <div style="color:var(--mut);font-size:11px;line-height:1.45;margin-top:7px" data-i18n-html="impact_expl">Each goal is scored <b style="color:var(--ink)">0–1 per cell</b>; your slider weights combine them, then cells are <b style="color:var(--ink)">ranked against each other</b> and shown as <b style="color:var(--ink)">impact 0–100</b> (a percentile — 100 = top-priority cell shown). Hover a cell to see which goals drive it.</div>
   <div style="color:var(--mut);font-size:11px;line-height:1.5;margin-top:9px" data-i18n-html="axis_method"></div>
-  <div style="margin-top:9px"><a href="https://pollocklab.github.io/where-to-blitz/where-to-blitz-walkthrough.html" target="_blank" rel="noopener" style="color:var(--acc);font-size:12px;font-weight:600" data-i18n="methodology_link">📖 Full methodology &amp; data — trace every number →</a></div>
+  <div style="margin-top:9px"><a href="https://pollocklab.github.io/where-to-blitz/where-to-blitz-walkthrough.html" target="_blank" rel="noopener" style="color:var(--acc);font-size:12px;font-weight:600" data-i18n="methodology_link">Full methodology &amp; data — trace every number →</a></div>
   <p class="foot" data-i18n-html="foot"><b style="color:var(--ink)">How it works:</b> <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">Blitz the Gap</a> is a Canada-wide bioblitz — head to a high-priority spot, record what you see on <a href="https://www.inaturalist.org" target="_blank" rel="noopener" style="color:var(--acc)">iNaturalist</a>, and your research-grade sightings flow into the <a href="https://www.inaturalist.org/projects/blitz-the-gap-2026-general" target="_blank" rel="noopener" style="color:var(--acc)">2026 project</a>, filling the map's gaps. Blitz the Gap is led by the <a href="https://pollocklab.github.io/blitz-the-gap/" target="_blank" rel="noopener" style="color:var(--acc)">Pollock Lab</a> at McGill University; this is a work-in-progress companion tool, not an official project page.<br><br>Nationally, the robust priority signal is <b style="color:var(--ink)">under-sampling</b> (iNaturalist density) + <b style="color:var(--ink)">climate coverage</b> (CHELSA); rarity and freshness are now real (rarity = COSEWIC/SARA species at risk via CAN-SAR + GBIF; freshness = iNaturalist recent vs all-time density). Drive/cycle/walk routes from OSRM (FOSSGIS); travel time from Weiss 2018. Driving CO₂ ≈ 0.18 kg/km; cycling/walking zero. A planning aid — obscure sensitive-species locations and respect Indigenous data-sovereignty before any public release.<br><br>This map spans many <b style="color:var(--ink)">Indigenous territories</b> — see whose at <a href="https://native-land.ca" target="_blank" rel="noopener" style="color:var(--acc)">native-land.ca</a>, and seek consent before recording on their lands.</p>
 </div>
 <div id="insights"></div>
@@ -364,8 +366,8 @@ const I18N={
       A planning aid, not ground truth — please obscure sensitive species and respect Indigenous data sovereignty. <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">How Blitz the Gap works →</a>`,
     finetune:"Fine-tune the five goals",
     your_trip:"Your trip",
-    search_ph:"🔍 Search a town or address",
-    my_location:"📍 Locate me",
+    search_ph:"Search a town or address",
+    my_location:"Locate me",
     start_alt:"Trip start — drag to move", start_tip:"Start — drag me, or tap the map",
     aria_site_notice:"Site notice", aria_dismiss:"Dismiss notice", aria_dismiss_short:"Dismiss",
     aria_language:"Language", aria_about_data:"About the data", aria_lifegroup:"Taxon", aria_criteria:"Criteria",
@@ -377,7 +379,7 @@ const I18N={
     rank_aria:(i,la,lo,sc)=>`Rank ${i}: latitude ${la}, longitude ${lo}, score ${sc} of 100`,
     prio_map_aria:(grp,goal)=>`${grp}, ${goal} priority map`,
     vancouver:"Vancouver",
-    start_hint:`Start: <b id="startlbl">—</b> · <b style="color:var(--gd)">tap the map</b>, search, or 📍 to set it.`,
+    start_hint:`Start: <b id="startlbl">—</b> · <b style="color:var(--gd)">tap the map</b>, search, or locate me to set it.`,
     time:"Time",
     unit_minutes:"Minutes", unit_hours:"Hours", unit_days:"Days",
     more_options:"More options",
@@ -389,26 +391,26 @@ const I18N={
     ratio_one:"Record ≥ the round trip",
     ratio_two:"Record ≥ 2× the round trip",
     worth_hint:`Drops mostly-driving trips. <b style="color:var(--ink)">Round trip = there and back</b> (both legs counted). Default: field time ≥ half your round-trip drive; pick "Any" for long hauls.`,
-    lowc:"♻︎ Prefer low-carbon trips",
+    lowc:"Prefer low-carbon trips",
     lowc_hint:"Rank by impact per kg of travel CO₂.",
-    startprosp:"🔭 Also show species around my start",
+    startprosp:"Also show species around my start",
     plan_trip:"Plan my trip →",
-    prospects_idle:"🔭 Tap a cell to see what to record there.",
-    gaptree_lookup:"🌿 Reading taxonomic coverage…",
-    gaptree_sparse:"🌿 Too few nearby records to rank groups here yet — every sighting helps fill the map.",
-    gaptree_err:"🌿 Couldn’t read coverage just now — tap the cell again.",
-    pop_groups_hd:"🌿 Four least sampled groups", pop_rare_hd:"🔭 Four most rarely logged species",
+    prospects_idle:"Tap a cell to see what to record there.",
+    gaptree_lookup:"Reading taxonomic coverage…",
+    gaptree_sparse:"Too few nearby records to rank groups here yet — every sighting helps fill the map.",
+    gaptree_err:"Couldn’t read coverage just now — tap the cell again.",
+    pop_groups_hd:"Four least sampled groups", pop_rare_hd:"Four most rarely logged species",
     gt_gap:"gap", gt_partial:"partial", gt_ok:"well recorded",
     gt_count:(c,n)=>`${c} of ~${n} nearby`,
     gt_switch:(g)=>`Switch the map to ${g}`,
     map_style:"Map style",
-    style_standard:"Standard", style_satellite:"Satellite", style_terrain:"Terrain", style_inat_density:"🛰 iNaturalist sampling density",
-    crit_ge:"⚖️ Getting Even — which group to record",
+    style_standard:"Standard", style_satellite:"Satellite", style_terrain:"Terrain", style_inat_density:"iNaturalist sampling density",
+    crit_ge:"Getting Even — which group to record",
     roads:"Roads", labels_places:"Labels & places",
     vector_hint:"Vector basemap — toggle layers like Maputnik. Other styles are raster (roads baked in).",
-    inat_coverage:"🛰 iNaturalist coverage",
+    inat_coverage:"iNaturalist coverage",
     coverage_hint:`Where data already is (bright = well-sampled, dark = gaps) — an iNaturalist-density "light up the map" layer (Biodiversité Québec), for the current group.`,
-    getting_even:"⚖️ Getting Even — which group to record",
+    getting_even:"Getting Even — which group to record",
     ge_hint:`Each cell is coloured by the most under-represented taxonomic group there (birds excluded — already well covered by eBird) — our finer-resolution take on the official "Getting Even" challenge. From iNaturalist observation density: a sample, not a census.`,
     ge_info_btn:"How is the recommended group worked out?",
     ge_method:`<b>How "which group to record" is worked out.</b> Tap any cell and the app asks iNaturalist, live, for each group of life (birds excluded — eBird already covers them):
@@ -419,17 +421,17 @@ const I18N={
       A group's coverage is the first divided by the second, then divided by the cell's overall recording rate — so an average group sits at <b style="color:var(--ink)">1</b>. Groups well below 1 are under-recorded relative to their neighbours and rise to the top, <b style="color:var(--ink)">biggest relative gap first</b>. That normalising step surfaces the real gaps even where everything is under-recorded (one cell can't hold a whole region's diversity). The map colours each cell by its single worst group; tap for the full ranked tree, tap a group to map it. iNaturalist density — a sample, not a census.`,
     ge_cats:["Fishes","Fungi","Reptiles & Amphibians","Invertebrates","Mammals","Plants"],
     ge_all:"All groups under-sampled",
-    ge_most:"⚖️ Most under-represented here:",
-    canada_only:"🍁 Canada only",
+    ge_most:"Most under-represented here:",
+    canada_only:"Canada only",
     canada_only_hint:"Hides cells across the US border, where the bright band is a data edge (the Canadian layer stops at the border), not a real gap. Approximate boundary.",
     more_presets:"More ▾",
     fewer_presets:"Fewer ▴",
-    methodology_link:"📖 Full methodology & data — trace every number →",
+    methodology_link:"Full methodology & data — trace every number →",
     hide_panel:"Hide the panel (more map)",
     show_panel:"Show the panel",
-    zoom_scale:"🔍 Rescale colours to the current view",
+    zoom_scale:"Rescale colours to the current view",
     zoom_scale_hint:`Ranks cells against what's on screen, so local gaps stand out when you zoom in. Off = ranked across all of Canada (a dark cell means the same everywhere).`,
-    legend_rel:"⚖ Colours rescaled to this view — not comparable across zoom levels.",
+    legend_rel:"Colours rescaled to this view — not comparable across zoom levels.",
     map_brightness:"Map brightness",
     data_opacity:"Density opacity",
     how_scored:"How impact is scored & data sources",
@@ -438,8 +440,8 @@ const I18N={
     axis_method:`<b style="color:var(--ink)">How each goal is scored (0–1 per cell):</b><br>• <b style="color:var(--ink)">Discover the most species</b> — where few have recorded: inverse iNaturalist observation density (Biodiversité Québec).<br>• <b style="color:var(--ink)">Find species at risk</b> — at-risk species recorded nearby, weighted by status (Endangered 3 / Threatened 2 / Special Concern 1): COSEWIC/SARA assessments (CAN-SAR) × GBIF occurrences.<br>• <b style="color:var(--ink)">Cover every habitat</b> — climate types rarely recorded: CHELSA climate “surprisal”.<br>• <b style="color:var(--ink)">Freshest gaps</b> — much recorded in the past, little lately: iNaturalist recent vs all-time density.<br>• <b style="color:var(--ink)">Sample before it's lost</b> — recent habitat change: Hansen Global Forest Change forest loss.`,
     foot:`<b style="color:var(--ink)">How it works:</b> <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">Blitz the Gap</a> is a Canada-wide bioblitz — head to a high-priority spot, record what you see on <a href="https://www.inaturalist.org" target="_blank" rel="noopener" style="color:var(--acc)">iNaturalist</a>, and your research-grade sightings flow into the <a href="https://www.inaturalist.org/projects/blitz-the-gap-2026-general" target="_blank" rel="noopener" style="color:var(--acc)">2026 project</a>, filling the map's gaps. Blitz the Gap is led by the <a href="https://pollocklab.github.io/blitz-the-gap/" target="_blank" rel="noopener" style="color:var(--acc)">Pollock Lab</a> at McGill University; this is a work-in-progress companion tool, not an official project page.<br><br>Nationally, the robust priority signal is <b style="color:var(--ink)">under-sampling</b> (iNaturalist density) + <b style="color:var(--ink)">climate coverage</b> (CHELSA); rarity and freshness are now real (rarity = COSEWIC/SARA species at risk via CAN-SAR + GBIF; freshness = iNaturalist recent vs all-time density). Drive/cycle/walk routes from OSRM (FOSSGIS); travel time from Weiss 2018. Driving CO₂ ≈ 0.18 kg/km; cycling/walking zero. A planning aid — obscure sensitive-species locations and respect Indigenous data-sovereignty before any public release.<br><br>This map spans many <b style="color:var(--ink)">Indigenous territories</b> — see whose at <a href="https://native-land.ca" target="_blank" rel="noopener" style="color:var(--acc)">native-land.ca</a>, and seek consent before recording on their lands.`,
     top_cells:"Top cells (accessible list)",
-    view_explore:"🗺 Explore", view_plan:"🧭 Plan a trip", view_compare:"📊 Compare goals",
-    loading:"🍃 Loading the map…",
+    view_explore:"Explore", view_plan:"Plan a trip", view_compare:"Compare goals",
+    loading:"Loading the map…",
     proto_banner:"⚠ Work in progress — a planning aid, not ground truth",
     load_error:"⚠ Couldn't load the map — check your connection.",
     retry:"↻ Retry",
@@ -452,17 +454,17 @@ const I18N={
     legendtap_plan_dest:"Tap the map to choose your destination.",
     near:"near", here:"here", my_loc_short:"my location", my_area_ip:"my area (from IP)",
     locating:"locating…", loc_unavail:"location unavailable — try the search above",
-    cells_loading:t=>`🔭 Loading ${t}…`,
+    cells_loading:t=>`Loading ${t}…`,
     prospects_where_start:"Around your start", pop_go_title2:"Your destination",
-    prospects_lookup:"🔭 Looking up what lives here…",
-    prospects_none:"🔭 No research-grade records here yet — you could be the first to document what lives here.",
-    prospects_err:"🔭 Couldn’t load species just now — tap the cell again.",
-    prospects_hd:(where,n,nearby)=>`🔭 <b style="color:var(--ink)">${where}</b> · ${n} species recorded on iNaturalist. Worth looking for${nearby?' (✦ = nearby)':''}:`,
+    prospects_lookup:"Looking up what lives here…",
+    prospects_none:"No research-grade records here yet — you could be the first to document what lives here.",
+    prospects_err:"Couldn’t load species just now — tap the cell again.",
+    prospects_hd:(where,n,nearby)=>`<b style="color:var(--ink)">${where}</b> · ${n} species recorded on iNaturalist. Worth looking for${nearby?' (nearby)':''}:`,
     rare:"rarely logged", uncommon:"few records", gap:"gap",
     here_count:n=>`${n} here`, nearby_lbl:"nearby",
     inat_caveat:"Counts are iNaturalist observations — what people have logged, not a complete species census.",
     worldwide:n=>`${n} on iNaturalist`,
-    explore_all:"Explore all on iNaturalist →", log_sighting:"＋ Log a sighting", for_challenge:"for this challenge",
+    explore_all:"Explore all on iNaturalist →", log_sighting:"Log a sighting", for_challenge:"for this challenge",
     join:"join →",
     more_challenges:"+ see all official challenges →",
     finding_routes:m=>`Finding real ${m} routes…`,
@@ -473,10 +475,10 @@ const I18N={
     farther:(bud,car)=>`Farther afield — over ${bud} round trip, but yours with more time${car?' or by 🚗':''}:`,
     right_here:"Right where you are",
     each_way:"each way", field:"field", in_field:"in the field", round:"round", over:"over",
-    no_extra:"📍 no extra travel — record the cell you're already in",
+    no_extra:"no extra travel — record the cell you're already in",
     pop_here_title:"Record right where you are",
     pop_here_sub:"you're in this ~25 km cell — no extra travel needed",
-    pop_here_foot:"📍 spend your time recording, not driving here",
+    pop_here_foot:"spend your time recording, not driving here",
     pop_go_title:"Go to this area", pop_go_sub:"— anywhere in the highlighted ~25 km cell",
     pop_centre:"centre", pop_impact:"impact",
     pop_round:"round trip", pop_estimated:"(estimated)",
@@ -486,8 +488,8 @@ const I18N={
     pop_ge_gap:g=>`Most under-recorded group here: <b>${g}</b> — record those.`,
     pop_nearest_gap:km=>`Nearest strong gap ~${km} km away.`,
     pop_find_gaps:"Find gaps reachable from here →",
-    share_link:"🔗 Copy link to this spot", copied:"✓ Copied!",
-    car_free:"car-free 🌿",
+    share_link:"Copy link to this spot", copied:"✓ Copied!",
+    car_free:"car-free",
     table_caption:"Top 40 cells for your goal mix & group, highest first. Tap a row to open it.",
     table_rank:"#", table_latlon:"Lat, lon", table_score:"Score",
     ins_hd:`<b>The same place — different goals, different life groups.</b> Each map shades every Canadian cell by one goal (<b>darker = go there</b>). The hot zones shift between goals (a value choice) and between groups (different species fill different gaps). Pick the rows & columns; tap any map to open it in the planner.`,
@@ -521,8 +523,8 @@ const I18N={
       Un outil de planification, pas une vérité absolue — veuillez masquer les espèces sensibles et respecter la souveraineté des données autochtones. <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">Fonctionnement de Blitz the Gap →</a>`,
     finetune:"Ajuster les cinq objectifs",
     your_trip:"Votre sortie",
-    search_ph:"🔍 Rechercher une ville ou une adresse",
-    my_location:"📍 Me localiser",
+    search_ph:"Rechercher une ville ou une adresse",
+    my_location:"Me localiser",
     start_alt:"Départ de la sortie — glissez pour déplacer", start_tip:"Départ — glissez-moi, ou touchez la carte",
     aria_site_notice:"Avis du site", aria_dismiss:"Fermer l'avis", aria_dismiss_short:"Fermer",
     aria_language:"Langue", aria_about_data:"À propos des données", aria_lifegroup:"Taxon", aria_criteria:"Critère",
@@ -534,7 +536,7 @@ const I18N={
     rank_aria:(i,la,lo,sc)=>`Rang ${i} : latitude ${la}, longitude ${lo}, score ${sc} sur 100`,
     prio_map_aria:(grp,goal)=>`${grp}, ${goal} carte de priorité`,
     vancouver:"Vancouver",
-    start_hint:`Départ : <b id="startlbl">—</b> · <b style="color:var(--gd)">touchez la carte</b>, cherchez, ou 📍 pour le définir.`,
+    start_hint:`Départ : <b id="startlbl">—</b> · <b style="color:var(--gd)">touchez la carte</b>, cherchez, ou localisez-moi pour le définir.`,
     time:"Durée",
     unit_minutes:"Minutes", unit_hours:"Heures", unit_days:"Jours",
     more_options:"Plus d'options",
@@ -546,26 +548,26 @@ const I18N={
     ratio_one:"Observer ≥ l'aller-retour",
     ratio_two:"Observer ≥ 2× l'aller-retour",
     worth_hint:`Écarte les sorties surtout en voiture. <b style="color:var(--ink)">Aller-retour = aller et retour</b> (les deux trajets comptés). Par défaut : temps sur le terrain ≥ la moitié de votre aller-retour; choisissez « Toute sortie » pour les longs trajets.`,
-    lowc:"♻︎ Préférer les sorties à faible carbone",
+    lowc:"Préférer les sorties à faible carbone",
     lowc_hint:"Classer par impact par kg de CO₂ de déplacement.",
-    startprosp:"🔭 Montrer aussi les espèces près de mon départ",
+    startprosp:"Montrer aussi les espèces près de mon départ",
     plan_trip:"Planifier ma sortie →",
-    prospects_idle:"🔭 Touchez une cellule pour voir quoi observer.",
-    gaptree_lookup:"🌿 Lecture de la couverture taxonomique…",
-    gaptree_sparse:"🌿 Trop peu d’observations à proximité pour classer les groupes ici — chaque observation aide à combler la carte.",
-    gaptree_err:"🌿 Lecture de la couverture impossible pour l’instant — touchez la cellule à nouveau.",
-    pop_groups_hd:"🌿 Quatre groupes les moins échantillonnés", pop_rare_hd:"🔭 Quatre espèces les plus rarement observées",
+    prospects_idle:"Touchez une cellule pour voir quoi observer.",
+    gaptree_lookup:"Lecture de la couverture taxonomique…",
+    gaptree_sparse:"Trop peu d’observations à proximité pour classer les groupes ici — chaque observation aide à combler la carte.",
+    gaptree_err:"Lecture de la couverture impossible pour l’instant — touchez la cellule à nouveau.",
+    pop_groups_hd:"Quatre groupes les moins échantillonnés", pop_rare_hd:"Quatre espèces les plus rarement observées",
     gt_gap:"lacune", gt_partial:"partielle", gt_ok:"bien documenté",
     gt_count:(c,n)=>`${c} sur ~${n} à proximité`,
     gt_switch:(g)=>`Afficher ${g} sur la carte`,
     map_style:"Style de carte",
-    style_standard:"Standard", style_satellite:"Satellite", style_terrain:"Relief", style_inat_density:"🛰 Densité d'échantillonnage iNaturalist",
-    crit_ge:"⚖️ Combler l'écart — quel groupe noter",
+    style_standard:"Standard", style_satellite:"Satellite", style_terrain:"Relief", style_inat_density:"Densité d'échantillonnage iNaturalist",
+    crit_ge:"Combler l'écart — quel groupe noter",
     roads:"Routes", labels_places:"Étiquettes et lieux",
     vector_hint:"Fond vectoriel — activez les couches comme dans Maputnik. Les autres styles sont matriciels (routes intégrées).",
-    inat_coverage:"🛰 Couverture iNaturalist",
+    inat_coverage:"Couverture iNaturalist",
     coverage_hint:`Où les données existent déjà (clair = bien échantillonné, foncé = lacunes) — une couche de densité iNaturalist « illuminer la carte » (Biodiversité Québec), pour le groupe actuel.`,
-    getting_even:"⚖️ Combler l'écart — quel groupe noter",
+    getting_even:"Combler l'écart — quel groupe noter",
     ge_hint:`Chaque cellule est colorée selon le groupe taxonomique le plus sous-représenté (oiseaux exclus — déjà bien couverts par eBird) — notre version à plus fine résolution du défi officiel « Combler l'écart ». Selon la densité d'observations iNaturalist : un échantillon, pas un inventaire.`,
     ge_info_btn:"Comment le groupe recommandé est-il déterminé ?",
     ge_method:`<b>Comment « quel groupe noter » est déterminé.</b> Touchez une cellule et l'application interroge iNaturalist, en direct, pour chaque groupe du vivant (oiseaux exclus — déjà couverts par eBird) :
@@ -576,17 +578,17 @@ const I18N={
       La couverture d'un groupe est la première divisée par la seconde, puis divisée par le taux d'enregistrement global de la cellule — un groupe moyen vaut donc <b style="color:var(--ink)">1</b>. Les groupes bien en dessous de 1 sont sous-documentés par rapport à leurs voisins et remontent en tête, <b style="color:var(--ink)">plus grande lacune relative d'abord</b>. Cette normalisation fait ressortir les vraies lacunes même là où tout est sous-documenté (une cellule ne peut contenir toute la diversité d'une région). La carte colore chaque cellule selon son groupe le plus faible ; touchez pour l'arbre complet classé, touchez un groupe pour le cartographier. Densité iNaturalist : un échantillon, pas un inventaire.`,
     ge_cats:["Poissons","Champignons","Reptiles et amphibiens","Invertébrés","Mammifères","Plantes"],
     ge_all:"Tous sous-échantillonnés",
-    ge_most:"⚖️ Le plus sous-représenté ici :",
-    canada_only:"🍁 Canada seulement",
+    ge_most:"Le plus sous-représenté ici :",
+    canada_only:"Canada seulement",
     canada_only_hint:"Masque les cellules au sud de la frontière, où la bande vive est une limite de données (la couche canadienne s'arrête à la frontière), pas une vraie lacune. Frontière approximative.",
     more_presets:"Plus ▾",
     fewer_presets:"Moins ▴",
-    methodology_link:"📖 Méthodologie complète et données — traçez chaque chiffre →",
+    methodology_link:"Méthodologie complète et données — traçez chaque chiffre →",
     hide_panel:"Masquer le panneau (plus de carte)",
     show_panel:"Afficher le panneau",
-    zoom_scale:"🔍 Recalibrer les couleurs sur la vue actuelle",
+    zoom_scale:"Recalibrer les couleurs sur la vue actuelle",
     zoom_scale_hint:`Classe les cellules par rapport à ce qui est à l'écran, pour faire ressortir les lacunes locales en zoomant. Désactivé = classement sur tout le Canada (une cellule foncée signifie la même chose partout).`,
-    legend_rel:"⚖ Couleurs recalibrées sur cette vue — non comparables entre niveaux de zoom.",
+    legend_rel:"Couleurs recalibrées sur cette vue — non comparables entre niveaux de zoom.",
     map_brightness:"Luminosité de la carte",
     data_opacity:"Opacité des données",
     how_scored:"Calcul de l'impact et sources de données",
@@ -595,8 +597,8 @@ const I18N={
     axis_method:`<b style="color:var(--ink)">Calcul de chaque objectif (0–1 par cellule) :</b><br>• <b style="color:var(--ink)">Découvrir le plus d'espèces</b> — là où peu ont observé : densité d'observations iNaturalist inversée (Biodiversité Québec).<br>• <b style="color:var(--ink)">Trouver des espèces en péril</b> — espèces en péril observées à proximité, pondérées par statut (en voie de disparition 3 / menacée 2 / préoccupante 1) : évaluations COSEWIC/SARA (CAN-SAR) × occurrences GBIF.<br>• <b style="color:var(--ink)">Couvrir chaque habitat</b> — types de climat rarement observés : « surprise » climatique CHELSA.<br>• <b style="color:var(--ink)">Lacunes les plus fraîches</b> — beaucoup observé autrefois, peu récemment : densité iNaturalist récente vs historique.<br>• <b style="color:var(--ink)">Échantillonner avant qu'il soit trop tard</b> — changement d'habitat récent : perte de couvert forestier Hansen Global Forest Change.`,
     foot:`<b style="color:var(--ink)">Fonctionnement :</b> <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">Blitz the Gap</a> est un bioblitz pancanadien — rendez-vous dans un endroit prioritaire, notez ce que vous voyez sur <a href="https://www.inaturalist.org" target="_blank" rel="noopener" style="color:var(--acc)">iNaturalist</a>, et vos observations de qualité recherche alimentent le <a href="https://www.inaturalist.org/projects/blitz-the-gap-2026-general" target="_blank" rel="noopener" style="color:var(--acc)">projet 2026</a>, comblant les lacunes de la carte. Blitz the Gap est mené par le <a href="https://pollocklab.github.io/blitz-the-gap/" target="_blank" rel="noopener" style="color:var(--acc)">Pollock Lab</a> de l'Université McGill; ceci est un outil complémentaire en cours de développement, non officiel.<br><br>À l'échelle nationale, le signal de priorité robuste est la <b style="color:var(--ink)">sous-représentation</b> (densité iNaturalist) + la <b style="color:var(--ink)">couverture climatique</b> (CHELSA); la rareté et la fraîcheur sont maintenant réelles (rareté = espèces en péril COSEWIC/SARA via CAN-SAR + GBIF; fraîcheur = densité iNaturalist récente vs historique). Itinéraires auto/vélo/marche d'OSRM (FOSSGIS); temps de déplacement de Weiss 2018. CO₂ en voiture ≈ 0,18 kg/km; vélo/marche nul. Un outil de planification — masquez les lieux d'espèces sensibles et respectez la souveraineté des données autochtones avant toute diffusion publique.<br><br>Cette carte couvre de nombreux <b style="color:var(--ink)">territoires autochtones</b> — voyez lesquels sur <a href="https://native-land.ca" target="_blank" rel="noopener" style="color:var(--acc)">native-land.ca</a>, et obtenez le consentement avant d'observer sur leurs terres.`,
     top_cells:"Meilleures cellules (liste accessible)",
-    view_explore:"🗺 Explorer", view_plan:"🧭 Planifier une sortie", view_compare:"📊 Comparer les objectifs",
-    loading:"🍃 Chargement de la carte…",
+    view_explore:"Explorer", view_plan:"Planifier une sortie", view_compare:"Comparer les objectifs",
+    loading:"Chargement de la carte…",
     proto_banner:"⚠ Travail en cours — une aide à la planification, pas une vérité de terrain",
     load_error:"⚠ Impossible de charger la carte — vérifiez votre connexion.",
     retry:"↻ Réessayer",
@@ -609,17 +611,17 @@ const I18N={
     legendtap_plan_dest:"Touchez la carte pour choisir votre destination.",
     near:"près de", here:"ici", my_loc_short:"ma position", my_area_ip:"ma région (selon l'IP)",
     locating:"localisation…", loc_unavail:"position indisponible — utilisez la recherche ci-dessus",
-    cells_loading:t=>`🔭 Chargement de ${t}…`,
+    cells_loading:t=>`Chargement de ${t}…`,
     prospects_where_start:"Près de votre départ", pop_go_title2:"Votre destination",
-    prospects_lookup:"🔭 Recherche de ce qui vit ici…",
-    prospects_none:"🔭 Aucune observation de qualité recherche ici pour l'instant — vous pourriez être la première personne à documenter ce qui vit ici.",
-    prospects_err:"🔭 Impossible de charger les espèces pour l’instant — touchez la cellule à nouveau.",
-    prospects_hd:(where,n,nearby)=>`🔭 <b style="color:var(--ink)">${where}</b> · ${n} espèces observées sur iNaturalist. À surveiller${nearby?' (✦ = à proximité)':''} :`,
+    prospects_lookup:"Recherche de ce qui vit ici…",
+    prospects_none:"Aucune observation de qualité recherche ici pour l'instant — vous pourriez être la première personne à documenter ce qui vit ici.",
+    prospects_err:"Impossible de charger les espèces pour l’instant — touchez la cellule à nouveau.",
+    prospects_hd:(where,n,nearby)=>`<b style="color:var(--ink)">${where}</b> · ${n} espèces observées sur iNaturalist. À surveiller${nearby?' (à proximité)':''} :`,
     rare:"rarement noté", uncommon:"peu de données", gap:"lacune",
     here_count:n=>`${n} ici`, nearby_lbl:"à proximité",
     inat_caveat:"Les nombres sont des observations iNaturalist — ce qui a été noté, pas un inventaire complet des espèces.",
     worldwide:n=>`${n} sur iNaturalist`,
-    explore_all:"Tout explorer sur iNaturalist →", log_sighting:"＋ Noter une observation", for_challenge:"pour ce défi",
+    explore_all:"Tout explorer sur iNaturalist →", log_sighting:"Noter une observation", for_challenge:"pour ce défi",
     join:"se joindre →",
     more_challenges:"+ voir tous les défis officiels →",
     finding_routes:m=>`Recherche d'itinéraires ${m} réels…`,
@@ -630,10 +632,10 @@ const I18N={
     farther:(bud,car)=>`Plus loin — au-delà de ${bud} d'aller-retour, mais à votre portée avec plus de temps${car?' ou en 🚗':''} :`,
     right_here:"Là où vous êtes",
     each_way:"par trajet", field:"terrain", in_field:"sur le terrain", round:"aller-retour", over:"au-delà de",
-    no_extra:"📍 aucun déplacement — observez la cellule où vous êtes déjà",
+    no_extra:"aucun déplacement — observez la cellule où vous êtes déjà",
     pop_here_title:"Observez là où vous êtes",
     pop_here_sub:"vous êtes dans cette cellule de ~25 km — aucun déplacement requis",
-    pop_here_foot:"📍 consacrez votre temps à observer, pas à conduire jusqu'ici",
+    pop_here_foot:"consacrez votre temps à observer, pas à conduire jusqu'ici",
     pop_go_title:"Allez dans cette zone", pop_go_sub:"— n'importe où dans la cellule de ~25 km en surbrillance",
     pop_centre:"centre", pop_impact:"impact",
     pop_round:"aller-retour", pop_estimated:"(estimé)",
@@ -643,8 +645,8 @@ const I18N={
     pop_ge_gap:g=>`Groupe le plus sous-documenté ici : <b>${g}</b> — notez-les.`,
     pop_nearest_gap:km=>`Lacune forte la plus proche à ~${km} km.`,
     pop_find_gaps:"Trouver des lacunes accessibles d'ici →",
-    share_link:"🔗 Copier le lien", copied:"✓ Copié !",
-    car_free:"sans voiture 🌿",
+    share_link:"Copier le lien", copied:"✓ Copié !",
+    car_free:"sans voiture",
     table_caption:"40 meilleures cellules pour votre combinaison d'objectifs et votre groupe, du plus élevé au plus bas. Touchez une ligne pour l'ouvrir.",
     table_rank:"#", table_latlon:"Lat, lon", table_score:"Score",
     ins_hd:`<b>Le même lieu — objectifs différents, groupes différents.</b> Chaque carte teinte chaque cellule canadienne selon un objectif (<b>plus foncé = y aller</b>). Les zones chaudes changent selon l'objectif (un choix de valeurs) et selon le groupe (des espèces différentes comblent des lacunes différentes). Choisissez les lignes et colonnes; touchez une carte pour l'ouvrir dans le planificateur.`,
@@ -833,7 +835,7 @@ async function fetchProspects(lat,lon,whereKey,opts){
     const ex=`https://www.inaturalist.org/observations?subview=map&swlat=${lat-HH}&nelat=${lat+HH}&swlng=${lon-HH}&nelng=${lon+HH}&quality_grade=research`;
     pr.innerHTML=`<div class="hd">${t('prospects_hd','<b style="color:var(--ink)">'+(where||t('here'))+'</b>',total.toLocaleString(LANG==='fr'?'fr-CA':'en-CA'),nearby)}</div>`+
       '<div class="prospects">'+res.map(r=>{const tx=r.taxon,g=tx.observations_count||0,rare=g<1500,unc=g<7000;
-        return `<a class="sp" href="https://www.inaturalist.org/taxa/${tx.id}" target="_blank" rel="noopener" title="${esc(tx.name)}"><img src="${safeImg(tx.default_photo.square_url)}" loading="lazy" alt=""><div class="nm">${r._here?'':'✦ '}${esc(tx.preferred_common_name||tx.name)}${rare?` <span class="rare">${L_rare}</span>`:(unc?` <span class="unc">${L_unc}</span>`:'')}</div><div class="ct">${r._here?T_here(r.count):L_nearby} · ${T_world(g)}</div></a>`;}).join('')+'</div>'+
+        return `<a class="sp" href="https://www.inaturalist.org/taxa/${tx.id}" target="_blank" rel="noopener" title="${esc(tx.name)}"><img src="${safeImg(tx.default_photo.square_url)}" loading="lazy" alt=""><div class="nm">${esc(tx.preferred_common_name||tx.name)}${rare?` <span class="rare">${L_rare}</span>`:(unc?` <span class="unc">${L_unc}</span>`:'')}</div><div class="ct">${r._here?T_here(r.count):L_nearby} · ${T_world(g)}</div></a>`;}).join('')+'</div>'+
       `<div style="margin-top:8px;font-size:10.5px;color:var(--mut);line-height:1.35">${t('inat_caveat')}</div>`+
       `<div style="margin-top:7px;font-size:11.5px"><a href="${ex}" target="_blank" rel="noopener" style="color:var(--acc)">${t('explore_all')}</a> &nbsp;·&nbsp; <a href="https://www.inaturalist.org/observations/new" target="_blank" rel="noopener" style="color:var(--gd)">${t('log_sighting')}</a> &nbsp;·&nbsp; <a href="https://www.inaturalist.org/projects/${state.project}" target="_blank" rel="noopener" style="color:var(--mut)">${t('for_challenge')}</a></div>`;
   }catch(e){
@@ -960,7 +962,7 @@ const state={taxon:(FILES["All biodiversity"]?"All biodiversity":Object.keys(FIL
 function debounce(fn,ms){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms);};}
 const replan=debounce(()=>{if(!planned)return;if(state.planMode==='dest'&&lastDest)setDest(lastDest[0],lastDest[1]);else planTrip();},650);
 
-const startIcon=L.divIcon({className:'',iconSize:[20,20],iconAnchor:[10,10],html:'<div style="width:18px;height:18px;border-radius:50%;background:#1f6fe0;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.45)"></div>'});
+const startIcon=L.divIcon({className:'',iconSize:[20,20],iconAnchor:[10,10],html:'<div style="width:18px;height:18px;border-radius:50%;background:rgb(139,168,132);border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.45)"></div>'});
 const destIcon=L.divIcon({className:'',iconSize:[26,38],iconAnchor:[13,36],html:'<svg width="26" height="38" viewBox="0 0 26 38"><path d="M13 0C6 0 0 6 0 13c0 9 13 25 13 25s13-16 13-25C26 6 20 0 13 0z" fill="#f0a000" stroke="#fff" stroke-width="2"/><circle cx="13" cy="13" r="5" fill="#fff"/></svg>'});
 const startMarker=L.marker(state.start,{draggable:true,icon:startIcon,zIndexOffset:1000,alt:t('start_alt'),title:t('start_tip')}).addTo(map).bindTooltip(t('start_tip'));
 startMarker.on('drag',()=>{const ll=startMarker.getLatLng();state.start=[ll.lat,ll.lng];});
@@ -1388,12 +1390,12 @@ function selectTrip(o){clearRoute();const dest=[o.m.r[0],o.m.r[1]];
     // so the line always visibly connects to where you are and where you're going.
     const cs=o.geo.coordinates.map(c=>[c[1],c[0]]);
     layers.push(L.polyline(cs,{color:'#ffffff',weight:9,opacity:.95}),
-                L.polyline(cs,{color:'#1f6fe0',weight:4.5,opacity:1}),
-                L.polyline([state.start,cs[0]],{color:'#1f6fe0',weight:2.5,dashArray:'2 6',opacity:.8}),
-                L.polyline([cs[cs.length-1],dest],{color:'#1f6fe0',weight:2.5,dashArray:'2 6',opacity:.8}));
+                L.polyline(cs,{color:'rgb(139,168,132)',weight:4.5,opacity:1}),
+                L.polyline([state.start,cs[0]],{color:'rgb(139,168,132)',weight:2.5,dashArray:'2 6',opacity:.8}),
+                L.polyline([cs[cs.length-1],dest],{color:'rgb(139,168,132)',weight:2.5,dashArray:'2 6',opacity:.8}));
   } else {
     layers.push(L.polyline([state.start,dest],{color:'#ffffff',weight:8,opacity:.95}),
-                L.polyline([state.start,dest],{color:'#1f6fe0',weight:4,dashArray:'7 7',opacity:1}));
+                L.polyline([state.start,dest],{color:'rgb(139,168,132)',weight:4,dashArray:'7 7',opacity:1}));
   }
   routeLine=L.featureGroup(layers).addTo(map);map.fitBounds(routeLine.getBounds(),{padding:[60,60],maxZoom:10});
   destMarker=L.marker(dest,{icon:destIcon,zIndexOffset:900}).addTo(map)
