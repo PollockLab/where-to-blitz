@@ -217,7 +217,7 @@ details.adv>summary:hover{color:var(--ink)}
   .infobtn{width:24px;height:24px;line-height:22px;font-size:13px}
   .langtoggle button{padding:7px 13px}
 }
-#maplegend{position:fixed;bottom:14px;right:14px;z-index:1050;background:rgba(255,255,255,.93);border-radius:9px;padding:8px 11px;box-shadow:0 2px 10px rgba(0,0,0,.22);font-size:14px;color:#16233a;max-width:212px;line-height:1.3}
+#maplegend{position:fixed;bottom:24px;right:14px;z-index:1050;background:rgba(255,255,255,.93);border-radius:9px;padding:8px 11px;box-shadow:0 2px 10px rgba(0,0,0,.22);font-size:14px;color:#16233a;max-width:212px;line-height:1.3}
 #maplegend .lt{font-weight:700;font-size:14.5px}/* retained: reused by the Getting Even categorical legend title (the priority-legend title div was removed for #47) */
 #maplegend .ramp{height:9px;border-radius:5px;background:linear-gradient(90deg,#ffffd9,#c7e9b4,#41b6c4,#225ea8,#081d58);margin:4px 0 2px}
 #maplegend .lab{display:flex;justify-content:space-between;font-size:12.5px;color:#46566a}
@@ -327,7 +327,7 @@ details.adv>summary:hover{color:var(--ink)}
 <div id="map" role="application" data-i18n-aria="aria_map" aria-label="Interactive priority map (screen-reader users: use the Top cells list)"></div>
 <div id="viewtoggle" role="navigation" data-i18n-aria="aria_map_view" aria-label="Map view"><button id="vexplore" class="on" aria-pressed="true" data-i18n="view_explore">🗺 Explore</button><button id="vplan" aria-pressed="false" data-i18n="view_plan">🧭 Plan a trip</button><button id="vcompare" aria-pressed="false" data-i18n="view_compare">📊 Compare goals</button></div>
 <div id="loading" role="status" aria-live="polite" data-i18n="loading">🍃 Loading the map…</div>
-<div id="maplegend" role="region" data-i18n-aria="aria_map_legend" aria-label="Map legend"><div class="ramp"></div><div class="lab"><span data-i18n="legend_low">well-sampled</span><span data-i18n="legend_high">biggest gaps</span></div><div class="hint" id="legendrel" style="display:none;color:#7a5b00" data-i18n="legend_rel">⚖ Colours rescaled to this view — not comparable to other zoom levels.</div></div>
+<div id="maplegend" role="region" data-i18n-aria="aria_map_legend" aria-label="Map legend"><div class="ramp"></div><div class="lab"><span data-i18n="legend_low">well-sampled</span><span data-i18n="legend_high">biggest gaps</span></div><div class="hint" id="legendrel" style="display:none;color:#7a5b00" data-i18n="legend_rel">⚖ Colours rescaled to this view — not comparable across zoom levels.</div></div>
 <button id="howbtn" type="button" aria-expanded="false" aria-controls="howpanel" data-i18n-title="how_scored" title="How impact is scored & data sources"><span class="ic" aria-hidden="true">ⓘ</span> <span data-i18n="how_scored">How impact is scored & data sources</span></button>
 <div id="howpanel" role="region" data-i18n-aria="how_scored" aria-label="How impact is scored & data sources">
   <button id="howclose" type="button" data-i18n-aria="aria_close" data-i18n-title="aria_close" aria-label="Close" title="Close">×</button>
@@ -429,7 +429,7 @@ const I18N={
     show_panel:"Show the panel",
     zoom_scale:"🔍 Rescale colours to the current view",
     zoom_scale_hint:`Ranks cells against what's on screen, so local gaps stand out when you zoom in. Off = ranked across all of Canada (a dark cell means the same everywhere).`,
-    legend_rel:"⚖ Colours rescaled to this view — not comparable to other zoom levels.",
+    legend_rel:"⚖ Colours rescaled to this view — not comparable across zoom levels.",
     map_brightness:"Map brightness",
     data_opacity:"Density opacity",
     how_scored:"How impact is scored & data sources",
@@ -586,7 +586,7 @@ const I18N={
     show_panel:"Afficher le panneau",
     zoom_scale:"🔍 Recalibrer les couleurs sur la vue actuelle",
     zoom_scale_hint:`Classe les cellules par rapport à ce qui est à l'écran, pour faire ressortir les lacunes locales en zoomant. Désactivé = classement sur tout le Canada (une cellule foncée signifie la même chose partout).`,
-    legend_rel:"⚖ Couleurs recalibrées sur cette vue — non comparables aux autres niveaux de zoom.",
+    legend_rel:"⚖ Couleurs recalibrées sur cette vue — non comparables entre niveaux de zoom.",
     map_brightness:"Luminosité de la carte",
     data_opacity:"Opacité des données",
     how_scored:"Calcul de l'impact et sources de données",
@@ -901,6 +901,7 @@ function fmth(h){if(h>=24){const d=Math.floor(h/24),hr=Math.round(h%24);return d
 function haversine(a,b,c,d){const R=6371,r=Math.PI/180,x=(c-a)*r,y=(d-b)*r,h=Math.sin(x/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin(y/2)**2;return 2*R*Math.asin(Math.sqrt(h));}
 
 const map=L.map('map',{zoomControl:true,preferCanvas:true}).setView([58,-96],4);
+map.zoomControl.setPosition('bottomleft');   // issue #54: top-left default sits under the floating panel; bottom-left is clear in Explore
 let _ppf=null;map.on('popupopen',()=>{_ppf=document.activeElement;});map.on('popupclose',()=>{try{if(_ppf&&_ppf.focus)_ppf.focus();}catch(e){}_ppf=null;
   if(!_reselect&&state.view==='explore'&&(destMarker||destCell))clearSelection();});   // closing the cell popup deselects (issue #16)
 document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;
