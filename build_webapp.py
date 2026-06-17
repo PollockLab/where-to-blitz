@@ -71,17 +71,16 @@ html,body{margin:0;height:100%;font-family:-apple-system,Segoe UI,Roboto,Helveti
 #protobar{position:fixed;top:0;left:0;right:0;height:30px;z-index:3000;display:flex;align-items:center;justify-content:center;gap:10px;background:#e99002;color:#231900;font-size:12px;font-weight:600;padding:0 12px;white-space:nowrap;overflow:hidden;box-shadow:0 1px 5px rgba(0,0,0,.35)}
 #protobar button{background:rgba(0,0,0,.22);border:0;color:inherit;border-radius:5px;cursor:pointer;font-size:14px;line-height:1;padding:1px 7px;flex:none}
 @media(max-width:640px){#protobar{font-size:11px;gap:6px;padding:0 8px}}
-#app{display:flex;height:calc(100% - var(--bh));margin-top:var(--bh)}
-#panel{width:360px;min-width:360px;height:100%;overflow-y:auto;background:var(--panel);padding:16px 16px 28px;border-right:1px solid #0a1119}
+#app{display:flex;height:calc(100% - var(--bh));margin-top:var(--bh);position:relative}
+/* Issue #20: the panel floats as a short card over a full-width map instead of a full-height column. */
+#panel{position:absolute;z-index:1100;top:12px;left:12px;width:336px;max-height:calc(100% - 24px);overflow-y:auto;background:var(--panel);padding:14px 15px 18px;border-radius:12px;border:1px solid #2a3a4d;box-shadow:0 6px 22px rgba(0,0,0,.5)}
 #map{flex:1;height:100%}
-#panelToggle{position:fixed;top:calc(var(--bh) + 12px);left:360px;transform:translateX(-50%);z-index:1300;width:28px;height:28px;border-radius:50%;background:var(--panel);color:var(--ink);border:1px solid #2a3a4d;cursor:pointer;font-size:16px;line-height:26px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.3);padding:0}
+#panelToggle{position:fixed;top:calc(var(--bh) + 18px);left:336px;z-index:1300;width:26px;height:26px;border-radius:50%;background:var(--panel);color:var(--ink);border:1px solid #2a3a4d;cursor:pointer;font-size:15px;line-height:24px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.35);padding:0}
 #panelToggle:hover{border-color:var(--acc);color:var(--acc)}
 #panelToggle:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 body.panel-collapsed #panel{display:none}
 body.panel-collapsed #panelToggle{left:8px;transform:none}
 body.panel-collapsed #map{flex:1;height:100%}
-body.panel-collapsed #viewtoggle{left:50%}
-body.panel-collapsed #maplegend{left:12px}
 body.panel-collapsed #loading{left:50%}
 h1{font-size:20.5px;margin:0 0 2px}
 .sub{color:var(--mut);font-size:14.5px;line-height:1.45;margin:0 0 8px}
@@ -160,10 +159,10 @@ details.adv>summary::before{content:"▸";font-size:11.5px;display:inline-block;
 details.adv[open]>summary::before{transform:rotate(90deg)}
 details.adv>summary:hover{color:var(--ink)}
 .leaflet-popup-content{font-size:15px}.leaflet-popup-content b{color:#0a2a44}
-#viewtoggle{position:fixed;top:calc(10px + var(--bh));left:calc(360px + 50%/2 + 90px);transform:translateX(-50%);z-index:1200;display:flex;background:#fff;border-radius:9px;box-shadow:0 2px 9px rgba(0,0,0,.28);overflow:hidden}
+#viewtoggle{position:fixed;top:calc(10px + var(--bh));left:50%;transform:translateX(-50%);z-index:1200;display:flex;background:#fff;border-radius:9px;box-shadow:0 2px 9px rgba(0,0,0,.28);overflow:hidden}
 #viewtoggle button{border:0;background:#fff;color:#1b2a3a;padding:8px 15px;font-size:15px;font-weight:650;cursor:pointer}
 #viewtoggle button.on{background:var(--acc);color:#fff}
-#insights{position:fixed;left:360px;top:0;right:0;bottom:0;z-index:1100;background:var(--bg);color:var(--ink);overflow-y:auto;padding:56px 22px 28px;display:none}
+#insights{position:fixed;left:0;top:0;right:0;bottom:0;z-index:1150;background:var(--bg);color:var(--ink);overflow-y:auto;padding:56px 22px 28px;display:none}
 #insights .ihd{font-size:16px;line-height:1.55;max-width:980px;margin:0 auto 18px}
 #insights .ihd b{color:var(--ink)}
 #insights .ctrls{max-width:1200px;margin:0 auto 16px;display:flex;flex-wrap:wrap;gap:20px;font-size:14.5px}
@@ -192,20 +191,20 @@ details.adv>summary:hover{color:var(--ink)}
 .infobox li{margin:3px 0}
 @media(max-width:640px){
   #app{flex-direction:column}
-  #panel{width:100%;min-width:0;height:auto;max-height:50vh;border-right:0;border-bottom:1px solid #0a1119}
+  #panel{position:static;width:100%;min-width:0;height:auto;max-height:50vh;border-radius:0;border:0;border-bottom:1px solid #0a1119;box-shadow:none}
   #map{height:50vh;flex:none}
   #viewtoggle{left:50%;top:auto;bottom:12px}
   #insights{left:0;top:0;height:100%;padding:54px 12px 24px}
   .infobtn{width:24px;height:24px;line-height:22px;font-size:13px}
   .langtoggle button{padding:7px 13px}
 }
-#maplegend{position:fixed;bottom:14px;left:372px;z-index:1050;background:rgba(255,255,255,.93);border-radius:9px;padding:8px 11px;box-shadow:0 2px 10px rgba(0,0,0,.22);font-size:12px;color:#16233a;max-width:212px;line-height:1.3}
+#maplegend{position:fixed;bottom:14px;right:14px;z-index:1050;background:rgba(255,255,255,.93);border-radius:9px;padding:8px 11px;box-shadow:0 2px 10px rgba(0,0,0,.22);font-size:12px;color:#16233a;max-width:212px;line-height:1.3}
 #maplegend .lt{font-weight:700;font-size:12.5px}
 #maplegend .ramp{height:9px;border-radius:5px;background:linear-gradient(90deg,#ffffd9,#c7e9b4,#41b6c4,#225ea8,#081d58);margin:4px 0 2px}
 #maplegend .lab{display:flex;justify-content:space-between;font-size:10.5px;color:#46566a}
 #maplegend .hint{margin-top:4px;color:#46566a;font-size:10.5px}
 @media(max-width:640px){#maplegend{left:auto;right:8px;bottom:auto;top:calc(50vh + 8px);max-width:158px;padding:6px 8px}}
-#loading{position:fixed;left:calc(360px + (100% - 360px)/2);top:46%;transform:translate(-50%,-50%);z-index:1200;background:rgba(255,255,255,.96);border-radius:10px;padding:11px 17px;box-shadow:0 3px 14px rgba(0,0,0,.25);font-size:14px;font-weight:600;color:#1b2a3a}
+#loading{position:fixed;left:50%;top:46%;transform:translate(-50%,-50%);z-index:1200;background:rgba(255,255,255,.96);border-radius:10px;padding:11px 17px;box-shadow:0 3px 14px rgba(0,0,0,.25);font-size:14px;font-weight:600;color:#1b2a3a}
 @media(max-width:640px){#loading{left:50%;top:74vh}}
 #howbtn{position:fixed;right:14px;top:calc(12px + var(--bh));z-index:1200;display:flex;align-items:center;gap:6px;background:#fff;color:#1b2a3a;border:0;border-radius:9px;box-shadow:0 2px 9px rgba(0,0,0,.28);padding:7px 11px;font-size:12.5px;font-weight:650;cursor:pointer;max-width:260px}
 #howbtn:hover{color:var(--acc)}
@@ -234,7 +233,7 @@ details.adv>summary:hover{color:var(--ink)}
     A planning aid, not ground truth — please obscure sensitive species and respect Indigenous data sovereignty. <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">How Blitz the Gap works →</a>
   </div>
   <select id="taxon" class="full" aria-label="Life group" style="margin-bottom:8px"></select>
-  <div class="presets" id="presets"></div>
+  <select id="criteria" class="full" aria-label="Criteria" style="margin-bottom:8px"></select>
 
   <div id="tripui">
   <div class="sec" data-i18n="your_trip">Your trip</div>
@@ -294,10 +293,9 @@ details.adv>summary:hover{color:var(--ink)}
       <label class="toggle" style="margin:4px 0"><input type="checkbox" id="tgLabels" checked> <span data-i18n="labels_places">Labels &amp; places</span></label>
       <div style="color:var(--mut);font-size:11px;line-height:1.4" data-i18n="vector_hint">Vector basemap — toggle layers like Maputnik. Other styles are raster (roads baked in).</div>
     </div>
-    <label class="toggle" style="margin:8px 0 2px"><input type="checkbox" id="tgCoverage"> <span data-i18n="inat_coverage">🛰 iNaturalist coverage</span></label>
-    <div style="color:var(--mut);font-size:11px;line-height:1.4" data-i18n="coverage_hint">Where data already is (bright = well-sampled, dark = gaps) — the official "light up the map" layer, for the current group.</div>
-    <label class="toggle" style="margin:8px 0 2px"><input type="checkbox" id="tgGettingEven"> <span data-i18n="getting_even">⚖️ Getting Even — which group to record</span></label><span class="infobtn" data-i18n-title="ge_info_btn" title="How is the recommended group worked out?" role="button" tabindex="0" aria-label="How the recommended group is worked out" aria-expanded="false" style="margin-left:6px;vertical-align:middle" onclick="const b=document.getElementById('geinfo').classList.toggle('open');this.setAttribute('aria-expanded',b)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">i</span>
-    <div style="color:var(--mut);font-size:11px;line-height:1.4" data-i18n="ge_hint">Each cell is coloured by the most under-represented taxonomic group there (birds excluded — already well covered by eBird) — our finer-resolution take on the official "Getting Even" challenge. From iNaturalist observation density: a sample, not a census.</div>
+    <label class="toggle" style="display:none"><input type="checkbox" id="tgCoverage"> <span data-i18n="inat_coverage">🛰 iNaturalist coverage</span></label><!-- driven by the "iNaturalist sampling density" map style (#20) -->
+    <label class="toggle" style="display:none"><input type="checkbox" id="tgGettingEven"> <span data-i18n="getting_even">⚖️ Getting Even — which group to record</span></label><!-- driven by the "Getting Even" criterion (#20) -->
+    <div style="display:none" data-i18n="ge_hint">Each cell is coloured by the most under-represented taxonomic group there (birds excluded — already well covered by eBird) — our finer-resolution take on the official "Getting Even" challenge. From iNaturalist observation density: a sample, not a census.</div>
     <div class="infobox" id="geinfo" data-i18n-html="ge_method"></div>
     <div style="display:flex;justify-content:space-between;margin:9px 0 0"><span style="font-size:13px" data-i18n="map_brightness">Map brightness</span><span class="v" id="bopv" style="color:var(--acc)">100%</span></div>
     <input type="range" id="baseop" min="0.25" max="1" step="0.05" value="1" aria-label="Map brightness">
@@ -375,6 +373,8 @@ const I18N={
     gt_switch:(g)=>`Switch the map to ${g}`,
     gaptree_foot:"Each group's recording here, judged against how thoroughly the whole cell is recorded, so the biggest relative gaps surface even where everything is under-recorded. Counts are distinct research-grade iNaturalist species in this cell vs the ~50 km around. Tap a group to map it.",
     map_style:"Map style",
+    style_standard:"Standard", style_satellite:"Satellite", style_terrain:"Terrain", style_inat_density:"🛰 iNaturalist sampling density",
+    crit_ge:"⚖️ Getting Even — which group to record",
     roads:"Roads", labels_places:"Labels & places",
     vector_hint:"Vector basemap — toggle layers like Maputnik. Other styles are raster (roads baked in).",
     inat_coverage:"🛰 iNaturalist coverage",
@@ -524,6 +524,8 @@ const I18N={
     gt_switch:(g)=>`Afficher ${g} sur la carte`,
     gaptree_foot:"L’enregistrement de chaque groupe dans cette cellule, évalué selon la couverture globale de la cellule, pour faire ressortir les plus grandes lacunes relatives même là où tout est sous-documenté. Les nombres sont des espèces iNaturalist de qualité recherche distinctes ici vs les ~50 km autour. Touchez un groupe pour l’afficher.",
     map_style:"Style de carte",
+    style_standard:"Standard", style_satellite:"Satellite", style_terrain:"Relief", style_inat_density:"🛰 Densité d'échantillonnage iNaturalist",
+    crit_ge:"⚖️ Combler l'écart — quel groupe noter",
     roads:"Routes", labels_places:"Étiquettes et lieux",
     vector_hint:"Fond vectoriel — activez les couches comme dans Maputnik. Les autres styles sont matriciels (routes intégrées).",
     inat_coverage:"🛰 Couverture iNaturalist",
@@ -655,10 +657,11 @@ function relabelDynamic(){
   // re-render the JS-built widgets whose static strings come from the dict
   if(typeof rebuildTaxonOptions==='function')rebuildTaxonOptions();
   if(typeof rebuildObjs==='function')rebuildObjs();
-  if(typeof rebuildPresets==='function')rebuildPresets();
+  if(typeof rebuildCriteria==='function')rebuildCriteria();
+  if(typeof rebuildStyles==='function')rebuildStyles();
   if(typeof rebuildModes==='function')rebuildModes();
-  // active challenge blurb + project link
-  if(typeof window.__activePreset==='number')applyChallenge(PRESETS[window.__activePreset]);
+  // re-apply the active preset to refresh language-dependent strings — but not while Getting Even is the active criterion
+  if(typeof window.__activePreset==='number'&&!(typeof geActive==='function'&&geActive()))applyChallenge(PRESETS[window.__activePreset]);
   // budget label unit suffix
   if(typeof refreshBudget==='function')refreshBudget();
   // legend "tap" hint follows current view
@@ -869,13 +872,10 @@ document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;
   if(state.view==='explore'&&(destMarker||destCell)){map.closePopup();clearSelection();}});
 const ATTR='&copy; OpenStreetMap contributors · routing &copy; OSRM';
 const BASEMAPS={
-  "OpenStreetMap":{url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png',opt:{maxZoom:19}},
-  "Light & muted":{url:'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',opt:{subdomains:'abcd',maxZoom:20}},
-  "Dark":{url:'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',opt:{subdomains:'abcd',maxZoom:20}},
-  "Roads (Voyager)":{url:'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',opt:{subdomains:'abcd',maxZoom:20}},
+  "Standard":{url:'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',opt:{subdomains:'abcd',maxZoom:20}},
   "Satellite":{url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',opt:{maxZoom:19}},
   "Terrain":{url:'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',opt:{subdomains:'abc',maxZoom:17}},
-  "Vector — toggle layers":{vector:true,style:'https://tiles.openfreemap.org/styles/positron'}
+  "Light":{url:'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',opt:{subdomains:'abcd',maxZoom:20}}   // base under the iNaturalist-density style; not a dropdown choice
 };
 let baseLayer=null, baseOpacity=1, glBase=null;
 function applyLayerToggles(){
@@ -905,7 +905,7 @@ function setBase(name){
     if(tg)tg.style.display='none';
   }
 }
-setBase('Light & muted');
+setBase('Standard');
 
 let markers=[], routeLine=null, destMarker=null, destCell=null, lastFit=null, lastScored=null, planned=false, lastDest=null;
 const VAN=[49.28,-123.12];
@@ -982,7 +982,7 @@ function recolour(){
   const flat=ord.length>0&&(ord[ord.length-1][0]-ord[0][0])<1e-9;   // guard empty markers (recolour runs during init before data loads)
   markers.forEach((m,i)=>{m.t=flat?0:rank[i]/n1;});   // national score, stable across pan/zoom
   const rel=zoomScaleActive()&&!cov;
-  document.getElementById('legendrel').style.display=rel?'block':'none';
+  const lr=document.getElementById('legendrel');if(lr)lr.style.display=rel?'block':'none';   // absent while the GE categorical legend is swapped in
   if(rel){
     // Colour = rank within the current viewport so a Montrealer zoomed in sees local gaps; off-view
     // cells go faint (they recolour on moveend). Hidden US cells excluded so border zooms aren't skewed.
@@ -1045,25 +1045,38 @@ function rebuildObjs(){if(!objsDiv)return;objsDiv.innerHTML='';   // issue #20 r
       document.getElementById('v_'+o.key).textContent=state.w[o.key].toFixed(2);markPreset(null);recolour();replan();});});}
 rebuildObjs();
 function applyWeights(arr,name){OBJ.forEach((o,i)=>{state.w[o.key]=arr[i];const s=document.getElementById('s_'+o.key),v=document.getElementById('v_'+o.key);if(s)s.value=arr[i];if(v)v.textContent=arr[i].toFixed(2);});markPreset(name);recolour();updateLegendLabels();replan();}
-const presetsDiv=document.getElementById('presets');
-function markPreset(name){[...presetsDiv.children].forEach(b=>b.classList.toggle('on',b.textContent===name));}
-// Jun-15 feedback: show a few broad presets, the rest behind "More" -- the meeting
-// wanted ~3 up front, not six, without losing any (#2). Nothing removed; just folded.
-const PRIMARY_PRESETS=3;let presetsExpanded=false;
-function rebuildPresets(){presetsDiv.innerHTML='';
-  PRESETS.forEach((p,i)=>{const b=document.createElement('button');b.textContent=presetName(i);b.title=presetBlurb(i);b.onclick=()=>applyChallenge(p);if(i>=PRIMARY_PRESETS&&!presetsExpanded)b.style.display='none';presetsDiv.appendChild(b);});
-  if(PRESETS.length>PRIMARY_PRESETS){const more=document.createElement('button');more.id='presetMore';more.textContent=presetsExpanded?t('fewer_presets'):t('more_presets');more.style.opacity='.75';more.onclick=()=>{presetsExpanded=!presetsExpanded;rebuildPresets();if(typeof window.__activePreset==='number')markPreset(presetName(window.__activePreset));};presetsDiv.appendChild(more);}}
-rebuildPresets();
+// Issue #20: criteria is a dropdown (was preset chips). Getting Even is one of the options;
+// picking it forces "All biodiversity" (the layer is taxon-independent) and shows the GE map.
+const critSel=document.getElementById('criteria');
+function markPreset(name){if(!critSel||name===null)return;   // reflect the active preset in the dropdown
+  const i=PRESETS.findIndex((_,k)=>presetName(k)===name);if(i>=0)critSel.value=String(i);}
+function rebuildCriteria(){if(!critSel)return;const cur=critSel.value;critSel.innerHTML='';
+  PRESETS.forEach((p,i)=>{const o=document.createElement('option');o.value=String(i);o.textContent=presetName(i);o.title=presetBlurb(i);critSel.appendChild(o);});
+  const ge=document.createElement('option');ge.value='ge';ge.textContent=t('crit_ge');critSel.appendChild(ge);
+  if(cur)critSel.value=cur;}
+rebuildCriteria();
 function applyChallenge(p){const i=PRESETS.indexOf(p);window.__activePreset=i;
-  if(i>=PRIMARY_PRESETS&&!presetsExpanded){presetsExpanded=true;rebuildPresets();}
   applyWeights(p.w,presetName(i));state.project=p.proj;
   const cb=document.getElementById('challengeBlurb');if(cb)cb.innerHTML=presetBlurb(i)+' <a href="https://www.inaturalist.org/projects/'+p.proj+'" target="_blank" rel="noopener" style="color:var(--acc);white-space:nowrap">'+t('join')+'</a>';}
+if(critSel)critSel.onchange=()=>{const v=critSel.value, ge=document.getElementById('tgGettingEven');
+  if(v==='ge'){
+    if(state.taxon!=='All biodiversity'&&FILES['All biodiversity']){taxonSel.value='All biodiversity';taxonSel.onchange();}
+    if(ge&&!ge.checked){ge.checked=true;ge.dispatchEvent(new Event('change'));}
+  }else{
+    if(ge&&ge.checked){ge.checked=false;ge.dispatchEvent(new Event('change'));}
+    applyChallenge(PRESETS[+v]);
+  }};
 applyChallenge(PRESETS[0]);
 (function(){var b=document.getElementById('protobar'),x=document.getElementById('protox');if(!b)return;var off=function(){b.style.display='none';document.documentElement.style.setProperty('--bh','0px');if(window.map)setTimeout(function(){map.invalidateSize();},60);};try{if(localStorage.getItem('wtb_proto')==='hid')off();}catch(e){}if(x)x.onclick=function(){off();try{localStorage.setItem('wtb_proto','hid');}catch(e){}};})();
 
 const bmSel=document.getElementById('basemap');
-Object.keys(BASEMAPS).forEach(n=>{const o=document.createElement('option');o.value=o.textContent=n;bmSel.appendChild(o);});
-bmSel.value='Light & muted'; bmSel.onchange=()=>setBase(bmSel.value);
+// Issue #20: map style is one of four choices; the iNaturalist sampling-density overlay folds in as the 4th.
+const MAP_STYLES=[['Standard','style_standard'],['Satellite','style_satellite'],['Terrain','style_terrain'],['__inat__','style_inat_density']];
+function rebuildStyles(){const cur=bmSel.value||'Standard';bmSel.innerHTML='';MAP_STYLES.forEach(([v,k])=>{const o=document.createElement('option');o.value=v;o.textContent=t(k);bmSel.appendChild(o);});bmSel.value=cur;}
+rebuildStyles();
+bmSel.onchange=()=>{const v=bmSel.value, cov=document.getElementById('tgCoverage');
+  if(v==='__inat__'){setBase('Light');if(cov&&!cov.checked){cov.checked=true;cov.dispatchEvent(new Event('change'));}}
+  else{setBase(v);if(cov&&cov.checked){cov.checked=false;cov.dispatchEvent(new Event('change'));}}};
 let covLayer=null;
 const COVTAXA={Plantae:'Plantae',Aves:'Aves',Mammalia:'Mammalia',Insecta:'Insecta',Amphibia:'Amphibia',Fungi:'Fungi',Reptilia:'Reptilia',Actinopterygii:'Actinopterygii',Arachnida:'Arachnida',Mollusca:'Mollusca'};   // COGs available per taxon (others -> All)
 function setCoverage(){
@@ -1078,7 +1091,8 @@ function setCoverage(){
   covLayer=L.tileLayer('https://tiler.biodiversite-quebec.ca/cog/tiles/{z}/{x}/{y}?url='+encodeURIComponent(cog)+'&rescale=0,10&colormap_name=magma&resampling=cubic',
     {opacity:0.75,maxZoom:14,zIndex:250,attribution:'iNaturalist density &copy; Biodiversit\u00e9 Qu\u00e9bec'}).addTo(map);
 }
-document.getElementById('tgCoverage').addEventListener('change',e=>{if(e.target.checked)document.getElementById('tgGettingEven').checked=false;updateLegend();setCoverage();recolour();});
+document.getElementById('tgCoverage').addEventListener('change',e=>{if(e.target.checked)document.getElementById('tgGettingEven').checked=false;updateLegend();setCoverage();recolour();
+  if(!e.target.checked&&bmSel.value==='__inat__'){bmSel.value='Standard';setBase('Standard');}});   // coverage turned off elsewhere (e.g. GE) -> reset the style dropdown
 document.getElementById('tgGettingEven').addEventListener('change',e=>{if(e.target.checked)document.getElementById('tgCoverage').checked=false;loadGE().then(()=>{setCoverage();updateLegend();recolour();});});
 {const z=document.getElementById('tgZoomScale');if(z)z.addEventListener('change',recolour);}
 {const c=document.getElementById('tgCanadaOnly');if(c)c.addEventListener('change',()=>{loadUS().then(recolour);});}
