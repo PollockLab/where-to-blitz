@@ -234,7 +234,7 @@ details.adv>summary:hover{color:var(--ink)}
     A planning aid, not ground truth — please obscure sensitive species and respect Indigenous data sovereignty. <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">How Blitz the Gap works →</a>
   </div>
   <select id="taxon" class="full" aria-label="Life group" style="margin-bottom:8px"></select>
-  <div class="presets" id="presets"></div>
+  <select id="criteria" class="full" aria-label="Criteria" style="margin-bottom:8px"></select>
 
   <div id="tripui">
   <div class="sec" data-i18n="your_trip">Your trip</div>
@@ -295,8 +295,8 @@ details.adv>summary:hover{color:var(--ink)}
       <div style="color:var(--mut);font-size:11px;line-height:1.4" data-i18n="vector_hint">Vector basemap — toggle layers like Maputnik. Other styles are raster (roads baked in).</div>
     </div>
     <label class="toggle" style="display:none"><input type="checkbox" id="tgCoverage"> <span data-i18n="inat_coverage">🛰 iNaturalist coverage</span></label><!-- driven by the "iNaturalist sampling density" map style (#20) -->
-    <label class="toggle" style="margin:8px 0 2px"><input type="checkbox" id="tgGettingEven"> <span data-i18n="getting_even">⚖️ Getting Even — which group to record</span></label><span class="infobtn" data-i18n-title="ge_info_btn" title="How is the recommended group worked out?" role="button" tabindex="0" aria-label="How the recommended group is worked out" aria-expanded="false" style="margin-left:6px;vertical-align:middle" onclick="const b=document.getElementById('geinfo').classList.toggle('open');this.setAttribute('aria-expanded',b)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">i</span>
-    <div style="color:var(--mut);font-size:11px;line-height:1.4" data-i18n="ge_hint">Each cell is coloured by the most under-represented taxonomic group there (birds excluded — already well covered by eBird) — our finer-resolution take on the official "Getting Even" challenge. From iNaturalist observation density: a sample, not a census.</div>
+    <label class="toggle" style="display:none"><input type="checkbox" id="tgGettingEven"> <span data-i18n="getting_even">⚖️ Getting Even — which group to record</span></label><!-- driven by the "Getting Even" criterion (#20) -->
+    <div style="display:none" data-i18n="ge_hint">Each cell is coloured by the most under-represented taxonomic group there (birds excluded — already well covered by eBird) — our finer-resolution take on the official "Getting Even" challenge. From iNaturalist observation density: a sample, not a census.</div>
     <div class="infobox" id="geinfo" data-i18n-html="ge_method"></div>
     <div style="display:flex;justify-content:space-between;margin:9px 0 0"><span style="font-size:13px" data-i18n="map_brightness">Map brightness</span><span class="v" id="bopv" style="color:var(--acc)">100%</span></div>
     <input type="range" id="baseop" min="0.25" max="1" step="0.05" value="1" aria-label="Map brightness">
@@ -375,6 +375,7 @@ const I18N={
     gaptree_foot:"Each group's recording here, judged against how thoroughly the whole cell is recorded, so the biggest relative gaps surface even where everything is under-recorded. Counts are distinct research-grade iNaturalist species in this cell vs the ~50 km around. Tap a group to map it.",
     map_style:"Map style",
     style_standard:"Standard", style_satellite:"Satellite", style_terrain:"Terrain", style_inat_density:"🛰 iNaturalist sampling density",
+    crit_ge:"⚖️ Getting Even — which group to record",
     roads:"Roads", labels_places:"Labels & places",
     vector_hint:"Vector basemap — toggle layers like Maputnik. Other styles are raster (roads baked in).",
     inat_coverage:"🛰 iNaturalist coverage",
@@ -525,6 +526,7 @@ const I18N={
     gaptree_foot:"L’enregistrement de chaque groupe dans cette cellule, évalué selon la couverture globale de la cellule, pour faire ressortir les plus grandes lacunes relatives même là où tout est sous-documenté. Les nombres sont des espèces iNaturalist de qualité recherche distinctes ici vs les ~50 km autour. Touchez un groupe pour l’afficher.",
     map_style:"Style de carte",
     style_standard:"Standard", style_satellite:"Satellite", style_terrain:"Relief", style_inat_density:"🛰 Densité d'échantillonnage iNaturalist",
+    crit_ge:"⚖️ Combler l'écart — quel groupe noter",
     roads:"Routes", labels_places:"Étiquettes et lieux",
     vector_hint:"Fond vectoriel — activez les couches comme dans Maputnik. Les autres styles sont matriciels (routes intégrées).",
     inat_coverage:"🛰 Couverture iNaturalist",
@@ -656,11 +658,11 @@ function relabelDynamic(){
   // re-render the JS-built widgets whose static strings come from the dict
   if(typeof rebuildTaxonOptions==='function')rebuildTaxonOptions();
   if(typeof rebuildObjs==='function')rebuildObjs();
-  if(typeof rebuildPresets==='function')rebuildPresets();
+  if(typeof rebuildCriteria==='function')rebuildCriteria();
   if(typeof rebuildStyles==='function')rebuildStyles();
   if(typeof rebuildModes==='function')rebuildModes();
-  // active challenge blurb + project link
-  if(typeof window.__activePreset==='number')applyChallenge(PRESETS[window.__activePreset]);
+  // re-apply the active preset to refresh language-dependent strings — but not while Getting Even is the active criterion
+  if(typeof window.__activePreset==='number'&&!(typeof geActive==='function'&&geActive()))applyChallenge(PRESETS[window.__activePreset]);
   // budget label unit suffix
   if(typeof refreshBudget==='function')refreshBudget();
   // legend "tap" hint follows current view
@@ -981,7 +983,7 @@ function recolour(){
   const flat=ord.length>0&&(ord[ord.length-1][0]-ord[0][0])<1e-9;   // guard empty markers (recolour runs during init before data loads)
   markers.forEach((m,i)=>{m.t=flat?0:rank[i]/n1;});   // national score, stable across pan/zoom
   const rel=zoomScaleActive()&&!cov;
-  document.getElementById('legendrel').style.display=rel?'block':'none';
+  const lr=document.getElementById('legendrel');if(lr)lr.style.display=rel?'block':'none';   // absent while the GE categorical legend is swapped in
   if(rel){
     // Colour = rank within the current viewport so a Montrealer zoomed in sees local gaps; off-view
     // cells go faint (they recolour on moveend). Hidden US cells excluded so border zooms aren't skewed.
@@ -1044,19 +1046,27 @@ function rebuildObjs(){if(!objsDiv)return;objsDiv.innerHTML='';   // issue #20 r
       document.getElementById('v_'+o.key).textContent=state.w[o.key].toFixed(2);markPreset(null);recolour();replan();});});}
 rebuildObjs();
 function applyWeights(arr,name){OBJ.forEach((o,i)=>{state.w[o.key]=arr[i];const s=document.getElementById('s_'+o.key),v=document.getElementById('v_'+o.key);if(s)s.value=arr[i];if(v)v.textContent=arr[i].toFixed(2);});markPreset(name);recolour();updateLegendLabels();replan();}
-const presetsDiv=document.getElementById('presets');
-function markPreset(name){[...presetsDiv.children].forEach(b=>b.classList.toggle('on',b.textContent===name));}
-// Jun-15 feedback: show a few broad presets, the rest behind "More" -- the meeting
-// wanted ~3 up front, not six, without losing any (#2). Nothing removed; just folded.
-const PRIMARY_PRESETS=3;let presetsExpanded=false;
-function rebuildPresets(){presetsDiv.innerHTML='';
-  PRESETS.forEach((p,i)=>{const b=document.createElement('button');b.textContent=presetName(i);b.title=presetBlurb(i);b.onclick=()=>applyChallenge(p);if(i>=PRIMARY_PRESETS&&!presetsExpanded)b.style.display='none';presetsDiv.appendChild(b);});
-  if(PRESETS.length>PRIMARY_PRESETS){const more=document.createElement('button');more.id='presetMore';more.textContent=presetsExpanded?t('fewer_presets'):t('more_presets');more.style.opacity='.75';more.onclick=()=>{presetsExpanded=!presetsExpanded;rebuildPresets();if(typeof window.__activePreset==='number')markPreset(presetName(window.__activePreset));};presetsDiv.appendChild(more);}}
-rebuildPresets();
+// Issue #20: criteria is a dropdown (was preset chips). Getting Even is one of the options;
+// picking it forces "All biodiversity" (the layer is taxon-independent) and shows the GE map.
+const critSel=document.getElementById('criteria');
+function markPreset(name){if(!critSel||name===null)return;   // reflect the active preset in the dropdown
+  const i=PRESETS.findIndex((_,k)=>presetName(k)===name);if(i>=0)critSel.value=String(i);}
+function rebuildCriteria(){if(!critSel)return;const cur=critSel.value;critSel.innerHTML='';
+  PRESETS.forEach((p,i)=>{const o=document.createElement('option');o.value=String(i);o.textContent=presetName(i);o.title=presetBlurb(i);critSel.appendChild(o);});
+  const ge=document.createElement('option');ge.value='ge';ge.textContent=t('crit_ge');critSel.appendChild(ge);
+  if(cur)critSel.value=cur;}
+rebuildCriteria();
 function applyChallenge(p){const i=PRESETS.indexOf(p);window.__activePreset=i;
-  if(i>=PRIMARY_PRESETS&&!presetsExpanded){presetsExpanded=true;rebuildPresets();}
   applyWeights(p.w,presetName(i));state.project=p.proj;
   const cb=document.getElementById('challengeBlurb');if(cb)cb.innerHTML=presetBlurb(i)+' <a href="https://www.inaturalist.org/projects/'+p.proj+'" target="_blank" rel="noopener" style="color:var(--acc);white-space:nowrap">'+t('join')+'</a>';}
+if(critSel)critSel.onchange=()=>{const v=critSel.value, ge=document.getElementById('tgGettingEven');
+  if(v==='ge'){
+    if(state.taxon!=='All biodiversity'&&FILES['All biodiversity']){taxonSel.value='All biodiversity';taxonSel.onchange();}
+    if(ge&&!ge.checked){ge.checked=true;ge.dispatchEvent(new Event('change'));}
+  }else{
+    if(ge&&ge.checked){ge.checked=false;ge.dispatchEvent(new Event('change'));}
+    applyChallenge(PRESETS[+v]);
+  }};
 applyChallenge(PRESETS[0]);
 (function(){var b=document.getElementById('protobar'),x=document.getElementById('protox');if(!b)return;var off=function(){b.style.display='none';document.documentElement.style.setProperty('--bh','0px');if(window.map)setTimeout(function(){map.invalidateSize();},60);};try{if(localStorage.getItem('wtb_proto')==='hid')off();}catch(e){}if(x)x.onclick=function(){off();try{localStorage.setItem('wtb_proto','hid');}catch(e){}};})();
 
