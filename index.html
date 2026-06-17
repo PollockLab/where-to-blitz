@@ -179,11 +179,11 @@ details.adv>summary:hover{color:var(--ink)}
 #howclose:hover{color:var(--ink)}
 @media(max-width:640px){#howbtn{max-width:none;right:8px;font-size:12px}#howpanel{left:8px;right:8px;width:auto;top:calc(50vh + 44px);max-height:44vh}}
 </style></head>
-<body><div id="protobar" role="region" aria-label="Site notice"><span data-i18n="proto_banner">⚠ Work in progress — a planning aid, not ground truth</span><button id="protox" type="button" aria-label="Dismiss notice" title="Dismiss">×</button></div><div id="app">
+<body><div id="protobar" role="region" data-i18n-aria="aria_site_notice" aria-label="Site notice"><span data-i18n="proto_banner">⚠ Work in progress — a planning aid, not ground truth</span><button id="protox" type="button" data-i18n-aria="aria_dismiss" data-i18n-title="aria_dismiss_short" aria-label="Dismiss notice" title="Dismiss">×</button></div><div id="app">
 <div id="panel" role="main">
-  <div class="langtoggle" role="group" aria-label="Language"><button id="lang-en" type="button">EN</button><button id="lang-fr" type="button">FR</button></div>
+  <div class="langtoggle" role="group" data-i18n-aria="aria_language" aria-label="Language"><button id="lang-en" type="button">EN</button><button id="lang-fr" type="button">FR</button></div>
   <h1 data-i18n-html="title_full">Where to <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--gd);text-decoration:underline">Blitz the Gap</a></h1>
-  <div class="sechd"><span class="sec" data-i18n="sec_group">Life group & goal</span><span class="infobtn" data-i18n-title="info_btn" title="Where do these scores come from?" role="button" tabindex="0" aria-label="About the data" aria-expanded="false" onclick="const b=document.getElementById('taxinfo').classList.toggle('open');this.setAttribute('aria-expanded',b)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">i</span></div>
+  <div class="sechd"><span class="sec" data-i18n="sec_group">Life group & goal</span><span class="infobtn" data-i18n-title="info_btn" title="Where do these scores come from?" role="button" tabindex="0" data-i18n-aria="aria_about_data" aria-label="About the data" aria-expanded="false" onclick="const b=document.getElementById('taxinfo').classList.toggle('open');this.setAttribute('aria-expanded',b)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">i</span></div>
   <div class="infobox" id="taxinfo" data-i18n-html="taxinfo">
     <b>Where the scores come from.</b> <b style="color:var(--ink)">Higher priority = a spot where a new sighting adds more to what we know.</b> Canada-wide, on a 0.25° (~25&nbsp;km) grid.
     <ul>
@@ -194,15 +194,15 @@ details.adv>summary:hover{color:var(--ink)}
     </ul>
     A planning aid, not ground truth — please obscure sensitive species and respect Indigenous data sovereignty. <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">How Blitz the Gap works →</a>
   </div>
-  <select id="taxon" class="full" aria-label="Life group" style="margin-bottom:8px"></select>
-  <select id="criteria" class="full" aria-label="Criteria" style="margin-bottom:8px"></select>
+  <select id="taxon" class="full" data-i18n-aria="aria_lifegroup" aria-label="Life group" style="margin-bottom:8px"></select>
+  <select id="criteria" class="full" data-i18n-aria="aria_criteria" aria-label="Criteria" style="margin-bottom:8px"></select>
 
   <div id="tripui">
   <div class="sec" data-i18n="your_trip">Your trip</div>
   <div style="position:relative">
-    <input id="placeSearch" type="text" placeholder="🔍 Search a town or address" data-i18n-ph="search_ph" autocomplete="off" aria-label="Search for a start place" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="searchResults" aria-autocomplete="list"
+    <input id="placeSearch" type="text" placeholder="🔍 Search a town or address" data-i18n-ph="search_ph" autocomplete="off" data-i18n-aria="aria_search" aria-label="Search for a start place" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="searchResults" aria-autocomplete="list"
       style="width:100%;padding:8px 9px;background:#0e1722;color:var(--ink);border:1px solid #2a3a4d;border-radius:7px;font-size:14px">
-    <div id="searchResults" role="listbox" aria-label="Search results"></div>
+    <div id="searchResults" role="listbox" data-i18n-aria="aria_search_results" aria-label="Search results"></div>
   </div>
   <div class="startrow" style="margin-top:6px">
     <button id="setMe" data-i18n="my_location">📍 Locate me</button>
@@ -212,14 +212,14 @@ details.adv>summary:hover{color:var(--ink)}
   <div id="modewhy" style="color:var(--mut);font-size:11px;margin:2px 0 0"></div>
   <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
     <span style="font-size:13.5px" data-i18n="time">Time</span>
-    <select id="unit" aria-label="Time unit"><option value="Minutes" data-i18n="unit_minutes">Minutes</option><option value="Hours" selected data-i18n="unit_hours">Hours</option><option value="Days" data-i18n="unit_days">Days</option></select>
+    <select id="unit" data-i18n-aria="aria_time_unit" aria-label="Time unit"><option value="Minutes" data-i18n="unit_minutes">Minutes</option><option value="Hours" selected data-i18n="unit_hours">Hours</option><option value="Days" data-i18n="unit_days">Days</option></select>
     <span class="v" id="budv" style="margin-left:auto;color:var(--gold);font-weight:700">5h</span>
   </div>
-  <input type="range" id="budget" min="1" max="14" step="0.5" value="5" aria-label="Time budget" style="margin-top:6px">
+  <input type="range" id="budget" min="1" max="14" step="0.5" value="5" data-i18n-aria="aria_time_budget" aria-label="Time budget" style="margin-top:6px">
   <details class="adv"><summary data-i18n="more_options">More options</summary>
     <div style="display:flex;gap:8px;align-items:center;margin:4px 0 8px">
       <span style="font-size:13.5px" data-i18n="max_travel">Max travel each way</span>
-      <select id="maxleg" aria-label="Max travel each way" style="margin-left:auto">
+      <select id="maxleg" data-i18n-aria="aria_max_travel" aria-label="Max travel each way" style="margin-left:auto">
         <option value="0" selected data-i18n="no_limit">No limit</option>
         <option value="0.25">15 min</option><option value="0.5">30 min</option>
         <option value="1">1h</option><option value="1.5">1h 30</option>
@@ -230,7 +230,7 @@ details.adv>summary:hover{color:var(--ink)}
     </div>
     <div style="display:flex;gap:8px;align-items:center;margin:2px 0 6px">
       <span style="font-size:13.5px" data-i18n="worth_drive">Worth the drive</span>
-      <select id="minratio" aria-label="Worth the drive" style="margin-left:auto">
+      <select id="minratio" data-i18n-aria="aria_worth_drive" aria-label="Worth the drive" style="margin-left:auto">
         <option value="0" data-i18n="ratio_any">Any trip</option>
         <option value="0.5" selected data-i18n="ratio_half">Record ≥ ½ the round trip</option>
         <option value="1" data-i18n="ratio_one">Record ≥ the round trip</option>
@@ -249,7 +249,7 @@ details.adv>summary:hover{color:var(--ink)}
   <div id="gaptree"></div>
 
   <details class="adv"><summary data-i18n="map_style">Map style</summary>
-    <select id="basemap" class="full" aria-label="Map style" style="margin-top:4px"></select>
+    <select id="basemap" class="full" data-i18n-aria="aria_map_style" aria-label="Map style" style="margin-top:4px"></select>
     <div id="layertoggles" style="display:none;margin-top:8px">
       <label class="toggle" style="margin:4px 0"><input type="checkbox" id="tgRoads" checked> <span data-i18n="roads">Roads</span></label>
       <label class="toggle" style="margin:4px 0"><input type="checkbox" id="tgLabels" checked> <span data-i18n="labels_places">Labels &amp; places</span></label>
@@ -260,19 +260,19 @@ details.adv>summary:hover{color:var(--ink)}
     <div style="display:none" data-i18n="ge_hint">Each cell is coloured by the most under-represented taxonomic group there (birds excluded — already well covered by eBird) — our finer-resolution take on the official "Getting Even" challenge. From iNaturalist observation density: a sample, not a census.</div>
     <div class="infobox" id="geinfo" data-i18n-html="ge_method"></div>
     <div style="display:flex;justify-content:space-between;margin:9px 0 0"><span style="font-size:13px" data-i18n="map_brightness">Map brightness</span><span class="v" id="bopv" style="color:var(--acc)">100%</span></div>
-    <input type="range" id="baseop" min="0.25" max="1" step="0.05" value="1" aria-label="Map brightness">
+    <input type="range" id="baseop" min="0.25" max="1" step="0.05" value="1" data-i18n-aria="aria_map_brightness" aria-label="Map brightness">
   </details>
 
-  <div id="celltable" class="sronly" role="region" aria-label="Top cells (accessible list)"></div>
+  <div id="celltable" class="sronly" role="region" data-i18n-aria="aria_top_cells" aria-label="Top cells (accessible list)"></div>
 </div>
-<button id="panelToggle" type="button" aria-label="Hide the panel" title="Hide the panel">‹</button>
-<div id="map" role="application" aria-label="Interactive priority map (screen-reader users: use the Top cells list)"></div>
-<div id="viewtoggle" role="navigation" aria-label="Map view"><button id="vexplore" class="on" aria-pressed="true" data-i18n="view_explore">🗺 Explore</button><button id="vplan" aria-pressed="false" data-i18n="view_plan">🧭 Plan a trip</button><button id="vcompare" aria-pressed="false" data-i18n="view_compare">📊 Compare goals</button></div>
+<button id="panelToggle" type="button" data-i18n-aria="hide_panel" data-i18n-title="hide_panel" aria-label="Hide the panel" title="Hide the panel">‹</button>
+<div id="map" role="application" data-i18n-aria="aria_map" aria-label="Interactive priority map (screen-reader users: use the Top cells list)"></div>
+<div id="viewtoggle" role="navigation" data-i18n-aria="aria_map_view" aria-label="Map view"><button id="vexplore" class="on" aria-pressed="true" data-i18n="view_explore">🗺 Explore</button><button id="vplan" aria-pressed="false" data-i18n="view_plan">🧭 Plan a trip</button><button id="vcompare" aria-pressed="false" data-i18n="view_compare">📊 Compare goals</button></div>
 <div id="loading" role="status" aria-live="polite" data-i18n="loading">🍃 Loading the map…</div>
-<div id="maplegend" role="region" aria-label="Map legend"><div class="lt" data-i18n="legend_title">Where to blitz</div><div class="ramp"></div><div class="lab"><span data-i18n="legend_low">well-sampled</span><span data-i18n="legend_high">biggest gaps</span></div><div class="hint" data-i18n-html="legend_hint">Darker = higher priority. <span id="legendtap">Tap a cell to see what to record.</span></div><div class="hint" id="legendrel" style="display:none;color:#7a5b00" data-i18n="legend_rel">⚖ Colours rescaled to this view — not comparable to other zoom levels.</div></div>
+<div id="maplegend" role="region" data-i18n-aria="aria_map_legend" aria-label="Map legend"><div class="lt" data-i18n="legend_title">Where to blitz</div><div class="ramp"></div><div class="lab"><span data-i18n="legend_low">well-sampled</span><span data-i18n="legend_high">biggest gaps</span></div><div class="hint" data-i18n-html="legend_hint">Darker = higher priority. <span id="legendtap">Tap a cell to see what to record.</span></div><div class="hint" id="legendrel" style="display:none;color:#7a5b00" data-i18n="legend_rel">⚖ Colours rescaled to this view — not comparable to other zoom levels.</div></div>
 <button id="howbtn" type="button" aria-expanded="false" aria-controls="howpanel" data-i18n-title="how_scored" title="How impact is scored & data sources"><span class="ic" aria-hidden="true">ⓘ</span> <span data-i18n="how_scored">How impact is scored & data sources</span></button>
-<div id="howpanel" role="region" aria-label="How impact is scored & data sources">
-  <button id="howclose" type="button" aria-label="Close" title="Close">×</button>
+<div id="howpanel" role="region" data-i18n-aria="how_scored" aria-label="How impact is scored & data sources">
+  <button id="howclose" type="button" data-i18n-aria="aria_close" data-i18n-title="aria_close" aria-label="Close" title="Close">×</button>
   <div class="legend" style="margin-top:2px"><span data-i18n="skip">skip</span><div class="bar"></div><span data-i18n="go_here">go here</span></div>
   <div style="color:var(--mut);font-size:11px;line-height:1.45;margin-top:7px" data-i18n-html="impact_expl">Each goal is scored <b style="color:var(--ink)">0–1 per cell</b>; your slider weights combine them, then cells are <b style="color:var(--ink)">ranked against each other</b> and shown as <b style="color:var(--ink)">impact 0–100</b> (a percentile — 100 = top-priority cell shown). Hover a cell to see which goals drive it.</div>
   <div style="color:var(--mut);font-size:11px;line-height:1.5;margin-top:9px" data-i18n-html="axis_method"></div>
@@ -309,6 +309,15 @@ const I18N={
     search_ph:"🔍 Search a town or address",
     my_location:"📍 Locate me",
     start_alt:"Trip start — drag to move", start_tip:"Start — drag me, or tap the map",
+    aria_site_notice:"Site notice", aria_dismiss:"Dismiss notice", aria_dismiss_short:"Dismiss",
+    aria_language:"Language", aria_about_data:"About the data", aria_lifegroup:"Life group", aria_criteria:"Criteria",
+    aria_search:"Search for a start place", aria_search_results:"Search results", aria_time_unit:"Time unit",
+    aria_time_budget:"Time budget", aria_max_travel:"Max travel each way", aria_worth_drive:"Worth the drive",
+    aria_map_style:"Map style", aria_map_brightness:"Map brightness", aria_top_cells:"Top cells (accessible list)",
+    aria_map:"Interactive priority map (screen-reader users: use the Top cells list)", aria_map_view:"Map view",
+    aria_map_legend:"Map legend", aria_close:"Close",
+    rank_aria:(i,la,lo,sc)=>`Rank ${i}: latitude ${la}, longitude ${lo}, score ${sc} of 100`,
+    prio_map_aria:(grp,goal)=>`${grp}, ${goal} priority map`,
     vancouver:"Vancouver",
     start_hint:`Start: <b id="startlbl">—</b> · <b style="color:var(--gd)">tap the map</b>, search, or 📍 to set it.`,
     time:"Time",
@@ -461,6 +470,15 @@ const I18N={
     search_ph:"🔍 Rechercher une ville ou une adresse",
     my_location:"📍 Me localiser",
     start_alt:"Départ de la sortie — glissez pour déplacer", start_tip:"Départ — glissez-moi, ou touchez la carte",
+    aria_site_notice:"Avis du site", aria_dismiss:"Fermer l'avis", aria_dismiss_short:"Fermer",
+    aria_language:"Langue", aria_about_data:"À propos des données", aria_lifegroup:"Groupe d'espèces", aria_criteria:"Critère",
+    aria_search:"Rechercher un lieu de départ", aria_search_results:"Résultats de recherche", aria_time_unit:"Unité de temps",
+    aria_time_budget:"Temps disponible", aria_max_travel:"Trajet max (aller)", aria_worth_drive:"Vaut le déplacement",
+    aria_map_style:"Style de carte", aria_map_brightness:"Luminosité de la carte", aria_top_cells:"Meilleures cellules (liste accessible)",
+    aria_map:"Carte de priorité interactive (lecteurs d'écran : utilisez la liste des meilleures cellules)", aria_map_view:"Vue de la carte",
+    aria_map_legend:"Légende de la carte", aria_close:"Fermer",
+    rank_aria:(i,la,lo,sc)=>`Rang ${i} : latitude ${la}, longitude ${lo}, score ${sc} sur 100`,
+    prio_map_aria:(grp,goal)=>`${grp}, ${goal} carte de priorité`,
     vancouver:"Vancouver",
     start_hint:`Départ : <b id="startlbl">—</b> · <b style="color:var(--gd)">touchez la carte</b>, cherchez, ou 📍 pour le définir.`,
     time:"Durée",
@@ -614,6 +632,7 @@ function applyI18N(){
   if(slTxt!=null&&slTxt!=='Vancouver'){const sl=document.getElementById('startlbl');if(sl)sl.textContent=slTxt;}
   document.querySelectorAll('[data-i18n-ph]').forEach(el=>{const v=t(el.getAttribute('data-i18n-ph'));if(v!=null)el.placeholder=v;});
   document.querySelectorAll('[data-i18n-title]').forEach(el=>{const v=t(el.getAttribute('data-i18n-title'));if(v!=null)el.title=v;});
+  document.querySelectorAll('[data-i18n-aria]').forEach(el=>{const v=t(el.getAttribute('data-i18n-aria'));if(v!=null)el.setAttribute('aria-label',v);});
   const le=document.getElementById('lang-en'),lf=document.getElementById('lang-fr');
   if(le)le.classList.toggle('on',LANG==='en');if(lf)lf.classList.toggle('on',LANG==='fr');
 }
@@ -931,7 +950,7 @@ function renderCellTable(){
   const el=document.getElementById('celltable');if(!el)return;   // sr-only region: always populated for screen-reader users (issue #20 removed the visible list)
   const top=markers.map(m=>({r:m.r,t:m.t||0})).sort((a,b)=>b.t-a.t).slice(0,40);
   el.innerHTML='<table><caption>'+t('table_caption')+'</caption><thead><tr><th scope="col">'+t('table_rank')+'</th><th scope="col">'+t('table_latlon')+'</th><th scope="col">'+t('table_score')+'</th></tr></thead><tbody>'+
-    top.map((o,i)=>`<tr tabindex="0" role="button" data-la="${o.r[0]}" data-lo="${o.r[1]}" aria-label="Rank ${i+1}: latitude ${o.r[0].toFixed(2)}, longitude ${o.r[1].toFixed(2)}, score ${(o.t*100|0)} of 100"><td>${i+1}</td><td>${o.r[0].toFixed(2)}, ${o.r[1].toFixed(2)}</td><td>${(o.t*100|0)}/100</td></tr>`).join('')+'</tbody></table>';
+    top.map((o,i)=>`<tr tabindex="0" role="button" data-la="${o.r[0]}" data-lo="${o.r[1]}" aria-label="${t('rank_aria',i+1,o.r[0].toFixed(2),o.r[1].toFixed(2),(o.t*100|0))}"><td>${i+1}</td><td>${o.r[0].toFixed(2)}, ${o.r[1].toFixed(2)}</td><td>${(o.t*100|0)}/100</td></tr>`).join('')+'</tbody></table>';
   el.querySelectorAll('tr[data-la]').forEach(tr=>{const go=()=>{const la=+tr.dataset.la,lo=+tr.dataset.lo;map.setView([la,lo],9);state.view==='plan'?planTap(la,lo):exploreCell(la,lo);};tr.onclick=go;tr.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}};});
 }
 function recolour(){
@@ -1298,7 +1317,7 @@ async function renderInsights(){
   html+='<div class="grp"><span class="lbl">'+t('ins_goals')+'</span>'+OBJ.map((o,i)=>`<span class="chip ${state.insGoals.includes(i)?'on':''}" role="button" tabindex="0" aria-pressed="${state.insGoals.includes(i)}" data-gl="${i}">${objName(i)}</span>`).join('')+'</div></div>';
   html+=`<div class="matrix" style="grid-template-columns:100px repeat(${goalsOn.length},1fr)"><div></div>`;
   goalsOn.forEach(gi=>html+=`<div class="gh">${objName(gi)}<span class="gq">${objQ(gi)}</span></div>`);
-  rowsTaxa.forEach(tx=>{html+=`<div class="rl">${groupName(tx)}</div>`;goalsOn.forEach(gi=>html+=`<div class="cell" tabindex="0" role="button" aria-label="${groupName(tx)}, ${objName(gi)}" data-tx="${tx}" data-gl="${gi}"><canvas width="220" height="170" role="img" aria-label="${groupName(tx)}, ${objName(gi)} priority map"></canvas></div>`);});
+  rowsTaxa.forEach(tx=>{html+=`<div class="rl">${groupName(tx)}</div>`;goalsOn.forEach(gi=>html+=`<div class="cell" tabindex="0" role="button" aria-label="${groupName(tx)}, ${objName(gi)}" data-tx="${tx}" data-gl="${gi}"><canvas width="220" height="170" role="img" aria-label="${t('prio_map_aria',groupName(tx),objName(gi))}"></canvas></div>`);});
   html+='</div><div class="idis" id="idis"></div>';
   ins.innerHTML=html;
   ins.querySelectorAll('.cell').forEach(c=>{drawMini(c.querySelector('canvas'),DATA[c.dataset.tx],+c.dataset.gl);
