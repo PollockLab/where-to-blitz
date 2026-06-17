@@ -71,17 +71,16 @@ html,body{margin:0;height:100%;font-family:-apple-system,Segoe UI,Roboto,Helveti
 #protobar{position:fixed;top:0;left:0;right:0;height:30px;z-index:3000;display:flex;align-items:center;justify-content:center;gap:10px;background:#e99002;color:#231900;font-size:12px;font-weight:600;padding:0 12px;white-space:nowrap;overflow:hidden;box-shadow:0 1px 5px rgba(0,0,0,.35)}
 #protobar button{background:rgba(0,0,0,.22);border:0;color:inherit;border-radius:5px;cursor:pointer;font-size:14px;line-height:1;padding:1px 7px;flex:none}
 @media(max-width:640px){#protobar{font-size:11px;gap:6px;padding:0 8px}}
-#app{display:flex;height:calc(100% - var(--bh));margin-top:var(--bh)}
-#panel{width:360px;min-width:360px;height:100%;overflow-y:auto;background:var(--panel);padding:16px 16px 28px;border-right:1px solid #0a1119}
+#app{display:flex;height:calc(100% - var(--bh));margin-top:var(--bh);position:relative}
+/* Issue #20: the panel floats as a short card over a full-width map instead of a full-height column. */
+#panel{position:absolute;z-index:1100;top:12px;left:12px;width:336px;max-height:calc(100% - 24px);overflow-y:auto;background:var(--panel);padding:14px 15px 18px;border-radius:12px;border:1px solid #2a3a4d;box-shadow:0 6px 22px rgba(0,0,0,.5)}
 #map{flex:1;height:100%}
-#panelToggle{position:fixed;top:calc(var(--bh) + 12px);left:360px;transform:translateX(-50%);z-index:1300;width:28px;height:28px;border-radius:50%;background:var(--panel);color:var(--ink);border:1px solid #2a3a4d;cursor:pointer;font-size:16px;line-height:26px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.3);padding:0}
+#panelToggle{position:fixed;top:calc(var(--bh) + 18px);left:336px;z-index:1300;width:26px;height:26px;border-radius:50%;background:var(--panel);color:var(--ink);border:1px solid #2a3a4d;cursor:pointer;font-size:15px;line-height:24px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.35);padding:0}
 #panelToggle:hover{border-color:var(--acc);color:var(--acc)}
 #panelToggle:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 body.panel-collapsed #panel{display:none}
 body.panel-collapsed #panelToggle{left:8px;transform:none}
 body.panel-collapsed #map{flex:1;height:100%}
-body.panel-collapsed #viewtoggle{left:50%}
-body.panel-collapsed #maplegend{left:12px}
 body.panel-collapsed #loading{left:50%}
 h1{font-size:20.5px;margin:0 0 2px}
 .sub{color:var(--mut);font-size:14.5px;line-height:1.45;margin:0 0 8px}
@@ -160,10 +159,10 @@ details.adv>summary::before{content:"▸";font-size:11.5px;display:inline-block;
 details.adv[open]>summary::before{transform:rotate(90deg)}
 details.adv>summary:hover{color:var(--ink)}
 .leaflet-popup-content{font-size:15px}.leaflet-popup-content b{color:#0a2a44}
-#viewtoggle{position:fixed;top:calc(10px + var(--bh));left:calc(360px + 50%/2 + 90px);transform:translateX(-50%);z-index:1200;display:flex;background:#fff;border-radius:9px;box-shadow:0 2px 9px rgba(0,0,0,.28);overflow:hidden}
+#viewtoggle{position:fixed;top:calc(10px + var(--bh));left:50%;transform:translateX(-50%);z-index:1200;display:flex;background:#fff;border-radius:9px;box-shadow:0 2px 9px rgba(0,0,0,.28);overflow:hidden}
 #viewtoggle button{border:0;background:#fff;color:#1b2a3a;padding:8px 15px;font-size:15px;font-weight:650;cursor:pointer}
 #viewtoggle button.on{background:var(--acc);color:#fff}
-#insights{position:fixed;left:360px;top:0;right:0;bottom:0;z-index:1100;background:var(--bg);color:var(--ink);overflow-y:auto;padding:56px 22px 28px;display:none}
+#insights{position:fixed;left:0;top:0;right:0;bottom:0;z-index:1150;background:var(--bg);color:var(--ink);overflow-y:auto;padding:56px 22px 28px;display:none}
 #insights .ihd{font-size:16px;line-height:1.55;max-width:980px;margin:0 auto 18px}
 #insights .ihd b{color:var(--ink)}
 #insights .ctrls{max-width:1200px;margin:0 auto 16px;display:flex;flex-wrap:wrap;gap:20px;font-size:14.5px}
@@ -192,20 +191,20 @@ details.adv>summary:hover{color:var(--ink)}
 .infobox li{margin:3px 0}
 @media(max-width:640px){
   #app{flex-direction:column}
-  #panel{width:100%;min-width:0;height:auto;max-height:50vh;border-right:0;border-bottom:1px solid #0a1119}
+  #panel{position:static;width:100%;min-width:0;height:auto;max-height:50vh;border-radius:0;border:0;border-bottom:1px solid #0a1119;box-shadow:none}
   #map{height:50vh;flex:none}
   #viewtoggle{left:50%;top:auto;bottom:12px}
   #insights{left:0;top:0;height:100%;padding:54px 12px 24px}
   .infobtn{width:24px;height:24px;line-height:22px;font-size:13px}
   .langtoggle button{padding:7px 13px}
 }
-#maplegend{position:fixed;bottom:14px;left:372px;z-index:1050;background:rgba(255,255,255,.93);border-radius:9px;padding:8px 11px;box-shadow:0 2px 10px rgba(0,0,0,.22);font-size:12px;color:#16233a;max-width:212px;line-height:1.3}
+#maplegend{position:fixed;bottom:14px;right:14px;z-index:1050;background:rgba(255,255,255,.93);border-radius:9px;padding:8px 11px;box-shadow:0 2px 10px rgba(0,0,0,.22);font-size:12px;color:#16233a;max-width:212px;line-height:1.3}
 #maplegend .lt{font-weight:700;font-size:12.5px}
 #maplegend .ramp{height:9px;border-radius:5px;background:linear-gradient(90deg,#ffffd9,#c7e9b4,#41b6c4,#225ea8,#081d58);margin:4px 0 2px}
 #maplegend .lab{display:flex;justify-content:space-between;font-size:10.5px;color:#46566a}
 #maplegend .hint{margin-top:4px;color:#46566a;font-size:10.5px}
 @media(max-width:640px){#maplegend{left:auto;right:8px;bottom:auto;top:calc(50vh + 8px);max-width:158px;padding:6px 8px}}
-#loading{position:fixed;left:calc(360px + (100% - 360px)/2);top:46%;transform:translate(-50%,-50%);z-index:1200;background:rgba(255,255,255,.96);border-radius:10px;padding:11px 17px;box-shadow:0 3px 14px rgba(0,0,0,.25);font-size:14px;font-weight:600;color:#1b2a3a}
+#loading{position:fixed;left:50%;top:46%;transform:translate(-50%,-50%);z-index:1200;background:rgba(255,255,255,.96);border-radius:10px;padding:11px 17px;box-shadow:0 3px 14px rgba(0,0,0,.25);font-size:14px;font-weight:600;color:#1b2a3a}
 @media(max-width:640px){#loading{left:50%;top:74vh}}
 #howbtn{position:fixed;right:14px;top:calc(12px + var(--bh));z-index:1200;display:flex;align-items:center;gap:6px;background:#fff;color:#1b2a3a;border:0;border-radius:9px;box-shadow:0 2px 9px rgba(0,0,0,.28);padding:7px 11px;font-size:12.5px;font-weight:650;cursor:pointer;max-width:260px}
 #howbtn:hover{color:var(--acc)}
