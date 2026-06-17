@@ -35,7 +35,8 @@ observation adds the most to what we know about the natural world?"* — into a 
 explore, and plan a real low-carbon trip on.
 
 If you build, score, or run the campaign — this is the methodology and the data underneath it,
-laid out so you can check every choice and reproduce every number.
+laid out so you can check every choice and reproduce every number. Prefer a terse formula
+reference? See [`METHODOLOGY.md`](https://github.com/PollockLab/where-to-blitz/blob/main/METHODOLOGY.md).
 
 > It is a **work-in-progress prototype and a planning aid, not ground truth.**
 > It is a *planning aid*. The responsible-use guardrails are part of the design, not an afterthought (last section).
