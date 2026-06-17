@@ -303,8 +303,8 @@ details.adv>summary:hover{color:var(--ink)}
     <label class="toggle" style="display:none"><input type="checkbox" id="tgGettingEven"> <span data-i18n="getting_even">⚖️ Getting Even — which group to record</span></label><!-- driven by the "Getting Even" criterion (#20) -->
     <div style="display:none" data-i18n="ge_hint">Each cell is coloured by the most under-represented taxonomic group there (birds excluded — already well covered by eBird) — our finer-resolution take on the official "Getting Even" challenge. From iNaturalist observation density: a sample, not a census.</div>
     <div class="infobox" id="geinfo" data-i18n-html="ge_method"></div>
-    <div style="display:flex;justify-content:space-between;margin:9px 0 0"><span style="font-size:13px" data-i18n="map_brightness">Map brightness</span><span class="v" id="bopv" style="color:var(--acc)">100%</span></div>
-    <input type="range" id="baseop" min="0.25" max="1" step="0.05" value="1" data-i18n-aria="aria_map_brightness" aria-label="Map brightness">
+    <div style="display:flex;justify-content:space-between;margin:9px 0 0"><span id="bople" style="font-size:13px" data-i18n="map_brightness">Map brightness</span><span class="v" id="bopv" style="color:var(--acc)">100%</span></div>
+    <input type="range" id="baseop" min="0.1" max="1" step="0.05" value="1" data-i18n-aria="aria_map_brightness" aria-label="Map brightness">
   </details>
 
   <div id="celltable" class="sronly" role="region" data-i18n-aria="aria_top_cells" aria-label="Top cells (accessible list)"></div>
@@ -357,7 +357,7 @@ const I18N={
     aria_language:"Language", aria_about_data:"About the data", aria_lifegroup:"Life group", aria_criteria:"Criteria",
     aria_search:"Search for a start place", aria_search_results:"Search results", aria_time_unit:"Time unit",
     aria_time_budget:"Time budget", aria_max_travel:"Max travel each way", aria_worth_drive:"Worth the drive",
-    aria_map_style:"Map style", aria_map_brightness:"Map brightness", aria_top_cells:"Top cells (accessible list)",
+    aria_map_style:"Map style", aria_map_brightness:"Map brightness", aria_data_opacity:"Density opacity", aria_top_cells:"Top cells (accessible list)",
     aria_map:"Interactive priority map (screen-reader users: use the Top cells list)", aria_map_view:"Map view",
     aria_map_legend:"Map legend", aria_close:"Close",
     rank_aria:(i,la,lo,sc)=>`Rank ${i}: latitude ${la}, longitude ${lo}, score ${sc} of 100`,
@@ -418,6 +418,7 @@ const I18N={
     zoom_scale_hint:`Ranks cells against what's on screen, so local gaps stand out when you zoom in. Off = ranked across all of Canada (a dark cell means the same everywhere).`,
     legend_rel:"⚖ Colours rescaled to this view — not comparable to other zoom levels.",
     map_brightness:"Map brightness",
+    data_opacity:"Density opacity",
     how_scored:"How impact is scored & data sources",
     skip:"skip", go_here:"go here",
     impact_expl:`Each goal is scored <b style="color:var(--ink)">0–1 per cell</b>; your slider weights combine them, then cells are <b style="color:var(--ink)">ranked against each other</b> and shown as <b style="color:var(--ink)">impact 0–100</b> (a percentile — 100 = top-priority cell shown). Hover a cell to see which goals drive it.`,
@@ -518,7 +519,7 @@ const I18N={
     aria_language:"Langue", aria_about_data:"À propos des données", aria_lifegroup:"Groupe d'espèces", aria_criteria:"Critère",
     aria_search:"Rechercher un lieu de départ", aria_search_results:"Résultats de recherche", aria_time_unit:"Unité de temps",
     aria_time_budget:"Temps disponible", aria_max_travel:"Trajet max (aller)", aria_worth_drive:"Vaut le déplacement",
-    aria_map_style:"Style de carte", aria_map_brightness:"Luminosité de la carte", aria_top_cells:"Meilleures cellules (liste accessible)",
+    aria_map_style:"Style de carte", aria_map_brightness:"Luminosité de la carte", aria_data_opacity:"Opacité des données", aria_top_cells:"Meilleures cellules (liste accessible)",
     aria_map:"Carte de priorité interactive (lecteurs d'écran : utilisez la liste des meilleures cellules)", aria_map_view:"Vue de la carte",
     aria_map_legend:"Légende de la carte", aria_close:"Fermer",
     rank_aria:(i,la,lo,sc)=>`Rang ${i} : latitude ${la}, longitude ${lo}, score ${sc} sur 100`,
@@ -579,6 +580,7 @@ const I18N={
     zoom_scale_hint:`Classe les cellules par rapport à ce qui est à l'écran, pour faire ressortir les lacunes locales en zoomant. Désactivé = classement sur tout le Canada (une cellule foncée signifie la même chose partout).`,
     legend_rel:"⚖ Couleurs recalibrées sur cette vue — non comparables aux autres niveaux de zoom.",
     map_brightness:"Luminosité de la carte",
+    data_opacity:"Opacité des données",
     how_scored:"Calcul de l'impact et sources de données",
     skip:"à éviter", go_here:"y aller",
     impact_expl:`Chaque objectif est noté <b style="color:var(--ink)">0–1 par cellule</b>; vos curseurs les combinent, puis les cellules sont <b style="color:var(--ink)">classées les unes par rapport aux autres</b> et affichées en <b style="color:var(--ink)">impact 0–100</b> (un centile — 100 = cellule la plus prioritaire affichée). Survolez une cellule pour voir les objectifs qui la motivent.`,
@@ -926,7 +928,7 @@ const BASEMAPS={
   "Terrain":{url:'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',opt:{subdomains:'abc',maxZoom:17}},
   "Light":{url:'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',opt:{subdomains:'abcd',maxZoom:20}}   // base under the iNaturalist-density style; not a dropdown choice
 };
-let baseLayer=null, baseOpacity=1, glBase=null;
+let baseLayer=null, baseOpacity=1, glBase=null, covOpacity=0.8;   // covOpacity: density-overlay opacity, slider-driven when a data overlay is active (#39)
 function applyLayerToggles(){
   if(!glBase)return;
   const showRoads=document.getElementById('tgRoads').checked, showLabels=document.getElementById('tgLabels').checked;
@@ -1147,16 +1149,33 @@ const PMRaster=L.GridLayer.extend({
 });
 function setCoverage(){
   if(covLayer){map.removeLayer(covLayer);covLayer=null;}
-  if(!document.getElementById('tgCoverage').checked)return;
+  if(!document.getElementById('tgCoverage').checked){updateOpacityControl();return;}
   const ct=COVPM.includes(state.taxon)?state.taxon:'All';
   const attr='iNaturalist density &copy; Biodiversit\u00e9 Qu\u00e9bec';
   if(state.taxon==='Fungi'){   // no dec25 layer -> remote 1 km COG
     covLayer=L.tileLayer('https://tiler.biodiversite-quebec.ca/cog/tiles/{z}/{x}/{y}?url='+encodeURIComponent('https://object-arbutus.cloud.computecanada.ca/bq-io/io/inat_canada_heatmaps/Fungi_density_inat_1km.tif')+'&rescale=0,10&colormap_name=magma&resampling=cubic',
-      {opacity:0.75,maxZoom:14,zIndex:250,attribution:attr}).addTo(map);
+      {opacity:covOpacity,maxZoom:14,zIndex:250,attribution:attr}).addTo(map);
   }else{
     covLayer=new PMRaster('density/'+ct+'.pmtiles',
-      {opacity:0.75,tileSize:256,maxNativeZoom:9,maxZoom:14,zIndex:250,attribution:attr}).addTo(map);
+      {opacity:covOpacity,tileSize:256,maxNativeZoom:9,maxZoom:14,zIndex:250,attribution:attr}).addTo(map);
   }
+  updateOpacityControl();
+}
+// #39: the opacity slider drives the data overlay when one is active (so it fades the magma to
+// reveal road/water/place context), else it falls back to basemap brightness. Switches label,
+// aria-label, slider value + % readout to match the active target.
+function dataOverlayActive(){return !!covLayer;}
+function updateOpacityControl(){
+  const sl=document.getElementById('baseop'),lab=document.getElementById('bople'),val=document.getElementById('bopv');
+  if(!sl||!lab||!val)return;
+  const ov=dataOverlayActive();
+  const v=ov?covOpacity:baseOpacity;
+  sl.value=v;
+  lab.textContent=t(ov?'data_opacity':'map_brightness');
+  sl.setAttribute('aria-label',t(ov?'aria_data_opacity':'aria_map_brightness'));
+  lab.setAttribute('data-i18n',ov?'data_opacity':'map_brightness');   // keep applyI18N repaint in sync with the active target
+  sl.setAttribute('data-i18n-aria',ov?'aria_data_opacity':'aria_map_brightness');
+  val.textContent=Math.round(v*100)+'%';
 }
 document.getElementById('tgCoverage').addEventListener('change',e=>{if(e.target.checked)document.getElementById('tgGettingEven').checked=false;updateLegend();setCoverage();recolour();
   if(!e.target.checked&&bmSel.value==='__inat__'){bmSel.value='Standard';setBase('Standard');}});   // coverage turned off elsewhere (e.g. GE) -> reset the style dropdown
@@ -1176,7 +1195,10 @@ map.on('moveend',()=>{if(zoomScaleActive()&&!geActive())recolour();});
   const setAria=c=>{const lab=t(c?'show_panel':'hide_panel');tog.setAttribute('aria-label',lab);tog.title=lab;tog.textContent=c?'›':'‹';};
   setAria(false);
   tog.addEventListener('click',()=>{const c=document.body.classList.toggle('panel-collapsed');setAria(c);setTimeout(()=>{try{map.invalidateSize();}catch(e){}},220);});})();
-document.getElementById('baseop').addEventListener('input',e=>{baseOpacity=parseFloat(e.target.value);if(baseLayer&&baseLayer.setOpacity)baseLayer.setOpacity(baseOpacity);else if(glBase&&glBase.getCanvas())glBase.getCanvas().style.opacity=baseOpacity;document.getElementById('bopv').textContent=Math.round(baseOpacity*100)+'%';});
+document.getElementById('baseop').addEventListener('input',e=>{const v=parseFloat(e.target.value);
+  if(dataOverlayActive()){covOpacity=v;if(covLayer&&covLayer.setOpacity)covLayer.setOpacity(covOpacity);}   // #39: fade the magma data
+  else{baseOpacity=v;if(baseLayer&&baseLayer.setOpacity)baseLayer.setOpacity(baseOpacity);else if(glBase&&glBase.getCanvas())glBase.getCanvas().style.opacity=baseOpacity;}
+  document.getElementById('bopv').textContent=Math.round(v*100)+'%';});
 ['tgRoads','tgLabels'].forEach(id=>document.getElementById(id).addEventListener('change',applyLayerToggles));
 document.getElementById('maxleg').addEventListener('change',e=>{state.maxLeg=parseFloat(e.target.value);replan();});
 document.getElementById('minratio').addEventListener('change',e=>{state.minRatio=parseFloat(e.target.value);replan();});
@@ -1448,6 +1470,8 @@ function setView(v){
   document.getElementById('tripui').style.display=v==='plan'?'':'none';
   for(const [id,vv] of [['vexplore','explore'],['vplan','plan'],['vcompare','compare']]){const b=document.getElementById(id);b.classList.toggle('on',v===vv);b.setAttribute('aria-pressed',v===vv);}
   if(v!=='plan')clearRoute();
+  // #40: the side panel isn't shown over Compare goals, so hide its collapse toggle there; restore it for Explore/Plan.
+  const ptog=document.getElementById('panelToggle');if(ptog)ptog.style.display=v==='compare'?'none':'';
   if(v==='compare')renderInsights(); else map.invalidateSize();
 }
 document.getElementById('vexplore').onclick=()=>setView('explore');
