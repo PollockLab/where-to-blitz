@@ -165,6 +165,16 @@ details.adv>summary::before{content:"▸";font-size:11.5px;display:inline-block;
 details.adv[open]>summary::before{transform:rotate(90deg)}
 details.adv>summary:hover{color:var(--ink)}
 .leaflet-popup-content{font-size:15px}.leaflet-popup-content b{color:#0a2a44}
+/* Issue #44: per-cell coverage + rare species live in the popup. Headings, a scroll-capped group list, and a 4-up species grid (no horizontal scroll). */
+.popsec{font-size:12px;font-weight:700;color:#0a2a44;margin:9px 0 5px}
+.popsec:first-child{margin-top:1px}
+.popscroll{max-height:150px;overflow-y:auto}
+.popscroll .gaptree{margin-top:0}
+.popgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.popgrid a{text-decoration:none;color:#0a2a44;display:block}
+.popgrid img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:7px;border:1px solid #cdd;display:block;background:#eee}
+.popgrid .nm{font-size:10px;line-height:1.15;margin-top:3px;max-height:24px;overflow:hidden}
+.popgrid .ct{font-size:9.5px;color:#667;margin-top:1px}
 #viewtoggle{position:fixed;top:calc(10px + var(--bh));left:50%;transform:translateX(-50%);z-index:1200;display:flex;background:#fff;border-radius:9px;box-shadow:0 2px 9px rgba(0,0,0,.28);overflow:hidden}
 #viewtoggle button{border:0;background:#fff;color:#1b2a3a;padding:8px 15px;font-size:15px;font-weight:650;cursor:pointer}
 #viewtoggle button.on{background:var(--acc);color:#fff}
@@ -288,9 +298,9 @@ details.adv>summary:hover{color:var(--ink)}
   </details>
   <button id="plan" data-i18n="plan_trip">Plan my trip →</button>
   <div id="trips"></div>
+  <!-- Issue #45: per-cell coverage + species now live in the cell popup (#44); only the plan-mode "species around my start" list remains in the sidebar, so #prospects sits inside #tripui and #gaptree is gone. -->
+  <div id="prospects" data-idle="1"></div>
   </div>
-  <div id="prospects" data-idle="1"><div class="hd" style="margin-top:10px" data-i18n="prospects_idle">🔭 Tap a cell to see what to record there.</div></div>
-  <div id="gaptree"></div>
 
   <details class="adv"><summary data-i18n="map_style">Map style</summary>
     <select id="basemap" class="full" data-i18n-aria="aria_map_style" aria-label="Map style" style="margin-top:4px"></select>
@@ -383,11 +393,10 @@ const I18N={
     gaptree_lookup:"🌿 Reading taxonomic coverage…",
     gaptree_sparse:"🌿 Too few nearby records to rank groups here yet — every sighting helps fill the map.",
     gaptree_err:"🌿 Couldn’t read coverage just now — tap the cell again.",
-    gaptree_hd:"🌿 Coverage by group here — biggest gaps first",
+    pop_groups_hd:"🌿 Four least sampled groups", pop_rare_hd:"🔭 Four most rarely logged species",
     gt_gap:"gap", gt_partial:"partial", gt_ok:"well recorded",
     gt_count:(c,n)=>`${c} of ~${n} nearby`,
     gt_switch:(g)=>`Switch the map to ${g}`,
-    gaptree_foot:"Each group's recording here, judged against how thoroughly the whole cell is recorded, so the biggest relative gaps surface even where everything is under-recorded. Counts are distinct research-grade iNaturalist species in this cell vs the ~50 km around. Tap a group to map it.",
     map_style:"Map style",
     style_standard:"Standard", style_satellite:"Satellite", style_terrain:"Terrain", style_inat_density:"🛰 iNaturalist sampling density",
     crit_ge:"⚖️ Getting Even — which group to record",
@@ -450,10 +459,6 @@ const I18N={
     inat_caveat:"Counts are iNaturalist observations — what people have logged, not a complete species census.",
     worldwide:n=>`${n} on iNaturalist`,
     explore_all:"Explore all on iNaturalist →", log_sighting:"＋ Log a sighting", for_challenge:"for this challenge",
-    fill_gap_surveyed:(cellN,M)=>`🎯 <b style="color:var(--ink)">Fill the gap</b> — this cell has <b>${cellN}</b> species recorded; ~<b>${M}</b> have been seen in the surrounding ~50&nbsp;km. Common ones still missing here:`,
-    fill_gap_under:(cellN,M)=>`🎯 <b style="color:var(--ink)">Undersampled here</b> — only <b>${cellN}</b> species recorded here vs ~<b>${M}</b> seen nearby; any of these (common nearby) helps:`,
-    nearby_count:n=>`${n} nearby`,
-    gap_popup:"🎯 Fill the gap — log these here:",
     join:"join →",
     more_challenges:"+ see all official challenges →",
     finding_routes:m=>`Finding real ${m} routes…`,
@@ -545,11 +550,10 @@ const I18N={
     gaptree_lookup:"🌿 Lecture de la couverture taxonomique…",
     gaptree_sparse:"🌿 Trop peu d’observations à proximité pour classer les groupes ici — chaque observation aide à combler la carte.",
     gaptree_err:"🌿 Lecture de la couverture impossible pour l’instant — touchez la cellule à nouveau.",
-    gaptree_hd:"🌿 Couverture par groupe ici — plus grandes lacunes d’abord",
+    pop_groups_hd:"🌿 Quatre groupes les moins échantillonnés", pop_rare_hd:"🔭 Quatre espèces les plus rarement observées",
     gt_gap:"lacune", gt_partial:"partielle", gt_ok:"bien documenté",
     gt_count:(c,n)=>`${c} sur ~${n} à proximité`,
     gt_switch:(g)=>`Afficher ${g} sur la carte`,
-    gaptree_foot:"L’enregistrement de chaque groupe dans cette cellule, évalué selon la couverture globale de la cellule, pour faire ressortir les plus grandes lacunes relatives même là où tout est sous-documenté. Les nombres sont des espèces iNaturalist de qualité recherche distinctes ici vs les ~50 km autour. Touchez un groupe pour l’afficher.",
     map_style:"Style de carte",
     style_standard:"Standard", style_satellite:"Satellite", style_terrain:"Relief", style_inat_density:"🛰 Densité d'échantillonnage iNaturalist",
     crit_ge:"⚖️ Combler l'écart — quel groupe noter",
@@ -612,10 +616,6 @@ const I18N={
     inat_caveat:"Les nombres sont des observations iNaturalist — ce qui a été noté, pas un inventaire complet des espèces.",
     worldwide:n=>`${n} sur iNaturalist`,
     explore_all:"Tout explorer sur iNaturalist →", log_sighting:"＋ Noter une observation", for_challenge:"pour ce défi",
-    fill_gap_surveyed:(cellN,M)=>`🎯 <b style="color:var(--ink)">Combler la lacune</b> — cette cellule a <b>${cellN}</b> espèces notées; ~<b>${M}</b> ont été vues dans les ~50&nbsp;km autour. Espèces communes encore absentes :`,
-    fill_gap_under:(cellN,M)=>`🎯 <b style="color:var(--ink)">Sous-échantillonné ici</b> — seulement <b>${cellN}</b> espèces notées ici contre ~<b>${M}</b> vues à proximité; chacune de celles-ci (commune à proximité) aide :`,
-    nearby_count:n=>`${n} à proximité`,
-    gap_popup:"🎯 Combler la lacune — notez-les ici :",
     join:"se joindre →",
     more_challenges:"+ voir tous les défis officiels →",
     finding_routes:m=>`Recherche d'itinéraires ${m} réels…`,
@@ -701,11 +701,13 @@ function relabelDynamic(){
   if(typeof startMarker!=='undefined'&&startMarker){startMarker.setTooltipContent(t('start_tip'));const se=startMarker.getElement();if(se){se.setAttribute('title',t('start_tip'));se.setAttribute('alt',t('start_alt'));}}
   // start-place prospects idle text (only if untouched)
   const pr=document.getElementById('prospects');
-  if(pr&&pr.dataset.idle==='1')pr.innerHTML='<div class="hd" style="margin-top:10px" data-i18n="prospects_idle">'+t('prospects_idle')+'</div>';
-  // otherwise re-render the open cell panel (prospects + fill-the-gap + gap-tree) in the new language;
-  // iNat responses are URL-cached and gap-tree rows are cached, so this is zero-network.
-  // skipPopup: the map popup already carries its gap thumbs — re-appending would duplicate them.
-  else if(pr&&_lastProspect&&typeof fetchProspects==='function')fetchProspects(_lastProspect.lat,_lastProspect.lon,_lastProspect.whereKey,{skipPopup:true});
+  // Re-render whatever cell view is open in the new language. iNat responses are URL-cached and gap-tree
+  // rows are cached, so this is zero-network. A cell tap lives in the popup (#popsp); the plan-mode
+  // "around my start" list lives in the sidebar (#prospects).
+  if(typeof fetchProspects!=='function'){}
+  else if(_lastProspect&&_lastProspect.toPopup){if(document.getElementById('popsp'))fetchProspects(_lastProspect.lat,_lastProspect.lon,_lastProspect.whereKey,{toPopup:true});}
+  else if(pr&&pr.dataset.idle==='1')pr.innerHTML='<div class="hd" style="margin-top:10px" data-i18n="prospects_idle">'+t('prospects_idle')+'</div>';
+  else if(pr&&_lastProspect)fetchProspects(_lastProspect.lat,_lastProspect.lon,_lastProspect.whereKey,{toPopup:false});
 }
 function setLang(l){if(l!==LANG){LANG=l;try{localStorage.setItem('wtb_lang',l);}catch(e){}}
   applyI18N();relabelDynamic();}
@@ -778,23 +780,27 @@ const WHERE_LBL={around_start:'prospects_where_start',right_here:'right_here',de
 // iNaturalist taxon names/photos are user-editable -> untrusted. Escape before any HTML interpolation.
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const safeImg=u=>{u=String(u==null?'':u);return /^https:\/\//.test(u)?esc(u):'';};
+// whereKey 'right_here'/'destination' from a CELL TAP render into the popup (opts.toPopup); 'around_start'
+// (plan-mode "species around my start") still renders into the sidebar #prospects. Issue #44/#45: the
+// gap tree and rare-species lists live in the popup now; fill-the-gap was dropped.
 async function fetchProspects(lat,lon,whereKey,opts){
   const myseq=++prospectSeq;
-  _lastProspect={lat,lon,whereKey};   // remember the open panel so setLang can re-render it in the new language
+  const toPopup=!!(opts&&opts.toPopup);
+  _lastProspect={lat,lon,whereKey,toPopup};   // remember the open panel so setLang can re-render it in the new language
   const where=t(WHERE_LBL[whereKey]||'here');
-  const pr=document.getElementById('prospects'); pr.dataset.idle='0'; pr.innerHTML='<div class="hd">'+t('prospects_lookup')+'</div>';
-  const _gt=document.getElementById('gaptree'); if(_gt) _gt.innerHTML='';
-  if(whereKey==='right_here'||whereKey==='destination') fetchGapTree(lat,lon);
-  // labels needed inside taxon-shadowed (.map(r=>{const t=r.taxon...})) closures
-  const L_rare=t('rare'),L_unc=t('uncommon'),L_gap=t('gap'),L_nearby=t('nearby_lbl');
-  const T_here=n=>t('here_count',n),T_world=g=>t('worldwide',g.toLocaleString(LANG==='fr'?'fr-CA':'en-CA')),T_nb=n=>t('nearby_count',n);
+  const pr=document.getElementById(toPopup?'popsp':'prospects'); if(!pr) return;   // popup closed -> nothing to fill
+  const msg=s=>toPopup?'<div class="popsec">'+s+'</div>':'<div class="hd">'+s+'</div>';   // .hd is dark-on-dark (sidebar); .popsec reads on the light popup
+  if(!toPopup) pr.dataset.idle='0';
+  pr.innerHTML=msg(t('prospects_lookup'));
+  if(toPopup) fetchGapTree(lat,lon);   // the coverage-by-group tree only lives in the popup now
+  const T_here=n=>t('here_count',n),T_world=g=>t('worldwide',g.toLocaleString(LANG==='fr'?'fr-CA':'en-CA'));
+  const L_rare=t('rare'),L_unc=t('uncommon'),L_nearby=t('nearby_lbl');
   const ic=ICONIC[state.taxon]||'', HH=0.125;
   const q=(h)=>`https://api.inaturalist.org/v1/observations/species_counts?swlat=${lat-h}&nelat=${lat+h}&swlng=${lon-h}&nelng=${lon+h}&quality_grade=research&taxon_geoprivacy=open&threatened=false&per_page=500&order_by=count`+(ic?`&iconic_taxa=${ic}`:'')+inatLocale();
   try{
     const j=await jget(q(HH));
     if(myseq!==prospectSeq)return;
     const total=j.total_results||0;
-    const cellIds=new Set((j.results||[]).map(r=>r.taxon&&r.taxon.id).filter(Boolean));   // everything already logged in this cell
     let res=(j.results||[]).filter(r=>r.count>=2 && r.taxon && r.taxon.default_photo).map(r=>({count:r.count,taxon:r.taxon,_here:true}));
     let nearby=false;
     if(res.length<4){
@@ -806,56 +812,31 @@ async function fetchProspects(lat,lon,whereKey,opts){
       const extra=((k&&k.results)||[]).filter(r=>r.taxon&&r.taxon.default_photo&&r.count>=3&&!have.has(r.taxon.id)).map(r=>({count:r.count,taxon:r.taxon,_here:false}));
       if(extra.length){res=res.concat(extra);nearby=true;}
     }
-    if(!res.length){pr.innerHTML='<div class="hd">'+t('prospects_none')+'</div>';return;}
+    if(!res.length){pr.innerHTML=msg(t('prospects_none'));return;}
     res=res.filter(r=>(r.taxon.observations_count||0)>40);                         // drop unverifiable one-offs
     res.sort((a,b)=>(a.taxon.observations_count||1e12)-(b.taxon.observations_count||1e12)); // globally rarest, but present here
+    if(toPopup){
+      // Issue #44: the four most rarely-logged species, side by side, no horizontal scroll.
+      pr.innerHTML='<div class="popsec">'+t('pop_rare_hd')+'</div><div class="popgrid">'+res.slice(0,4).map(r=>{const tx=r.taxon,g=tx.observations_count||0;
+        return `<a href="https://www.inaturalist.org/taxa/${tx.id}" target="_blank" rel="noopener" title="${esc(tx.name)}"><img src="${safeImg(tx.default_photo.square_url)}" loading="lazy" alt=""><div class="nm">${esc(tx.preferred_common_name||tx.name)}</div><div class="ct">${T_world(g)}</div></a>`;}).join('')+'</div>';
+      return;
+    }
     res=res.slice(0,6);
     const ex=`https://www.inaturalist.org/observations?subview=map&swlat=${lat-HH}&nelat=${lat+HH}&swlng=${lon-HH}&nelng=${lon+HH}&quality_grade=research`;
     pr.innerHTML=`<div class="hd">${t('prospects_hd','<b style="color:var(--ink)">'+(where||t('here'))+'</b>',total.toLocaleString(LANG==='fr'?'fr-CA':'en-CA'),nearby)}</div>`+
       '<div class="prospects">'+res.map(r=>{const tx=r.taxon,g=tx.observations_count||0,rare=g<1500,unc=g<7000;
-        return `<a class="sp" href="https://www.inaturalist.org/taxa/${tx.id}" target="_blank" rel="noopener" title="${esc(tx.name)}"><img src="${safeImg(tx.default_photo.square_url)}" loading="lazy" alt=""><div class="nm">${r._here?'':'✦ '}${esc(tx.preferred_common_name||tx.name)}${rare?` <span class="rare">${L_rare}</span>`:(unc?` <span class="unc">${L_unc}</span>`:'')}</div><div class="ct">${r._here?T_here(r.count):L_nearby} · ${T_world(g)}</div></a>`;}).join('')+'</div>'+'<div id="firsts"></div>'+
+        return `<a class="sp" href="https://www.inaturalist.org/taxa/${tx.id}" target="_blank" rel="noopener" title="${esc(tx.name)}"><img src="${safeImg(tx.default_photo.square_url)}" loading="lazy" alt=""><div class="nm">${r._here?'':'✦ '}${esc(tx.preferred_common_name||tx.name)}${rare?` <span class="rare">${L_rare}</span>`:(unc?` <span class="unc">${L_unc}</span>`:'')}</div><div class="ct">${r._here?T_here(r.count):L_nearby} · ${T_world(g)}</div></a>`;}).join('')+'</div>'+
       `<div style="margin-top:8px;font-size:10.5px;color:var(--mut);line-height:1.35">${t('inat_caveat')}</div>`+
       `<div style="margin-top:7px;font-size:11.5px"><a href="${ex}" target="_blank" rel="noopener" style="color:var(--acc)">${t('explore_all')}</a> &nbsp;·&nbsp; <a href="https://www.inaturalist.org/observations/new" target="_blank" rel="noopener" style="color:var(--gd)">${t('log_sighting')}</a> &nbsp;·&nbsp; <a href="https://www.inaturalist.org/projects/${state.project}" target="_blank" rel="noopener" style="color:var(--mut)">${t('for_challenge')}</a></div>`;
-    // "Fill the gap": species common in the ~50 km neighbourhood but missing from THIS cell's
-    // research-grade records (cell query widened to 500 to keep the absence honest). Framed as
-    // "missing from this cell", not "nobody has seen it here" -- records-based, not absolute.
-    const firstsR=await fetchFirsts(lat,lon,ic,cellIds,total),firsts=firstsR.list;
-    if(myseq!==prospectSeq) return;
-    // well-surveyed cell -> a missing common species is a real gap; barely-surveyed cell ->
-    // almost everything is "missing", so any record helps (don't overclaim a "gap").
-    let nt=0,bd=1e9;for(const m of markers){const dd=Math.abs(m.r[0]-lat)+Math.abs(m.r[1]-lon);if(dd<bd){bd=dd;nt=m.r[8]||0;}}
-    const surveyed=nt>=40;
-    const fe=document.getElementById('firsts');
-    if(fe && firsts.length){
-      fe.innerHTML=`<div class="hd" style="margin-top:11px">${surveyed?t('fill_gap_surveyed',firstsR.cellN,firstsR.M):t('fill_gap_under',firstsR.cellN,firstsR.M)}</div>`+
-        '<div class="prospects">'+firsts.map(r=>{const tx=r.taxon,nm=tx.preferred_common_name||tx.name;return `<a class="sp" href="https://www.inaturalist.org/taxa/${tx.id}" target="_blank" rel="noopener" title="${esc(tx.name)}"><img src="${safeImg(tx.default_photo.square_url)}" loading="lazy" alt="${esc(nm)}"><div class="nm">${esc(nm)} <span class="first">${L_gap}</span></div><div class="ct">${T_nb(r.count.toLocaleString(LANG==='fr'?'fr-CA':'en-CA'))}</div></a>`;}).join('')+'</div>';
-    }
-    // surface the actionable gap right on the map popup -- no panel scroll needed
-    if(whereKey==='destination' && !(opts&&opts.skipPopup) && destMarker && destMarker.getPopup() && firsts.length){
-      const gapThumbs='<div style="font-size:11.5px;color:#1b7837;font-weight:700;margin:9px 0 4px">'+t('gap_popup')+'</div><div style="display:flex;gap:6px">'+firsts.slice(0,4).map(r=>{const tx=r.taxon,nm=tx.preferred_common_name||tx.name;return `<a href="https://www.inaturalist.org/taxa/${tx.id}" target="_blank" rel="noopener" style="width:62px;text-decoration:none;color:#0a2a44" title="${esc(tx.name)}"><img src="${safeImg(tx.default_photo.square_url)}" style="width:62px;height:62px;object-fit:cover;border-radius:7px;border:1px solid #cdd;display:block"><div style="font-size:10px;line-height:1.15;margin-top:3px;height:24px;overflow:hidden">${esc(nm)}</div></a>`;}).join('')+'</div>';
-      destMarker.setPopupContent(destMarker.getPopup().getContent()+gapThumbs); destMarker.openPopup();
-    }
   }catch(e){
     // Only the primary cell query (and any other un-isolated step) can land here -- the widening
-    // top-up and fetchFirsts swallow their own transient errors, so a single tail abort or 429 no
-    // longer blanks an otherwise-loadable cell. This IS a genuine load failure (not emptiness:
-    // empty cells render prospects_none above), so honour the stale-seq guard and offer a retry.
+    // top-up swallows its own transient errors, so a single tail abort or 429 no longer blanks an
+    // otherwise-loadable cell. This IS a genuine load failure (not emptiness: empty cells render
+    // prospects_none above), so honour the stale-seq guard and offer a retry.
     if(myseq!==prospectSeq)return;
-    pr.innerHTML='<div class="hd">'+t('prospects_err')+' <a href="#" data-prospect-retry="1" style="color:var(--acc)">'+t('retry')+'</a></div>';
+    pr.innerHTML=msg(t('prospects_err')+' <a href="#" data-prospect-retry="1" style="color:var(--acc)">'+t('retry')+'</a>');
     const rl=pr.querySelector('[data-prospect-retry]'); if(rl)rl.onclick=ev=>{ev.preventDefault();fetchProspects(lat,lon,whereKey,opts);};
   }
-}
-// round-robin across iconic taxa so picks aren't 6 of the same group (coverage, not raw-abundance rank)
-function spreadByTaxon(arr){const by={};arr.forEach(r=>{const k=(r.taxon.iconic_taxon_name)||'?';(by[k]=by[k]||[]).push(r);});const ks=Object.keys(by),out=[];let guard=0;while(out.length<arr.length&&guard++<arr.length*(ks.length+1)){for(const k of ks){if(by[k].length){out.push(by[k].shift());if(out.length>=arr.length)break;}}}return out;}
-async function fetchFirsts(lat,lon,ic,cellIds,cellN){
-  const R=0.5;   // ~50 km neighbourhood -- same habitat zone, not a different ecoregion
-  const u=`https://api.inaturalist.org/v1/observations/species_counts?swlat=${lat-R}&nelat=${lat+R}&swlng=${lon-R}&nelng=${lon+R}&quality_grade=research&taxon_geoprivacy=open&threatened=false&per_page=200&order_by=count`+(ic?`&iconic_taxa=${ic}`:'')+inatLocale();
-  try{const j=await jget(u);
-    const all=(j.results||[]).filter(r=>r.taxon&&r.taxon.default_photo);
-    const M=j.total_results||all.length;                  // TRUE neighbourhood richness (uncapped), not the top-200 page; same filters as the cell query (research/open/threatened=false)
-    const miss=spreadByTaxon(all.filter(r=>!cellIds.has(r.taxon.id)&&r.count>=10&&(r.taxon.observations_count||0)>40)).slice(0,6);
-    return {list:miss,M,cellN:cellN||cellIds.size};       // cellN = uncapped cell richness (total_results), comparable to M; falls back to the Set size
-  }catch(e){return {list:[],M:0,cellN:0};}
 }
 const showProspects=debounce((lat,lon)=>fetchProspects(lat,lon,'around_start'),500);
 // Per-cell taxonomic-coverage tree: distinct research-grade iNat species recorded in this cell
@@ -866,22 +847,22 @@ const GT_CACHE={};   // computed rows keyed by cell -- taxon-independent, so re-
 const gtkey=(lat,lon)=>lat.toFixed(3)+','+lon.toFixed(3);
 // rows: [] -> too few nearby records to rank (honest, not a failure); null -> the lookup itself failed.
 function paintGapTree(el,rows){
-  if(rows===null){el.innerHTML='<div class="hd" style="margin-top:11px">'+t('gaptree_err')+'</div>';return;}
-  if(!rows.length){el.innerHTML='<div class="hd" style="margin-top:11px">'+t('gaptree_sparse')+'</div>';return;}
+  if(rows===null){el.innerHTML='<div class="popsec">'+t('gaptree_err')+'</div>';return;}
+  if(!rows.length){el.innerHTML='<div class="popsec">'+t('gaptree_sparse')+'</div>';return;}
   const lab=v=>v<0.2?t('gt_gap'):(v<0.6?t('gt_partial'):t('gt_ok'));
   const cls=v=>v<0.2?'gt-gap':(v<0.6?'gt-part':'gt-ok');
-  el.innerHTML='<div class="hd" style="margin-top:11px">'+t('gaptree_hd')+'</div>'+
-    '<div class="gaptree">'+rows.map(r=>{const pct=Math.round(Math.min(1,r.cov)*100);
-      return `<button class="gtrow ${cls(r.cov)}" data-g="${esc(r.g)}" aria-label="${esc(groupName(r.g))}: ${t('gt_count',r.c,r.n)}, ${lab(r.cov)}. ${t('gt_switch',groupName(r.g))}"><span class="gtn">${esc(groupName(r.g))}</span><span class="gtbar"><span style="width:${pct}%"></span></span><span class="gtc">${t('gt_count',r.c,r.n)} · ${lab(r.cov)}</span></button>`;}).join('')+'</div>'+
-    '<div style="margin-top:6px;font-size:10.5px;color:var(--mut);line-height:1.35">'+t('gaptree_foot')+'</div>';
+  // Issue #44: rows are sorted biggest-gap first; cap the popup at the four least-sampled groups, scroll for the rest.
+  el.innerHTML='<div class="popsec">'+t('pop_groups_hd')+'</div>'+
+    '<div class="popscroll"><div class="gaptree">'+rows.map(r=>{const pct=Math.round(Math.min(1,r.cov)*100);
+      return `<button class="gtrow ${cls(r.cov)}" data-g="${esc(r.g)}" aria-label="${esc(groupName(r.g))}: ${t('gt_count',r.c,r.n)}, ${lab(r.cov)}. ${t('gt_switch',groupName(r.g))}"><span class="gtn">${esc(groupName(r.g))}</span><span class="gtbar"><span style="width:${pct}%"></span></span><span class="gtc">${t('gt_count',r.c,r.n)} · ${lab(r.cov)}</span></button>`;}).join('')+'</div></div>';
   el.querySelectorAll('.gtrow').forEach(b=>b.onclick=()=>{const g=b.dataset.g;if(!FILES[g]||state.taxon===g)return;taxonSel.value=g;taxonSel.onchange();});
 }
 async function fetchGapTree(lat,lon){
   const myseq=++gapSeq;
-  const el=document.getElementById('gaptree'); if(!el) return;
+  const el=document.getElementById('popgaps'); if(!el) return;   // popup container; closed -> nothing to fill
   const ck=gtkey(lat,lon);
   if(GT_CACHE[ck]!==undefined){paintGapTree(el,GT_CACHE[ck]);return;}
-  el.innerHTML='<div class="hd" style="margin-top:11px">'+t('gaptree_lookup')+'</div>';
+  el.innerHTML='<div class="popsec">'+t('gaptree_lookup')+'</div>';
   const HH=0.125,R=0.5,GR=t('group'),groups=Object.keys(ICONIC);
   const box=(h)=>`swlat=${lat-h}&nelat=${lat+h}&swlng=${lon-h}&nelng=${lon+h}`;
   const base='https://api.inaturalist.org/v1/observations/species_counts?quality_grade=research&taxon_geoprivacy=open&threatened=false&order_by=count';
@@ -1374,7 +1355,7 @@ function clearRoute(){[routeLine,destMarker,destCell].forEach(l=>{if(l)map.remov
 let _reselect=false;   // true only while exploreCell swaps one selection for another (suppress the close-driven clear)
 function clearSelection(){clearRoute();
   const pr=document.getElementById('prospects');if(pr){pr.dataset.idle='1';pr.innerHTML='<div class="hd" style="margin-top:10px" data-i18n="prospects_idle">'+t('prospects_idle')+'</div>';}
-  const gt=document.getElementById('gaptree');if(gt)gt.innerHTML='';
+  _lastProspect=null;   // the cell popup (which held the coverage tree + species) is gone; nothing for setLang to re-render
   try{history.replaceState(null,'',location.pathname);}catch(e){}}
 function selectTrip(o){clearRoute();const dest=[o.m.r[0],o.m.r[1]];
   destCell=L.rectangle([[dest[0]-0.125,dest[1]-0.125],[dest[0]+0.125,dest[1]+0.125]],{color:'#1b7837',weight:2,dashArray:'5 5',fillColor:'#74c476',fillOpacity:0.16,interactive:false}).addTo(map);
@@ -1459,27 +1440,17 @@ function exploreCell(lat,lon){
   _reselect=true;   // swapping selections: suppress the close-driven deselect until the new popup is open (issue #16)
   let best=markers[0],bd=1e9;for(const m of markers){const d=Math.abs(m.r[0]-lat)+Math.abs(m.r[1]-lon);if(d<bd){bd=d;best=m;}}
   const o=best,dest=[o.r[0],o.r[1]];clearRoute();
-  let geLine='';if(geActive()){const v=GE[gekey(dest[0],dest[1])];geLine='<div style="margin-bottom:4px">'+t('ge_most')+' <b>'+(!v||v[0]<0?t('ge_all'):t('ge_cats')[v[0]])+'</b></div>';}
   try{history.replaceState(null,'','?at='+dest[0].toFixed(3)+','+dest[1].toFixed(3)+'&g='+encodeURIComponent(state.taxon));}catch(e){}
   destCell=L.rectangle([[dest[0]-0.125,dest[1]-0.125],[dest[0]+0.125,dest[1]+0.125]],{color:'#1b7837',weight:2,dashArray:'5 5',fillColor:'#74c476',fillOpacity:0.16,interactive:false}).addTo(map);
-  const score=(o.t*100|0);
-  let body;
-  if((o.t||0)<LOW_GAP_T){
-    // low-gap cell: reframe instead of a bare "0/100 · —". Show the gap score muted (honest, not
-    // inflated), the most under-recorded group here, and the nearest cell that is a real gap.
-    const gid='gegap'+(++geGapSeq), near=nearestStrongGap(dest[0],dest[1]);
-    body=`${t('pop_low_gap')} <span style="color:#889">(${score}/100)</span>`
-      +`<div id="${gid}" style="margin-top:3px">${geGapPhrase(dest[0],dest[1])}</div>`
-      +(near?`<div style="margin-top:3px">${t('pop_nearest_gap',Math.round(near.km))}${PLAN_ENABLED?` <a href="#" role="button" onclick="exploreToPlan(${dest[0]},${dest[1]});return false;" style="color:#1f6fe0">${t('pop_find_gaps')}</a>`:''}</div>`:'');
-    if(!GE_LOADED)loadGE().then(()=>{const el=document.getElementById(gid);if(el)el.innerHTML=geGapPhrase(dest[0],dest[1]);}).catch(()=>{});
-  } else {
-    body=`${t('pop_impact')} <b>${score}/100</b> · ${contribStr(o.r)}`;
-    const why=whyMatters(o.r); if(why) body+=`<div style="margin-top:3px;color:#9fb0c0">${why}</div>`;
-  }
+  // Issue #44: the popup holds the per-cell coverage tree (#popgaps) and the rarest species (#popsp), both
+  // filled async by fetchProspects/fetchGapTree. Centre the cell first (animate:false so it doesn't race
+  // autoPan), then openPopup autoPans with top padding so the popup clears the view toggle / info button.
   destMarker=L.marker(dest,{icon:destIcon,zIndexOffset:900}).addTo(map)
-    .bindPopup(`${geLine}<b>${t('pop_explore_title')}</b> ${t('pop_explore_sub')}<br><span style="color:#667">${t('pop_centre')} ${dest[0].toFixed(2)}, ${dest[1].toFixed(2)}</span><br>${body}<br><a href="#" role="button" onclick="if(navigator.clipboard){navigator.clipboard.writeText(location.href).then(()=>{this.textContent=t('copied');}).catch(()=>{});}return false;" style="color:#1f6fe0;font-size:12px">${t('share_link')}</a>`).openPopup();
+    .bindPopup(`<div id="popgaps"><div class="popsec">${t('gaptree_lookup')}</div></div><div id="popsp"><div class="popsec">${t('prospects_lookup')}</div></div>`,{maxWidth:300,minWidth:272,autoPanPaddingTopLeft:[18,96],autoPanPaddingBottomRight:[18,40]});
+  map.setView(dest,map.getZoom(),{animate:false});
+  destMarker.openPopup();
   _reselect=false;
-  fetchProspects(dest[0],dest[1],'destination');
+  fetchProspects(dest[0],dest[1],'destination',{toPopup:true});
 }
 function setView(v){
   state.view=v;
