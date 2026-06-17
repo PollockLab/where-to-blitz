@@ -63,6 +63,8 @@ HTML = r"""<!doctype html>
   integrity="sha384-SYKAG6cglRMN0RVvhNeBY0r3FYKNOJtznwA0v7B5Vp9tr31xAHsZC0DqkQ/pZDmj" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js"
   integrity="sha384-4CB9Vtol9LN6lGgBCvmPLbUEZwilrqIvPieSRurgAXAB7FVJaLS9n8WyAIA5wjQ+" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"
+  integrity="sha384-QfbOCebHNw8pQiPAOd2IFee2v2A5VYZxBk0+JGZ5H+3mfzVIp6zsQNkTsfGJot93" crossorigin="anonymous"></script>
 <style>
 :root{--bg:#0f1620;--panel:#172230;--ink:#e8eef5;--mut:#9fb2c6;--acc:#11a3ff;--gd:#22c55e;--gold:#f0a000}
 *{box-sizing:border-box}
@@ -1107,18 +1109,36 @@ bmSel.onchange=()=>{const v=bmSel.value, cov=document.getElementById('tgCoverage
   if(v==='__inat__'){setBase('Light');if(cov&&!cov.checked){cov.checked=true;cov.dispatchEvent(new Event('change'));}}
   else{setBase(v);if(cov&&cov.checked){cov.checked=false;cov.dispatchEvent(new Event('change'));}}};
 let covLayer=null;
-const COVTAXA={Plantae:'Plantae',Aves:'Aves',Mammalia:'Mammalia',Insecta:'Insecta',Amphibia:'Amphibia',Fungi:'Fungi',Reptilia:'Reptilia',Actinopterygii:'Actinopterygii',Arachnida:'Arachnida',Mollusca:'Mollusca'};   // COGs available per taxon (others -> All)
+// dec25 100 m density is served as local raster PMTiles (issue #10): the magma colormap
+// (rescale 0,10) is baked into transparent WEBP tiles so the overlay sharpens as you zoom
+// to ~300 m, where the 1 km COG via TiTiler stayed coarse. Fungi has no dec25 layer ->
+// keep its older 1 km COG on the remote tiler until one lands.
+const COVPM=['All','Amphibia','Aves','Insecta','Mammalia','Plantae','Reptilia','Actinopterygii','Arachnida','Mollusca'];   // taxa with a local PMTiles (others -> All)
+// Raster-PMTiles Leaflet layer: tiles are addressed in the 256-scheme but stored as 512 px
+// WEBP, decoded to a canvas tile (alpha already baked in). Over-zooms past native z9.
+const PMRaster=L.GridLayer.extend({
+  initialize:function(url,opts){L.GridLayer.prototype.initialize.call(this,opts);this._pm=new pmtiles.PMTiles(new pmtiles.FetchSource(url));},
+  createTile:function(coords,done){
+    const tile=document.createElement('canvas');tile.width=tile.height=256;const ctx=tile.getContext('2d');
+    this._pm.getZxy(coords.z,coords.x,coords.y).then(r=>{
+      if(!r){done(null,tile);return;}
+      return createImageBitmap(new Blob([r.data],{type:'image/webp'})).then(bmp=>{ctx.drawImage(bmp,0,0,256,256);done(null,tile);});
+    }).catch(e=>done(e,tile));
+    return tile;
+  }
+});
 function setCoverage(){
   if(covLayer){map.removeLayer(covLayer);covLayer=null;}
   if(!document.getElementById('tgCoverage').checked)return;
-  const ct=COVTAXA[state.taxon]||'All';
-  // Guillaume's Dec-2025 iNaturalist density heatmaps (issue #7), per group at 1 km.
-  // Fungi has no dec25 1 km COG yet -> keep its older per-taxon layer until one lands.
-  const cog = ct==='Fungi'
-    ? 'https://object-arbutus.cloud.computecanada.ca/bq-io/io/inat_canada_heatmaps/Fungi_density_inat_1km.tif'
-    : 'https://object-arbutus.alliancecan.ca/86e1f3d5df8442d39450533329f621ae:stac/inat_canada_heatmaps/'+ct+'_density_inat_dec25_1km.tif';
-  covLayer=L.tileLayer('https://tiler.biodiversite-quebec.ca/cog/tiles/{z}/{x}/{y}?url='+encodeURIComponent(cog)+'&rescale=0,10&colormap_name=magma&resampling=cubic',
-    {opacity:0.75,maxZoom:14,zIndex:250,attribution:'iNaturalist density &copy; Biodiversit\u00e9 Qu\u00e9bec'}).addTo(map);
+  const ct=COVPM.includes(state.taxon)?state.taxon:'All';
+  const attr='iNaturalist density &copy; Biodiversit\u00e9 Qu\u00e9bec';
+  if(state.taxon==='Fungi'){   // no dec25 layer -> remote 1 km COG
+    covLayer=L.tileLayer('https://tiler.biodiversite-quebec.ca/cog/tiles/{z}/{x}/{y}?url='+encodeURIComponent('https://object-arbutus.cloud.computecanada.ca/bq-io/io/inat_canada_heatmaps/Fungi_density_inat_1km.tif')+'&rescale=0,10&colormap_name=magma&resampling=cubic',
+      {opacity:0.75,maxZoom:14,zIndex:250,attribution:attr}).addTo(map);
+  }else{
+    covLayer=new PMRaster('density/'+ct+'.pmtiles',
+      {opacity:0.75,tileSize:256,maxNativeZoom:9,maxZoom:14,zIndex:250,attribution:attr}).addTo(map);
+  }
 }
 document.getElementById('tgCoverage').addEventListener('change',e=>{if(e.target.checked)document.getElementById('tgGettingEven').checked=false;updateLegend();setCoverage();recolour();
   if(!e.target.checked&&bmSel.value==='__inat__'){bmSel.value='Standard';setBase('Standard');}});   // coverage turned off elsewhere (e.g. GE) -> reset the style dropdown

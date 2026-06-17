@@ -6,6 +6,8 @@
 #   # VOI backtest (reads cached cluster_results/inat_*.csv; re-pull with pull_inat_backtest.py):
 #   .venv/bin/python _build_backtest_notebook.py && .venv/bin/jupyter nbconvert --to notebook --execute --inplace voi-backtest.ipynb
 rasterio==1.4.4
+rio-cogeo==7.0.2          # build_density_pmtiles.py: validate/re-tile the 100 m density COG
+rio-pmtiles==1.2.1       # build_density_pmtiles.py: bake density into raster PMTiles for Pages
 numpy==2.4.6
 pandas==3.0.3
 matplotlib==3.11.0
