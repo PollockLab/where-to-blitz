@@ -185,6 +185,7 @@ details.adv>summary:hover{color:var(--ink)}
 .popgrid img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:7px;border:1px solid #cdd;display:block;background:#eee}
 .popgrid .nm{font-size:10px;line-height:1.15;margin-top:3px;max-height:24px;overflow:hidden}
 .popgrid .ct{font-size:9.5px;color:#667;margin-top:1px}
+.popcap{font-size:11px;line-height:1.3;color:#667;margin-top:6px}
 #viewtoggle{position:fixed;top:calc(10px + var(--bh));left:50%;transform:translateX(-50%);z-index:1200;display:flex;background:#fff;border-radius:9px;box-shadow:0 2px 9px rgba(0,0,0,.28);overflow:hidden}
 #viewtoggle button{border:0;background:#fff;color:#1b2a3a;padding:8px 15px;font-size:15px;font-weight:650;cursor:pointer}
 #viewtoggle button.on{background:var(--acc);color:#fff}
@@ -407,6 +408,7 @@ const I18N={
     gaptree_sparse:"Too few nearby records to rank groups here yet — every sighting helps fill the map.",
     gaptree_err:"Couldn’t read coverage just now — tap the cell again.",
     pop_groups_hd:"Four least sampled groups", pop_rare_hd:"Four most rarely logged species",
+    gt_caveat:"iNaturalist records — what's been logged nearby, a proxy for effort, not a count of what's there.",
     gt_gap:"gap", gt_partial:"partial", gt_ok:"well recorded",
     gt_count:(c,n)=>`${c} here · ~${n} nearby`,   // two observed iNat record tallies, not a ratio-of-total: "X of ~Y" wrongly read as complete coverage at equality (5 of ~5). ~Y is a floor, never true richness.
     gt_switch:(g)=>`Switch the map to ${g}`,
@@ -556,6 +558,7 @@ const I18N={
     gaptree_sparse:"Trop peu d’observations à proximité pour classer les groupes ici — chaque observation aide à combler la carte.",
     gaptree_err:"Lecture de la couverture impossible pour l’instant — touchez la cellule à nouveau.",
     pop_groups_hd:"Quatre groupes les moins échantillonnés", pop_rare_hd:"Quatre espèces les plus rarement observées",
+    gt_caveat:"Observations iNaturalist — ce qui est consigné à proximité, un indice d'effort, pas un inventaire de ce qui s'y trouve.",
     gt_gap:"lacune", gt_partial:"partielle", gt_ok:"bien documenté",
     gt_count:(c,n)=>`${c} ici · ~${n} à proximité`,
     gt_switch:(g)=>`Afficher ${g} sur la carte`,
@@ -851,7 +854,8 @@ function paintGapTree(el,rows){
   // Issue #44: rows are sorted biggest-gap first; cap the popup at the four least-sampled groups, scroll for the rest.
   el.innerHTML='<div class="popsec">'+t('pop_groups_hd')+'</div>'+
     '<div class="popscroll"><div class="gaptree">'+rows.map(r=>{const pct=Math.round(Math.min(1,r.cov)*100);
-      return `<button class="gtrow ${cls(r.cov)}" data-g="${esc(r.g)}" aria-label="${esc(groupName(r.g))}: ${t('gt_count',r.c,r.n)}, ${lab(r.cov)}. ${t('gt_switch',groupName(r.g))}"><span class="gtn">${esc(groupName(r.g))}</span><span class="gtbar"><span style="width:${pct}%"></span></span><span class="gtc">${t('gt_count',r.c,r.n)}</span></button>`;}).join('')+'</div></div>';
+      return `<button class="gtrow ${cls(r.cov)}" data-g="${esc(r.g)}" aria-label="${esc(groupName(r.g))}: ${t('gt_count',r.c,r.n)}, ${lab(r.cov)}. ${t('gt_switch',groupName(r.g))}"><span class="gtn">${esc(groupName(r.g))}</span><span class="gtbar"><span style="width:${pct}%"></span></span><span class="gtc">${t('gt_count',r.c,r.n)}</span></button>`;}).join('')+'</div></div>'+
+    '<div class="popcap">'+t('gt_caveat')+'</div>';   // honest: these are iNaturalist record counts (a proxy), not true richness
   el.querySelectorAll('.gtrow').forEach(b=>b.onclick=()=>{const g=b.dataset.g;if(!FILES[g]||state.taxon===g)return;taxonSel.value=g;taxonSel.onchange();});
 }
 async function fetchGapTree(lat,lon,el){
