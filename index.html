@@ -187,6 +187,7 @@ details.adv>summary:hover{color:var(--ink)}
 #maplegend{position:fixed;bottom:24px;right:14px;z-index:1050;background:rgba(255,255,255,.93);border-radius:9px;padding:6px 10px;box-shadow:0 2px 10px rgba(0,0,0,.22);font-size:14px;color:#16233a;min-width:188px;max-width:244px;line-height:1.25}
 #maplegend .lt{font-weight:700;font-size:14px}/* retained: reused by the Getting Even categorical legend title (the priority-legend title div was removed for #47) */
 #maplegend .ramp{height:9px;border-radius:5px;background:linear-gradient(90deg,#ffffd9,#c7e9b4,#41b6c4,#225ea8,#081d58);margin:3px 0 2px}
+#maplegend .ramp.magma{background:linear-gradient(90deg,#000004,#51127c,#b73779,#fc8961,#fcfdbf)}/* matches the iNaturalist density overlay colormap */
 #maplegend .lab{display:flex;justify-content:space-between;font-size:12.5px;color:#46566a}
 #maplegend .hint{margin-top:3px;color:#46566a;font-size:12.5px}
 @media(max-width:640px){#maplegend{left:auto;right:8px;bottom:auto;top:calc(50vh + 8px);min-width:0;max-width:158px;padding:6px 8px}}
@@ -413,6 +414,7 @@ const I18N={
     load_error:"⚠ Couldn't load the map — check your connection.",
     retry:"↻ Retry",
     legend_title:"Where to blitz", legend_low:"well-sampled", legend_high:"biggest gaps",
+    density_low:"few records", density_high:"many records", density_legend_hint:"iNaturalist records (sharpens to ~300 m)",
     axis_legend:[["well-sampled","biggest gaps"],["no species at risk","many at risk"],["climate well-covered","climate under-sampled"],["recently recorded","long overdue"],["stable","recently changed"]],
     legend_hint:`Darker = higher priority. <span id="legendtap">Tap a cell to see what to record.</span>`,
     // dynamic
@@ -563,6 +565,7 @@ const I18N={
     load_error:"⚠ Impossible de charger la carte — vérifiez votre connexion.",
     retry:"↻ Réessayer",
     legend_title:"Où aller", legend_low:"bien échantillonné", legend_high:"plus grandes lacunes",
+    density_low:"peu d'observations", density_high:"beaucoup d'observations", density_legend_hint:"observations iNaturalist (jusqu'à ~300 m)",
     axis_legend:[["bien échantillonné","plus grandes lacunes"],["aucune espèce en péril","beaucoup en péril"],["climat bien couvert","climat sous-échantillonné"],["observé récemment","en retard depuis longtemps"],["stable","changé récemment"]],
     legend_hint:`Plus foncé = priorité plus élevée. <span id="legendtap">Touchez une cellule pour voir quoi observer.</span>`,
     // dynamic
@@ -1032,6 +1035,9 @@ function updateLegend(){
     const sw=(c,lab)=>`<div style="display:flex;align-items:center;gap:6px;margin:2px 0"><span style="width:13px;height:13px;border-radius:3px;background:${c};border:1px solid #ccc;flex:none"></span><span>${lab}</span></div>`;
     ml.innerHTML='<div class="lt">'+t('getting_even')+'</div>'+
       t('ge_cats').map((nm,i)=>sw(GE_PAL[i],nm)).join('')+sw(GE_ALL,t('ge_all'));
+  }else if(document.getElementById('tgCoverage')&&document.getElementById('tgCoverage').checked){
+    // The density overlay is a magma raster of iNaturalist record density, not the priority ramp — show its own scale.
+    ml.innerHTML='<div class="ramp magma"></div><div class="lab"><span>'+t('density_low')+'</span><span>'+t('density_high')+'</span></div><div class="hint">'+t('density_legend_hint')+'</div>';
   }else{
     ml.innerHTML=GE_PRIORITY_LEGEND;updateLegendLabels();
     const lt=document.getElementById('legendtap');if(lt)lt.textContent=t(legendTapKey());
