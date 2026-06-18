@@ -93,6 +93,35 @@ Challenge presets are just preset weight mixes, e.g. *Canada's Most Wanted* = co
   can actually reach a gap within your time budget — chosen from your start, not assumed.
 - **CO₂:** driving ≈ 0.18 kg/km; cycling/walking zero.
 
+## Which species to record in a cell (#48)
+
+Tapping a cell suggests *what to record there*. The axes above rank **where** to go; this ranks
+**which species** add the most once you are there. It is an **intermediate, interpretable metric** —
+the intended end state is a model-based score (the lab's SDM predictions in the cell plus a
+value-of-information score for how much an observation would improve those models), which is future
+work, not v1.
+
+Earlier the suggestions were sorted by a species' **global iNaturalist observation count** ("globally
+rarest first"). That conflates *photographic popularity* with *recording value*: a species can have
+few records worldwide simply because it is hard to photograph or unpopular, while a species that is
+common globally can still be genuinely under-recorded in one place. So the list now ranks by recording
+value computed from records actually around the cell:
+
+- For each candidate species we pull its research-grade count **in the cell** (~14 km box) and **in the
+  ~40 km neighbourhood** (one extra `species_counts` call, best-effort — if it fails the rank degrades
+  to a within-cell order).
+- Candidates are ordered **lexicographically**: (1) **new-to-cell** species — present in the
+  neighbourhood but not yet recorded in this cell — first, because recording one adds a species the
+  cell's record is missing; (2) then by **local coverage gap**, the local÷neighbourhood share ascending,
+  so species under-recorded *here* relative to nearby rank above ones already well covered here;
+  (3) tie-broken by **regional scarcity** (fewer neighbourhood records first), so each record is more
+  informative. Species at risk and obscured taxa are excluded upstream (`threatened=false`,
+  `taxon_geoprivacy=open`) per the dual-use guard below.
+
+Caveats: counts are iNaturalist research-grade records, a sampling proxy, not a census; species tied on
+regional scarcity keep iNaturalist's own order; and the metric measures recording-gap value, not
+ecological importance — that awaits the SDM/VOI score.
+
 ---
 
 ## Honesty notes
