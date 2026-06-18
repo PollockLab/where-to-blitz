@@ -22,6 +22,9 @@ fi
 [ -f cluster_results/ca_forestloss.tif ] || "$PY" build_hansen_ca.py    # Hansen Global Forest Change
 # 3) build the grid: streams density COGs from the bucket, joins conservation/staleness from the committed CSVs
 "$PY" build_fullgrid_ca.py
+# 3b) re-tag out-of-Canada cells for the Canada-only view mask (us_cells.json). MUST follow the grid build:
+#     if the grid's cell set changes, a stale mask leaks US coastal cells into the default view (#58 follow-up).
+"$PY" build_canada_mask.py
 # 4) regenerate the deployed single-page app
 "$PY" build_webapp.py
 echo "done — cluster_results/ca/ + index.html regenerated."

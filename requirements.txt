@@ -8,6 +8,7 @@
 rasterio==1.4.4
 rio-cogeo==7.0.2          # build_density_pmtiles.py: validate/re-tile the 100 m density COG
 rio-pmtiles==1.2.1       # build_density_pmtiles.py: bake density into raster PMTiles for Pages
+shapely==2.1.2           # build_canada_mask.py: point-in-Canada test for the us_cells.json view mask
 numpy==2.4.6
 pandas==3.0.3
 matplotlib==3.11.0
