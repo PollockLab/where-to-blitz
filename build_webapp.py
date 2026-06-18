@@ -192,8 +192,8 @@ details.adv>summary:hover{color:var(--ink)}
 #insights .ihd b{color:var(--ink)}
 #insights .ctrls{max-width:1200px;margin:0 auto 16px;display:flex;flex-wrap:wrap;gap:20px;font-size:14.5px}
 #insights .ctrls .grp{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
-#insights .ctrls .lbl{color:var(--mut);font-weight:700;text-transform:uppercase;font-size:11.5px;letter-spacing:.05em;margin-right:3px}
-#insights .chip{background:#10203044;border:1px solid #2a3a4d;border-radius:13px;padding:4px 11px;cursor:pointer;user-select:none}
+#insights .ctrls .lbl{color:var(--mut);font-weight:700;text-transform:uppercase;font-size:12.5px;letter-spacing:.06em;margin-right:3px}/* match the Explore .sec label so the two views read as one product */
+#insights .chip{background:#10203044;border:1px solid #2a3a4d;border-radius:14px;padding:4px 11px;cursor:pointer;user-select:none}
 #insights .chip.on{background:var(--acc);border-color:var(--acc);color:#fff}
 #insights .chip:focus-visible,.infobtn:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 #insights .matrix{display:grid;gap:10px;max-width:1200px;margin:0 auto;align-items:start}
