@@ -225,12 +225,12 @@ details.adv>summary:hover{color:var(--ink)}
   .infobtn{width:24px;height:24px;line-height:22px;font-size:13px}
   .langtoggle button{padding:7px 13px}
 }
-#maplegend{position:fixed;bottom:24px;right:14px;z-index:1050;background:rgba(255,255,255,.93);border-radius:9px;padding:6px 10px;box-shadow:0 2px 10px rgba(0,0,0,.22);font-size:14px;color:#16233a;max-width:244px;line-height:1.25}
+#maplegend{position:fixed;bottom:24px;right:14px;z-index:1050;background:rgba(255,255,255,.93);border-radius:9px;padding:6px 10px;box-shadow:0 2px 10px rgba(0,0,0,.22);font-size:14px;color:#16233a;min-width:188px;max-width:244px;line-height:1.25}
 #maplegend .lt{font-weight:700;font-size:14px}/* retained: reused by the Getting Even categorical legend title (the priority-legend title div was removed for #47) */
 #maplegend .ramp{height:9px;border-radius:5px;background:linear-gradient(90deg,#ffffd9,#c7e9b4,#41b6c4,#225ea8,#081d58);margin:3px 0 2px}
 #maplegend .lab{display:flex;justify-content:space-between;font-size:12.5px;color:#46566a}
 #maplegend .hint{margin-top:3px;color:#46566a;font-size:12.5px}
-@media(max-width:640px){#maplegend{left:auto;right:8px;bottom:auto;top:calc(50vh + 8px);max-width:158px;padding:6px 8px}}
+@media(max-width:640px){#maplegend{left:auto;right:8px;bottom:auto;top:calc(50vh + 8px);min-width:0;max-width:158px;padding:6px 8px}}
 #loading{position:fixed;left:50%;top:46%;transform:translate(-50%,-50%);z-index:1200;background:rgba(255,255,255,.96);border-radius:10px;padding:11px 17px;box-shadow:0 3px 14px rgba(0,0,0,.25);font-size:14px;font-weight:600;color:#1b2a3a}
 @media(max-width:640px){#loading{left:50%;top:74vh}}
 #howbtn{position:fixed;right:14px;top:calc(12px + var(--bh));z-index:1200;display:flex;align-items:center;gap:6px;background:#fff;color:#1b2a3a;border:0;border-radius:9px;box-shadow:0 2px 9px rgba(0,0,0,.28);padding:7px 11px;font-size:12.5px;font-weight:650;cursor:pointer;max-width:260px}
