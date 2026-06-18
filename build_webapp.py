@@ -101,7 +101,7 @@ select.full{width:100%}
 .obj{margin:8px 0 8px}
 .obj .top{display:flex;justify-content:space-between;align-items:baseline}
 .obj .nm{font-weight:650;font-size:16px}
-.obj .q{color:var(--mut);font-size:13px;margin:1px 0 5px}
+.obj .q{color:var(--mut);font-size:12.5px;margin:1px 0 5px}
 .obj .v{color:var(--acc);font-weight:700;font-size:15px;font-variant-numeric:tabular-nums}
 input[type=range]{width:100%;accent-color:var(--acc);margin:0}
 .presets{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 2px}
@@ -121,19 +121,19 @@ input[type=range]{width:100%;accent-color:var(--acc);margin:0}
 #plan{width:100%;margin-top:10px;background:var(--gd);color:#04220f;border:0;border-radius:8px;padding:11px;font-size:17px;font-weight:700;cursor:pointer}
 #plan:hover{filter:brightness(1.08)}
 #trips{margin-top:10px;font-size:15px}
-#trips .hd{color:var(--mut);font-size:13px;margin:6px 0 4px}
+#trips .hd{color:var(--mut);font-size:12.5px;margin:6px 0 4px}
 #trips .row{padding:6px 9px;border-radius:7px;background:#0e1722;margin:5px 0;cursor:pointer;border:1px solid #20303f}
 #trips .row:hover,#trips .row.sel{border-color:var(--gold)}
 #trips .row .t1{display:flex;justify-content:space-between;font-weight:650}
 #trips .row .imp{color:var(--gold)}
 #trips .row .t2{color:var(--mut);font-size:14px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #prospects{margin-top:8px}
-#prospects .hd{color:var(--mut);font-size:13px;margin:6px 0 5px}
+#prospects .hd{color:var(--mut);font-size:12.5px;margin:6px 0 5px}
 .prospects{display:flex;gap:7px;overflow-x:auto;padding-bottom:4px}
 .prospects .sp{flex:0 0 86px;text-decoration:none;color:var(--ink)}
 .prospects .sp img{width:86px;height:86px;object-fit:cover;border-radius:8px;display:block;border:1px solid #2a3a4d;background:#0e1722}
 .prospects .sp .nm{font-size:12.5px;line-height:1.2;margin-top:3px}
-.prospects .sp .ct{font-size:11.5px;color:var(--mut)}
+.prospects .sp .ct{font-size:11px;color:var(--mut)}
 .prospects .rare{background:var(--gold);color:#3a2a00;font-size:10.5px;font-weight:700;padding:0 4px;border-radius:6px;white-space:nowrap}
 .prospects .unc{background:#33465a;color:#cfe0ee;font-size:10.5px;font-weight:700;padding:0 4px;border-radius:6px;white-space:nowrap}
 .prospects .first{background:var(--gd);color:#04220f;font-size:10.5px;font-weight:700;padding:0 4px;border-radius:6px;white-space:nowrap}
@@ -149,16 +149,16 @@ input[type=range]{width:100%;accent-color:var(--acc);margin:0}
 .gtrow.gt-ok .gtbar>span{background:var(--gd)}
 #searchResults{position:absolute;left:0;right:0;top:100%;z-index:1000;background:#0e1722;border:1px solid #2a3a4d;border-radius:7px;margin-top:2px;overflow:hidden;display:none;box-shadow:0 4px 14px rgba(0,0,0,.4)}
 #searchResults.open{display:block}
-#searchResults .res{padding:8px 10px;cursor:pointer;font-size:13px;line-height:1.3;border-bottom:1px solid #1a2735}
+#searchResults .res{padding:8px 10px;cursor:pointer;font-size:12.5px;line-height:1.3;border-bottom:1px solid #1a2735}
 #searchResults .res:last-child{border-bottom:0}
 #searchResults .res:hover,#searchResults .res.on{background:#16263a}
 #searchResults .res .sub{color:var(--mut);font-size:11px}
-.legend{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;color:var(--mut)}
+.legend{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12.5px;color:var(--mut)}
 .bar{height:11px;flex:1;border-radius:6px;background:linear-gradient(90deg,#ffffd9,#edf8b1,#c7e9b4,#7fcdbb,#41b6c4,#1d91c0,#225ea8,#253494,#081d58)}
 .foot{color:var(--mut);font-size:12.5px;line-height:1.5;margin-top:8px}
 .sronly{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 #celltable{max-height:300px;overflow:auto;margin-top:6px}
-#celltable table{width:100%;border-collapse:collapse;font-size:12px}
+#celltable table{width:100%;border-collapse:collapse;font-size:12.5px}
 #celltable caption{text-align:left;color:var(--mut);font-size:11px;margin-bottom:5px;caption-side:top}
 #celltable th,#celltable td{text-align:left;padding:3px 6px;border-bottom:1px solid #243446}
 #celltable th{color:var(--mut);font-weight:700}
@@ -172,7 +172,7 @@ details.adv[open]>summary::before{transform:rotate(90deg)}
 details.adv>summary:hover{color:var(--ink)}
 .leaflet-popup-content{font-size:15px}.leaflet-popup-content b{color:#0a2a44}
 /* Issue #44: per-cell coverage + rare species live in the popup. Headings, a scroll-capped group list, and a 4-up species grid (no horizontal scroll). */
-.popsec{font-size:12px;font-weight:700;color:#0a2a44;margin:9px 0 5px}
+.popsec{font-size:12.5px;font-weight:700;color:#0a2a44;margin:9px 0 5px}
 .popsec:first-child{margin-top:1px}
 .popscroll{max-height:150px;overflow:hidden auto}
 .popscroll .gaptree{margin-top:0}
@@ -200,7 +200,7 @@ details.adv>summary:hover{color:var(--ink)}
 #insights .chip:focus-visible,.infobtn:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 #insights .matrix{display:grid;gap:10px;max-width:1200px;margin:0 auto;align-items:start}
 #insights .gh{font-weight:700;font-size:14px;text-align:center;align-self:end;padding-bottom:3px}
-#insights .gh .gq{color:var(--mut);font-size:11.5px;font-weight:400;line-height:1.2;display:block;margin-top:1px}
+#insights .gh .gq{color:var(--mut);font-size:11px;font-weight:400;line-height:1.2;display:block;margin-top:1px}
 #insights .rl{font-weight:700;font-size:15px;display:flex;align-items:center}
 #insights .cell{background:var(--panel);border:1px solid #2a3a4d;border-radius:9px;padding:6px;cursor:pointer;transition:border-color .12s}
 #insights .cell:hover{border-color:var(--acc)}
@@ -211,7 +211,7 @@ details.adv>summary:hover{color:var(--ink)}
 .sechd .sec{margin:0}
 .infobtn{cursor:pointer;width:16px;height:16px;border-radius:50%;border:1px solid var(--mut);color:var(--mut);font:italic 700 11px/14px Georgia,serif;text-align:center;flex:0 0 auto;user-select:none}
 .infobtn:hover{border-color:var(--acc);color:var(--acc)}
-.infobox{display:none;background:#0e1722;border:1px solid #2a3a4d;border-radius:8px;padding:9px 11px;margin:0 0 8px;font-size:12px;line-height:1.5;color:var(--mut)}
+.infobox{display:none;background:#0e1722;border:1px solid #2a3a4d;border-radius:8px;padding:9px 11px;margin:0 0 8px;font-size:12.5px;line-height:1.5;color:var(--mut)}
 .infobox.open{display:block}
 .infobox b{color:var(--ink)}
 .infobox ul{margin:5px 0 0;padding-left:15px}
@@ -273,7 +273,7 @@ details.adv>summary:hover{color:var(--ink)}
   <div class="startrow" style="margin-top:6px">
     <button id="setMe" data-i18n="my_location">Locate me</button>
   </div>
-  <div style="color:var(--mut);font-size:11.5px;margin:4px 0 7px" data-i18n-html="start_hint">Start: <b id="startlbl">Vancouver</b> · <b style="color:var(--gd)">tap the map</b> to move it.</div>
+  <div style="color:var(--mut);font-size:11px;margin:4px 0 7px" data-i18n-html="start_hint">Start: <b id="startlbl">Vancouver</b> · <b style="color:var(--gd)">tap the map</b> to move it.</div>
   <div class="startrow" id="modes"></div>
   <div id="modewhy" style="color:var(--mut);font-size:11px;margin:2px 0 0"></div>
   <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
@@ -326,7 +326,7 @@ details.adv>summary:hover{color:var(--ink)}
     <div style="display:none" data-i18n="ge_hint">Each cell is coloured by the most under-represented taxonomic group there (birds excluded — already well covered by eBird) — our finer-resolution take on the official "Getting Even" challenge. From iNaturalist observation density: a sample, not a census.</div>
     <div class="infobox" id="geinfo" data-i18n-html="ge_method"></div>
     <div id="opacityRow" style="display:none"><!-- #46: only shown while a data overlay (density style) is active; basemap brightness is otherwise locked at 100% -->
-    <div style="display:flex;justify-content:space-between;margin:9px 0 0"><span id="bople" style="font-size:13px" data-i18n="data_opacity">Density opacity</span><span class="v" id="bopv" style="color:var(--acc)">80%</span></div>
+    <div style="display:flex;justify-content:space-between;margin:9px 0 0"><span id="bople" style="font-size:12.5px" data-i18n="data_opacity">Density opacity</span><span class="v" id="bopv" style="color:var(--acc)">80%</span></div>
     <input type="range" id="baseop" min="0.1" max="1" step="0.05" value="1" data-i18n-aria="aria_data_opacity" aria-label="Density opacity">
     </div>
   </details>
@@ -827,7 +827,7 @@ async function fetchProspects(lat,lon,whereKey,opts){
       '<div class="prospects">'+res.map(r=>{const tx=r.taxon,g=tx.observations_count||0,rare=g<1500,unc=g<7000;
         return `<a class="sp" href="https://www.inaturalist.org/taxa/${tx.id}" target="_blank" rel="noopener" title="${esc(tx.name)}"><img src="${safeImg(tx.default_photo.square_url)}" loading="lazy" alt=""><div class="nm">${esc(tx.preferred_common_name||tx.name)}${rare?` <span class="rare">${L_rare}</span>`:(unc?` <span class="unc">${L_unc}</span>`:'')}</div><div class="ct">${r._here?T_here(r.count):L_nearby} · ${T_world(g)}</div></a>`;}).join('')+'</div>'+
       `<div style="margin-top:8px;font-size:10.5px;color:var(--mut);line-height:1.35">${t('inat_caveat')}</div>`+
-      `<div style="margin-top:7px;font-size:11.5px"><a href="${ex}" target="_blank" rel="noopener" style="color:var(--acc)">${t('explore_all')}</a> &nbsp;·&nbsp; <a href="https://www.inaturalist.org/observations/new" target="_blank" rel="noopener" style="color:var(--gd)">${t('log_sighting')}</a> &nbsp;·&nbsp; <a href="https://www.inaturalist.org/projects/${state.project}" target="_blank" rel="noopener" style="color:var(--mut)">${t('for_challenge')}</a></div>`;
+      `<div style="margin-top:7px;font-size:11px"><a href="${ex}" target="_blank" rel="noopener" style="color:var(--acc)">${t('explore_all')}</a> &nbsp;·&nbsp; <a href="https://www.inaturalist.org/observations/new" target="_blank" rel="noopener" style="color:var(--gd)">${t('log_sighting')}</a> &nbsp;·&nbsp; <a href="https://www.inaturalist.org/projects/${state.project}" target="_blank" rel="noopener" style="color:var(--mut)">${t('for_challenge')}</a></div>`;
   }catch(e){
     // Only the primary cell query (and any other un-isolated step) can land here -- the widening
     // top-up swallows its own transient errors, so a single tail abort or 429 no longer blanks an
