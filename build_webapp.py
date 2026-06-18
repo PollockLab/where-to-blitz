@@ -94,11 +94,11 @@ body.panel-collapsed #panelToggle{left:8px;transform:none}
 body.panel-collapsed #map{flex:1;height:100%}
 body.panel-collapsed #loading{left:50%}
 h1{font-size:20.5px;margin:0 0 2px}
-.sub{color:var(--mut);font-size:14.5px;line-height:1.45;margin:0 0 8px}
+.sub{color:var(--mut);font-size:14px;line-height:1.45;margin:0 0 8px}
 .sec{font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin:14px 0 8px;font-weight:700}
 select{padding:7px 8px;background:#0e1722;color:var(--ink);border:1px solid #2a3a4d;border-radius:7px;font-size:16px}
 select.full{width:100%}
-.obj{margin:10px 0 12px}
+.obj{margin:8px 0 8px}
 .obj .top{display:flex;justify-content:space-between;align-items:baseline}
 .obj .nm{font-weight:650;font-size:16px}
 .obj .q{color:var(--mut);font-size:13px;margin:1px 0 5px}
@@ -115,7 +115,7 @@ input[type=range]{width:100%;accent-color:var(--acc);margin:0}
 .langtoggle button{background:#10203044;color:var(--mut);border:1px solid #2a3a4d;border-radius:6px;padding:3px 9px;font-size:12.5px;font-weight:700;cursor:pointer;letter-spacing:.03em}
 .langtoggle button:hover{border-color:var(--acc);color:var(--ink)}
 .langtoggle button.on{border-color:var(--acc);background:var(--acc);color:#fff}
-.toggle{display:flex;align-items:center;gap:8px;margin:9px 0 2px;font-size:15px;cursor:pointer}
+.toggle{display:flex;align-items:center;gap:8px;margin:6px 0 2px;font-size:15px;cursor:pointer}
 .toggle input{width:16px;height:16px;accent-color:var(--gd)}
 #plan{width:100%;margin-top:10px;background:var(--gd);color:#04220f;border:0;border-radius:8px;padding:11px;font-size:17px;font-weight:700;cursor:pointer}
 #plan:hover{filter:brightness(1.08)}
@@ -190,20 +190,20 @@ details.adv>summary:hover{color:var(--ink)}
 #insights{position:fixed;left:0;top:0;right:0;bottom:0;z-index:1150;background:var(--bg);color:var(--ink);overflow-y:auto;padding:56px 22px 28px;display:none}
 #insights .ihd{font-size:16px;line-height:1.55;max-width:980px;margin:0 auto 18px}
 #insights .ihd b{color:var(--ink)}
-#insights .ctrls{max-width:1200px;margin:0 auto 16px;display:flex;flex-wrap:wrap;gap:20px;font-size:14.5px}
+#insights .ctrls{max-width:1200px;margin:0 auto 16px;display:flex;flex-wrap:wrap;gap:20px;font-size:14px}
 #insights .ctrls .grp{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
 #insights .ctrls .lbl{color:var(--mut);font-weight:700;text-transform:uppercase;font-size:12.5px;letter-spacing:.06em;margin-right:3px}/* match the Explore .sec label so the two views read as one product */
-#insights .chip{background:#10203044;border:1px solid #2a3a4d;border-radius:14px;padding:4px 11px;cursor:pointer;user-select:none}
+#insights .chip{background:#10203044;border:1px solid #2a3a4d;border-radius:14px;padding:5px 10px;cursor:pointer;user-select:none}
 #insights .chip.on{background:var(--acc);border-color:var(--acc);color:#fff}
 #insights .chip:focus-visible,.infobtn:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 #insights .matrix{display:grid;gap:10px;max-width:1200px;margin:0 auto;align-items:start}
-#insights .gh{font-weight:700;font-size:14.5px;text-align:center;align-self:end;padding-bottom:3px}
+#insights .gh{font-weight:700;font-size:14px;text-align:center;align-self:end;padding-bottom:3px}
 #insights .gh .gq{color:var(--mut);font-size:11.5px;font-weight:400;line-height:1.2;display:block;margin-top:1px}
 #insights .rl{font-weight:700;font-size:15px;display:flex;align-items:center}
-#insights .cell{background:var(--panel);border:1px solid #243446;border-radius:9px;padding:6px;cursor:pointer;transition:border-color .12s}
+#insights .cell{background:var(--panel);border:1px solid #2a3a4d;border-radius:9px;padding:6px;cursor:pointer;transition:border-color .12s}
 #insights .cell:hover{border-color:var(--acc)}
 #insights .cell canvas{width:100%;height:auto;background:#fbfbf6;border-radius:5px;display:block}
-#insights .idis{max-width:980px;margin:18px auto 0;color:var(--mut);font-size:14.5px;line-height:1.6;border-top:1px solid #243446;padding-top:12px}
+#insights .idis{max-width:980px;margin:18px auto 0;color:var(--mut);font-size:14px;line-height:1.6;border-top:1px solid #243446;padding-top:12px}
 #insights .idis b{color:var(--ink)}
 .sechd{display:flex;align-items:center;gap:6px;margin:14px 0 8px}
 .sechd .sec{margin:0}
@@ -224,7 +224,7 @@ details.adv>summary:hover{color:var(--ink)}
   .langtoggle button{padding:7px 13px}
 }
 #maplegend{position:fixed;bottom:24px;right:14px;z-index:1050;background:rgba(255,255,255,.93);border-radius:9px;padding:6px 10px;box-shadow:0 2px 10px rgba(0,0,0,.22);font-size:14px;color:#16233a;max-width:244px;line-height:1.25}
-#maplegend .lt{font-weight:700;font-size:14.5px}/* retained: reused by the Getting Even categorical legend title (the priority-legend title div was removed for #47) */
+#maplegend .lt{font-weight:700;font-size:14px}/* retained: reused by the Getting Even categorical legend title (the priority-legend title div was removed for #47) */
 #maplegend .ramp{height:9px;border-radius:5px;background:linear-gradient(90deg,#ffffd9,#c7e9b4,#41b6c4,#225ea8,#081d58);margin:3px 0 2px}
 #maplegend .lab{display:flex;justify-content:space-between;font-size:12.5px;color:#46566a}
 #maplegend .hint{margin-top:3px;color:#46566a;font-size:12.5px}
