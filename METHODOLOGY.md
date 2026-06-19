@@ -84,13 +84,18 @@ Challenge presets are just preset weight mixes, e.g. *Canada's Most Wanted* = co
 
 ## Validation — does priority actually predict discovery?
 
+**Tested, not asserted.** At equal effort, the cells this tool ranks highest discover **up to 3× more
+new species** than the cells it ranks lowest — Spearman **ρ ≈ 0.47–0.69**, permutation **p < 0.001**,
+and it holds out-of-sample in Eastern Canada. The per-taxon numbers are in the table below; every one
+reads straight from a committed result file.
+
 The premise — *a record in an under-sampled cell adds more than one where people already crowd* —
 is tested, not asserted, on a **leakage-free temporal split** of the BC 2025 pilot (iNaturalist
 project 228908): score each cell from observations **up to** a cutoff T, then measure
 **new-to-cell species recorded after T**, rarefied to **equal effort** (K = 5 observations per
 cell) so busy cells get no free credit for sheer volume. Significance is a permutation null, and
 the whole thing is re-run **out-of-sample on Eastern Canada** (disjoint from BC). Scripts:
-`voi_backtest.py`, `backtest_appscore.py`.
+`voi_backtest.py`, `backtest_appscore.py` (BC), `backtest_east.py` (East).
 
 - **Under-sampling predicts discovery.** At equal effort, the train-only `discover` axis ranks
   cells by new-species yield at Spearman **ρ ≈ 0.47–0.69** across five taxa (amphibians, birds,
@@ -104,6 +109,30 @@ the whole thing is re-run **out-of-sample on Eastern Canada** (disjoint from BC)
   still accumulate *more* new species in absolute terms — raw count anti-correlates with priority.
   The validated, decision-relevant claim is the one about *your* trip: **a given amount of effort
   discovers more in a gap cell.**
+
+### The numbers, per taxon
+
+| Taxon | Region | Cells (rarefied) | `discover` ρ | Composite ρ | Yield, top vs bottom |
+|---|---|---:|---:|---:|---:|
+| Amphibians | BC | 91 | 0.48 | 0.42 | 2.0× |
+| Birds | BC | 126 | 0.61 | 0.24 | 1.8× |
+| Insects | BC | 106 | 0.53 | 0.21 | 1.3× |
+| Mammals | BC | 141 | 0.61 | 0.30 | 2.7× |
+| Reptiles | BC | 59 | 0.65 | 0.52 | 2.5× |
+| Birds | East | 178 | 0.58 | 0.37 | 1.4× |
+| Insects | East | 136 | 0.47 | 0.30 | 1.1× |
+| Mammals | East | 213 | 0.69 | 0.52 | 3.0× |
+
+*How to read a row:* take **mammals in the East** — rank its 213 cells by the `discover` axis, send the
+same five observations to each, and the top-ranked cells turn up **3× as many new species** as the
+bottom-ranked ones. **ρ** is the rank correlation between priority and discovery (1.0 = perfect, 0 =
+none); **Yield** is that effect in plain terms — new species found per equal effort, best cells over
+worst. Every `discover` correlation clears permutation **p < 0.001**; the composite clears **p ≤ 0.03**
+(weakest: BC insects, 0.029).
+
+*Reproduce:* `python backtest_appscore.py` (BC) and `python backtest_east.py` (East) regenerate
+`cluster_results/voi_appscore_results.json` and `…_east_results.json`; the table reads straight from
+those two files.
 
 *Scope (honest):* retrospective over *collected* iNaturalist observations — it inherits observer
 bias (controlled via rate-per-observation and effort rarefaction, not eliminated); "new species"
