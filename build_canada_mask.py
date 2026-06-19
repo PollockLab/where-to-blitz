@@ -1,31 +1,34 @@
-"""Tag grid cells that fall outside Canada, for the app's optional 'Canada only' view.
+"""Tag grid cells that fall on the US side of the border, for the app's 'Canada only' view.
 
-The 0.25-deg grid is identical across taxa, so we read one webapp_data_*.json, test each
-cell centre against a simplified Canada boundary (Natural Earth 1:110m, committed alongside),
-and write the out-of-Canada cell keys to us_cells.json. Approximate at the ~25 km border scale;
-it cleanly removes the deep-US band (the 49N false-gap seam) without needing the heavy rasters.
-Keys match the app's gekey: lat.toFixed(3)+','+lon.toFixed(3).
+The 0.25-deg grid is identical across taxa, so we read one webapp_data_*.json and classify each
+cell centre by NEAREST COUNTRY: a cell is hidden only if its centre is closer to the United States
+than to Canada (Natural Earth 1:50m boundaries, simplified to ~0.01 deg and committed alongside as
+na_boundaries.geojson). This is symmetric — it removes the deep-US band AND the coastal-Alaska
+panhandle west of BC (issue #72) without ever hiding Canadian coastal-water cells (the previous
+lat<49.5 + coarse-1:110m heuristic over-hid those, and missed Alaska entirely). Cells inside Canada
+are kept instantly via a prepared contains() test; only the ~6k non-interior cells pay the
+distance computation. Keys match the app's gekey: lat.toFixed(3)+','+lon.toFixed(3).
 """
 import json, glob, os
 from shapely.geometry import shape, Point
 from shapely.prepared import prep
 
 HERE = "cluster_results/ca"
-geo = json.load(open(os.path.join(HERE, "canada_boundary.geojson")))
-geom = geo.get("geometry") or geo["features"][0]["geometry"]
-canada = prep(shape(geom))
+bd = json.load(open(os.path.join(HERE, "na_boundaries.geojson")))
+geoms = {f["properties"]["country"]: shape(f["geometry"]) for f in bd["features"]}
+CA, US = geoms["CA"], geoms["US"]
+CA_prep = prep(CA)
 
 src = next(f for f in sorted(glob.glob(f"{HERE}/webapp_data_*.json")) if "gettingeven" not in f)
 d = json.load(open(src)); rows = d[next(k for k, v in d.items() if isinstance(v, list))]
 
-# Only flag below 49.5N. The grid's genuine US cells are all south of there (Alaska is west
-# of the -141 bbox edge), while the simplified boundary drops Canadian Arctic-archipelago and
-# coastal islands (Baffin, Ellesmere, Haida Gwaii) -- capping the test keeps those as Canada.
-US_LAT_MAX = 49.5
 us = []
 for r in rows:
     lat, lon = r[0], r[1]
-    if lat < US_LAT_MAX and not canada.contains(Point(lon, lat)):
+    p = Point(lon, lat)
+    if CA_prep.contains(p):
+        continue                          # interior Canada — always shown
+    if CA.distance(p) > US.distance(p):   # closer to the US than to Canada — hide
         us.append(f"{lat:.3f},{lon:.3f}")
 json.dump({"us_cells": us}, open(f"{HERE}/us_cells.json", "w"), separators=(",", ":"))
-print(f"{len(us)} / {len(rows)} cells outside Canada -> us_cells.json")
+print(f"{len(us)} / {len(rows)} cells nearer the US than Canada -> us_cells.json")

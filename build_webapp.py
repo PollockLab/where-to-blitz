@@ -1452,8 +1452,12 @@ async function renderInsights(){
 // Explore mode: tap a cell to see its score + what to record there (no trip planning).
 function exploreCell(lat,lon){
   if(!markers.length)return;   // map tapped before cell data loaded
-  _reselect=true;   // swapping selections: suppress the close-driven deselect until the new popup is open (issue #16)
   let best=markers[0],bd=1e9;for(const m of markers){const d=Math.abs(m.r[0]-lat)+Math.abs(m.r[1]-lon);if(d<bd){bd=d;best=m;}}
+  // #72: a tap snaps to the nearest cell. Reject taps far from any cell (no grabbing a distant border cell
+  // from mid-ocean / outside the grid; ~0.45° Manhattan ≈ within one 0.25° cell), and never select a hidden
+  // US cell — the marker handler already guards direct cell taps, this covers taps on the bare map.
+  if(bd>0.45||(caOnlyActive()&&US_CELLS&&US_CELLS.has(gekey(best.r[0],best.r[1]))))return;
+  _reselect=true;   // swapping selections: suppress the close-driven deselect until the new popup is open (issue #16)
   const o=best,dest=[o.r[0],o.r[1]];clearRoute();
   try{history.replaceState(null,'','?at='+dest[0].toFixed(3)+','+dest[1].toFixed(3)+'&g='+encodeURIComponent(state.taxon));}catch(e){}
   destCell=L.rectangle([[dest[0]-0.125,dest[1]-0.125],[dest[0]+0.125,dest[1]+0.125]],{color:'#1b7837',weight:2,dashArray:'5 5',fillColor:'#74c476',fillOpacity:0.16,interactive:false}).addTo(map);
