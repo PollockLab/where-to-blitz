@@ -408,7 +408,7 @@ const I18N={
     gaptree_lookup:"Reading taxonomic coverage…",
     gaptree_sparse:"Too few nearby records to rank groups here yet — every sighting helps fill the map.",
     gaptree_err:"Couldn’t read coverage just now — tap the cell again.",
-    pop_groups_hd:"Four least sampled groups", pop_rare_hd:"Four most rarely logged species",
+    pop_groups_hd:"Under-sampled groups", pop_rare_hd:"Four most rarely logged species",
     gt_caveat:"iNaturalist records — what's been logged nearby, a proxy for effort, not a count of what's there.",
     gt_gap:"gap", gt_partial:"partial", gt_ok:"well recorded",
     gt_count:(c,n)=>`${c} here · ~${n} nearby`,   // two observed iNat record tallies, not a ratio-of-total: "X of ~Y" wrongly read as complete coverage at equality (5 of ~5). ~Y is a floor, never true richness.
@@ -559,7 +559,7 @@ const I18N={
     gaptree_lookup:"Lecture de la couverture taxonomique…",
     gaptree_sparse:"Trop peu d’observations à proximité pour classer les groupes ici — chaque observation aide à combler la carte.",
     gaptree_err:"Lecture de la couverture impossible pour l’instant — touchez la cellule à nouveau.",
-    pop_groups_hd:"Quatre groupes les moins échantillonnés", pop_rare_hd:"Quatre espèces les plus rarement observées",
+    pop_groups_hd:"Groupes sous-échantillonnés", pop_rare_hd:"Quatre espèces les plus rarement observées",
     gt_caveat:"Observations iNaturalist — ce qui est consigné à proximité, un indice d'effort, pas un inventaire de ce qui s'y trouve.",
     gt_gap:"lacune", gt_partial:"partielle", gt_ok:"bien documenté",
     gt_count:(c,n)=>`${c} ici · ~${n} à proximité`,
@@ -1468,7 +1468,10 @@ function exploreCell(lat,lon){
   popDiv.appendChild(popGaps); popDiv.appendChild(popSp);
   destMarker=L.marker(dest,{icon:destIcon,zIndexOffset:900}).addTo(map)
     .bindPopup(popDiv,{maxWidth:320,minWidth:288,autoPanPaddingTopLeft:[18,96],autoPanPaddingBottomRight:[18,40]});
-  map.setView(dest,map.getZoom(),{animate:false});
+  // #70: place the tapped cell low (≈1/6 of the map height below it) so the upward-opening popup
+  // clears the top chrome on laptops — true-centering hid the popup's top.
+  const _z=map.getZoom(),_dp=map.project(dest,_z),_mh=map.getSize().y;
+  map.setView(map.unproject(L.point(_dp.x,_dp.y-_mh/3),_z),_z,{animate:false});
   destMarker.openPopup();
   _reselect=false;
   fetchProspects(dest[0],dest[1],'destination',{toPopup:true,spEl:popSp,gapsEl:popGaps});
