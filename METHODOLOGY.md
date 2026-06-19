@@ -82,6 +82,37 @@ Challenge presets are just preset weight mixes, e.g. *Canada's Most Wanted* = co
 
 ---
 
+## Validation — does priority actually predict discovery?
+
+The premise — *a record in an under-sampled cell adds more than one where people already crowd* —
+is tested, not asserted, on a **leakage-free temporal split** of the BC 2025 pilot (iNaturalist
+project 228908): score each cell from observations **up to** a cutoff T, then measure
+**new-to-cell species recorded after T**, rarefied to **equal effort** (K = 5 observations per
+cell) so busy cells get no free credit for sheer volume. Significance is a permutation null, and
+the whole thing is re-run **out-of-sample on Eastern Canada** (disjoint from BC). Scripts:
+`voi_backtest.py`, `backtest_appscore.py`.
+
+- **Under-sampling predicts discovery.** At equal effort, the train-only `discover` axis ranks
+  cells by new-species yield at Spearman **ρ ≈ 0.47–0.69** across five taxa (amphibians, birds,
+  insects, mammals, reptiles), all permutation **p < 0.01**, and holds out-of-sample in the East.
+- **Going where it's already busy anti-predicts it.** All-time observation density (the
+  opportunistic "light up the map" signal, used as a negative control) lands at **ρ ≈ −0.47 to
+  −0.69** — the opposite sign. This is the core "blitz the gap" result.
+- **The leak-free composite validates** at **ρ ≈ 0.21–0.52** (all p ≤ 0.03): the blended impact
+  score points the same way, once its `discover` axis is rebuilt from only what was known at T.
+- **Read it per-effort, not by raw count.** Because more people visit busy cells, those cells
+  still accumulate *more* new species in absolute terms — raw count anti-correlates with priority.
+  The validated, decision-relevant claim is the one about *your* trip: **a given amount of effort
+  discovers more in a gap cell.**
+
+*Scope (honest):* retrospective over *collected* iNaturalist observations — it inherits observer
+bias (controlled via rate-per-observation and effort rarefaction, not eliminated); "new species"
+means new to that cell's iNaturalist record, not new to science. Method grounded in Di Cecco et
+al. 2021 (effort/observer-bias confound), Chao 1984 and Colwell & Coddington 1994 (richness
+extrapolation).
+
+---
+
 ## Trip planning
 
 - **Travel time** per cell: mean of **Weiss et al. 2018** "accessibility" (minutes to the
