@@ -69,10 +69,7 @@ HTML = r"""<!doctype html>
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;font-family:'Inter',-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink)}
 h1,.sec,.sechd .sec,.popsec,#viewtoggle button,#langbtn{font-family:'Space Grotesk','Inter',sans-serif}
-:root{--bh:30px}
-#protobar{position:fixed;top:0;left:0;right:0;height:30px;z-index:3000;display:flex;align-items:center;justify-content:center;gap:10px;background:#e99002;color:#231900;font-size:12px;font-weight:600;padding:0 12px;white-space:nowrap;overflow:hidden;box-shadow:0 1px 5px rgba(0,0,0,.35)}
-#protobar button{background:rgba(0,0,0,.22);border:0;color:inherit;border-radius:5px;cursor:pointer;font-size:14px;line-height:1;padding:1px 7px;flex:none}
-@media(max-width:640px){#protobar{font-size:11px;gap:6px;padding:0 8px}}
+:root{--bh:0px}
 #app{display:flex;height:calc(100% - var(--bh));margin-top:var(--bh);position:relative}
 /* Issue #20: the panel floats as a short card over a full-width map instead of a full-height column. */
 /* The rounded card and the scroller are separate elements: a scrolling element with border-radius
@@ -250,7 +247,7 @@ details.adv>summary:hover{color:var(--ink)}
 #howclose:hover{color:var(--ink)}
 @media(max-width:640px){#topctrls{right:8px}#howbtn{max-width:none;font-size:12px}#howpanel{left:8px;right:8px;width:auto;top:calc(50vh + 44px);max-height:44vh}}
 </style></head>
-<body><div id="protobar" role="region" data-i18n-aria="aria_site_notice" aria-label="Site notice"><span data-i18n="proto_banner">⚠ Work in progress — a planning aid, not ground truth</span><button id="protox" type="button" data-i18n-aria="aria_dismiss" data-i18n-title="aria_dismiss_short" aria-label="Dismiss notice" title="Dismiss">×</button></div><div id="app">
+<body><div id="app">
 <div id="panel" role="main"><div id="panelInner">
   <div class="titlerow">
     <h1 data-i18n-html="title_full">Where to<br><a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc);text-decoration:underline">Blitz the Gap</a></h1>
@@ -385,7 +382,6 @@ const I18N={
     search_ph:"Search a town or address",
     my_location:"Locate me",
     start_alt:"Trip start — drag to move", start_tip:"Start — drag me, or tap the map",
-    aria_site_notice:"Site notice", aria_dismiss:"Dismiss notice", aria_dismiss_short:"Dismiss",
     aria_language:"Language", lang_switch:"Switch language", aria_about_data:"About the data", aria_lifegroup:"Species group", aria_criteria:"Criteria",
     aria_search:"Search for a start place", aria_search_results:"Search results", aria_time_unit:"Time unit",
     aria_time_budget:"Time budget", aria_max_travel:"Max travel each way", aria_worth_drive:"Worth the drive",
@@ -458,7 +454,6 @@ const I18N={
     top_cells:"Top cells (accessible list)",
     view_explore:"Explore", view_plan:"Plan a trip", view_compare:"Compare goals",
     loading:"Loading the map…",
-    proto_banner:"⚠ Work in progress — a planning aid, not ground truth",
     load_error:"⚠ Couldn't load the map — check your connection.",
     retry:"↻ Retry",
     legend_title:"Where to blitz", legend_low:"well-sampled", legend_high:"biggest gaps",
@@ -535,7 +530,6 @@ const I18N={
     search_ph:"Rechercher une ville ou une adresse",
     my_location:"Me localiser",
     start_alt:"Départ de la sortie — glissez pour déplacer", start_tip:"Départ — glissez-moi, ou touchez la carte",
-    aria_site_notice:"Avis du site", aria_dismiss:"Fermer l'avis", aria_dismiss_short:"Fermer",
     aria_language:"Langue", lang_switch:"Changer de langue", aria_about_data:"À propos des données", aria_lifegroup:"Groupe d'espèces", aria_criteria:"Critère",
     aria_search:"Rechercher un lieu de départ", aria_search_results:"Résultats de recherche", aria_time_unit:"Unité de temps",
     aria_time_budget:"Temps disponible", aria_max_travel:"Trajet max (aller)", aria_worth_drive:"Vaut le déplacement",
@@ -608,7 +602,6 @@ const I18N={
     top_cells:"Meilleures cellules (liste accessible)",
     view_explore:"Explorer", view_plan:"Planifier une sortie", view_compare:"Comparer les objectifs",
     loading:"Chargement de la carte…",
-    proto_banner:"⚠ Travail en cours — une aide à la planification, pas une vérité de terrain",
     load_error:"⚠ Impossible de charger la carte — vérifiez votre connexion.",
     retry:"↻ Réessayer",
     legend_title:"Où aller", legend_low:"bien échantillonné", legend_high:"plus grandes lacunes",
@@ -1168,7 +1161,6 @@ if(critSel)critSel.onchange=()=>{const v=critSel.value, ge=document.getElementBy
     applyChallenge(PRESETS[+v]);
   }};
 applyChallenge(PRESETS[0]);
-(function(){var b=document.getElementById('protobar'),x=document.getElementById('protox');if(!b)return;var off=function(){b.style.display='none';document.documentElement.style.setProperty('--bh','0px');if(window.map)setTimeout(function(){map.resize();},60);};try{if(localStorage.getItem('wtb_proto')==='hid')off();}catch(e){}if(x)x.onclick=function(){off();try{localStorage.setItem('wtb_proto','hid');}catch(e){}};})();
 
 const bmSel=document.getElementById('basemap');
 // Issue #20: map style is one of four choices; the iNaturalist sampling-density overlay folds in as the 4th.
