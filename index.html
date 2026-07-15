@@ -424,7 +424,7 @@ const I18N={
     legendtap_explore:"Tap a cell to see what to record.",
     legendtap_plan_start:"Tap the map to set your start.",
     legendtap_plan_dest:"Tap the map to choose your destination.",
-    near:"near", here:"here", my_loc_short:"my location", my_area_ip:"my area (from IP)",
+    near:"near", here:"here", my_loc_short:"my location", my_area_ip:"my area (from IP)", outside_ca:"outside Canada — showing Vancouver",
     locating:"locating…", loc_unavail:"location unavailable — try the search above",
     cells_loading:t=>`Loading ${t}…`,
     prospects_where_start:"Around your start", pop_go_title2:"Your destination",
@@ -572,7 +572,7 @@ const I18N={
     legendtap_explore:"Touchez une cellule pour voir quoi observer.",
     legendtap_plan_start:"Touchez la carte pour définir votre départ.",
     legendtap_plan_dest:"Touchez la carte pour choisir votre destination.",
-    near:"près de", here:"ici", my_loc_short:"ma position", my_area_ip:"ma région (selon l'IP)",
+    near:"près de", here:"ici", my_loc_short:"ma position", my_area_ip:"ma région (selon l'IP)", outside_ca:"hors Canada — Vancouver affiché",
     locating:"localisation…", loc_unavail:"position indisponible — utilisez la recherche ci-dessus",
     cells_loading:t=>`Chargement de ${t}…`,
     prospects_where_start:"Près de votre départ", pop_go_title2:"Votre destination",
@@ -1255,9 +1255,13 @@ const doSearch=debounce(async q=>{
 psEl.addEventListener('input',e=>doSearch(e.target.value));
 psEl.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();const f=srEl.querySelector('.res[data-lat]');if(f)f.click();}else if(e.key==='Escape')closeResults();});
 document.addEventListener('click',e=>{if(!srEl.contains(e.target)&&e.target!==psEl)closeResults();});
+// Canada bbox, matching the search viewbox (-141,84,-52,41). Off Canada -> the map has no cells there.
+function inCanada(lat,lon){return lat>=41&&lat<=84&&lon>=-141&&lon<=-52;}
 function locateMe(){setStartLabel(t('locating'));
   let done=false;
-  const ok=(lat,lon,how)=>{if(done)return;done=true;map.jumpTo({center:[lon,lat],zoom:7});setStart(lat,lon,how);};   // idempotent: GPS resolving after the IP fallback fired can't double-set
+  const ok=(lat,lon,how)=>{if(done)return;done=true;                          // GPS or IP landing outside Canada -> Vancouver default
+    if(!inCanada(lat,lon)){lat=VAN[0];lon=VAN[1];how=t('outside_ca');}
+    map.jumpTo({center:[lon,lat],zoom:7});setStart(lat,lon,how);};   // idempotent: GPS resolving after the IP fallback fired can't double-set
   const fail=()=>{if(!done)setStartLabel(t('loc_unavail'));};                                            // never clobber a successful locate
   if(navigator.geolocation){navigator.geolocation.getCurrentPosition(p=>ok(p.coords.latitude,p.coords.longitude,t('my_loc_short')),()=>{if(!done)ipLoc(ok,fail);},{timeout:6000});setTimeout(()=>{if(!done)ipLoc(ok,fail);},6500);}else ipLoc(ok,fail);}
 document.getElementById('setMe').onclick=locateMe;
