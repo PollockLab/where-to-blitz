@@ -16,3 +16,9 @@ cluster_results/inat_*.csv
 
 # local embedding cache for offline strategy sweeps (regenerable)
 local_cache/
+
+# #87 vector-tile spike: generated grid tiles + tmp (re-derivable via build_vector_tiles.py)
+cluster_results/_vtiles_tmp/
+density/cells5.pmtiles
+density/cells25.pmtiles
+density/_gap5_raster.pmtiles
