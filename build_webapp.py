@@ -23,12 +23,12 @@ OBJ = [
 # inputs (Make a Splash, Missing Species in Canada, Too Hot to Handle, KBA-assessment lists) are
 # not all wired yet; until the lab finalises the calculation, each goal is a TEMPORARY combination
 # of the five real axes already computed [discover, conservation, env, staleness, urgency]:
-#   Spatial Gap       = iNaturalist density + CHELSA climate gap
+#   Spatial Gap       = iNaturalist under-sampling only (inverse density; #89: no other factors)
 #   Species discovery = under-sampling + recent-vs-all-time density ("Revisit the Past")
 #   Conservation      = COSEWIC/SARA at risk + recently changed habitat ("Too Hot to Handle")
 # Getting Even is the separate categorical layer, added as the 'ge' option in the dropdown.
 PRESETS = [
-    {"name": "Spatial Gap",       "w": [1.0, 0, 0.5, 0, 0], "proj": "blitz-the-gap-2026-general",         "blurb": "Under-recorded places and under-sampled climates (iNaturalist density + CHELSA climate gap)."},
+    {"name": "Spatial Gap",       "w": [1.0, 0, 0, 0, 0],   "proj": "blitz-the-gap-2026-general",         "blurb": "Under-recorded places: where few have logged on iNaturalist (inverse observation density)."},
     {"name": "Species discovery", "w": [1.0, 0, 0, 0.6, 0], "proj": "blitz-the-gap-revisiting-the-past",  "blurb": "Where new-to-the-record species are likeliest: under-sampling plus cells recorded long ago but quiet lately."},
     {"name": "Conservation",      "w": [0, 1.0, 0, 0, 0.4], "proj": "blitz-the-gap-canada-s-most-wanted", "blurb": "Where species at risk concentrate, weighted toward recently changed habitat (COSEWIC/SARA via CAN-SAR + GBIF)."},
 ]
@@ -510,7 +510,7 @@ const I18N={
     obj_name:["Discover the most species","Find species at risk","Cover every habitat","Freshest gaps","Sample before it's lost"],
     obj_q:["go where few people have looked","go where COSEWIC/SARA species at risk concentrate","go where the climate is under-sampled","go where lots was recorded long ago but little lately (iNaturalist recent vs all-time density)","go where forest cover was recently lost (logging, fire, dieback)"],
     preset_name:["Spatial Gap","Species discovery","Conservation"],
-    preset_blurb:["Under-recorded places and under-sampled climates (iNaturalist density + CHELSA climate gap).","Where new-to-the-record species are likeliest: under-sampling plus cells recorded long ago but quiet lately.","Where species at risk concentrate, weighted toward recently changed habitat (COSEWIC/SARA via CAN-SAR + GBIF)."],
+    preset_blurb:["Under-recorded places: where few have logged on iNaturalist (inverse observation density).","Where new-to-the-record species are likeliest: under-sampling plus cells recorded long ago but quiet lately.","Where species at risk concentrate, weighted toward recently changed habitat (COSEWIC/SARA via CAN-SAR + GBIF)."],
     group:{Amphibia:"Amphibians",Aves:"Birds",Insecta:"Insects",Mammalia:"Mammals",Reptilia:"Reptiles",Plantae:"Plants",Fungi:"Fungi",Actinopterygii:"Fishes",Arachnida:"Arachnids",Mollusca:"Molluscs","All biodiversity":"All biodiversity"},
     modes:{Walk:"Walk",Cycle:"Cycle",Drive:"Drive"},
   },
@@ -657,7 +657,7 @@ const I18N={
     obj_name:["Découvrir le plus d'espèces","Trouver des espèces en péril","Couvrir chaque habitat","Lacunes les plus fraîches","Échantillonner avant qu'il soit trop tard"],
     obj_q:["allez où peu de gens ont cherché","allez où se concentrent les espèces en péril (COSEWIC/SARA)","allez où le climat est sous-échantillonné","allez où l'on a beaucoup observé autrefois mais peu récemment (densité iNaturalist récente vs historique)","allez où le couvert forestier a été récemment perdu (coupe, feu, dépérissement)"],
     preset_name:["Lacune spatiale","Découverte d'espèces","Conservation"],
-    preset_blurb:["Lieux sous-observés et climats sous-échantillonnés (densité iNaturalist + lacune climatique CHELSA).","Là où de nouvelles espèces pour le registre sont les plus probables : sous-représentation et cellules observées autrefois mais calmes récemment.","Là où se concentrent les espèces en péril, pondéré vers les habitats récemment modifiés (COSEWIC/SARA; CAN-SAR + GBIF)."],
+    preset_blurb:["Lieux sous-observés : là où peu de gens ont enregistré sur iNaturalist (densité d'observation inversée).","Là où de nouvelles espèces pour le registre sont les plus probables : sous-représentation et cellules observées autrefois mais calmes récemment.","Là où se concentrent les espèces en péril, pondéré vers les habitats récemment modifiés (COSEWIC/SARA; CAN-SAR + GBIF)."],
     group:{Amphibia:"Amphibiens",Aves:"Oiseaux",Insecta:"Insectes",Mammalia:"Mammifères",Reptilia:"Reptiles",Plantae:"Plantes",Fungi:"Champignons",Actinopterygii:"Poissons",Arachnida:"Arachnides",Mollusca:"Mollusques","All biodiversity":"Toute la biodiversité"},
     modes:{Walk:"Marche",Cycle:"Vélo",Drive:"Voiture"},
   }
