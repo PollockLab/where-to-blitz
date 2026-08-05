@@ -8,11 +8,15 @@ per cell: what fraction of verifiable records are stuck unverified, and how long
 they've waited. Pair with the research-grade pull (inat_<taxon>.csv) to get the
 per-cell backlog fraction = needs_id / (needs_id + research).
 """
-import sys, time, requests, pandas as pd
+import sys
+import time
+
+import pandas as pd
+import requests
 
 INAT = "https://api.inaturalist.org/v1/observations"
 PROJECT = 228908
-BC = dict(swlat=48.3, swlng=-139.1, nelat=60.0, nelng=-114.0)
+BC = {"swlat": 48.3, "swlng": -139.1, "nelat": 60.0, "nelng": -114.0}
 SEASON = ("2025-04-01", "2025-09-30")
 PER_PAGE = 200
 SLEEP = 0.5
@@ -37,13 +41,13 @@ def pull(iconic, d1, d2, qgrade, cap=CAP_PAGES):
             if not g or not o.get("observed_on"):
                 continue
             t = o.get("taxon") or {}
-            rows.append(dict(
-                id=o["id"], lon=g["coordinates"][0], lat=g["coordinates"][1],
-                observed_on=o["observed_on"], created_at=o.get("created_at"),
-                quality_grade=o.get("quality_grade"),
-                ident_count=o.get("identifications_count"),
-                agree=o.get("num_identification_agreements"),
-                taxon_id=t.get("id"), rank=t.get("rank")))
+            rows.append({
+                "id": o["id"], "lon": g["coordinates"][0], "lat": g["coordinates"][1],
+                "observed_on": o["observed_on"], "created_at": o.get("created_at"),
+                "quality_grade": o.get("quality_grade"),
+                "ident_count": o.get("identifications_count"),
+                "agree": o.get("num_identification_agreements"),
+                "taxon_id": t.get("id"), "rank": t.get("rank")})
         id_below = res[-1]["id"]; pages += 1
         if len(res) < PER_PAGE:
             break

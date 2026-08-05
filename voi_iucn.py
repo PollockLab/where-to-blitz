@@ -6,7 +6,11 @@ not the range-restriction proxy. Run on vertebrates (good IUCN coverage).
 GBIF endpoint (no auth, verified): /species/match -> usageKey ->
 /species/{key}/iucnRedListCategory -> code (LC/NT/VU/EN/CR/...).
 """
-import sys, json, time, os
+import json
+import os
+import sys
+import time
+
 import pandas as pd
 import requests
 import voi_conservation as vc

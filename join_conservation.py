@@ -7,7 +7,10 @@ cell's normalized at-risk score from ca_atrisk_richness.csv (built by build_atri
 fetches these JSONs at runtime, so patching them updates the live data (no index.html rebuild needed
 for the data itself; labeling changes are separate).
 """
-import json, csv, glob, os
+import csv
+import glob
+import json
+import os
 
 RES = 0.25
 norm = {}

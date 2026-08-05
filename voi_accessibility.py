@@ -8,7 +8,10 @@ script tests that claim on the BC backtest cells using the real Weiss 2018
 travel-time-to-cities surface (minutes), and quantifies the reachable-frontier
 trade-off a practical tool faces.
 """
-import sys, json, glob
+import glob
+import json
+import sys
+
 import numpy as np
 import pandas as pd
 import rasterio
@@ -53,7 +56,7 @@ def analyse(name):
     r, _ = spearman(cells.travel_min.values, cells.priority.values)
     out["traveltime_vs_priority"] = r
     # 3. do remote cells actually out-discover at equal effort? travel-time vs rarefied new@K
-    r, n = spearman(rk.travel_min.values, rk.rare_newK.values)
+    r, _n = spearman(rk.travel_min.values, rk.rare_newK.values)
     out["traveltime_vs_discovery_rarefied"] = r
     # 4. reachable-frontier trade-off: among revisited cells, if we keep only those
     #    within a travel budget, how much discovery do we retain vs how much closer?

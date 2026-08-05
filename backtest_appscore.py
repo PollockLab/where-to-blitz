@@ -20,7 +20,9 @@ Leakage discipline (the crux):
 Outcome + controls (rarefied new-species@K, permutation null) are reused from
 voi_backtest so the two analyses are directly comparable.
 """
-import sys, json, glob
+import json
+import sys
+
 import numpy as np
 import pandas as pd
 import voi_backtest as vb
@@ -39,7 +41,7 @@ GROUP = {"Amphibia": "Amphibia", "Aves": "Aves", "Insecta": "Insecta",
 def load_app_axes(group):
     """(gi,gj) -> dict of the app's per-cell axis values, on the shared grid."""
     d = json.load(open(f"{CA}/webapp_data_{group}.json"))
-    rows = d[list(d.keys())[0]]
+    rows = d[next(iter(d.keys()))]
     out = {}
     for r in rows:
         gi = int(np.floor(r[0] / RES)); gj = int(np.floor(r[1] / RES))
@@ -103,7 +105,7 @@ def analyse(name, df, K=5):
     rk["app_leakfree"] = composite(rk, "scarcity")      # train-only discover proxy
     rk["app_shipped"] = composite(rk, "app_discover")   # all-time discover (LEAKY)
 
-    out = {"taxon": name, "n_cells": int(len(cells)), "n_rarefied": int(len(rk)),
+    out = {"taxon": name, "n_cells": len(cells), "n_rarefied": len(rk),
            "K": K, "perm_p_floor": 1.0 / vb.N_PERM,
            "total_new_species": int(cells.new_species.sum())}
 
@@ -119,11 +121,11 @@ def analyse(name, df, K=5):
     }
     res = {}
     for key, sc in scores.items():
-        rho, p, mu, sd = vb.perm_test(sc.values, rk.rare_newK.values,
+        rho, p, _mu, _sd = vb.perm_test(sc.values, rk.rare_newK.values,
                                       np.random.default_rng(vb.SEED + 7))
         ratio, topm, botm = eff_ratio(rk, sc)
-        res[key] = dict(spearman=rho, perm_p=p, eff_ratio_top_bottom=ratio,
-                        new_at_K_top=topm, new_at_K_bottom=botm)
+        res[key] = {"spearman": rho, "perm_p": p, "eff_ratio_top_bottom": ratio,
+                        "new_at_K_top": topm, "new_at_K_bottom": botm}
     out["scores"] = res
     return out, rk
 
@@ -149,6 +151,6 @@ if __name__ == "__main__":
             d = s[key]
             er = d["eff_ratio_top_bottom"]
             print(f"  {key:22s} rho={d['spearman']:+.3f} perm_p={fp(d['perm_p']):>8} "
-                  f"eff_top/bot={('%.2fx' % er) if er else '  n/a'}")
+                  f"eff_top/bot={(f'{er:.2f}x') if er else '  n/a'}")
     json.dump(results, open("cluster_results/voi_appscore_results.json", "w"), indent=2)
     print(f"\nwrote cluster_results/voi_appscore_results.json ({len(results)} taxa)")

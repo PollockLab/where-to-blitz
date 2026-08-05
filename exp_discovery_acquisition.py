@@ -9,8 +9,14 @@ and reports discovery curves. Every claim is a measured number with seeds.
 Output: exp_discovery_results.json + exp_discovery_curves.png in --out.
 """
 from __future__ import annotations
-import argparse, io, json, time, urllib.request
+
+import argparse
+import io
+import json
+import time
+import urllib.request
 from collections import defaultdict
+
 import numpy as np
 
 INAT = "https://api.inaturalist.org/v1/observations"
@@ -56,21 +62,23 @@ def fetch_image(url):
 
 
 def _load_dinov2(device):
-    import torch, torchvision.transforms as T
+    import torch
+    import torchvision.transforms as T
     model = torch.hub.load("facebookresearch/dinov2", "dinov2_vits14").to(device).eval()
     tf = T.Compose([T.Resize(224), T.CenterCrop(224), T.ToTensor(),
                     T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
     return model, tf, "dinov2_vits14"
 
 def _load_resnet50(device):
-    import torch, torchvision
+    import torch
+    import torchvision
     from torchvision.models import ResNet50_Weights
     w = ResNet50_Weights.IMAGENET1K_V2
     m = torchvision.models.resnet50(weights=w); m.fc = torch.nn.Identity()
     return m.to(device).eval(), w.transforms(), "resnet50_imagenet"
 
 def _load_clip(device):
-    import torch, open_clip
+    import open_clip
     model, _, preprocess = open_clip.create_model_and_transforms("ViT-B-32", pretrained="laion2b_s34b_b79k")
     model = model.to(device).eval()
     class _Vis:
@@ -100,7 +108,6 @@ def embed_images(records, device, batch=64, want="auto"):
     def flush():
         if not buf:
             return
-        import torch
         with torch.no_grad():
             x = torch.stack(buf).to(device)
             z = encode(x).float().cpu().numpy()
@@ -178,11 +185,11 @@ def main():
 
     recs = pull_observations(args.n)
     print(f"pulled {len(recs)} amphibian obs w/ photo+species, "
-          f"{len(set(r['species'] for r in recs))} distinct species")
+          f"{len({r['species'] for r in recs})} distinct species")
     E, keep, backbone = embed_images(recs, device, want=args.backbone)
     recs = [recs[i] for i in keep]
     print(f"embedded {len(recs)} images with {backbone}, dim={E.shape[1]} in {time.time()-t0:.0f}s")
-    n_species = len(set(r["species"] for r in recs))
+    n_species = len({r["species"] for r in recs})
 
     strategies = {"random": acq_random, "spatial_coverage": acq_spatial_coverage,
                   "embedding_novelty": acq_embed_novelty}

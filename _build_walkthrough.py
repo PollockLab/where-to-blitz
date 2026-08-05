@@ -24,8 +24,9 @@ Pages root). The Mermaid source is preserved in a <details> block for editabilit
 """
 import urllib.error
 import urllib.request
+
 import nbformat as nbf
-from nbformat.v4 import new_notebook, new_markdown_cell, new_code_cell
+from nbformat.v4 import new_code_cell, new_markdown_cell, new_notebook
 
 _ZOOMOUT_PNG = "where-to-blitz-zoomout.png"
 

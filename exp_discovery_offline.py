@@ -36,8 +36,15 @@ Every claim is a measured number with seeds, a paired sign-flip permutation test
 bootstrap CI; contrasts compare each strategy against the BEST simple spatial baseline.
 """
 from __future__ import annotations
-import argparse, io, json, os, time, urllib.request
+
+import argparse
+import io
+import json
+import os
+import time
+import urllib.request
 from pathlib import Path
+
 import numpy as np
 
 INAT = "https://api.inaturalist.org/v1/observations"
@@ -113,14 +120,16 @@ def fetch_image_from_url(url: str):
 
 # ---- backbones -------------------------------------------------------------
 def _load_dinov2(device):
-    import torch, torchvision.transforms as T
+    import torch
+    import torchvision.transforms as T
     model = torch.hub.load("facebookresearch/dinov2", "dinov2_vits14").to(device).eval()
     tf = T.Compose([T.Resize(224), T.CenterCrop(224), T.ToTensor(),
                     T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
     return model, tf, "dinov2_vits14"
 
 def _load_resnet50(device):
-    import torch, torchvision
+    import torch
+    import torchvision
     from torchvision.models import ResNet50_Weights
     w = ResNet50_Weights.IMAGENET1K_V2
     m = torchvision.models.resnet50(weights=w); m.fc = torch.nn.Identity()
@@ -379,7 +388,7 @@ def main():
     if args.stage_only:
         print("[stage] pulling observations from iNaturalist...")
         recs = pull_observations(args.n, taxon=args.taxon, project=args.project)
-        print(f"[stage] got {len(recs)} obs ({len(set(r['species'] for r in recs))} species)")
+        print(f"[stage] got {len(recs)} obs ({len({r['species'] for r in recs})} species)")
         assert cache_dir, "--image-cache required for --stage-only"
         recs = stage_images(recs, cache_dir)
         out_json = cache_dir / "observations.json"
@@ -419,7 +428,7 @@ def main():
             print(f"[run] no obs cache, pulling {args.taxon} from iNat (need internet)...")
             recs = pull_observations(args.n, taxon=args.taxon, project=args.project)
         print(f"pulled {len(recs)} {args.taxon} obs w/ photo+species, "
-              f"{len(set(r['species'] for r in recs))} distinct species")
+              f"{len({r['species'] for r in recs})} distinct species")
         use_cache = cache_dir is not None
         E, keep, backbone = embed_images(recs, device, want=args.backbone, use_cache=use_cache)
         recs = [recs[i] for i in keep]

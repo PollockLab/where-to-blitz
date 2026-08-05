@@ -22,11 +22,14 @@ Honest caveat: both pulls are page-capped (~6400/taxon/window), so in the
 densest cells both sides saturate and backlog_frac is biased there; frac_unengaged
 and median_wait are the robust headline, backlog_frac is directional.
 """
-import sys, json, glob
+import glob
+import json
+import sys
+
+import backtest_appscore as bas
 import numpy as np
 import pandas as pd
 import voi_backtest as vb
-import backtest_appscore as bas
 
 RES = vb.RES
 REF_DATE = pd.Timestamp("2026-06-14", tz="UTC")     # pull date; fixed for determinism
@@ -79,9 +82,9 @@ def analyse(name):
 
     out = {
         "taxon": name,
-        "n_needsid_obs": int(len(ni)),
-        "n_research_obs": int(len(rs)),
-        "n_cells_scored": int(len(scored)),
+        "n_needsid_obs": len(ni),
+        "n_research_obs": len(rs),
+        "n_cells_scored": len(scored),
         "overall_backlog_frac": float(len(ni) / (len(ni) + len(rs))),
         "median_wait_days_all": float(np.nanmedian(ni.wait_days)),
         "frac_unengaged_all": float(ni.unengaged.mean()),

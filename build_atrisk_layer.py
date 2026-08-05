@@ -14,7 +14,11 @@ in a cell = "not recorded there", not "absent". Label in-app as COSEWIC at-risk 
 Output: cluster_results/ca/ca_atrisk_richness.csv (gi,gj,lat,lon,n_species,score_raw,conservation_norm)
 Usage : .venv/bin/python build_atrisk_layer.py
 """
-import json, csv, urllib.request, urllib.parse, time
+import csv
+import json
+import time
+import urllib.parse
+import urllib.request
 from collections import defaultdict
 
 RES = 0.25

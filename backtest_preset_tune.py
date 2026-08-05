@@ -17,11 +17,13 @@ coverage) and urgency (habitat loss) exist to serve DIFFERENT goals the app
 offers as presets; this does not argue for deleting them, only that the DEFAULT
 preset over-weights them for the discovery framing it advertises.
 """
-import glob, json
+import glob
+import json
+
+import backtest_appscore as bas
 import numpy as np
 import pandas as pd
 import voi_backtest as vb
-import backtest_appscore as bas
 
 CANDIDATES = {
     "current_default": {"discover": 0.8, "env": 0.7, "urgency": 0.3},

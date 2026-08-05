@@ -12,9 +12,12 @@ Then normalized 0-1.
 Source: GBIF maps v2 density MVT tiles (api.gbif.org/v2/map/occurrence/density), country=CA,
 EPSG:4326, squareSize=8. Output: cluster_results/ca/ca_staleness.csv (gi,gj,lat,lon,all,recent,staleness_norm)
 """
-import urllib.request, csv, math
-import mapbox_vector_tile as mvt
+import csv
+import math
+import urllib.request
 from collections import defaultdict
+
+import mapbox_vector_tile as mvt
 
 RES = 0.25
 Z = 3
@@ -23,7 +26,7 @@ COLS, ROWS = 2 ** (Z + 1), 2 ** Z          # EPSG:4326 tile grid
 TLON, TLAT = 360.0 / COLS, 180.0 / ROWS    # tile span (deg)
 RECENT = "&year=2021,2026"
 # Canada land tiles at z3: x in 1..5 (lon -157.5..-45), y in 0..2 (lat 90..22.5)
-TILES = [(Z, x, y) for x in range(1, 6) for y in range(0, 3)]
+TILES = [(Z, x, y) for x in range(1, 6) for y in range(3)]
 
 
 def fetch_bins(z, x, y, extra=""):
@@ -75,6 +78,7 @@ for k, a in allg.items():
 hi = max(raw.values()) if raw else 1.0
 
 import json
+
 d = json.load(open("cluster_results/ca/webapp_data_All_biodiversity.json"))
 rows = next(v for v in d.values() if isinstance(v, list))
 with open("cluster_results/ca/ca_staleness.csv", "w", newline="") as f:

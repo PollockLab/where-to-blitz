@@ -17,7 +17,10 @@ Honest scope: retrospective simulation over *collected* observations, not
 prospective field guidance; "new species" = new to that cell's iNat record, not
 new-to-science; inherits iNat observer bias (controlled, not eliminated).
 """
-import sys, json, glob
+import glob
+import json
+import sys
+
 import numpy as np
 import pandas as pd
 
@@ -83,15 +86,15 @@ def build_cells(df):
         new_sp = test_sp.get(key, set()) - seen
         nt = int(n_test.get(key, 0))
         aux[key] = (seen, test_list.get(key, []))
-        rows.append(dict(
-            gi=gi, gj=gj, clat=(gi + 0.5) * RES, clon=(gj + 0.5) * RES,
-            n_train=int(n_train[key]),
-            days_since=(SPLIT - last_seen[key]).days,
-            chao_unseen=chao_unseen[key],
-            n_test=nt,
-            new_species=len(new_sp),
-            revisited=nt > 0,
-        ))
+        rows.append({
+            "gi": gi, "gj": gj, "clat": (gi + 0.5) * RES, "clon": (gj + 0.5) * RES,
+            "n_train": int(n_train[key]),
+            "days_since": (SPLIT - last_seen[key]).days,
+            "chao_unseen": chao_unseen[key],
+            "n_test": nt,
+            "new_species": len(new_sp),
+            "revisited": nt > 0,
+        })
     cells = pd.DataFrame(rows)
     cells.attrs["aux"] = aux
 
@@ -155,14 +158,14 @@ def lift(cells, score_col, topk_frac=TOPK_FRAC):
     'efficiency, not volume' point. (An effort-matched baseline was dropped: with
     priority cells' tiny effort it collapsed to a single mega-cell, a strawman.)"""
     c = cells.sort_values(score_col, ascending=False).reset_index(drop=True)
-    k = max(1, int(round(len(c) * topk_frac)))
+    k = max(1, round(len(c) * topk_frac))
     total_new = c.new_species.sum()
     if total_new == 0:
         return None
     captured = c.head(k).new_species.sum() / total_new
     area_base = k / len(c)
-    return dict(topk=k, n_cells=len(c), captured=float(captured),
-                area_baseline=float(area_base), lift_vs_area=float(captured / area_base))
+    return {"topk": k, "n_cells": len(c), "captured": float(captured),
+                "area_baseline": float(area_base), "lift_vs_area": float(captured / area_base)}
 
 
 def analyse(name, df, K=5):
@@ -172,7 +175,7 @@ def analyse(name, df, K=5):
     aux = cells.attrs["aux"]
     rng = np.random.default_rng(SEED)
     rev = cells[cells.revisited].copy()        # effort-controlled subset
-    out = {"taxon": name, "n_cells": int(len(cells)), "n_revisited": int(len(rev)),
+    out = {"taxon": name, "n_cells": len(cells), "n_revisited": len(rev),
            "n_train": int(df_train_count(df)), "n_test": int(df_test_count(df)),
            "total_new_species": int(cells.new_species.sum()),
            "perm_p_floor": 1.0 / N_PERM}
@@ -188,11 +191,11 @@ def analyse(name, df, K=5):
     cells["rare_newK"] = rarefy_new_at_k(cells, aux, np.random.default_rng(SEED), K=K)
     rk = cells.dropna(subset=["rare_newK"])
     out["K"] = K
-    out["n_cells_rarefied"] = int(len(rk))
+    out["n_cells_rarefied"] = len(rk)
     rho_r, p_r, mu_r, sd_r = perm_test(rk.priority.values, rk.rare_newK.values,
                                        np.random.default_rng(SEED + 1))
-    out["rarefied_priority"] = dict(spearman=rho_r, perm_p=p_r, null_mean=mu_r, null_sd=sd_r)
-    out["rarefied_staleness"] = dict(spearman=spearman(rk.staleness.values, rk.rare_newK.values))
+    out["rarefied_priority"] = {"spearman": rho_r, "perm_p": p_r, "null_mean": mu_r, "null_sd": sd_r}
+    out["rarefied_staleness"] = {"spearman": spearman(rk.staleness.values, rk.rare_newK.values)}
     # rarefied top/bottom-tercile efficiency ratio (stable: equal effort K per cell)
     if len(rk) >= 6:
         q = rk.priority.quantile([1/3, 2/3])
@@ -212,7 +215,7 @@ def analyse(name, df, K=5):
     # (2) EFFORT-CONTROLLED: priority vs new-species RATE on revisited cells (the honest test)
     for col in ["priority", "scarcity", "staleness", "density", "chao_unseen"]:
         rho, p, mu, sd = perm_test(rev[col].values, rev.new_rate.values, rng)
-        out[f"rate_{col}"] = dict(spearman=rho, perm_p=p, null_mean=mu, null_sd=sd)
+        out[f"rate_{col}"] = {"spearman": rho, "perm_p": p, "null_mean": mu, "null_sd": sd}
 
     # (3) lift over baselines (all cells, raw discoveries)
     out["lift_priority"] = lift(cells, "priority")

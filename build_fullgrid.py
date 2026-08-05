@@ -10,7 +10,9 @@ biodiversity" — it was "no records yet". Here every land cell appears:
 
 Land vs ocean is decided by the Weiss travel-time raster (ocean = nodata -9999).
 """
-import json, glob
+import glob
+import json
+
 import numpy as np
 import pandas as pd
 import rasterio
@@ -61,7 +63,7 @@ print(f"BC land cells (multi-point Weiss mask + records): {len(df)}")
 
 # 2) shared layers for ALL land cells
 with rasterio.open(CLIM) as ds:
-    clim = np.array([list(ds.sample([(lon, lat)]))[0] for lat, lon in zip(df.clat, df.clon)], float)
+    clim = np.array([next(iter(ds.sample([(lon, lat)]))) for lat, lon in zip(df.clat, df.clon)], float)
 clim[clim < -1e30] = np.nan
 Z = (clim - np.nanmean(clim, 0)) / (np.nanstd(clim, 0) + 1e-9)    # standardized climate
 df["o_urgency"] = norm(sample(LOSS, lonlat))                      # recent forest loss, full coverage
@@ -120,4 +122,5 @@ data["All biodiversity"] = [[base[i][0], base[i][1], *[round(float(x), 3) for x 
 
 json.dump(data, open("cluster_results/webapp_data.json", "w"), separators=(",", ":"))
 import os
+
 print(f"\nwrote webapp_data.json — {len(data)} groups, {len(base)} land cells each, {os.path.getsize('cluster_results/webapp_data.json')//1024} KB")
