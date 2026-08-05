@@ -16,7 +16,6 @@ Run with the project venv (rasterio, rio-cogeo, rio-pmtiles, matplotlib):
     python build_density_pmtiles.py [TAXON ...]
 Defaults to all dec25 taxa. Outputs <taxon>.pmtiles into ./pmtiles/.
 """
-import io
 import subprocess
 import sys
 from pathlib import Path

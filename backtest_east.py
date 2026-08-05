@@ -2,8 +2,9 @@
 DISJOINT from BC (Eastern Canada). Same method, same app axes, same outcome —
 does directed>opportunistic survive out-of-sample geography?"""
 import json
-import pandas as pd
+
 import backtest_appscore as bas
+import pandas as pd
 
 results = []
 for tx in ["Aves", "Insecta", "Mammalia"]:
@@ -19,6 +20,6 @@ for tx in ["Aves", "Insecta", "Mammalia"]:
     for k in ["discover_leakfree", "app_leakfree", "opportunistic_density"]:
         d = s[k]; er = d["eff_ratio_top_bottom"]
         print(f"  {k:22s} rho={d['spearman']:+.3f} perm_p={fp(d['perm_p']):>8} "
-              f"eff_top/bot={('%.2fx' % er) if er else ' n/a'}")
+              f"eff_top/bot={(f'{er:.2f}x') if er else ' n/a'}")
 json.dump(results, open("cluster_results/voi_appscore_east_results.json", "w"), indent=2)
 print(f"\nwrote cluster_results/voi_appscore_east_results.json ({len(results)} taxa)")

@@ -21,7 +21,10 @@ uniformly wherever that species is discovered; it does not encode the per-cell
 priority->outcome link, so it does not leak. Disclosed: range is measured from the
 collected data (observer-biased), a proxy for true range.
 """
-import sys, json, glob
+import glob
+import json
+import sys
+
 import numpy as np
 import pandas as pd
 import voi_backtest as vb
@@ -74,22 +77,22 @@ def analyse_conservation(name, df, K=5, weights=None, tag="rarity"):
     cells["w_meanrarity"] = cells.w_newK / cells.rare_newK.where(cells.rare_newK > 0)
     rk = cells.dropna(subset=["rare_newK"]).copy()
 
-    out = {"taxon": name, "n_cells_rarefied": int(len(rk)),
+    out = {"taxon": name, "n_cells_rarefied": len(rk),
            "perm_p_floor": 1.0 / vb.N_PERM, "K": K,
            "n_species": int(df.dropna(subset=["taxon_id"]).taxon_id.nunique())}
     # (1) priority predicts rarity-weighted discovery (effort-equalized)
     rho_w, p_w, _, sd_w = vb.perm_test(rk.priority.values, rk.w_newK.values,
                                        np.random.default_rng(vb.SEED + 7))
-    out["weighted_discovery"] = dict(spearman=rho_w, perm_p=p_w, null_sd=sd_w)
+    out["weighted_discovery"] = {"spearman": rho_w, "perm_p": p_w, "null_sd": sd_w}
     # baseline: unweighted (count) — for contrast
     rho_u, p_u, _, _ = vb.perm_test(rk.priority.values, rk.rare_newK.values,
                                     np.random.default_rng(vb.SEED + 8))
-    out["unweighted_discovery"] = dict(spearman=rho_u, perm_p=p_u)
+    out["unweighted_discovery"] = {"spearman": rho_u, "perm_p": p_u}
     # (2) THE sustainability test: do high-priority cells discover RARER species?
     valid = rk.dropna(subset=["w_meanrarity"])
     rho_r, p_r, _, sd_r = vb.perm_test(valid.priority.values, valid.w_meanrarity.values,
                                        np.random.default_rng(vb.SEED + 9))
-    out["discovery_rarity_vs_priority"] = dict(spearman=rho_r, perm_p=p_r, null_sd=sd_r)
+    out["discovery_rarity_vs_priority"] = {"spearman": rho_r, "perm_p": p_r, "null_sd": sd_r}
     # top vs bottom priority: mean rarity of discoveries
     if len(valid) >= 6:
         q = valid.priority.quantile([1/3, 2/3])

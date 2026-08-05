@@ -6,11 +6,15 @@ both sides of the temporal split are represented even when we cap a large taxon
 (an id-desc sample would skew toward later-observed records). Region: British
 Columbia bbox (the 2025 BTG pilot concentrated here). Saves incrementally.
 """
-import sys, time, requests, pandas as pd
+import sys
+import time
+
+import pandas as pd
+import requests
 
 INAT = "https://api.inaturalist.org/v1/observations"
 PROJECT = 228908
-BC = dict(swlat=48.3, swlng=-139.1, nelat=60.0, nelng=-114.0)
+BC = {"swlat": 48.3, "swlng": -139.1, "nelat": 60.0, "nelng": -114.0}
 SPLIT = "2025-07-01"
 SEASON = ("2025-04-01", "2025-09-30")
 PER_PAGE = 200
@@ -35,9 +39,9 @@ def pull_window(iconic, d1, d2, cap=CAP_PAGES):
             g = o.get("geojson"); t = o.get("taxon") or {}
             if not g or not o.get("observed_on"):
                 continue
-            rows.append(dict(id=o["id"], lon=g["coordinates"][0], lat=g["coordinates"][1],
-                             observed_on=o["observed_on"], taxon_id=t.get("id"),
-                             taxon_name=t.get("name"), rank=t.get("rank")))
+            rows.append({"id": o["id"], "lon": g["coordinates"][0], "lat": g["coordinates"][1],
+                             "observed_on": o["observed_on"], "taxon_id": t.get("id"),
+                             "taxon_name": t.get("name"), "rank": t.get("rank")})
         id_below = res[-1]["id"]; pages += 1
         if len(res) < PER_PAGE:
             break

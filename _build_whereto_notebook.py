@@ -5,6 +5,7 @@ each is backtested against its own goal, and the recommendation changes per
 objective. Every number recomputed in-notebook; nothing hardcoded.
 """
 import nbformat as nbf
+
 nb = nbf.v4.new_notebook(); cells = []
 md = lambda s: cells.append(nbf.v4.new_markdown_cell(s))
 co = lambda s: cells.append(nbf.v4.new_code_cell(s))

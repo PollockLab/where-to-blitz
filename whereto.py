@@ -19,7 +19,11 @@ The headline experiment: discovery and conservation are DIFFERENT objectives tha
 serve DIFFERENT goals — discover wins at finding MANY species, a purpose-built
 conservation objective wins at finding RARE ones. Proven head-to-head, not asserted.
 """
-import sys, json, glob, os
+import glob
+import json
+import os
+import sys
+
 import numpy as np
 import pandas as pd
 import voi_backtest as vb
@@ -88,7 +92,7 @@ def _env_coverage(cells, env_raster, h=1.0):
     (Gaussian KDE in standardized climate space, weighted by records). priority = 1/density."""
     import rasterio
     with rasterio.open(env_raster) as ds:
-        samp = np.array([list(ds.sample([(lon, lat)]))[0] for lat, lon in zip(cells.clat, cells.clon)], float)
+        samp = np.array([next(iter(ds.sample([(lon, lat)]))) for lat, lon in zip(cells.clat, cells.clon)], float)
     samp[samp < -1e30] = np.nan
     Z = (samp - np.nanmean(samp, 0)) / (np.nanstd(samp, 0) + 1e-9)      # standardize each climate band
     w = cells.n_train.values.astype(float)                              # record weight per cell
@@ -108,7 +112,7 @@ def _urgency(cells, loss_raster):
     the ~5x5 sub-pixels covering the cell."""
     import rasterio
     out = np.full(len(cells), np.nan)
-    rad = int(round(vb.RES / 0.05 / 2))                # half-cell in 0.05-deg pixels (~2-3)
+    rad = round(vb.RES / 0.05 / 2)                # half-cell in 0.05-deg pixels (~2-3)
     with rasterio.open(loss_raster) as ds:
         arr = ds.read(1, masked=True).filled(np.nan)
         for i, (lat, lon) in enumerate(zip(cells.clat, cells.clon)):
@@ -173,6 +177,6 @@ if __name__ == "__main__":
         print(disagreement(cells, objs).to_string())
         print("\nBACKTEST — each objective vs post-T outcome (rarefied K=5; * = perm p<0.05):")
         print(backtest_objectives(cells, objs).to_string())
-        summary[name] = {"n_cells": int(len(cells)), "objectives": objs}
+        summary[name] = {"n_cells": len(cells), "objectives": objs}
     json.dump(summary, open("cluster_results/whereto_summary.json", "w"), indent=2)
     print("\nwrote whereto_cells_*.csv + whereto_summary.json")

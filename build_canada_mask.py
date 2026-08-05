@@ -14,8 +14,11 @@ only the non-interior cells pay the distance computation. The output file keeps 
 name (the app fetches it by that path); its contents are all cells hidden from the Canada-only view.
 Keys match the app's gekey: lat.toFixed(3)+','+lon.toFixed(3).
 """
-import json, glob, os
-from shapely.geometry import shape, Point
+import glob
+import json
+import os
+
+from shapely.geometry import Point, shape
 from shapely.prepared import prep
 
 HERE = "cluster_results/ca"

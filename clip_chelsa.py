@@ -1,5 +1,7 @@
-import rasterio, numpy as np
+import numpy as np
+import rasterio
 from rasterio.windows import from_bounds
+
 BBOX=(-139.0,48.0,-114.0,60.0)  # BC: minlon,minlat,maxlon,maxlat
 base="/vsicurl/https://os.zhdk.cloud.switch.ch/chelsav2/GLOBAL/climatologies/1981-2010/bio/CHELSA_bio{}_1981-2010_V.2.1.tif"
 bands={1:"temp",4:"seasonality",12:"precip"}

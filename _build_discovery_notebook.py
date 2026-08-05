@@ -4,7 +4,10 @@ Keyed by backbone (the experiment's only real axis); cluster/GPU is provenance, 
 Every headline number and significance call is read straight from the JSON the cluster wrote.
 Run AFTER the cluster jobs return.
 """
-import glob, json, os
+import glob
+import json
+import os
+
 import nbformat as nbf
 
 # backbone -> (display name, sort order by descending embedding quality)

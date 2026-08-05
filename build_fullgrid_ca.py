@@ -23,11 +23,14 @@ fall outside the Canada heatmap footprint and so are naturally excluded (matches
 default). Provenance/vintage note: density reflects the CURRENT public heatmap, so per-cell scores
 refresh vs the prior (lost-vintage) grid.
 """
-import csv, json, os
+import csv
+import json
+import os
+
 import numpy as np
 import rasterio
-from rasterio.warp import reproject, Resampling
 from rasterio.transform import from_origin
+from rasterio.warp import Resampling, reproject
 
 RES = 0.25
 BBOX = (-141.0, 41.0, -52.0, 84.0)          # minlon, minlat, maxlon, maxlat
@@ -52,8 +55,8 @@ GROUP_TO_COG = {
 GROUPS = list(GROUP_TO_COG)
 
 # ----------------------------------------------------------------- destination 0.25-deg grid
-NCOL = int(round((BBOX[2] - BBOX[0]) / RES))
-NROW = int(round((BBOX[3] - BBOX[1]) / RES))
+NCOL = round((BBOX[2] - BBOX[0]) / RES)
+NROW = round((BBOX[3] - BBOX[1]) / RES)
 DST_T = from_origin(BBOX[0], BBOX[3], RES, RES)
 
 
@@ -105,7 +108,7 @@ print(f"after land/data mask: {N} cells")
 
 # ----------------------------------------------------------------- climate (CHELSA) -> standardized Z
 with rasterio.open(CLIM) as ds:
-    clim = np.array([list(ds.sample([(lo, la)]))[0] for lo, la in lonlat], float)
+    clim = np.array([next(iter(ds.sample([(lo, la)]))) for lo, la in lonlat], float)
 clim[clim < -1e30] = np.nan
 Z = (clim - np.nanmean(clim, 0)) / (np.nanstd(clim, 0) + 1e-9)
 

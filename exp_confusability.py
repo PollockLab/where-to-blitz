@@ -22,7 +22,10 @@ Two parts:
     with wait_days. Gated behind open_clip availability; prints how to run on the
     cluster when deps are absent (torch/open_clip not installed locally).
 """
-import sys, glob, json
+import glob
+import json
+import sys
+
 import numpy as np
 import pandas as pd
 
@@ -54,20 +57,20 @@ def pilot(name):
     df["coarseness"] = -df["depth"]                       # higher = coarser = harder
     df["unengaged"] = (df["ident_count"].fillna(0) <= 1).astype(float)
     df = df.dropna(subset=["coarseness", "wait_days"])
-    rho_wait, n1 = spearman(df.coarseness, df.wait_days)
-    rho_uneng, n2 = spearman(df.coarseness, df.unengaged)
+    rho_wait, _n1 = spearman(df.coarseness, df.wait_days)
+    rho_uneng, _n2 = spearman(df.coarseness, df.unengaged)
     # fraction of the needs-ID pile stuck ABOVE species (could not be pinned down)
     above_species = float((df.depth < 6).mean())
-    return dict(taxon=name, n=int(len(df)),
-                frac_above_species=above_species,
-                rho_coarseness_wait=rho_wait,
-                rho_coarseness_unengaged=rho_uneng)
+    return {"taxon": name, "n": len(df),
+                "frac_above_species": above_species,
+                "rho_coarseness_wait": rho_wait,
+                "rho_coarseness_unengaged": rho_uneng}
 
 
 def embeddings_available():
     try:
         import open_clip  # noqa: F401
-        import torch      # noqa: F401
+        import torch  # noqa: F401
         return True
     except Exception:
         return False

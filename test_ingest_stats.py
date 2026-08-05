@@ -2,6 +2,7 @@
 Needs internet (live Arbutus COGs + TiTiler). Run: .venv/bin/python -m pytest -q
 """
 import urllib.parse
+
 import pytest
 import requests
 from ingest_stats import compute_render_stats, stac_item

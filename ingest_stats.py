@@ -13,8 +13,13 @@ All inputs are read over HTTP range reads (cloud-optimized); nothing is download
 whole. No auth, no GDAL config needed for public Arbutus COGs.
 """
 from __future__ import annotations
-import argparse, json, sys, urllib.parse
+
+import argparse
+import json
+import sys
+import urllib.parse
 from pathlib import Path
+
 import numpy as np
 import rasterio
 from rasterio.warp import transform_bounds
