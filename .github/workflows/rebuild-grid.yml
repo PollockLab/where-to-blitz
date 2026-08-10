@@ -69,9 +69,41 @@ jobs:
           path: cluster_results
           retention-days: 7
 
-  matrix-build:
+  fit-25km:
     if: github.event_name == 'workflow_dispatch' && !inputs.validate_only
     needs: prepare-inputs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download shared inputs
+        uses: actions/download-artifact@v4
+        with:
+          name: inputs-ca
+          path: cluster_results
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}-py-3.11
+      - name: Install deps
+        run: pip install -r requirements.txt
+      - name: Build 25 km tier (fits national ramps + webapp JSON)
+        env:
+          GRID_RES: 25000
+        run: python build_fullgrid_ca.py
+      - name: Upload 25km fit artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fit-25km
+          path: cluster_results/ca
+          retention-days: 7
+
+  matrix-build:
+    if: github.event_name == 'workflow_dispatch' && !inputs.validate_only
+    needs: [prepare-inputs, fit-25km]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -84,6 +116,11 @@ jobs:
         with:
           name: inputs-ca
           path: cluster_results
+      - name: Download fitted national ramps (25 km tier)
+        uses: actions/download-artifact@v4
+        with:
+          name: fit-25km
+          path: cluster_results/ca
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -112,7 +149,7 @@ jobs:
 
   aggregate:
     if: github.event_name == 'workflow_dispatch' && !inputs.validate_only
-    needs: matrix-build
+    needs: [matrix-build, fit-25km]
     outputs:
       inputs_hash: ${{ steps.compute_inputs.outputs.inputs_hash }}
     runs-on: ubuntu-latest
@@ -121,18 +158,26 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Download shared inputs
+      - name: Download 25 km tier (ramps + stacks + webapp JSON)
         uses: actions/download-artifact@v4
         with:
-          name: inputs-ca
-          path: cluster_results
+          name: fit-25km
+          path: cluster_results/ca
       - name: Download 5km artifacts from matrix jobs
         uses: actions/download-artifact@v4
         with:
-          # By not specifying a name, download-artifact will fetch all artifacts from the run
-          # (the per-group grid_5000m uploads above). They will be restored into the workspace
-          # preserving their paths (cluster_results/ca/grid_5000m/<group>.tif).
+          # Each grid_5000m-<group> artifact lands in its own dir (grid_5000m/ + pmtiles/ inside).
           path: .
+      - name: Merge per-group 5km stacks + tiles into cluster_results/ca
+        run: |
+          set -euo pipefail
+          mkdir -p cluster_results/ca/grid_5000m cluster_results/ca/pmtiles
+          for d in grid_5000m-*/; do
+            cp "$d"grid_5000m/*.tif cluster_results/ca/grid_5000m/
+            cp "$d"pmtiles/*.pmtiles cluster_results/ca/pmtiles/ 2>/dev/null || true
+          done
+          ls cluster_results/ca/grid_5000m | wc -l
+          ls cluster_results/ca/pmtiles | wc -l
       - name: Compute inputs hash
         id: compute_inputs
         run: |
@@ -186,12 +231,6 @@ jobs:
       - name: Install deps
         if: ${{ steps.check_artifact.outputs.found != 'true' }}
         run: pip install -r requirements.txt
-      - name: Build aggregated 25 km tier (prefer downloaded 5 km stacks)
-        if: ${{ steps.check_artifact.outputs.found != 'true' }}
-        env:
-          GRID_RES: 25000
-          INPUTS_HASH: ${{ steps.compute_inputs.outputs.inputs_hash }}
-        run: python build_fullgrid_ca.py
       - name: Build 25km PMTiles from lattice stacks
         if: ${{ steps.check_artifact.outputs.found != 'true' }}
         run: python build_grid_pmtiles.py --res 25000

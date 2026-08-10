@@ -155,6 +155,10 @@ def main(argv=None) -> int:
     report["meta"] = {"found_5km": list(g5.keys()), "found_25km": list(g25.keys())}
 
     groups = sorted(set(list(g25.keys()) + list(g5.keys())))
+    if not groups:
+        print(f"ERROR: no grid stacks found under {ca} - artifact missing or malformed",
+              file=sys.stderr)
+        return 2
     for grp in groups:
         rec: dict[str, Any] = {"group": grp}
         coarse = g25.get(grp)
