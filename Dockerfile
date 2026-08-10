@@ -13,7 +13,6 @@ ENV DEBIAN_FRONTEND=noninteractive \
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
        build-essential \
-       git \
        ca-certificates \
        gdal-bin \
        libgdal-dev \
@@ -29,10 +28,8 @@ RUN python -m venv $VENV_DIR \
 # Copy only requirements first so Docker layer can be cached
 COPY requirements.txt /tmp/requirements.txt
 
-# Install Python deps, then the latest rio-pmtiles from GitHub
-RUN pip install --no-cache-dir -r /tmp/requirements.txt \
-    && pip install --no-cache-dir git+https://github.com/rio-tiler/rio-pmtiles.git \
-    && rm -rf /root/.cache/pip
+# Install Python deps (rio-pmtiles is pinned in requirements.txt; no git build needed)
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 # Working directory for runtime invocations
 WORKDIR /workspace
