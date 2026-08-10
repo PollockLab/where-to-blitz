@@ -25,10 +25,13 @@ on:
   push:
     branches:
       - main
+  # Without this the light checks only ran after a merge, so the lint and test gates below
+  # could only ever report a regression that had already landed on main.
+  pull_request:
 
 jobs:
   validate-light:
-    if: github.event_name == 'push'
+    if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
