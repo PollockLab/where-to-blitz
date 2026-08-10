@@ -51,6 +51,7 @@ OBJ = [
 # Getting Even is the separate categorical layer, added as the 'ge' option in the dropdown.
 # PRESETS/DEFAULT/TIER_SWITCH_Z live in goal_presets.py (shared with the tile builder, #87).
 from goal_presets import DEFAULT, PRESETS, TIER_SWITCH_Z
+from grid_lattice import HEIGHT_M, WIDTH_M, X0, Y1
 
 # PMTiles ship in the Pages site under tiles/ (same-origin: browsers block cross-origin range
 # reads from release assets - no CORS headers). The grid-outputs-v1 release is the durable
@@ -74,6 +75,12 @@ out = (
     .replace("__DEFAULT__", json.dumps(DEFAULT))
     .replace("__PMTILES_BASE__", PMTILES_BASE)
     .replace("__TIER_SWITCH_Z__", str(TIER_SWITCH_Z))
+    # The app snaps clicks to the same lattice the tiles are cut on. These were hardcoded in
+    # the template, so the clickable cells could drift off the raster without anything saying so.
+    .replace("__LATTICE_X0__", str(X0))
+    .replace("__LATTICE_Y1__", str(Y1))
+    .replace("__LATTICE_W__", str(WIDTH_M))
+    .replace("__LATTICE_H__", str(HEIGHT_M))
     .replace("__PLAN_ENABLED__", "true" if PLAN_ENABLED else "false")
     .replace("__COMPARE_ENABLED__", "true" if COMPARE_ENABLED else "false")
 )
