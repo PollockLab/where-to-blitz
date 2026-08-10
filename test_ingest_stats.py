@@ -5,7 +5,10 @@ import urllib.parse
 
 import pytest
 import requests
+
 from ingest_stats import compute_render_stats, stac_item
+
+pytestmark = pytest.mark.network   # deselected by default (pytest.ini); run with -m network
 
 BUCKET = "https://object-arbutus.cloud.computecanada.ca/bq-io/blitz-the-gap"
 TILER = "https://tiler.biodiversite-quebec.ca"
