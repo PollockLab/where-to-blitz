@@ -708,16 +708,21 @@ function geActive(){const e=document.getElementById('tgGettingEven');return!!(e&
 function caOnlyActive(){const e=document.getElementById('tgCanadaOnly');return e?e.checked:true;}        // issue #20 removed the toggle; behaviour stays on by default
 // US-side cells (approx, lazy-loaded): hidden when "Canada only" is on -- the cross-border band is a data edge, not a real gap (#5).
 let US_CELLS=null;
+let _lineFilterIds=-1;
 async function loadUS(){if(US_CELLS)return;try{const r=await fetchT(DATA_DIR+'us_cells.json',8000);US_CELLS=new Set((await r.json()).us_cells||[]);}catch(e){US_CELLS=new Set();}}
 function applyCanadaMask(){
   if(!caOnlyActive()){
     if(_mapLoaded&&map.getLayer('cells-line'))map.setFilter('cells-line',null);
+    _lineFilterIds=-1;
     return;
   }
   if(!US_CELLS){loadUS().then(recolour);return;}
   const hiddenIds=[];
   markers.forEach(m=>{if(US_CELLS.has(gekey(m.r[0],m.r[1]))){setCellState(m.i,'rgba(0,0,0,0)',0);hiddenIds.push(m.i);}});
-  if(_mapLoaded&&map.getLayer('cells-line')){
+  // The lattice and the mask are both taxon-invariant, so the (linear-scan) id filter is set once
+  // rather than on every recolour.
+  if(_mapLoaded&&map.getLayer('cells-line')&&_lineFilterIds!==hiddenIds.length){
+    _lineFilterIds=hiddenIds.length;
     map.setFilter('cells-line',hiddenIds.length?['!',['in',['id'],['literal',hiddenIds]]]:null);
   }
 }
@@ -926,8 +931,11 @@ map.on('load',()=>{
     'fill-opacity':['coalesce',['feature-state','op'],0]}});
   // Outlines ride a separate line layer so the grid raster can show through the transparent fill
   // (#87 P3). Hidden above the tier switch - the 5 km raster carries the detail there.
-  map.addLayer({id:'cells-line',type:'line',source:'cells',maxzoom:TIER_SWITCH_Z,paint:{
-    'line-color':'rgba(15,22,32,0.25)','line-width':1}});
+  // Below z6 a 25 km cell is only a few pixels, so 23k hairlines collapse into a black moiré that
+  // buries the priority colours. Fade the lattice in only once a cell is big enough to aim at.
+  map.addLayer({id:'cells-line',type:'line',source:'cells',minzoom:5,maxzoom:TIER_SWITCH_Z,paint:{
+    'line-color':'#0f1620','line-width':1,
+    'line-opacity':['interpolate',['linear'],['zoom'],5,0,7,0.25]}});
   // Top-in-view outlines (D2 option c). No fill; just a marker ring on the nationally-best cells in view.
   map.addLayer({id:'cells-top',type:'line',source:'cells',maxzoom:TIER_SWITCH_Z,paint:{
     'line-color':'#f0a000','line-width':2.5},filter:['==',['id'],-1]});
