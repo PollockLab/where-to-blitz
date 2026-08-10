@@ -17,6 +17,7 @@ Output: cluster_results/ca/pmtiles/<group>_<goal>_<res>.pmtiles
 """
 import argparse
 import concurrent.futures
+import json
 import subprocess
 import tempfile
 from pathlib import Path
@@ -25,12 +26,14 @@ import matplotlib
 import numpy as np
 import rasterio
 from rasterio.enums import ColorInterp
+from rasterio.warp import transform as warp_transform
 
 from goal_presets import AXES, PRESETS
 from grid_schema import BAND_INDEX
 
 HERE = Path(__file__).resolve().parent
 OUT = HERE / "cluster_results" / "ca" / "pmtiles"
+US_MASK_FILE = HERE / "cluster_results" / "ca" / "us_cells.json"
 
 TILE_BANDS = {ax: BAND_INDEX[ax] for ax in AXES}
 # Native zoom per tier: 25km -> z8 (shown z<=9), 5km -> z9 (plan measured 20.9 MB at z0-9).
@@ -57,9 +60,52 @@ if not RAST_DIRS:
 
 OUT.mkdir(parents=True, exist_ok=True)
 
+
+def _load_us_parent_cells(crs, origin_x, origin_y):
+    if not US_MASK_FILE.exists():
+        return set()
+    with US_MASK_FILE.open() as fh:
+        keys = json.load(fh).get("us_cells", [])
+    if not keys:
+        return set()
+    latlon = [tuple(map(float, k.split(","))) for k in keys]
+    lats = [p[0] for p in latlon]
+    lons = [p[1] for p in latlon]
+    xs, ys = warp_transform("EPSG:4326", crs, lons, lats)
+    out = set()
+    for x, y in zip(xs, ys):
+        c = int(np.floor((x - origin_x) / 25000.0))
+        r = int(np.floor((origin_y - y) / 25000.0))
+        out.add((r, c))
+    return out
+
+
+def _hidden_mask(height, width, res_m, us_parent_cells):
+    if not us_parent_cells:
+        return np.zeros((height, width), dtype=bool)
+    if res_m == 25000:
+        hidden = np.zeros((height, width), dtype=bool)
+        for r, c in us_parent_cells:
+            if 0 <= r < height and 0 <= c < width:
+                hidden[r, c] = True
+        return hidden
+    if res_m == 5000:
+        parent_h = height // 5
+        parent_w = width // 5
+        hidden_parent = np.zeros((parent_h, parent_w), dtype=bool)
+        for r, c in us_parent_cells:
+            if 0 <= r < parent_h and 0 <= c < parent_w:
+                hidden_parent[r, c] = True
+        return np.repeat(np.repeat(hidden_parent, 5, axis=0), 5, axis=1)[:height, :width]
+    return np.zeros((height, width), dtype=bool)
+
+
+_US_PARENT_CACHE = None
+
 jobs = []  # (tmp_tif, out_path, zoom); rendered serially, tiled in parallel below
 for rdir in RAST_DIRS:
     res_label = rdir.name
+    res_m = int(res_label.split("_")[1].replace("m", ""))
     tifs = sorted(rdir.glob("*.tif"))
     for tif in tifs:
         if tif.stem == "index":
@@ -71,6 +117,9 @@ for rdir in RAST_DIRS:
             crs = src.crs
             transform = src.transform
             height, width = src.height, src.width
+            if _US_PARENT_CACHE is None:
+                _US_PARENT_CACHE = _load_us_parent_cells(crs, transform.c, transform.f)
+            hidden_us = _hidden_mask(height, width, res_m, _US_PARENT_CACHE)
 
             # Read the five scoring axes once; each preset is a linear blend of them.
             axes = {ax: src.read(TILE_BANDS[ax]).astype(np.float64) for ax in AXES}
@@ -81,7 +130,7 @@ for rdir in RAST_DIRS:
                     if w:
                         data += w * np.where(np.isfinite(axes[ax]), axes[ax], 0.0)
                 data = np.clip(data, 0, 1)
-                valid = np.isfinite(axes["discover"])  # the footprint mask is shared
+                valid = np.isfinite(axes["discover"]) & ~hidden_us  # hide foreign-border cells in both tiers
                 norm = np.where(valid, np.clip(data, 0, 1), 0)
                 idx = (norm * 255).round().astype(np.uint8)
                 rgb = _LUT[idx]

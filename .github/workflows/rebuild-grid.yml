@@ -364,6 +364,9 @@ jobs:
           set -euo pipefail
           mkdir -p _site/tiles _site/cluster_results/ca
           cp artifacts/index.html _site/
+          for f in blitz-logo.png og-image.png; do
+            [ -f "$f" ] && cp "$f" _site/
+          done
           cp artifacts/cluster_results/ca/pmtiles/*.pmtiles _site/tiles/
           # density tiles carry a density_ prefix (matches the app's tiles/density_<Taxon>.pmtiles)
           for f in density/*.pmtiles; do cp "$f" "_site/tiles/density_$(basename "$f")"; done
@@ -418,6 +421,9 @@ jobs:
           set -euo pipefail
           mkdir -p _site/tiles _site/cluster_results/ca
           cp index.html _site/
+          for f in blitz-logo.png og-image.png; do
+            [ -f "$f" ] && cp "$f" _site/
+          done
           cp cluster_results/ca/pmtiles/*.pmtiles _site/tiles/ 2>/dev/null || echo "No PMTiles in local path"
           for f in density/*.pmtiles; do
             [ -f "$f" ] && cp "$f" "_site/tiles/density_$(basename "$f")" || true
