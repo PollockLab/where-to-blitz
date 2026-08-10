@@ -36,7 +36,7 @@ jobs:
       - name: Install ruff
         run: pip install ruff
       - name: Ruff check
-        run: ruff check build_fullgrid_ca.py build_grid_pmtiles.py grid_lattice.py national_breaks.py climate_kde.py validate_artifacts.py build_webapp.py
+        run: ruff check build_fullgrid_ca.py build_grid_pmtiles.py grid_lattice.py national_breaks.py climate_kde.py validate_artifacts.py build_webapp.py aggregate_25km_from_5km.py goal_presets.py
       - name: Shell syntax
         run: bash -n rebuild_grid.sh prepare_inputs.sh publish_grid_release.sh
 
@@ -231,6 +231,9 @@ jobs:
       - name: Install deps
         if: ${{ steps.check_artifact.outputs.found != 'true' }}
         run: pip install -r requirements.txt
+      - name: Derive final 25 km stacks from the 5 km children (nesting by construction)
+        if: ${{ steps.check_artifact.outputs.found != 'true' }}
+        run: python aggregate_25km_from_5km.py
       - name: Build 25km PMTiles from lattice stacks
         if: ${{ steps.check_artifact.outputs.found != 'true' }}
         run: python build_grid_pmtiles.py --res 25000
