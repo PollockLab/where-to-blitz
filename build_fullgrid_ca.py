@@ -215,54 +215,13 @@ def write_stack(group, bands):
 # ----------------------------------------------------------------- per-group rows
 data, sizes = {}, {}
 os.makedirs(OUT_DIR, exist_ok=True)
-# If the aggregate job downloaded per-group fine-resolution stacks as artifacts, import them
-# into the expected location so the 25 km aggregation can prefer those exact 5 km children.
-if RES == 25000:
-    fine_dir = os.path.join(OUT_DIR, "grid_5000m")
-    os.makedirs(fine_dir, exist_ok=True)
-    import glob
-    import shutil
-    for g in GROUPS:
-        fname = f"{g.replace(' ', '_')}.tif"
-        # Search workspace (including artifact-extraction dirs) for matching fine stacks
-        matches = glob.glob(os.path.join('.', '**', fname), recursive=True)
-        for m in matches:
-            # Skip files already in our output dir
-            if os.path.abspath(m).startswith(os.path.abspath(OUT_DIR)):
-                continue
-            dst = os.path.join(fine_dir, fname)
-            try:
-                shutil.copyfile(m, dst)
-                print(f"Imported fine stack for {g} from {m} -> {dst}")
-                break
-            except OSError as e:
-                print(f"Could not copy {m} to {dst}: {e}")
 for group in groups_to_build:
     cog = GROUP_TO_COG[group]
-    # Prefer aggregating the existing fine-resolution stacks (5 km) into 25 km when available so
-    # the 25 km tier is exactly the mean of its 25 children. Otherwise fall back to block_mean on
-    # the original 1 km COGs.
-    if RES == 25000:
-        fine_dir = os.path.join(OUT_DIR, "grid_5000m")
-        fine_path = os.path.join(fine_dir, f"{group.replace(' ', '_')}.tif")
-        if os.path.exists(fine_path):
-            # Aggregate the 5 km lattice stack to 25 km by a k x k block mean (k=5).
-            import rasterio as _r
-            with _r.open(fine_path) as _src:
-                a = _src.read(1).astype(float)
-                ok = np.isfinite(a)
-            k = LAT.res // 5000  # expect 5
-            if (a.shape[0] % k) != 0 or (a.shape[1] % k) != 0:
-                raise ValueError(f"unexpected fine grid shape {a.shape} for aggregation k={k}")
-            s = np.where(ok, a, 0.0).reshape(LAT.nrow, k, LAT.ncol, k).sum((1, 3))
-            c = ok.reshape(LAT.nrow, k, LAT.ncol, k).sum((1, 3))
-            out = np.full(LAT.shape, np.nan, np.float32)
-            np.divide(s, c, out=out, where=c > 0)
-            grid = out
-        else:
-            grid = allgrid if cog == "All" else block_mean(cog_url(cog), LAT)
-    else:
-        grid = allgrid if cog == "All" else block_mean(cog_url(cog), LAT)
+    # Both tiers block-mean the 1 km COG directly. The lattice is aligned, so a 25 km cell is
+    # the mean of its 25 5 km children up to float associativity - and with the 25 km tier
+    # fitting the national ramps FIRST and the 5 km tier reusing them (national_breaks.REF_RES),
+    # the ramped bands nest the same way. The validator proves it per band.
+    grid = allgrid if cog == "All" else block_mean(cog_url(cog), LAT)
     dens = grid[rows, cols]
     dens0 = np.where(np.isfinite(dens) & (dens > 0), dens, 0.0)
     n_train = np.round(dens0 * cell_km2).astype(int)
