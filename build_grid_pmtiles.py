@@ -17,7 +17,6 @@ Output: cluster_results/ca/pmtiles/<group>_<goal>_<res>.pmtiles
 """
 import argparse
 import concurrent.futures
-import json
 import subprocess
 import tempfile
 from pathlib import Path
@@ -25,15 +24,19 @@ from pathlib import Path
 import matplotlib
 import numpy as np
 import rasterio
-from rasterio.enums import ColorInterp
-from rasterio.warp import transform as warp_transform
+from rasterio.enums import ColorInterp, Resampling
+from rasterio.transform import array_bounds
+from rasterio.warp import calculate_default_transform, reproject
 
+import border_mask
+from border_mask import COARSE_RES
 from goal_presets import AXES, PRESETS
 from grid_schema import BAND_INDEX
 
+MERCATOR = "EPSG:3857"
+
 HERE = Path(__file__).resolve().parent
 OUT = HERE / "cluster_results" / "ca" / "pmtiles"
-US_MASK_FILE = HERE / "cluster_results" / "ca" / "us_cells.json"
 
 TILE_BANDS = {ax: BAND_INDEX[ax] for ax in AXES}
 # Native zoom per tier: 25km -> z8 (shown z<=9), 5km -> z9 (plan measured 20.9 MB at z0-9).
@@ -61,46 +64,42 @@ if not RAST_DIRS:
 OUT.mkdir(parents=True, exist_ok=True)
 
 
-def _load_us_parent_cells(crs, origin_x, origin_y):
-    if not US_MASK_FILE.exists():
-        return set()
-    with US_MASK_FILE.open() as fh:
-        keys = json.load(fh).get("us_cells", [])
-    if not keys:
-        return set()
-    latlon = [tuple(map(float, k.split(","))) for k in keys]
-    lats = [p[0] for p in latlon]
-    lons = [p[1] for p in latlon]
-    xs, ys = warp_transform("EPSG:4326", crs, lons, lats)
-    out = set()
-    for x, y in zip(xs, ys):
-        c = int(np.floor((x - origin_x) / 25000.0))
-        r = int(np.floor((origin_y - y) / 25000.0))
-        out.add((r, c))
-    return out
+def _hidden_mask(height, width, res_m, crs, origin_x, origin_y):
+    """Cells outside Canada at this tier's own resolution (see border_mask)."""
+    key = (str(crs), origin_x, origin_y, height, width, res_m)
+    if key not in _MASK_CACHE:
+        if res_m == COARSE_RES:
+            fine = border_mask.hidden_fine(crs, origin_x, origin_y, height * 5, width * 5)
+            _MASK_CACHE[key] = border_mask.hidden_coarse(fine)
+        else:
+            _MASK_CACHE[key] = border_mask.hidden_fine(crs, origin_x, origin_y, height, width)
+    return _MASK_CACHE[key]
 
 
-def _hidden_mask(height, width, res_m, us_parent_cells):
-    if not us_parent_cells:
-        return np.zeros((height, width), dtype=bool)
-    if res_m == 25000:
-        hidden = np.zeros((height, width), dtype=bool)
-        for r, c in us_parent_cells:
-            if 0 <= r < height and 0 <= c < width:
-                hidden[r, c] = True
-        return hidden
-    if res_m == 5000:
-        parent_h = height // 5
-        parent_w = width // 5
-        hidden_parent = np.zeros((parent_h, parent_w), dtype=bool)
-        for r, c in us_parent_cells:
-            if 0 <= r < parent_h and 0 <= c < parent_w:
-                hidden_parent[r, c] = True
-        return np.repeat(np.repeat(hidden_parent, 5, axis=0), 5, axis=1)[:height, :width]
-    return np.zeros((height, width), dtype=bool)
+_MASK_CACHE = {}
 
 
-_US_PARENT_CACHE = None
+def _write_mercator(path, bands, src_crs, src_transform, width, height):
+    """Write the RGBA cell image as an EPSG:3857 GeoTIFF.
+
+    rio-pmtiles derives its tile envelope from the source corners transformed to WGS84. For a
+    LAEA source the extent's edges bow poleward between the corners, so the corner-only envelope
+    clipped the archive at the corner latitude (~61.7 N) and dropped every Arctic cell. Warping
+    here — GDAL's suggested output samples the edges, not just the corners — gives rio-pmtiles a
+    source whose bounds are already exact, and saves it warping every tile.
+    """
+    dst_transform, dst_w, dst_h = calculate_default_transform(
+        src_crs, MERCATOR, width, height, *array_bounds(height, width, src_transform))
+    with rasterio.open(path, "w", driver="GTiff", width=dst_w, height=dst_h, count=4,
+                       dtype="uint8", crs=MERCATOR, transform=dst_transform,
+                       compress="deflate", tiled=True, blockxsize=512, blockysize=512) as dst:
+        for i in range(4):
+            reproject(source=bands[i], destination=rasterio.band(dst, i + 1),
+                      src_transform=src_transform, src_crs=src_crs,
+                      dst_transform=dst_transform, dst_crs=MERCATOR,
+                      resampling=Resampling.nearest)   # keep hard cell edges and a binary alpha
+        dst.colorinterp = [ColorInterp.red, ColorInterp.green,
+                           ColorInterp.blue, ColorInterp.alpha]
 
 jobs = []  # (tmp_tif, out_path, zoom); rendered serially, tiled in parallel below
 for rdir in RAST_DIRS:
@@ -117,9 +116,7 @@ for rdir in RAST_DIRS:
             crs = src.crs
             transform = src.transform
             height, width = src.height, src.width
-            if _US_PARENT_CACHE is None:
-                _US_PARENT_CACHE = _load_us_parent_cells(crs, transform.c, transform.f)
-            hidden_us = _hidden_mask(height, width, res_m, _US_PARENT_CACHE)
+            hidden_us = _hidden_mask(height, width, res_m, crs, transform.c, transform.f)
 
             # Read the five scoring axes once; each preset is a linear blend of them.
             axes = {ax: src.read(TILE_BANDS[ax]).astype(np.float64) for ax in AXES}
@@ -140,17 +137,8 @@ for rdir in RAST_DIRS:
 
                 with tempfile.NamedTemporaryFile(suffix=".tif", delete=False) as tmp:
                     tmp_path = tmp.name
-                with rasterio.open(tmp_path, "w", driver="GTiff",
-                                   width=width, height=height, count=4,
-                                   dtype="uint8", crs=crs, transform=transform,
-                                   compress="deflate", tiled=True,
-                                   blockxsize=512, blockysize=512) as dst:
-                    dst.write(rgb[..., 0], 1)
-                    dst.write(rgb[..., 1], 2)
-                    dst.write(rgb[..., 2], 3)
-                    dst.write(alpha, 4)
-                    dst.colorinterp = [ColorInterp.red, ColorInterp.green,
-                                       ColorInterp.blue, ColorInterp.alpha]
+                bands = np.stack([rgb[..., 0], rgb[..., 1], rgb[..., 2], alpha])
+                _write_mercator(tmp_path, bands, crs, transform, width, height)
 
                 zoom = ZOOM_BY_RES.get(res_label, "0..9")
                 print(f"  staged {tif.name} ({preset['name']}) -> {out.name} (z{zoom})")
