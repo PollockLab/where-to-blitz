@@ -1135,6 +1135,8 @@ let covActive=false;
 // (rescale 0,10) is baked into transparent WEBP tiles so the overlay sharpens as you zoom
 // to ~300 m, where the 1 km COG via TiTiler stayed coarse. Fungi has no dec25 layer ->
 // keep its older 1 km COG on the remote tiler until one lands.
+const TIER_SWITCH_Z=9;   // 25 km vector tier at z <= this, 5 km raster above (#87 D5; Ryan tunes)
+const PM_BASE='https://github.com/PollockLab/where-to-blitz/releases/download/grid-outputs-v1';   // release-asset base URL for all PMTiles (#87 P4)
 const COVPM=['All','Amphibia','Aves','Insecta','Mammalia','Plantae','Reptilia','Actinopterygii','Arachnida','Mollusca'];   // taxa with a local PMTiles (others -> All)
 // Raster PMTiles now ride the native MapLibre pmtiles:// protocol (registered once) instead of a custom
 // GridLayer that hand-decoded WEBP to canvas. The protocol reads each archive's TileJSON (native z9) and
@@ -1152,7 +1154,7 @@ function setCoverage(){
     map.addSource('cov',{type:'raster',tiles:['https://tiler.biodiversite-quebec.ca/cog/tiles/{z}/{x}/{y}?url='+encodeURIComponent('https://object-arbutus.cloud.computecanada.ca/bq-io/io/inat_canada_heatmaps/Fungi_density_inat_1km.tif')+'&rescale=0,10&colormap_name=magma&resampling=cubic'],tileSize:256,maxzoom:14,attribution:attr});
   }else{
     ensurePM();
-    map.addSource('cov',{type:'raster',url:'pmtiles://density/'+ct+'.pmtiles',tileSize:256,attribution:attr});
+    map.addSource('cov',{type:'raster',url:'pmtiles://'+PM_BASE+'/density_'+ct+'.pmtiles',tileSize:256,attribution:attr});
   }
   map.addLayer({id:'cov',type:'raster',source:'cov',paint:{'raster-opacity':covOpacity}},map.getLayer(CELL_LAYER)?CELL_LAYER:undefined);
   covActive=true;
