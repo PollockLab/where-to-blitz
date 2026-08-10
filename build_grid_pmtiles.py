@@ -94,7 +94,13 @@ def _write_mercator(path, bands, src_crs, src_transform, width, height):
     (see SUPERSAMPLE docstring above) instead of just the cell's existence.
     """
     bounds = array_bounds(height, width, src_transform)
-    (_, _), (south, _) = warp_transform(src_crs, "EPSG:4326", bounds[::2], bounds[1::2])
+    left, bottom, right, top = bounds
+    # All four corners: the LAEA extent is asymmetric about lon_0, so the southernmost point is
+    # a specific corner (the SE one for this lattice, 35.8 N) -- transforming only (left, bottom)
+    # picked 39.9 N and left the pin ~6% coarser than the "southernmost row" this comment promises.
+    _, lats = warp_transform(src_crs, "EPSG:4326",
+                             [left, right, left, right], [bottom, bottom, top, top])
+    south = min(lats)
     dst_res = abs(src_transform.a) / math.cos(math.radians(south)) / SUPERSAMPLE
     dst_transform, dst_w, dst_h = calculate_default_transform(
         src_crs, MERCATOR, width, height, *bounds, resolution=dst_res)
