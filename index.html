@@ -741,7 +741,7 @@ function co2lbl(kg){return (kg<=0&&MODES[state.mode].emit===0)?t('car_free'):'~'
 const ICONIC={Amphibia:'Amphibia',Aves:'Aves',Insecta:'Insecta',Mammalia:'Mammalia',Reptilia:'Reptilia',Plantae:'Plantae',Fungi:'Fungi',Actinopterygii:'Actinopterygii',Arachnida:'Arachnida',Mollusca:'Mollusca'};
 let prospectSeq=0;
 let _lastProspect=null;   // {lat,lon,whereKey} of the open cell panel, so a language switch can re-render it
-const LATTICE_X0=-2150000, LATTICE_Y1=4300000, LATTICE_W=5500000, LATTICE_H=4525000;
+const LATTICE_X0=-2150000, LATTICE_Y1=4300000, LATTICE_W=5500000, LATTICE_H=4525000;   // injected from grid_lattice.py — the clickable lattice and the raster tiles are the same grid
 function activeCellResM(){return map&&map.getZoom&&map.getZoom()>=TIER_SWITCH_Z?5000:25000;}
 function snapToLattice(lat,lon,resM){
   const c=LAEA.fwd(lat,lon), ncol=Math.floor(LATTICE_W/resM), nrow=Math.floor(LATTICE_H/resM);

@@ -50,3 +50,34 @@ def test_priority_copy_says_brighter_not_darker():
     for stale in ("darker = higher priority", "darker = go there",
                   "plus foncé = priorité", "plus foncé = y aller"):
         assert stale not in css, f"stale legend copy: {stale!r}"
+
+
+def test_no_placeholder_survives_the_build():
+    """Every __PLACEHOLDER__ in the template must be substituted by build_webapp.py."""
+    built = TEMPLATE.parent.parent / "index.html"
+    if not built.exists():
+        pytest.skip("run build_webapp.py first")
+    leftover = sorted(set(re.findall(r"__[A-Z][A-Z0-9_]*__", built.read_text())))
+    assert not leftover, f"unsubstituted placeholders shipped: {leftover}"
+
+
+def test_lattice_is_injected_not_hardcoded():
+    """The clickable lattice must come from grid_lattice, not a second copy in the template.
+
+    A drifted origin would put the clickable cells off the raster grid they label — the
+    misalignment this app was already reported for.
+    """
+    import grid_lattice
+
+    src = TEMPLATE.read_text()
+    for placeholder in ("__LATTICE_X0__", "__LATTICE_Y1__", "__LATTICE_W__", "__LATTICE_H__"):
+        assert placeholder in src, f"{placeholder} is hardcoded again in the template"
+
+    built = TEMPLATE.parent.parent / "index.html"
+    if not built.exists():
+        pytest.skip("run build_webapp.py first")
+    line = re.search(r"const LATTICE_X0=(-?\d+), LATTICE_Y1=(-?\d+), LATTICE_W=(\d+), LATTICE_H=(\d+)",
+                     built.read_text())
+    assert line, "the built lattice constants are missing or malformed"
+    assert [int(g) for g in line.groups()] == [
+        grid_lattice.X0, grid_lattice.Y1, grid_lattice.WIDTH_M, grid_lattice.HEIGHT_M]
