@@ -3,13 +3,6 @@ name: Build and push prebuilt raster builder image
 # Manual workflow to build and push a prebuilt image with GDAL and Python deps
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - 'sota/87-projected-5km-grid'
-      - 'main'
-    paths:
-      - 'Dockerfile'
-      - 'requirements.txt'
 
 
 jobs:
