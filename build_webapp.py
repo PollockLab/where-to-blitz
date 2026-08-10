@@ -1560,6 +1560,7 @@ function bootSeq(){return loadGroup(state.taxon).then(()=>{buildMarkers();setVie
   }catch(e){}}).catch(()=>{const el=document.getElementById('loading');if(el){el.style.display='block';el.innerHTML=t('load_error')+' <a href="#" onclick="bootRetry();return false;" style="color:#7fd1ff">'+t('retry')+'</a>';}});}
 function bootRetry(){const el=document.getElementById('loading');if(el){el.style.display='block';el.textContent=t('loading');}bootSeq();}
 bootSeq();
+window._map=map;   // console handle for tuning TIER_SWITCH_Z by eye (#87 D5: Ryan screenshots z8/9/10)
 </script></body></html>"""
 
 out = (HTML.replace("__FILES__", json.dumps(FILES, separators=(",", ":")))
