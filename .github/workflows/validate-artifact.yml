@@ -1,0 +1,50 @@
+name: Validate artifact
+# Cheap standalone validation of an already-built rebuilt-site artifact - runs the numeric
+# nesting gate (25km == 5x5 block mean of 5km) and PMTiles size checks without rebuilding.
+on:
+  workflow_dispatch:
+    inputs:
+      artifact_name:
+        description: "Artifact name to validate (e.g. rebuilt-site-<hash>)"
+        type: string
+        required: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: artifacts
+      - name: List downloaded files
+        run: |
+          ls -la artifacts || true
+          ls -la artifacts/cluster_results/ca || true
+      - name: Install rasterio
+        run: pip install rasterio numpy
+      - name: Run validation
+        id: run_validation
+        continue-on-error: true
+        run: |
+          python validate_artifacts.py artifacts --output validate_report.json || echo $? > validate_exit_code
+      - name: Upload validation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-report
+          path: validate_report.json
+          retention-days: 7
+      - name: Print summary
+        run: |
+          cat validate_report.json | python3 -c "import json,sys; r=json.load(sys.stdin); print(json.dumps(r['summary'])); [print(g, v.get('pass'), v.get('reason', '')) for g, v in r['groups'].items()]" || cat validate_report.json || true
+      - name: Fail on validation failure
+        if: always()
+        run: |
+          code=0
+          if [ -f validate_exit_code ]; then code=$(cat validate_exit_code); fi
+          if [ "$code" -ne "0" ]; then echo "Validation failed (exit $code)"; exit $code; else echo "Validation succeeded"; fi
