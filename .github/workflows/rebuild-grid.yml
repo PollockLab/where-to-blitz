@@ -1,10 +1,12 @@
 name: Rebuild grid
 # Release-based flow (#87 P4): tiles are ~280 MB of derived binaries, so they are NOT
-# committed to git and NOT rebuilt on every push. A manual dispatch runs the full
-# pipeline (prepare-inputs -> per-group 5 km matrix -> 25 km aggregate -> validate)
-# and, with publish: true, uploads the PMTiles to the grid-outputs-v1 release, whose
-# asset URLs (S3-backed, range-request capable) are what the webapp fetches.
-# Pushes get a fast lint/syntax check only.
+# committed to git. A manual dispatch runs the full pipeline (prepare-inputs -> per-group
+# 5 km matrix -> 25 km aggregate -> validate) and, with publish: true, uploads the
+# PMTiles to the grid-outputs-v1 release, whose asset URLs (S3-backed, range-request
+# capable) are what the webapp fetches.
+#
+# Pushes to main: fast deploy-only mode. Skips expensive tile regeneration; instead uses
+# the latest PMTiles from grid-outputs-v1 release and redeploys the site.
 on:
   workflow_dispatch:
     inputs:
@@ -366,6 +368,61 @@ jobs:
           # density tiles carry a density_ prefix (matches the app's tiles/density_<Taxon>.pmtiles)
           for f in density/*.pmtiles; do cp "$f" "_site/tiles/density_$(basename "$f")"; done
           cp artifacts/cluster_results/ca/*.json _site/cluster_results/ca/
+          du -sh _site
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  deploy-site-fast:
+    # On push to main: redeploy the site without rebuilding tiles (use latest release assets).
+    # Lint validation already passed. This job rebuilds the webapp (index.html) and deploys.
+    if: github.event_name == 'push'
+    needs: validate-light
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}-py-3.11
+      - name: Install deps
+        run: pip install -r requirements.txt
+      - name: Download latest PMTiles from release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p cluster_results/ca/pmtiles density
+          # Download all PMTiles from grid-outputs-v1 release
+          gh release download grid-outputs-v1 --pattern "*.pmtiles" --dir cluster_results/ca/pmtiles --repo "$GITHUB_REPOSITORY" || true
+          gh release download grid-outputs-v1 --pattern "density_*.pmtiles" --dir density --repo "$GITHUB_REPOSITORY" || true
+          ls -lh cluster_results/ca/pmtiles/ || echo "No PMTiles found"
+      - name: Rebuild webapp
+        run: python build_webapp.py
+      - name: Assemble _site
+        run: |
+          set -euo pipefail
+          mkdir -p _site/tiles _site/cluster_results/ca
+          cp index.html _site/
+          cp cluster_results/ca/pmtiles/*.pmtiles _site/tiles/ 2>/dev/null || echo "No PMTiles in local path"
+          for f in density/*.pmtiles; do
+            [ -f "$f" ] && cp "$f" "_site/tiles/density_$(basename "$f")" || true
+          done
+          cp cluster_results/ca/*.json _site/cluster_results/ca/ 2>/dev/null || echo "No JSON found"
           du -sh _site
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
