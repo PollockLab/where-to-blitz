@@ -1,6 +1,6 @@
 """Tag grid cells that fall outside Canada, for the app's always-on 'Canada only' view.
 
-The 0.25-deg grid is identical across taxa, so we read one webapp_data_*.json and classify each
+The cell grid is identical across taxa, so we read one webapp_data_*.json and classify each
 cell centre by NEAREST COUNTRY: a cell is hidden only if its centre is closer to a FOREIGN country
 than to Canada (Natural Earth 1:50m boundaries, simplified to ~0.01 deg and committed alongside as
 na_boundaries.geojson). The foreign set is the United States and Greenland:
