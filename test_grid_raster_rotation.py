@@ -59,17 +59,24 @@ def test_pinned_resolution_supersamples_the_cell(tmp_path):
 
 
 def test_warped_cell_boundary_is_actually_rotated(tmp_path):
-    """The warp must reproduce the true shear, not flatten it into an axis-aligned grid.
+    """The warp must stair-step a cell edge *within* the cell, not just tilt the whole extent.
 
-    Compares the column position of one stripe boundary at the top vs. the bottom of the output
-    raster. In true Mercator space a LAEA cell edge this far from the projection centre shears by
-    several pixels top-to-bottom; an unrotated (bugged) warp holds that column fixed.
+    A boundary column that drifts across the full raster proves nothing: extent-level shear
+    survives even at ~0.7 px/cell (measured -- the pre-fix SUPERSAMPLE=1 output still shifts
+    5 px top-to-bottom), because the coarse warp tilts the block layout while every individual
+    cell stays a flat rectangle. What the bug actually destroyed is the staircase *inside* one
+    cell's rows. So this test tracks a stripe boundary row-by-row and requires the staircase
+    period -- the row distance between consecutive column steps -- to be at most one source
+    cell's height in output rows. At SUPERSAMPLE=1 a cell is ~1 row tall and steps can only
+    occur at cell-block granularity (period > cell height: fails); with supersampling the edge
+    steps at least once within every cell (verified to fail at SUPERSAMPLE=1, pass at 4).
     """
     out = tmp_path / "merc.tif"
     _stripe_geotiff(out)
     with rasterio.open(out) as dst:
         band = dst.read(1)  # 0/255 stripes; alpha (band 4) marks valid pixels
         alpha = dst.read(4)
+        rows_per_cell = RES / abs(dst.transform.e)  # source cell height in output rows
 
     def boundary_col(row):
         vals = band[row]
@@ -82,13 +89,19 @@ def test_warped_cell_boundary_is_actually_rotated(tmp_path):
         transitions = np.flatnonzero(np.diff(run.astype(int)) != 0)
         return None if len(transitions) == 0 else idx[transitions[0]]
 
-    h = band.shape[0]
-    top = boundary_col(int(h * 0.1))
-    bottom = boundary_col(int(h * 0.9))
-    assert top is not None and bottom is not None, "warp produced no valid stripe boundary to compare"
+    cols = np.array([c if (c := boundary_col(r)) is not None else -1
+                     for r in range(band.shape[0])])
+    valid_rows = np.flatnonzero(cols >= 0)
+    assert len(valid_rows) > 2, "warp produced no valid stripe boundary to trace"
+    run = cols[valid_rows[0]:valid_rows[-1] + 1]
+    assert (run >= 0).all(), "stripe boundary is discontinuous across valid rows"
 
-    shift = abs(top - bottom)
-    assert shift >= 3, (
-        f"stripe boundary only shifts {shift} px top-to-bottom -- "
-        "the LAEA cell's true Mercator rotation was lost in the warp"
+    step_rows = np.flatnonzero(np.diff(run) != 0)
+    assert len(step_rows) >= 2, "stripe boundary never steps -- rotation lost entirely"
+    worst_period = max(np.diff(step_rows).max(), step_rows[0] + 1,
+                       len(run) - 1 - step_rows[-1])
+    assert worst_period <= rows_per_cell + 1, (
+        f"stripe boundary steps only every {worst_period} rows but a cell spans "
+        f"{rows_per_cell:.1f} rows -- cells render as flat rectangles, the LAEA "
+        "rotation is lost at cell scale"
     )
