@@ -709,7 +709,18 @@ function caOnlyActive(){const e=document.getElementById('tgCanadaOnly');return e
 // US-side cells (approx, lazy-loaded): hidden when "Canada only" is on -- the cross-border band is a data edge, not a real gap (#5).
 let US_CELLS=null;
 async function loadUS(){if(US_CELLS)return;try{const r=await fetchT(DATA_DIR+'us_cells.json',8000);US_CELLS=new Set((await r.json()).us_cells||[]);}catch(e){US_CELLS=new Set();}}
-function applyCanadaMask(){if(!caOnlyActive())return;if(!US_CELLS){loadUS().then(recolour);return;}markers.forEach(m=>{if(US_CELLS.has(gekey(m.r[0],m.r[1])))setCellState(m.i,'rgba(0,0,0,0)',0);});}
+function applyCanadaMask(){
+  if(!caOnlyActive()){
+    if(_mapLoaded&&map.getLayer('cells-line'))map.setFilter('cells-line',null);
+    return;
+  }
+  if(!US_CELLS){loadUS().then(recolour);return;}
+  const hiddenIds=[];
+  markers.forEach(m=>{if(US_CELLS.has(gekey(m.r[0],m.r[1]))){setCellState(m.i,'rgba(0,0,0,0)',0);hiddenIds.push(m.i);}});
+  if(_mapLoaded&&map.getLayer('cells-line')){
+    map.setFilter('cells-line',hiddenIds.length?['!',['in',['id'],['literal',hiddenIds]]]:null);
+  }
+}
 function geColour(m){const v=GE[gekey(m.r[0],m.r[1])];if(!v)return GE_ALL;return v[0]<0?GE_ALL:(GE_PAL[v[0]]||GE_ALL);}
 // A cell in the bottom band of the national gap ranking (e.g. well-sampled cities) is a low
 // priority for the all-taxa mission -- but it's not worthless. Surface the two honest reasons
