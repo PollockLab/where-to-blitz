@@ -22,7 +22,7 @@ on:
         default: ""
   push:
     branches:
-      - 'sota/87-projected-5km-grid'
+      - main
 
 jobs:
   validate-light:
