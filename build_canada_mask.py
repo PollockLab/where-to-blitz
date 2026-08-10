@@ -1,44 +1,43 @@
 """Tag grid cells that fall outside Canada, for the app's always-on 'Canada only' view.
 
-The cell grid is identical across taxa, so we read one webapp_data_*.json and classify each
-cell centre by NEAREST COUNTRY: a cell is hidden only if its centre is closer to a FOREIGN country
-than to Canada (Natural Earth 1:50m boundaries, simplified to ~0.01 deg and committed alongside as
-na_boundaries.geojson). The foreign set is the United States and Greenland:
-  - US removes the deep-US band AND the coastal-Alaska panhandle west of BC (issue #72);
-  - Greenland (GL) removes the western Greenland cells that the Weiss land mask admits — they are
-    nearer Canada than the US, so the US-only test left ~1/4 of Greenland coloured (issue #86).
-The nearest-country test is symmetric and never hides Canadian coastal-water cells (the previous
-lat<49.5 + coarse-1:110m heuristic over-hid those, and missed Alaska entirely). Canadian Arctic
-islands (Ellesmere, Devon, Baffin) sit inside the CA polygon, so contains() keeps them instantly;
-only the non-interior cells pay the distance computation. The output file keeps its us_cells.json
-name (the app fetches it by that path); its contents are all cells hidden from the Canada-only view.
-Keys match the app's gekey: lat.toFixed(3)+','+lon.toFixed(3).
+The classification itself lives in border_mask, so the vector lattice the app clicks and the raster
+PMTiles it renders are cut by exactly the same mask — they used to be derived separately and could
+disagree at the border. A 25 km cell is hidden only when all 25 of its 5 km children are outside
+Canada, so no cell holding Canadian ground is ever made unclickable.
+
+The output keeps its us_cells.json name (the app fetches it by that path); its contents are all
+cells hidden from the Canada-only view. Keys match the app's gekey: lat.toFixed(3)+','+lon.toFixed(3).
 """
 import glob
 import json
 import os
 
-from shapely.geometry import Point, shape
-from shapely.prepared import prep
+import numpy as np
+import rasterio
+from rasterio.warp import transform as warp_transform
+
+import border_mask
 
 HERE = "cluster_results/ca"
-bd = json.load(open(os.path.join(HERE, "na_boundaries.geojson")))
-geoms = {f["properties"]["country"]: shape(f["geometry"]) for f in bd["features"]}
-CA = geoms["CA"]
-CA_prep = prep(CA)
-FOREIGN = [geoms["US"], geoms["GL"]]       # hide cells nearer any of these than Canada (#72, #86)
+STACK = f"{HERE}/grid_5000m/All_biodiversity.tif"
 
-src = next(f for f in sorted(glob.glob(f"{HERE}/webapp_data_*.json")) if "gettingeven" not in f)
-d = json.load(open(src)); rows = d[next(k for k, v in d.items() if isinstance(v, list))]
+with rasterio.open(STACK) as src:
+    crs, tr = src.crs, src.transform
+    fine = border_mask.hidden_fine(crs, tr.c, tr.f, src.height, src.width)
+coarse = border_mask.hidden_coarse(fine)
 
-hidden = []
-for r in rows:
-    lat, lon = r[0], r[1]
-    p = Point(lon, lat)
-    if CA_prep.contains(p):
-        continue                          # interior Canada — always shown
-    dca = CA.distance(p)
-    if any(dca > f.distance(p) for f in FOREIGN):   # closer to a foreign country than to Canada — hide
-        hidden.append(f"{lat:.3f},{lon:.3f}")
-json.dump({"us_cells": hidden}, open(f"{HERE}/us_cells.json", "w"), separators=(",", ":"))
-print(f"{len(hidden)} / {len(rows)} cells nearer a foreign country (US/Greenland) than Canada -> us_cells.json")
+src_json = next(f for f in sorted(glob.glob(f"{HERE}/webapp_data_*.json")) if "gettingeven" not in f)
+with open(src_json) as fh:
+    d = json.load(fh)
+rows = d[next(k for k, v in d.items() if isinstance(v, list))]
+
+xs, ys = warp_transform("EPSG:4326", crs, [r[1] for r in rows], [r[0] for r in rows])
+cols = np.floor((np.asarray(xs) - tr.c) / border_mask.COARSE_RES).astype(int)
+lines = np.floor((tr.f - np.asarray(ys)) / border_mask.COARSE_RES).astype(int)
+inside = (lines >= 0) & (lines < coarse.shape[0]) & (cols >= 0) & (cols < coarse.shape[1])
+
+hidden = [f"{r[0]:.3f},{r[1]:.3f}"
+          for r, ln, cl, ok in zip(rows, lines, cols, inside, strict=True) if ok and coarse[ln, cl]]
+with open(os.path.join(HERE, "us_cells.json"), "w") as fh:
+    json.dump({"us_cells": hidden}, fh, separators=(",", ":"))
+print(f"{len(hidden)} / {len(rows)} cells fully outside Canada -> us_cells.json")
