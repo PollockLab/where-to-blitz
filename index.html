@@ -191,7 +191,9 @@ details.adv>summary:hover{color:var(--ink)}
 #maplegend .ramp.magma{background:linear-gradient(90deg,#000004,#51127c,#b73779,#fc8961,#fcfdbf)}/* matches the iNaturalist density overlay colormap */
 #maplegend .lab{display:flex;justify-content:space-between;font-size:12.5px;color:#46566a}
 #maplegend .hint{margin-top:3px;color:#46566a;font-size:10.5px}/* #82: two sizes under the .lab labels (12.5px) */
+.maplibregl-ctrl-bottom-right{right:14px;bottom:92px;z-index:1060}
 @media(max-width:640px){#maplegend{left:auto;right:8px;bottom:auto;top:calc(50vh + 8px);min-width:0;max-width:158px;padding:6px 8px}}
+@media(max-width:640px){.maplibregl-ctrl-bottom-right{right:8px;bottom:8px}}
 #loading{position:fixed;left:50%;top:46%;transform:translate(-50%,-50%);z-index:1200;background:rgba(255,255,255,.96);border-radius:10px;padding:11px 17px;box-shadow:0 3px 14px rgba(0,0,0,.25);font-size:14px;font-weight:600;color:#1b2a3a}
 @media(max-width:640px){#loading{left:50%;top:74vh}}
 #howbtn{display:flex;align-items:center;gap:6px;background:#fff;color:#1b2a3a;border:0;border-radius:9px;box-shadow:0 2px 9px rgba(0,0,0,.28);padding:7px 11px;font-size:12.5px;font-weight:650;cursor:pointer;max-width:260px}
@@ -663,9 +665,9 @@ function relabelDynamic(){
   // rows are cached, so this is zero-network. A cell tap lives in the popup (#popsp); the plan-mode
   // "around my start" list lives in the sidebar (#prospects).
   if(typeof fetchProspects!=='function'){}
-  else if(_lastProspect&&_lastProspect.toPopup&&_lastProspect.spEl&&_lastProspect.spEl.isConnected){fetchProspects(_lastProspect.lat,_lastProspect.lon,_lastProspect.whereKey,{toPopup:true,spEl:_lastProspect.spEl,gapsEl:_lastProspect.gapsEl});}
+  else if(_lastProspect&&_lastProspect.toPopup&&_lastProspect.spEl&&_lastProspect.spEl.isConnected){fetchProspects(_lastProspect.lat,_lastProspect.lon,_lastProspect.whereKey,{toPopup:true,spEl:_lastProspect.spEl,gapsEl:_lastProspect.gapsEl,resM:_lastProspect.resM});}
   else if(pr&&pr.dataset.idle==='1')pr.innerHTML='<div class="hd" style="margin-top:10px" data-i18n="prospects_idle">'+t('prospects_idle')+'</div>';
-  else if(pr&&_lastProspect)fetchProspects(_lastProspect.lat,_lastProspect.lon,_lastProspect.whereKey,{toPopup:false});
+  else if(pr&&_lastProspect)fetchProspects(_lastProspect.lat,_lastProspect.lon,_lastProspect.whereKey,{toPopup:false,resM:_lastProspect.resM});
 }
 function setLang(l){if(l!==LANG){LANG=l;try{localStorage.setItem('wtb_lang',l);}catch(e){}}
   applyI18N();relabelDynamic();}
@@ -723,6 +725,25 @@ function co2lbl(kg){return (kg<=0&&MODES[state.mode].emit===0)?t('car_free'):'~'
 const ICONIC={Amphibia:'Amphibia',Aves:'Aves',Insecta:'Insecta',Mammalia:'Mammalia',Reptilia:'Reptilia',Plantae:'Plantae',Fungi:'Fungi',Actinopterygii:'Actinopterygii',Arachnida:'Arachnida',Mollusca:'Mollusca'};
 let prospectSeq=0;
 let _lastProspect=null;   // {lat,lon,whereKey} of the open cell panel, so a language switch can re-render it
+const LATTICE_X0=-2150000, LATTICE_Y1=4300000, LATTICE_W=5500000, LATTICE_H=4525000;
+function activeCellResM(){return map&&map.getZoom&&map.getZoom()>=TIER_SWITCH_Z?5000:25000;}
+function snapToLattice(lat,lon,resM){
+  const c=LAEA.fwd(lat,lon), ncol=Math.floor(LATTICE_W/resM), nrow=Math.floor(LATTICE_H/resM);
+  const col=Math.floor((c[0]-LATTICE_X0)/resM), row=Math.floor((LATTICE_Y1-c[1])/resM);
+  if(col<0||row<0||col>=ncol||row>=nrow)return null;
+  const q=LAEA.inv(LATTICE_X0+(col+0.5)*resM,LATTICE_Y1-(row+0.5)*resM);
+  return {lat:q[0],lon:q[1],row,col,resM};
+}
+function nearestMarker(lat,lon){
+  if(!markers.length)return null;
+  let best=markers[0],bd=1e9;for(const m of markers){const d=Math.abs(m.r[0]-lat)+Math.abs(m.r[1]-lon);if(d<bd){bd=d;best=m;}}
+  return {best,bd};
+}
+function cellBoundsForRes(lat,lon,resM){
+  const poly=cellPoly(lat,lon,resM);let minLon=180,maxLon=-180,minLat=90,maxLat=-90;
+  for(const p of poly){if(p[0]<minLon)minLon=p[0];if(p[0]>maxLon)maxLon=p[0];if(p[1]<minLat)minLat=p[1];if(p[1]>maxLat)maxLat=p[1];}
+  return {swlat:minLat,nelat:maxLat,swlng:minLon,nelng:maxLon};
+}
 // iNaturalist returns common names per locale; ask for French names in FR mode (falls back to the
 // scientific name where no French common name exists). EN is iNat's default, so leave en URLs
 // untouched — keeps their cache keys and behaviour identical to before.
@@ -739,23 +760,25 @@ const safeImg=u=>{u=String(u==null?'':u);return /^https:\/\//.test(u)?esc(u):'';
 async function fetchProspects(lat,lon,whereKey,opts){
   const myseq=++prospectSeq;
   const toPopup=!!(opts&&opts.toPopup);
+  const resM=(opts&&opts.resM)||25000;
+  const box=cellBoundsForRes(lat,lon,resM);
   // For a cell tap, paint into the persistent popup element refs passed by exploreCell, NOT a
   // getElementById lookup: Leaflet rebuilds the popup content node during the autoPan/setView churn
   // of a tap, so a queried node goes stale mid-fetch and the on-screen popup keeps loading (#56).
   const spEl=(opts&&opts.spEl)||null, gapsEl=(opts&&opts.gapsEl)||null;
-  _lastProspect={lat,lon,whereKey,toPopup,spEl,gapsEl};   // remember the open panel so setLang can re-render it in the new language
+  _lastProspect={lat,lon,whereKey,toPopup,spEl,gapsEl,resM};   // remember the open panel so setLang can re-render it in the new language
   const where=t(WHERE_LBL[whereKey]||'here');
   const pr=toPopup?spEl:document.getElementById('prospects'); if(!pr) return;   // popup closed -> nothing to fill
   const msg=s=>toPopup?'<div class="popsec">'+s+'</div>':'<div class="hd">'+s+'</div>';   // .hd is dark-on-dark (sidebar); .popsec reads on the light popup
   if(!toPopup) pr.dataset.idle='0';
   pr.innerHTML=msg(t('prospects_lookup'));
-  if(toPopup) fetchGapTree(lat,lon,gapsEl);   // the coverage-by-group tree only lives in the popup now
+  if(toPopup) fetchGapTree(lat,lon,gapsEl,resM);   // the coverage-by-group tree only lives in the popup now
   const T_here=n=>t('here_count',n),T_near=n=>t('near_count',n);
   const L_rare=t('rare'),L_new=t('new_here'),L_notHere=t('not_here_tag');
-  const ic=ICONIC[state.taxon]||'', HH=0.125;
-  const q=(h)=>`https://api.inaturalist.org/v1/observations/species_counts?swlat=${lat-h}&nelat=${lat+h}&swlng=${lon-h}&nelng=${lon+h}&quality_grade=research&taxon_geoprivacy=open&threatened=false&per_page=500&order_by=count`+(ic?`&iconic_taxa=${ic}`:'')+inatLocale();
+  const ic=ICONIC[state.taxon]||'';
+  const q=(b)=>`https://api.inaturalist.org/v1/observations/species_counts?swlat=${b.swlat}&nelat=${b.nelat}&swlng=${b.swlng}&nelng=${b.nelng}&quality_grade=research&taxon_geoprivacy=open&threatened=false&per_page=500&order_by=count`+(ic?`&iconic_taxa=${ic}`:'')+inatLocale();
   try{
-    const j=await jget(q(HH));
+    const j=await jget(q(box));
     if(myseq!==prospectSeq)return;
     const total=j.total_results||0;
     // Issue #48: rank by RECORDING VALUE, not global iNaturalist popularity. We always pull the ~40 km
@@ -765,7 +788,7 @@ async function fetchProspects(lat,lon,whereKey,opts){
     // observations_count, which is photo popularity, not value. Best-effort: if the neighbourhood call
     // fails, reg falls back to the local count and the ranking degrades to a within-cell order.
     const cell=(j.results||[]).filter(r=>r.count>=2 && r.taxon && r.taxon.default_photo);
-    const k=await jget(q(3*HH)).catch(()=>null);
+    const k=await jget(q({swlat:lat-0.5,nelat:lat+0.5,swlng:lon-0.5,nelng:lon+0.5})).catch(()=>null);
     if(myseq!==prospectSeq)return;
     const reg={}; ((k&&k.results)||[]).forEach(r=>{if(r.taxon)reg[r.taxon.id]=r.count;});
     const have=new Set(cell.map(r=>r.taxon.id));
@@ -825,17 +848,18 @@ function paintGapTree(el,rows){
     '<div class="popcap">'+t('gt_caveat')+'</div>';   // honest: these are iNaturalist record counts (a proxy), not true richness
   el.querySelectorAll('.gtrow').forEach(b=>b.onclick=()=>{const g=b.dataset.g;if(!FILES[g]||state.taxon===g)return;taxonSel.value=g;taxonSel.onchange();});
 }
-async function fetchGapTree(lat,lon,el){
+async function fetchGapTree(lat,lon,el,resM){
   const myseq=++gapSeq;
   // `el` is the PERSISTENT popup element passed by exploreCell, not a getElementById lookup: Leaflet
   // rebuilds the popup content node during the autoPan/setView churn of a tap, so a queried node goes
   // stale mid-fetch and the on-screen popup keeps its loading text (issue #56).
   if(!el) return;   // popup container; closed -> nothing to fill
-  const ck=gtkey(lat,lon);
+  const ck=gtkey(lat,lon)+'|'+String(resM||25000);
   if(GT_CACHE[ck]!==undefined){paintGapTree(el,GT_CACHE[ck]);return;}
   el.innerHTML='<div class="popsec">'+t('gaptree_lookup')+'</div>';
-  const HH=0.125,R=0.5,GR=t('group'),groups=Object.keys(ICONIC);
-  const box=(h)=>`swlat=${lat-h}&nelat=${lat+h}&swlng=${lon-h}&nelng=${lon+h}`;
+  const R=0.5,GR=t('group'),groups=Object.keys(ICONIC);
+  const inner=cellBoundsForRes(lat,lon,resM||25000);
+  const box=(b)=>`swlat=${b.swlat}&nelat=${b.nelat}&swlng=${b.swlng}&nelng=${b.nelng}`;
   const base='https://api.inaturalist.org/v1/observations/species_counts?quality_grade=research&taxon_geoprivacy=open&threatened=false&order_by=count';
   try{
     // Two calls total (issue #56): the cell numerator and the neighbourhood denominator are each ONE
@@ -846,8 +870,8 @@ async function fetchGapTree(lat,lon,el){
     // rich areas (a dense group can cap at its share of 500), fine as a coverage heuristic and revisitable
     // when the goal calculations are finalised (#49). Each leg swallows its own error.
     let cellFail=false,nbFail=false;
-    const cellP=jget(`${base}&${box(HH)}&per_page=500`).catch(()=>{cellFail=true;return{results:[]};});
-    const nbP=jget(`${base}&${box(R)}&per_page=500`).catch(()=>{nbFail=true;return{results:[]};});
+    const cellP=jget(`${base}&${box(inner)}&per_page=500`).catch(()=>{cellFail=true;return{results:[]};});
+    const nbP=jget(`${base}&swlat=${lat-R}&nelat=${lat+R}&swlng=${lon-R}&nelng=${lon+R}&per_page=500`).catch(()=>{nbFail=true;return{results:[]};});
     const [cj,nj]=await Promise.all([cellP,nbP]);
     if(myseq!==gapSeq)return;
     // total outage (both calls failed) -> "tap again", not a misleading "too few records here".
@@ -894,10 +918,10 @@ map.on('load',()=>{
   map.addLayer({id:'cells-line',type:'line',source:'cells',maxzoom:TIER_SWITCH_Z,paint:{
     'line-color':'rgba(15,22,32,0.25)','line-width':1}});
   // Top-in-view outlines (D2 option c). No fill; just a marker ring on the nationally-best cells in view.
-  map.addLayer({id:'cells-top',type:'line',source:'cells',paint:{
+  map.addLayer({id:'cells-top',type:'line',source:'cells',maxzoom:TIER_SWITCH_Z,paint:{
     'line-color':'#f0a000','line-width':2.5},filter:['==',['id'],-1]});
   map.on('click',CELL_LAYER,e=>{const f=e.features&&e.features[0];if(!f)return;const r=markers[f.id]&&markers[f.id].r;if(!r)return;
-    if(caOnlyActive()&&US_CELLS&&US_CELLS.has(gekey(r[0],r[1])))return;state.view==='explore'?exploreCell(r[0],r[1]):planTap(r[0],r[1]);});
+    if(caOnlyActive()&&US_CELLS&&US_CELLS.has(gekey(r[0],r[1])))return;state.view==='explore'?exploreCell(e.lngLat.lat,e.lngLat.lng):planTap(r[0],r[1]);});
   map.on('mouseenter',CELL_LAYER,()=>{map.getCanvas().style.cursor='pointer';});
   map.on('mouseleave',CELL_LAYER,()=>{map.getCanvas().style.cursor='';});
   setBase('Standard');
@@ -926,7 +950,7 @@ const BASEMAPS={
   "Terrain":{tiles:SUB('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png','abc'),maxzoom:17},
   "Light":{tiles:SUB('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png','abcd'),maxzoom:20}   // base under the iNaturalist-density style; not a dropdown choice
 };
-let baseOpacity=1, covOpacity=0.8;   // covOpacity: density-overlay opacity, slider-driven when a data overlay is active (#39)
+let baseOpacity=1, gridOpacity=0.72, covOpacity=0.8;   // default grid opacity keeps basemap context visible
 function setBase(name){
   if(!_mapLoaded){whenMap(()=>setBase(name));return;}
   if(map.getLayer('basemap'))map.removeLayer('basemap');
@@ -1001,9 +1025,8 @@ const LAEA=(()=>{
     return [(bt+APA[0]*Math.sin(2*bt)+APA[1]*Math.sin(4*bt)+APA[2]*Math.sin(6*bt))/RAD,(L0+lam)/RAD];};
   return {fwd:fwd,inv:inv};
 })();
-const CELL_HALF_M=12500;   // half a 25km lattice cell (vector data is the 25km tier)
-function cellPoly(lat,lon){
-  const c=LAEA.fwd(lat,lon),h=CELL_HALF_M;
+function cellPoly(lat,lon,resM){
+  const c=LAEA.fwd(lat,lon),h=(resM||25000)/2;
   return [[-h,-h],[h,-h],[h,h],[-h,h],[-h,-h]].map(d=>{const q=LAEA.inv(c[0]+d[0],c[1]+d[1]);return [q[1],q[0]];});
 }
 function buildMarkers(){
@@ -1156,8 +1179,9 @@ function setGridRaster(){
   const attr='Blitz the Gap priority grid';
   map.addSource('grid25',{type:'raster',url:'pmtiles://'+base+'_grid_25000m.pmtiles',tileSize:256,maxzoom:TIER_SWITCH_Z,attribution:attr});
   map.addSource('grid5',{type:'raster',url:'pmtiles://'+base+'_grid_5000m.pmtiles',tileSize:256,minzoom:TIER_SWITCH_Z,attribution:attr});
-  map.addLayer({id:'grid25',type:'raster',source:'grid25',maxzoom:TIER_SWITCH_Z},CELL_LAYER);
-  map.addLayer({id:'grid5',type:'raster',source:'grid5',minzoom:TIER_SWITCH_Z},CELL_LAYER);
+  map.addLayer({id:'grid25',type:'raster',source:'grid25',maxzoom:TIER_SWITCH_Z,paint:{'raster-opacity':gridOpacity}},CELL_LAYER);
+  map.addLayer({id:'grid5',type:'raster',source:'grid5',minzoom:TIER_SWITCH_Z,paint:{'raster-opacity':gridOpacity}},CELL_LAYER);
+  updateOpacityControl();
 }
 // Local-contrast aid (D2 option c): outline the top ~20 cells in the current view by the STABLE
 // national score. The map never recolours; the "best near me" answer is a list + outlines.
@@ -1193,9 +1217,15 @@ function setCoverage(){
 // #39: the opacity slider drives the data overlay when one is active (so it fades the magma to
 // reveal road/water/place context), else it falls back to basemap brightness. Switches label,
 // aria-label, slider value + % readout to match the active target.
-function dataOverlayActive(){return covActive;}
+function gridOverlayActive(){return _mapLoaded&&!!(map.getLayer('grid25')||map.getLayer('grid5'));}
+function dataOverlayActive(){return covActive||gridOverlayActive();}
 function setBaseOpacity(v){baseOpacity=v;if(_mapLoaded&&map.getLayer('basemap'))map.setPaintProperty('basemap','raster-opacity',v);}
 function setCovOpacity(v){covOpacity=v;if(_mapLoaded&&map.getLayer('cov'))map.setPaintProperty('cov','raster-opacity',v);}
+function setGridOpacity(v){
+  gridOpacity=v;
+  if(_mapLoaded&&map.getLayer('grid25'))map.setPaintProperty('grid25','raster-opacity',v);
+  if(_mapLoaded&&map.getLayer('grid5'))map.setPaintProperty('grid5','raster-opacity',v);
+}
 function updateOpacityControl(){
   const sl=document.getElementById('baseop'),lab=document.getElementById('bople'),val=document.getElementById('bopv');
   if(!sl||!lab||!val)return;
@@ -1203,7 +1233,7 @@ function updateOpacityControl(){
   const row=document.getElementById('opacityRow');
   if(row)row.style.display=ov?'':'none';   // #46(b): the slider only appears with a data overlay; lock basemap brightness at 100% otherwise
   if(!ov)setBaseOpacity(1);
-  const v=ov?covOpacity:baseOpacity;
+  const v=ov?(covActive?covOpacity:gridOpacity):baseOpacity;
   sl.value=v;
   lab.textContent=t(ov?'data_opacity':'map_brightness');
   sl.setAttribute('aria-label',t(ov?'aria_data_opacity':'aria_map_brightness'));
@@ -1230,7 +1260,8 @@ map.on('moveend',()=>{if(!geActive())updateTopOutlines();});
   setAria(false);
   tog.addEventListener('click',()=>{const c=document.body.classList.toggle('panel-collapsed');setAria(c);setTimeout(()=>{try{map.resize();}catch(e){}},220);});})();
 document.getElementById('baseop').addEventListener('input',e=>{const v=parseFloat(e.target.value);
-  if(dataOverlayActive())setCovOpacity(v);   // #39: fade the magma data
+  if(covActive)setCovOpacity(v);   // #39: fade the magma data
+  else if(gridOverlayActive())setGridOpacity(v);   // priority raster opacity
   else setBaseOpacity(v);
   document.getElementById('bopv').textContent=Math.round(v*100)+'%';});
 document.getElementById('maxleg').addEventListener('change',e=>{state.maxLeg=parseFloat(e.target.value);replan();});
@@ -1386,8 +1417,8 @@ function rankAndRender(){
 // Trip-planner overlays as MapLibre sources/layers (were Leaflet rectangle/polyline/featureGroup vectors).
 // destCell = the dashed green target square; route = the white-cased green line(s). DOM markers ride on top.
 let routeIds=[];
-function setDestCell(lat,lon){if(!_mapLoaded)return;removeDestCell();
-  map.addSource('destcell',{type:'geojson',data:{type:'Feature',geometry:{type:'Polygon',coordinates:[cellPoly(lat,lon)]}}});
+function setDestCell(lat,lon,resM){if(!_mapLoaded)return;removeDestCell();
+  map.addSource('destcell',{type:'geojson',data:{type:'Feature',geometry:{type:'Polygon',coordinates:[cellPoly(lat,lon,resM)]}}});
   map.addLayer({id:'destcell-fill',type:'fill',source:'destcell',paint:{'fill-color':'#74c476','fill-opacity':0.16}});
   map.addLayer({id:'destcell-line',type:'line',source:'destcell',paint:{'line-color':'#1b7837','line-width':2,'line-dasharray':[2.5,2.5]}});
   destCell=true;}
@@ -1485,15 +1516,19 @@ async function renderInsights(){
 // Explore mode: tap a cell to see its score + what to record there (no trip planning).
 function exploreCell(lat,lon){
   if(!markers.length)return;   // map tapped before cell data loaded
-  let best=markers[0],bd=1e9;for(const m of markers){const d=Math.abs(m.r[0]-lat)+Math.abs(m.r[1]-lon);if(d<bd){bd=d;best=m;}}
+  const resM=activeCellResM();
+  const snap=snapToLattice(lat,lon,resM);if(!snap)return;
+  const nn=nearestMarker(snap.lat,snap.lon);if(!nn)return;
+  const best=nn.best,bd=nn.bd;
   // #72: a tap snaps to the nearest cell. Reject taps far from any cell (no grabbing a distant border cell
   // from mid-ocean / outside the grid; ~0.45° Manhattan ≈ within one 0.25° cell), and never select a hidden
   // US cell — the marker handler already guards direct cell taps, this covers taps on the bare map.
-  if(bd>0.45||(caOnlyActive()&&US_CELLS&&US_CELLS.has(gekey(best.r[0],best.r[1]))))return;
+  const maxTap=resM===5000?0.14:0.45;
+  if(bd>maxTap||(caOnlyActive()&&US_CELLS&&US_CELLS.has(gekey(best.r[0],best.r[1]))))return;
   _reselect=true;   // swapping selections: suppress the close-driven deselect until the new popup is open (issue #16)
-  const o=best,dest=[o.r[0],o.r[1]];clearRoute();
+  const dest=[snap.lat,snap.lon];clearRoute();
   try{history.replaceState(null,'','?at='+dest[0].toFixed(3)+','+dest[1].toFixed(3)+'&g='+encodeURIComponent(state.taxon));}catch(e){}
-  setDestCell(dest[0],dest[1]);
+  setDestCell(dest[0],dest[1],resM);
   // Issue #44/#56: the popup holds the per-cell coverage tree and the rarest species, filled async. setDOMContent
   // keeps the same persistent element (the two child containers stay attached) so an in-flight fetch can fill it.
   const popDiv=document.createElement('div');
@@ -1508,7 +1543,7 @@ function exploreCell(lat,lon){
   map.jumpTo({center:map.unproject([_dp.x,_dp.y-_mh/3]),zoom:_z});
   destMarker.togglePopup();
   _reselect=false;
-  fetchProspects(dest[0],dest[1],'destination',{toPopup:true,spEl:popSp,gapsEl:popGaps});
+  fetchProspects(dest[0],dest[1],'destination',{toPopup:true,spEl:popSp,gapsEl:popGaps,resM:resM});
 }
 function setView(v){
   state.view=v;
