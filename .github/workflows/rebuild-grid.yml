@@ -35,12 +35,24 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Install ruff
-        run: pip install ruff
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}-py-3.11
+      - name: Install deps
+        run: pip install ruff -r requirements.txt
       - name: Ruff check
-        run: ruff check build_fullgrid_ca.py build_grid_pmtiles.py grid_lattice.py national_breaks.py climate_kde.py validate_artifacts.py build_webapp.py aggregate_25km_from_5km.py goal_presets.py
+        # Every module on the rebuild's critical path, minus three with pre-existing violations
+        # that want a judgement call, not a reflex: build_hansen_ca.py (a deliberate blind catch
+        # so one bad Hansen tile cannot sink the run), clip_chelsa_ca.py, build_density_pmtiles.py.
+        run: ruff check build_fullgrid_ca.py fullgrid_fields.py fullgrid_outputs.py grid_lattice.py grid_schema.py goal_presets.py national_breaks.py climate_kde.py border_mask.py build_canada_mask.py build_grid_pmtiles.py aggregate_25km_from_5km.py validate_artifacts.py build_webapp.py test_climate_kde.py test_legend_ramp.py test_ingest_stats.py
       - name: Shell syntax
         run: bash -n rebuild_grid.sh prepare_inputs.sh publish_grid_release.sh
+      - name: Tests
+        # pytest.ini deselects the network-marked suite, which depends on third-party uptime
+        run: pytest -q
 
   prepare-inputs:
     if: github.event_name == 'workflow_dispatch' && !inputs.validate_only
