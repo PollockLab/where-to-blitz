@@ -4,6 +4,7 @@ style switcher); a weight slider per goal blended into a live "impact" score; a
 start point + flexible time budget (minutes / hours / days); real driving routes
 (OSRM) with drive time, field time, and travel CO2; and a low-carbon ranking
 option. Answers "from here, with this much time, where do I maximise my impact?"."""
+
 import json
 
 # Canada-wide: fetch per-group at runtime (national grid fetched per-group at runtime is too big to inline).
@@ -13,11 +14,31 @@ with open("cluster_results/ca/index.json") as _fh:
 FILES = CA_INDEX["files"]
 # rows: [lat, lon, discover, conservation, env, staleness, urgency, travel_min, n_train]
 OBJ = [
-    {"key": "discover",     "name": "Discover the most species", "q": "go where few people have looked"},
-    {"key": "conservation", "name": "Find rare species",          "q": "go where COSEWIC/SARA species at risk concentrate"},
-    {"key": "env",          "name": "Cover every habitat",        "q": "go where the climate is under-sampled"},
-    {"key": "staleness",    "name": "Freshest gaps",              "q": "go where lots was recorded long ago but little lately (iNaturalist recent vs all-time density)"},
-    {"key": "urgency",      "name": "Sample before it's lost",    "q": "go where forest cover was recently lost (logging, fire, dieback)"},
+    {
+        "key": "discover",
+        "name": "Discover the most species",
+        "q": "go where few people have looked",
+    },
+    {
+        "key": "conservation",
+        "name": "Find rare species",
+        "q": "go where COSEWIC/SARA species at risk concentrate",
+    },
+    {
+        "key": "env",
+        "name": "Cover every habitat",
+        "q": "go where the climate is under-sampled",
+    },
+    {
+        "key": "staleness",
+        "name": "Freshest gaps",
+        "q": "go where lots was recorded long ago but little lately (iNaturalist recent vs all-time density)",
+    },
+    {
+        "key": "urgency",
+        "name": "Sample before it's lost",
+        "q": "go where forest cover was recently lost (logging, fire, dieback)",
+    },
 ]
 # order matches OBJ: [discover, conservation, env, staleness, urgency]
 # Issue #49: the Goal selector is reduced to four central goals (Katherine/Maho). Their intended
@@ -40,7 +61,7 @@ PMTILES_BASE = "tiles"
 # the team wants a simple gap-visualisation tool, not a trip planner. The code stays in place and
 # dormant (flag flips it back) so a future "help plan a blitz" tool can reuse it.
 PLAN_ENABLED = False
-COMPARE_ENABLED = False   # Issue #71: the "Compare goals" view is stashed (kept dormant). Flag flips it back.
+COMPARE_ENABLED = False  # Issue #71: the "Compare goals" view is stashed (kept dormant). Flag flips it back.
 
 HTML = r"""<!doctype html>
 <html lang="en"><head>
@@ -1021,15 +1042,42 @@ function contribStr(r){const c=contribs(r).slice(0,3).map(x=>x.nm.toLowerCase()+
 // Plain-language reason this cell is worth a visit, from its single dominant (weighted) signal.
 // Intrinsic-motivation framing; honest because it names the axis actually driving the score.
 
-const HALF=0.125;   // half a 0.25-deg cell
+// Cell polygons follow the projected LAEA lattice (WGS84 ellipsoidal, lat_0=45, lon_0=-100) -- the same
+// CRS the raster tiles are built in -- so vector outlines sit exactly on the raster cell edges. A lon/lat
+// rectangle is only axis-aligned in degrees; in Web Mercator a 25km LAEA cell is a rotated square.
+// Faithful port of proj4's ellipsoidal LAEA (oblique mode), validated against pyproj to ~1e-9 m.
+const LAEA=(()=>{
+  const A=6378137,ES=0.0066943799901413165,E=Math.sqrt(ES),RAD=Math.PI/180;
+  const qsfnz=s=>{const c=E*s;return (1-ES)*(s/(1-c*c)-(0.5/E)*Math.log((1-c)/(1+c)));};
+  const QP=qsfnz(1),RQ=Math.sqrt(0.5*QP),S0=Math.sin(45*RAD);
+  const SINB1=qsfnz(S0)/QP,COSB1=Math.sqrt(1-SINB1*SINB1);
+  const DD=Math.cos(45*RAD)/(Math.sqrt(1-ES*S0*S0)*RQ*COSB1),XMF=RQ*DD,YMF=RQ/DD,L0=-100*RAD;
+  const APA=[ES/3+ES*ES*0.17222222222222222+ES*ES*ES*0.10257936507936508,
+             ES*ES*0.06388888888888888+ES*ES*ES*0.0664021164021164,
+             ES*ES*ES*0.016415012942191544];
+  const fwd=(lat,lon)=>{const lam=lon*RAD-L0,sb=qsfnz(Math.sin(lat*RAD))/QP,cb=Math.sqrt(1-sb*sb),
+    b=Math.sqrt(2/(1+SINB1*sb+COSB1*cb*Math.cos(lam)));
+    return [A*XMF*b*cb*Math.sin(lam),A*YMF*b*(COSB1*sb-SINB1*cb*Math.cos(lam))];};
+  const inv=(X,Y)=>{const x=(X/A)/DD,y=(Y/A)*DD,rho=Math.hypot(x,y);
+    if(rho<1e-10)return[45,-100];
+    const ce=2*Math.asin(Math.min(1,0.5*rho/RQ)),cc=Math.cos(ce),sc=Math.sin(ce),
+    bt=Math.asin(Math.max(-1,Math.min(1,cc*SINB1+y*sc*COSB1/rho))),
+    lam=Math.atan2(x*sc,rho*COSB1*cc-y*SINB1*sc);
+    return [(bt+APA[0]*Math.sin(2*bt)+APA[1]*Math.sin(4*bt)+APA[2]*Math.sin(6*bt))/RAD,(L0+lam)/RAD];};
+  return {fwd:fwd,inv:inv};
+})();
+const CELL_HALF_M=12500;   // half a 25km lattice cell (vector data is the 25km tier)
+function cellPoly(lat,lon){
+  const c=LAEA.fwd(lat,lon),h=CELL_HALF_M;
+  return [[-h,-h],[h,-h],[h,h],[-h,h],[-h,-h]].map(d=>{const q=LAEA.inv(c[0]+d[0],c[1]+d[1]);return [q[1],q[0]];});
+}
 function buildMarkers(){
   if(!_mapLoaded){whenMap(buildMarkers);return;}
   const rs=rows();
-  // The 0.25° grid geometry is identical across taxa, so after the first build a taxon switch only swaps each
-  // cell's data row + restyles via feature-state -- the 38k-feature source is never reparsed (setData runs once).
+  // The lattice geometry is identical across taxa, so after the first build a taxon switch only swaps each
+  // cell's data row + restyles via feature-state -- the 23k-feature source is never reparsed (setData runs once).
   if(markers.length===rs.length){markers.forEach((m,i)=>m.r=rs[i]);recolour();return;}
-  const feats=rs.map((r,i)=>({type:'Feature',id:i,properties:{},geometry:{type:'Polygon',coordinates:[[
-    [r[1]-HALF,r[0]-HALF],[r[1]+HALF,r[0]-HALF],[r[1]+HALF,r[0]+HALF],[r[1]-HALF,r[0]+HALF],[r[1]-HALF,r[0]-HALF]]]}}));
+  const feats=rs.map((r,i)=>({type:'Feature',id:i,properties:{},geometry:{type:'Polygon',coordinates:[cellPoly(r[0],r[1])]}}));
   map.getSource('cells').setData({type:'FeatureCollection',features:feats});
   markers=rs.map((r,i)=>({r:r,i:i,t:0}));   // r[0],r[1] invariant across taxa; i = stable feature id for setFeatureState
   recolour();
@@ -1403,8 +1451,8 @@ function rankAndRender(){
 // Trip-planner overlays as MapLibre sources/layers (were Leaflet rectangle/polyline/featureGroup vectors).
 // destCell = the dashed green target square; route = the white-cased green line(s). DOM markers ride on top.
 let routeIds=[];
-function setDestCell(lat,lon){if(!_mapLoaded)return;removeDestCell();const H=0.125;
-  map.addSource('destcell',{type:'geojson',data:{type:'Feature',geometry:{type:'Polygon',coordinates:[[[lon-H,lat-H],[lon+H,lat-H],[lon+H,lat+H],[lon-H,lat+H],[lon-H,lat-H]]]}}});
+function setDestCell(lat,lon){if(!_mapLoaded)return;removeDestCell();
+  map.addSource('destcell',{type:'geojson',data:{type:'Feature',geometry:{type:'Polygon',coordinates:[cellPoly(lat,lon)]}}});
   map.addLayer({id:'destcell-fill',type:'fill',source:'destcell',paint:{'fill-color':'#74c476','fill-opacity':0.16}});
   map.addLayer({id:'destcell-line',type:'line',source:'destcell',paint:{'line-color':'#1b7837','line-width':2,'line-dasharray':[2.5,2.5]}});
   destCell=true;}
@@ -1563,14 +1611,16 @@ bootSeq();
 window._map=map;   // console handle for tuning TIER_SWITCH_Z by eye (#87 D5: Ryan screenshots z8/9/10)
 </script></body></html>"""
 
-out = (HTML.replace("__FILES__", json.dumps(FILES, separators=(",", ":")))
-           .replace("__OBJ__", json.dumps(OBJ))
-           .replace("__PRESETS__", json.dumps(PRESETS))
-           .replace("__DEFAULT__", json.dumps(DEFAULT))
-           .replace("__PMTILES_BASE__", PMTILES_BASE)
-           .replace("__TIER_SWITCH_Z__", str(TIER_SWITCH_Z))
-           .replace("__PLAN_ENABLED__", "true" if PLAN_ENABLED else "false")
-           .replace("__COMPARE_ENABLED__", "true" if COMPARE_ENABLED else "false"))
+out = (
+    HTML.replace("__FILES__", json.dumps(FILES, separators=(",", ":")))
+    .replace("__OBJ__", json.dumps(OBJ))
+    .replace("__PRESETS__", json.dumps(PRESETS))
+    .replace("__DEFAULT__", json.dumps(DEFAULT))
+    .replace("__PMTILES_BASE__", PMTILES_BASE)
+    .replace("__TIER_SWITCH_Z__", str(TIER_SWITCH_Z))
+    .replace("__PLAN_ENABLED__", "true" if PLAN_ENABLED else "false")
+    .replace("__COMPARE_ENABLED__", "true" if COMPARE_ENABLED else "false")
+)
 with open("index.html", "w") as _fh:
     _fh.write(out)
 print(f"wrote index.html  ({len(out) / 1024:.0f} KB)")
