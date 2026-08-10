@@ -4,12 +4,10 @@ in-notebook from the cached pull (cluster_results/inat_*.csv); the verdict text
 is generated programmatically from the results, so it is honest to whatever the
 data shows (positive, null, or mixed).
 """
-import nbformat as nbf
+from notebook_core import NotebookBuilder
 
-nb = nbf.v4.new_notebook()
-cells = []
-md = lambda s: cells.append(nbf.v4.new_markdown_cell(s))
-co = lambda s: cells.append(nbf.v4.new_code_cell(s))
+nb = NotebookBuilder()
+md, co = nb.md, nb.co
 
 md(r"""# Does "where should I go?" actually work? — a leakage-free backtest
 
@@ -291,9 +289,4 @@ md(r"""### What this does and does not establish
 
 *Correction logged: the project memory/design docs had cited Mondain-Monval 2024 with a paraphrased title ("spatial gap-filling beats haphazard sampling"). Its real title is "Adaptive sampling by citizen scientists improves species distribution model performance: A simulation study," and it is a virtual-ecologist simulation — motivation for this backtest, not a template. Fixed here and in design-02.*""")
 
-nb["cells"] = cells
-nb["metadata"] = {"kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
-                  "language_info": {"name": "python"}}
-with open("voi-backtest.ipynb", "w") as fh:
-    nbf.write(nb, fh)
-print("wrote voi-backtest.ipynb with", len(cells), "cells")
+nb.write("voi-backtest.ipynb")

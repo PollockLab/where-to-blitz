@@ -25,8 +25,7 @@ Pages root). The Mermaid source is preserved in a <details> block for editabilit
 import urllib.error
 import urllib.request
 
-import nbformat as nbf
-from nbformat.v4 import new_code_cell, new_markdown_cell, new_notebook
+from notebook_core import NotebookBuilder
 
 _ZOOMOUT_PNG = "where-to-blitz-zoomout.png"
 
@@ -57,9 +56,8 @@ def _render_mermaid_to_file(diagram: str, path: str) -> None:
         f.write(png_bytes)
     print(f"  wrote {path} ({len(png_bytes)//1024} KB)")
 
-cells = []
-def md(t): cells.append(new_markdown_cell(t.strip("\n")))
-def code(t): cells.append(new_code_cell(t.strip("\n")))
+nb = NotebookBuilder(strip=True)
+md, code = nb.md, nb.co
 
 # ---------------------------------------------------------------- title
 md(r"""
@@ -771,10 +769,4 @@ Every number traces to a file in `cluster_results/`; nothing is from memory. Pro
 planning aid, not ground truth.*
 """)
 
-nb = new_notebook(cells=cells, metadata={
-    "kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
-    "language_info": {"name": "python"},
-})
-out = "where-to-blitz-walkthrough.ipynb"
-nbf.write(nb, out)
-print(f"wrote {out} with {len(cells)} cells")
+nb.write("where-to-blitz-walkthrough.ipynb")
