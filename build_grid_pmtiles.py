@@ -27,12 +27,12 @@ import rasterio
 from rasterio.enums import ColorInterp
 
 from goal_presets import AXES, PRESETS
+from grid_schema import BAND_INDEX
 
 HERE = Path(__file__).resolve().parent
 OUT = HERE / "cluster_results" / "ca" / "pmtiles"
 
-BANDS = ["discover", "conservation", "env", "staleness", "urgency", "travel_min", "n_train"]
-TILE_BANDS = {"discover": 1, "conservation": 2, "env": 3, "staleness": 4, "urgency": 5}
+TILE_BANDS = {ax: BAND_INDEX[ax] for ax in AXES}
 # Native zoom per tier: 25km -> z8 (shown z<=9), 5km -> z9 (plan measured 20.9 MB at z0-9).
 ZOOM_BY_RES = {"grid_5000m": "0..9", "grid_25000m": "0..8"}
 

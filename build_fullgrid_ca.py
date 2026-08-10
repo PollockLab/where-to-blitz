@@ -61,6 +61,7 @@ import rasterio
 import national_breaks as nb
 from climate_kde import surprisal
 from grid_lattice import Lattice, block_mean, read_crs, reproject_mean
+from grid_schema import BANDS
 
 RES = int(os.environ.get("GRID_RES", "25000"))  # lattice cell size in metres; 25000 or 5000
 JSON_RES = 25000                                # the tier the app's vector/popup layer ships from
@@ -100,8 +101,7 @@ if GROUP_ARG:
 else:
     groups_to_build = GROUPS
 
-# band order of the per-group raster stack; matches the JSON row format after [lat, lon]
-BANDS = ["discover", "conservation", "env", "staleness", "urgency", "travel_min", "n_train"]
+# band order of the per-group raster stack (grid_schema.BANDS); matches the JSON row format after [lat, lon]
 
 
 def cog_url(cog):

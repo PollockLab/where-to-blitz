@@ -28,14 +28,12 @@ import numpy as np
 import rasterio
 
 from grid_lattice import Lattice, mean_pool_block, sum_pool_block
+from grid_schema import BANDS, SUM_BANDS
 
 HERE = Path(__file__).resolve().parent
 FINE = HERE / "cluster_results" / "ca" / "grid_5000m"
 COARSE = HERE / "cluster_results" / "ca" / "grid_25000m"
 COARSE.mkdir(parents=True, exist_ok=True)
-
-BANDS = ["discover", "conservation", "env", "staleness", "urgency", "travel_min", "n_train"]
-SUM_BANDS = {"n_train"}  # extensive: counts add, they don't average
 
 # CRS comes from a local 5 km stack (same lattice CRS; no network read needed).
 _first = next(p for p in sorted(FINE.glob("*.tif")) if p.stem != "index")

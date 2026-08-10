@@ -26,10 +26,7 @@ import numpy as np
 import rasterio
 
 from grid_lattice import mean_pool_block, sum_pool_block
-
-# band order of the lattice stacks (build_fullgrid_ca.BANDS); 1-based.
-BAND_NAMES = ["discover", "conservation", "env", "staleness", "urgency", "travel_min", "n_train"]
-SUM_BANDS = {7}  # n_train is extensive: the parent count is the SUM of child counts
+from grid_schema import SUM_BAND_INDICES as SUM_BANDS  # 1-based; n_train is extensive
 
 
 def compare_arrays(expected: np.ndarray, actual: np.ndarray, abs_tol: float, rel_tol: float) -> dict[str, Any]:
