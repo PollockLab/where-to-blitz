@@ -18,10 +18,11 @@ The 25 km webapp JSON and the national ramps still come from the native 25 km bu
 reference resolution as designed. Differences between the vector tier and the
 aggregated raster tier are within the quantisation step the P3 gate checks.
 
-Usage: python aggregate_25km_from_5km.py
+Usage: python aggregate_25km_from_5km.py [--group Aves]
 Reads  cluster_results/ca/grid_5000m/<Group>.tif
 Writes cluster_results/ca/grid_25000m/<Group>.tif (overwrites the native build)
 """
+import argparse
 from pathlib import Path
 
 import numpy as np
@@ -29,6 +30,12 @@ import rasterio
 
 from grid_lattice import Lattice, mean_pool_block, sum_pool_block
 from grid_schema import BANDS, SUM_BANDS
+
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--group", help="aggregate only this group (matrix jobs do one each)")
+
+args = parser.parse_args()
+GROUP = args.group.replace(" ", "_") if args.group else None
 
 HERE = Path(__file__).resolve().parent
 FINE = HERE / "cluster_results" / "ca" / "grid_5000m"
@@ -45,7 +52,7 @@ K = 25000 // 5000
 assert LAT25.nrow * K == LAT5.nrow and LAT25.ncol * K == LAT5.ncol, "lattices must align 5x5"
 
 for tif in sorted(FINE.glob("*.tif")):
-    if tif.stem == "index":
+    if tif.stem == "index" or (GROUP and tif.stem != GROUP):
         continue
     out = COARSE / tif.name
     with rasterio.open(tif) as src:

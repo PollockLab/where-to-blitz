@@ -58,9 +58,19 @@ jobs:
           path: |
             ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}-py-3.11
+      - name: Cache prepared inputs
+        id: inputs-cache
+        uses: actions/cache@v4
+        with:
+          # ~227 MB of travel time, bioclim and forest loss, all deterministic given these
+          # three scripts and the release they pull from. Regenerating them costs ~22 min.
+          path: cluster_results
+          key: inputs-ca-grid-inputs-v1-${{ hashFiles('prepare_inputs.sh', 'clip_chelsa_ca.py', 'build_hansen_ca.py') }}
       - name: Install deps
+        if: steps.inputs-cache.outputs.cache-hit != 'true'
         run: pip install -r requirements.txt
       - name: Prepare shared small inputs (travel time, bioclim, forestloss)
+        if: steps.inputs-cache.outputs.cache-hit != 'true'
         run: |
           chmod +x prepare_inputs.sh
           ./prepare_inputs.sh
@@ -140,12 +150,17 @@ jobs:
         run: python build_fullgrid_ca.py --group "${{ matrix.group }}"
       - name: Build 5km PMTiles for this group
         run: python build_grid_pmtiles.py --group "${{ matrix.group }}" --res 5000
-      - name: Upload 5km artifact
+      - name: Derive this group's 25 km stack from its 5 km children
+        run: python aggregate_25km_from_5km.py --group "${{ matrix.group }}"
+      - name: Build 25km PMTiles for this group
+        run: python build_grid_pmtiles.py --group "${{ matrix.group }}" --res 25000
+      - name: Upload group artifact (both tiers)
         uses: actions/upload-artifact@v4
         with:
           name: grid_5000m-${{ matrix.group }}
           path: |
             cluster_results/ca/grid_5000m
+            cluster_results/ca/grid_25000m
             cluster_results/ca/pmtiles
           retention-days: 7
 
@@ -173,12 +188,16 @@ jobs:
       - name: Merge per-group 5km stacks + tiles into cluster_results/ca
         run: |
           set -euo pipefail
-          mkdir -p cluster_results/ca/grid_5000m cluster_results/ca/pmtiles
+          mkdir -p cluster_results/ca/grid_5000m cluster_results/ca/grid_25000m cluster_results/ca/pmtiles
           for d in grid_5000m-*/; do
             cp "$d"grid_5000m/*.tif cluster_results/ca/grid_5000m/
+            # the matrix job derived this group's 25 km stack too, so it overwrites the
+            # native fit-25km stack exactly as the serial aggregate step used to
+            cp "$d"grid_25000m/*.tif cluster_results/ca/grid_25000m/ 2>/dev/null || true
             cp "$d"pmtiles/*.pmtiles cluster_results/ca/pmtiles/ 2>/dev/null || true
           done
           ls cluster_results/ca/grid_5000m | wc -l
+          ls cluster_results/ca/grid_25000m | wc -l
           ls cluster_results/ca/pmtiles | wc -l
       - name: Compute inputs hash
         id: compute_inputs
@@ -199,8 +218,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          sudo apt-get update -y
-          sudo apt-get install -y jq unzip
           ART_NAME="rebuilt-site-${{ steps.compute_inputs.outputs.inputs_hash }}"
           page=1
           found_id=""
@@ -233,12 +250,6 @@ jobs:
       - name: Install deps
         if: ${{ steps.check_artifact.outputs.found != 'true' }}
         run: pip install -r requirements.txt
-      - name: Derive final 25 km stacks from the 5 km children (nesting by construction)
-        if: ${{ steps.check_artifact.outputs.found != 'true' }}
-        run: python aggregate_25km_from_5km.py
-      - name: Build 25km PMTiles from lattice stacks
-        if: ${{ steps.check_artifact.outputs.found != 'true' }}
-        run: python build_grid_pmtiles.py --res 25000
       - name: Rebuild webapp (index.html)
         if: ${{ steps.check_artifact.outputs.found != 'true' }}
         run: python build_webapp.py
