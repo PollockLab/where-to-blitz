@@ -1,12 +1,10 @@
 """Builds openbiodiversity-serving-demo.ipynb from verified cells.
 Every number is computed live; nothing is hardcoded from memory.
 """
-import nbformat as nbf
+from notebook_core import NotebookBuilder
 
-nb = nbf.v4.new_notebook()
-cells = []
-md = lambda s: cells.append(nbf.v4.new_markdown_cell(s))
-co = lambda s: cells.append(nbf.v4.new_code_cell(s))
+nb = NotebookBuilder()
+md, co = nb.md, nb.co
 
 md(r"""# openbiodiversity.ca — proving the serving thesis on real data
 
@@ -393,9 +391,4 @@ md(r"""## 8 · Scorecard — what this notebook actually proves
 
 **Correction logged while building this:** the design-01 doc had the hardcoded ceilings for `SR_allSDMs` and `SR_verts` swapped (it read 700/1200; the current frontend source is 1200/700). The table above uses the values verified against `Map/index.jsx`. Retracted and fixed in the doc.""")
 
-nb["cells"] = cells
-nb["metadata"] = {"kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
-                  "language_info": {"name": "python"}}
-with open("openbiodiversity-serving-demo.ipynb", "w") as f:
-    nbf.write(nb, f)
-print("wrote openbiodiversity-serving-demo.ipynb with", len(cells), "cells")
+nb.write("openbiodiversity-serving-demo.ipynb")

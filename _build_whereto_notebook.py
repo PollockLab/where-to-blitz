@@ -4,11 +4,10 @@ engine for Blitz the Gap. Reads the engine's cached per-cell tables
 each is backtested against its own goal, and the recommendation changes per
 objective. Every number recomputed in-notebook; nothing hardcoded.
 """
-import nbformat as nbf
+from notebook_core import NotebookBuilder
 
-nb = nbf.v4.new_notebook(); cells = []
-md = lambda s: cells.append(nbf.v4.new_markdown_cell(s))
-co = lambda s: cells.append(nbf.v4.new_code_cell(s))
+nb = NotebookBuilder()
+md, co = nb.md, nb.co
 
 md(r"""# Where should I go to record biodiversity?
 
@@ -171,7 +170,4 @@ The practical takeaway: a good tool should let people pick the goal openly, and 
 
 **What it does and doesn't do.** It guides where to *record which species live where* — not how many individuals are present, what their traits are, or how species interact, which need other kinds of fieldwork. Travel time only ever *lowers* a place's priority (a cost), never raises it. Sensitive-species locations are hidden and Indigenous data-sovereignty rules respected. The check uses observations already collected — a realistic dry run, not a live field season.""")
 
-nb["cells"]=cells
-nb["metadata"]={"kernelspec":{"display_name":"Python 3","language":"python","name":"python3"},"language_info":{"name":"python"}}
-with open("where-to-go-engine.ipynb","w") as f: nbf.write(nb,f)
-print("wrote where-to-go-engine.ipynb with",len(cells),"cells")
+nb.write("where-to-go-engine.ipynb")

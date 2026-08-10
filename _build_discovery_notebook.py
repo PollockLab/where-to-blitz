@@ -8,7 +8,7 @@ import glob
 import json
 import os
 
-import nbformat as nbf
+from notebook_core import NotebookBuilder
 
 # backbone -> (display name, sort order by descending embedding quality)
 BACKBONE = {
@@ -33,10 +33,8 @@ for p in paths:
             "Archive old results out of cluster_results/*/ before building, so the notebook "
             "never mixes a raw-lat/lon baseline with a great-circle one.")
 
-nb = nbf.v4.new_notebook()
-cells = []
-md = lambda s: cells.append(nbf.v4.new_markdown_cell(s))
-co = lambda s: cells.append(nbf.v4.new_code_cell(s))
+nb = NotebookBuilder()
+md, co = nb.md, nb.co
 
 md(r"""# When does an embedding beat geographic coverage for species discovery? When it matches the domain
 
@@ -415,9 +413,4 @@ so it can't be dismissed as a strawman. The verdict is a paired test (sign-flip 
 eyeballed gap. The robustness axis is the embedding **backbone** (Rauch: embedding quality drives the result),
 tested across DINOv2 → CLIP → ResNet50._""")
 
-nb["cells"] = cells
-nb["metadata"] = {"kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
-                  "language_info": {"name": "python"}}
-with open(os.path.join(HERE, "discovery-acquisition-experiment.ipynb"), "w") as f:
-    nbf.write(nb, f)
-print("wrote discovery-acquisition-experiment.ipynb;", len(cells), "cells")
+nb.write(os.path.join(HERE, "discovery-acquisition-experiment.ipynb"))
