@@ -1112,7 +1112,7 @@ let covActive=false;
 // to ~300 m, where the 1 km COG via TiTiler stayed coarse. Fungi has no dec25 layer ->
 // keep its older 1 km COG on the remote tiler until one lands.
 const TIER_SWITCH_Z=9;   // 25 km vector tier at z <= this, 5 km raster above (#87 D5; Ryan tunes)
-const PM_BASE='https://github.com/PollockLab/where-to-blitz/releases/download/grid-outputs-v1';   // release-asset base URL for all PMTiles (#87 P4)
+const PM_BASE='tiles';   // release-asset base URL for all PMTiles (#87 P4)
 // Grid raster tiers (#87 P3): one pre-coloured WEBP tileset per (taxon, goal), 25 km at/below
 // TIER_SWITCH_Z and 5 km above it. Colour is baked at build time from the fixed national ramps,
 // so a cell's colour is stable across pan/zoom (D2: viewport recolouring removed).

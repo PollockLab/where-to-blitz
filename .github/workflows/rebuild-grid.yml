@@ -334,3 +334,43 @@ jobs:
           cp -R artifacts/cluster_results/ca/pmtiles cluster_results/ca/ 2>/dev/null || true
           cp -R artifacts/density/* density/ 2>/dev/null || true
           SKIP_BUILD=1 ./publish_grid_release.sh
+
+  deploy-site:
+    # Assembles the Pages site (index.html + tiles/ + webapp JSON) from the validated
+    # artifacts and deploys it as a Pages artifact - nothing enters git history (#87 P4).
+    # NOTE: the repo's Pages source must be "GitHub Actions" (build_type=workflow) for this
+    # to go live; it stays on legacy branch-deploy until this branch merges, so Ryan's
+    # #97/#98 merges keep deploying from main in the meantime.
+    if: github.event_name == 'workflow_dispatch' && inputs.publish && !inputs.validate_only
+    needs: [aggregate, validate]
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download rebuilt site artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: rebuilt-site-${{ needs.aggregate.outputs.inputs_hash }}
+          path: artifacts
+      - name: Assemble _site
+        run: |
+          set -euo pipefail
+          mkdir -p _site/tiles _site/cluster_results/ca
+          cp artifacts/index.html _site/
+          cp artifacts/cluster_results/ca/pmtiles/*.pmtiles _site/tiles/
+          # density tiles carry a density_ prefix (matches the app's tiles/density_<Taxon>.pmtiles)
+          for f in density/*.pmtiles; do cp "$f" "_site/tiles/density_$(basename "$f")"; done
+          cp artifacts/cluster_results/ca/*.json _site/cluster_results/ca/
+          du -sh _site
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

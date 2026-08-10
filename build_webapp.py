@@ -31,10 +31,10 @@ OBJ = [
 # PRESETS/DEFAULT/TIER_SWITCH_Z live in goal_presets.py (shared with the tile builder, #87).
 from goal_presets import DEFAULT, PRESETS, TIER_SWITCH_Z
 
-# PMTiles are published as GitHub Release assets (grid-outputs-v1), not committed to git:
-# release download URLs redirect to S3-backed storage with HTTP range support, which is all
-# the pmtiles:// protocol needs (#87 P4). Density tiles are prefixed density_ in the release.
-PMTILES_BASE = "https://github.com/PollockLab/where-to-blitz/releases/download/grid-outputs-v1"
+# PMTiles ship in the Pages site under tiles/ (same-origin: browsers block cross-origin range
+# reads from release assets - no CORS headers). The grid-outputs-v1 release is the durable
+# archive; the deploy-site job assembles _site/ from the built artifacts (#87 P4).
+PMTILES_BASE = "tiles"
 
 # Issue #17: the "Plan a trip" view (start point, travel budget, OSRM routing) is hidden for now —
 # the team wants a simple gap-visualisation tool, not a trip planner. The code stays in place and
