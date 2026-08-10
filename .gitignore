@@ -11,8 +11,17 @@ __pycache__/
 cluster_results/inat_*.csv
 *.log
 
+# Per-tier lattice stacks: the intermediate build_fullgrid_ca.py hands to build_grid_pmtiles.py (#87)
+cluster_results/ca/grid_*m/
+
 # claude-flow runtime/session state
 .claude-flow/
 
 # local embedding cache for offline strategy sweeps (regenerable)
 local_cache/
+
+# Derived tiles/density we keep out of git (built in CI)
+grid/
+density/
+cluster_results/ca/*.pmtiles
+cluster_results/ca/pmtiles/

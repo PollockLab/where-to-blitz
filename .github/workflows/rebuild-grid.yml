@@ -1,31 +1,292 @@
 name: Rebuild grid
-# Manually-triggered reproducible rebuild of the Canada grid (issue #58).
-# Streams density from the public Biodiversite Quebec bucket; fetches the Weiss travel raster
-# from the grid-inputs release; commits the regenerated cluster_results/ca + index.html.
+# Release-based flow (#87 P4): tiles are ~280 MB of derived binaries, so they are NOT
+# committed to git and NOT rebuilt on every push. A manual dispatch runs the full
+# pipeline (prepare-inputs -> per-group 5 km matrix -> 25 km aggregate -> validate)
+# and, with publish: true, uploads the PMTiles to the grid-outputs-v1 release, whose
+# asset URLs (S3-backed, range-request capable) are what the webapp fetches.
+# Pushes get a fast lint/syntax check only.
 on:
   workflow_dispatch:
     inputs:
-      commit:
-        description: "Commit the regenerated grid back to the branch"
+      publish:
+        description: "Upload built PMTiles to the grid-outputs-v1 release"
         type: boolean
         default: false
+      validate_only:
+        description: "Skip the build; validate an existing rebuilt-site artifact"
+        type: boolean
+        default: false
+      artifact_name:
+        description: "Artifact to validate when validate_only is set"
+        type: string
+        default: ""
+  push:
+    branches:
+      - 'sota/87-projected-5km-grid'
+
 jobs:
-  rebuild:
+  validate-light:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Install ruff
+        run: pip install ruff
+      - name: Ruff check
+        run: ruff check build_fullgrid_ca.py build_grid_pmtiles.py grid_lattice.py national_breaks.py climate_kde.py validate_artifacts.py build_webapp.py
+      - name: Shell syntax
+        run: bash -n rebuild_grid.sh prepare_inputs.sh publish_grid_release.sh
+
+  prepare-inputs:
+    if: github.event_name == 'workflow_dispatch' && !inputs.validate_only
+    runs-on: ubuntu-latest
+    outputs:
+      uploaded: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}-py-3.11
       - name: Install deps
         run: pip install -r requirements.txt
-      - name: Rebuild
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: ./rebuild_grid.sh
-      - name: Commit (optional)
-        if: ${{ inputs.commit }}
+      - name: Prepare shared small inputs (travel time, bioclim, forestloss)
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add cluster_results/ca index.html && git commit -m "chore(data): rebuild grid from public sources" && git push
+          chmod +x prepare_inputs.sh
+          ./prepare_inputs.sh
+      - name: Upload prepared inputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: inputs-ca
+          path: cluster_results
+          retention-days: 7
+
+  matrix-build:
+    if: github.event_name == 'workflow_dispatch' && !inputs.validate_only
+    needs: prepare-inputs
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        group: ["All biodiversity", "Plantae", "Insecta", "Aves", "Fungi", "Mammalia", "Actinopterygii", "Reptilia", "Amphibia", "Arachnida", "Mollusca"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download shared inputs
+        uses: actions/download-artifact@v4
+        with:
+          name: inputs-ca
+          path: cluster_results
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}-py-3.11
+      - name: Install deps
+        run: pip install -r requirements.txt
+      - name: Build group grid (5 km)
+        env:
+          GRID_RES: 5000
+        run: python build_fullgrid_ca.py --group "${{ matrix.group }}"
+      - name: Build 5km PMTiles for this group
+        run: python build_grid_pmtiles.py --group "${{ matrix.group }}" --res 5000
+      - name: Upload 5km artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: grid_5000m-${{ matrix.group }}
+          path: |
+            cluster_results/ca/grid_5000m
+            cluster_results/ca/pmtiles
+          retention-days: 7
+
+  aggregate:
+    if: github.event_name == 'workflow_dispatch' && !inputs.validate_only
+    needs: matrix-build
+    outputs:
+      inputs_hash: ${{ steps.compute_inputs.outputs.inputs_hash }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Download shared inputs
+        uses: actions/download-artifact@v4
+        with:
+          name: inputs-ca
+          path: cluster_results
+      - name: Download 5km artifacts from matrix jobs
+        uses: actions/download-artifact@v4
+        with:
+          # By not specifying a name, download-artifact will fetch all artifacts from the run
+          # (the per-group grid_5000m uploads above). They will be restored into the workspace
+          # preserving their paths (cluster_results/ca/grid_5000m/<group>.tif).
+          path: .
+      - name: Compute inputs hash
+        id: compute_inputs
+        run: |
+          set -euo pipefail
+          REL="${GRID_INPUTS_RELEASE:-grid-inputs-v1}"
+          if [ -f cluster_results/ca/breaks.json ]; then breaks_content=$(cat cluster_results/ca/breaks.json); else breaks_content=""; fi
+          sha1=$(git log -n1 --pretty=format:%H -- .github/workflows/rebuild-grid.yml 2>/dev/null || echo)
+          sha2=$(git log -n1 --pretty=format:%H -- build_fullgrid_ca.py 2>/dev/null || echo)
+          sha3=$(git log -n1 --pretty=format:%H -- build_grid_pmtiles.py 2>/dev/null || echo)
+          sha4=$(git log -n1 --pretty=format:%H -- rebuild_grid.sh 2>/dev/null || echo)
+          INPUTS_HASH=$(printf "%s\n%s\n%s\n%s\n%s\n" "$REL" "$breaks_content" "$sha1" "$sha2" "$sha3" "$sha4" | sha256sum | awk '{print $1}')
+          echo "inputs_hash=$INPUTS_HASH" >> $GITHUB_OUTPUT
+          echo "INPUTS_HASH=$INPUTS_HASH" >> $GITHUB_ENV
+      - name: Check for existing rebuilt artifact
+        id: check_artifact
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          sudo apt-get update -y
+          sudo apt-get install -y jq unzip
+          ART_NAME="rebuilt-site-${{ steps.compute_inputs.outputs.inputs_hash }}"
+          page=1
+          found_id=""
+          while true; do
+            resp=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100&page=$page")
+            if [ -z "$resp" ]; then break; fi
+            id=$(echo "$resp" | jq -r --arg NAME "$ART_NAME" '.artifacts[] | select(.name==$NAME) | .id' | head -n1)
+            if [ -n "$id" ] && [ "$id" != "null" ]; then found_id="$id"; break; fi
+            total=$(echo "$resp" | jq '.artifacts | length')
+            if [ "$total" -lt 100 ]; then break; fi
+            page=$((page+1))
+          done
+          if [ -n "$found_id" ]; then
+            echo "found=true" >> $GITHUB_OUTPUT
+            echo "id=$found_id" >> $GITHUB_OUTPUT
+            curl -sL -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/$found_id/zip" -o artifact.zip
+            mkdir -p rebuilt-site-${{ steps.compute_inputs.outputs.inputs_hash }}
+            unzip -q artifact.zip -d rebuilt-site-${{ steps.compute_inputs.outputs.inputs_hash }}
+            ls -la rebuilt-site-${{ steps.compute_inputs.outputs.inputs_hash }} || true
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Cache pip
+        if: ${{ steps.check_artifact.outputs.found != 'true' }}
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}-py-3.11
+      - name: Install deps
+        if: ${{ steps.check_artifact.outputs.found != 'true' }}
+        run: pip install -r requirements.txt
+      - name: Build aggregated 25 km tier (prefer downloaded 5 km stacks)
+        if: ${{ steps.check_artifact.outputs.found != 'true' }}
+        env:
+          GRID_RES: 25000
+          INPUTS_HASH: ${{ steps.compute_inputs.outputs.inputs_hash }}
+        run: python build_fullgrid_ca.py
+      - name: Build 25km PMTiles from lattice stacks
+        if: ${{ steps.check_artifact.outputs.found != 'true' }}
+        run: python build_grid_pmtiles.py --res 25000
+      - name: Rebuild webapp (index.html)
+        if: ${{ steps.check_artifact.outputs.found != 'true' }}
+        run: python build_webapp.py
+      - name: Upload rebuilt site artifacts
+        if: ${{ steps.check_artifact.outputs.found != 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: rebuilt-site-${{ steps.compute_inputs.outputs.inputs_hash }}
+          path: |
+            cluster_results/ca
+            index.html
+          retention-days: 7
+
+      # The aggregate job runs only after all matrix jobs finish. Use actions/download-artifact
+      # to fetch the per-group 5 km stacks that the aggregate run will prefer when building the
+      # 25 km tier.
+
+  validate:
+    # always() so validate_only mode still runs when aggregate is skipped; in a full run,
+    # validate only after a successful aggregate.
+    if: ${{ always() && github.event_name == 'workflow_dispatch' && (inputs.validate_only && inputs.artifact_name != '' || !inputs.validate_only && needs.aggregate.result == 'success') }}
+    needs: aggregate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Try download artifact (hashed)
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.validate_only && inputs.artifact_name || format('rebuilt-site-{0}', needs.aggregate.outputs.inputs_hash) }}
+          path: artifacts
+        continue-on-error: true
+      - name: Try download artifact (generic)
+        uses: actions/download-artifact@v4
+        with:
+          name: rebuilt-site
+          path: artifacts
+        continue-on-error: true
+      - name: List downloaded files
+        run: |
+          echo "Artifact root: $(pwd)/artifacts"
+          ls -la artifacts || true
+          ls -la artifacts/cluster_results/ca || true
+      - name: Install rasterio
+        run: pip install rasterio
+      - name: Run validation
+        id: run_validation
+        continue-on-error: true
+        run: |
+          python validate_artifacts.py artifacts --output validate_report.json || echo $? > validate_exit_code
+      - name: Upload validation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-report
+          path: validate_report.json
+          retention-days: 7
+      - name: Print summary
+        run: |
+          echo "Validation report:"
+          cat validate_report.json || true
+      - name: Fail on validation failure
+        if: always()
+        run: |
+          code=0
+          if [ -f validate_exit_code ]; then code=$(cat validate_exit_code); fi
+          if [ "$code" -ne "0" ]; then echo "Validation failed (exit $code)"; exit $code; else echo "Validation succeeded"; fi
+
+  publish-release:
+    # Uploads the validated PMTiles to the grid-outputs release. Only runs on a manual
+    # dispatch with publish: true, after validate passes.
+    if: github.event_name == 'workflow_dispatch' && inputs.publish && !inputs.validate_only
+    needs: [aggregate, validate]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download rebuilt site artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: rebuilt-site-${{ needs.aggregate.outputs.inputs_hash }}
+          path: artifacts
+      - name: Publish PMTiles to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GRID_OUTPUTS_RELEASE: grid-outputs-v1
+        run: |
+          set -euo pipefail
+          chmod +x publish_grid_release.sh
+          # publish_grid_release.sh runs rebuild_grid.sh by default; SKIP_BUILD=1 because
+          # the aggregate job already built everything - just point it at the artifacts.
+          mkdir -p cluster_results/ca density
+          cp -R artifacts/cluster_results/ca/pmtiles cluster_results/ca/ 2>/dev/null || true
+          cp -R artifacts/density/* density/ 2>/dev/null || true
+          SKIP_BUILD=1 ./publish_grid_release.sh
