@@ -37,6 +37,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Lowercase owner for GHCR tag
+        id: lc
+        run: echo "owner=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
@@ -44,7 +47,7 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/where-to-blitz-builder:latest
-            ghcr.io/${{ github.repository_owner }}/where-to-blitz-builder:${{ github.sha }}
+            ghcr.io/${{ steps.lc.outputs.owner }}/where-to-blitz-builder:latest
+            ghcr.io/${{ steps.lc.outputs.owner }}/where-to-blitz-builder:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
