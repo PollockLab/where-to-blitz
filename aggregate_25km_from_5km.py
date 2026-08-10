@@ -27,7 +27,7 @@ from pathlib import Path
 import numpy as np
 import rasterio
 
-from grid_lattice import Lattice
+from grid_lattice import Lattice, mean_pool_block, sum_pool_block
 
 HERE = Path(__file__).resolve().parent
 FINE = HERE / "cluster_results" / "ca" / "grid_5000m"
@@ -55,16 +55,9 @@ for tif in sorted(FINE.glob("*.tif")):
         planes = []
         for b in range(1, n_bands + 1):
             a = src.read(b).astype(np.float64)
-            ok = np.isfinite(a)
-            s = np.where(ok, a, 0.0).reshape(LAT25.nrow, K, LAT25.ncol, K).sum((1, 3))
-            cnt = ok.reshape(LAT25.nrow, K, LAT25.ncol, K).sum((1, 3))
             band_name = BANDS[b - 1] if b - 1 < len(BANDS) else f"band{b}"
-            plane = np.full(LAT25.shape, np.nan, np.float32)
-            if band_name in SUM_BANDS:
-                plane[cnt > 0] = s[cnt > 0]          # sum of children counts
-            else:
-                np.divide(s, cnt, out=plane, where=cnt > 0)  # mean of children
-            planes.append(plane)
+            pool = sum_pool_block if band_name in SUM_BANDS else mean_pool_block
+            planes.append(pool(a, K).astype(np.float32))
     with rasterio.open(out, "w", driver="GTiff", width=LAT25.ncol, height=LAT25.nrow,
                        count=n_bands, dtype="float32", crs=LAT25.crs, transform=LAT25.transform,
                        nodata=np.nan, compress="deflate", predictor=3, tiled=True,

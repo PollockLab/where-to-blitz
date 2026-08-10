@@ -25,43 +25,11 @@ from typing import Any
 import numpy as np
 import rasterio
 
+from grid_lattice import mean_pool_block, sum_pool_block
+
 # band order of the lattice stacks (build_fullgrid_ca.BANDS); 1-based.
 BAND_NAMES = ["discover", "conservation", "env", "staleness", "urgency", "travel_min", "n_train"]
 SUM_BANDS = {7}  # n_train is extensive: the parent count is the SUM of child counts
-
-
-def sum_pool_block(a: np.ndarray, k: int) -> np.ndarray:
-    """k x k block sum of a 2D array, ignoring NaNs (NaN where no child is finite)."""
-    h, w = a.shape
-    if h % k != 0 or w % k != 0:
-        raise ValueError(f"array shape {a.shape} not divisible by k={k}")
-    ok = np.isfinite(a)
-    s = np.where(ok, a, 0.0).reshape(h // k, k, w // k, k).sum((1, 3))
-    c = ok.reshape(h // k, k, w // k, k).sum((1, 3))
-    out = np.full((h // k, w // k), np.nan, dtype=float)
-    out[c > 0] = s[c > 0]
-    return out
-
-
-def mean_pool_block(a: np.ndarray, k: int) -> tuple[np.ndarray, np.ndarray]:
-    """Compute k x k block mean of 2D array a, ignoring NaNs.
-
-    Returns (mean, count_non_nan) where mean has shape (H//k, W//k).
-    """
-    if a.ndim != 2:
-        raise ValueError("expected 2D array")
-    h, w = a.shape
-    if h % k != 0 or w % k != 0:
-        raise ValueError(f"array shape {a.shape} not divisible by k={k}")
-    H = h // k
-    W = w // k
-    ok = np.isfinite(a)
-    # replace non-finite with 0 for summation and count with ok
-    s = np.where(ok, a, 0.0).reshape(H, k, W, k).sum((1, 3))
-    c = ok.reshape(H, k, W, k).sum((1, 3))
-    out = np.full((H, W), np.nan, dtype=float)
-    np.divide(s, c, out=out, where=c > 0)
-    return out, c
 
 
 def compare_arrays(expected: np.ndarray, actual: np.ndarray, abs_tol: float, rel_tol: float) -> dict[str, Any]:
@@ -124,7 +92,7 @@ def validate_group(fine_path: Path, coarse_path: Path, abs_tol: float, rel_tol: 
                     if b in SUM_BANDS:
                         expected = sum_pool_block(a5, k)
                     else:
-                        expected, _counts = mean_pool_block(a5, k)
+                        expected = mean_pool_block(a5, k)
                 except (ValueError, RuntimeError) as e:
                     rec["bands"][str(b)] = {"pass": False, "reason": f"pool_error: {e}"}
                     overall_pass = False

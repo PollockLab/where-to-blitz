@@ -64,6 +64,38 @@ def read_crs(url):
         return src.crs
 
 
+def mean_pool_block(a, k):
+    """k x k block mean of a 2D array, ignoring NaNs (NaN where no child is finite)."""
+    a = np.asarray(a, dtype=float)
+    if a.ndim != 2:
+        raise ValueError("expected 2D array")
+    h, w = a.shape
+    if h % k != 0 or w % k != 0:
+        raise ValueError(f"array shape {a.shape} not divisible by k={k}")
+    ok = np.isfinite(a)
+    s = np.where(ok, a, 0.0).reshape(h // k, k, w // k, k).sum((1, 3))
+    c = ok.reshape(h // k, k, w // k, k).sum((1, 3))
+    out = np.full((h // k, w // k), np.nan, dtype=float)
+    np.divide(s, c, out=out, where=c > 0)
+    return out
+
+
+def sum_pool_block(a, k):
+    """k x k block sum of a 2D array, ignoring NaNs (NaN where no child is finite)."""
+    a = np.asarray(a, dtype=float)
+    if a.ndim != 2:
+        raise ValueError("expected 2D array")
+    h, w = a.shape
+    if h % k != 0 or w % k != 0:
+        raise ValueError(f"array shape {a.shape} not divisible by k={k}")
+    ok = np.isfinite(a)
+    s = np.where(ok, a, 0.0).reshape(h // k, k, w // k, k).sum((1, 3))
+    c = ok.reshape(h // k, k, w // k, k).sum((1, 3))
+    out = np.full((h // k, w // k), np.nan, dtype=float)
+    out[c > 0] = s[c > 0]
+    return out
+
+
 def _valid_mask(a, nodata):
     ok = np.isfinite(a)
     if nodata is not None:
