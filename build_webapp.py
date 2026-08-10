@@ -8,7 +8,8 @@ import json
 
 # Canada-wide: fetch per-group at runtime (national grid fetched per-group at runtime is too big to inline).
 # Inject only the group->filename map; the browser fetches each group's JSON on demand.
-CA_INDEX = json.load(open("cluster_results/ca/index.json"))
+with open("cluster_results/ca/index.json") as _fh:
+    CA_INDEX = json.load(_fh)
 FILES = CA_INDEX["files"]
 # rows: [lat, lon, discover, conservation, env, staleness, urgency, travel_min, n_train]
 OBJ = [
@@ -27,12 +28,13 @@ OBJ = [
 #   Species discovery = under-sampling + recent-vs-all-time density ("Revisit the Past")
 #   Conservation      = COSEWIC/SARA at risk + recently changed habitat ("Too Hot to Handle")
 # Getting Even is the separate categorical layer, added as the 'ge' option in the dropdown.
-PRESETS = [
-    {"name": "Spatial Gap",       "w": [1.0, 0, 0, 0, 0],   "proj": "blitz-the-gap-2026-general",         "blurb": "Under-recorded places: where few have logged on iNaturalist (inverse observation density)."},
-    {"name": "Species discovery", "w": [1.0, 0, 0, 0.6, 0], "proj": "blitz-the-gap-revisiting-the-past",  "blurb": "Where new-to-the-record species are likeliest: under-sampling plus cells recorded long ago but quiet lately."},
-    {"name": "Conservation",      "w": [0, 1.0, 0, 0, 0.4], "proj": "blitz-the-gap-canada-s-most-wanted", "blurb": "Where species at risk concentrate, weighted toward recently changed habitat (COSEWIC/SARA via CAN-SAR + GBIF)."},
-]
-DEFAULT = PRESETS[0]["w"]
+# PRESETS/DEFAULT/TIER_SWITCH_Z live in goal_presets.py (shared with the tile builder, #87).
+from goal_presets import DEFAULT, PRESETS, TIER_SWITCH_Z
+
+# PMTiles are published as GitHub Release assets (grid-outputs-v1), not committed to git:
+# release download URLs redirect to S3-backed storage with HTTP range support, which is all
+# the pmtiles:// protocol needs (#87 P4). Density tiles are prefixed density_ in the release.
+PMTILES_BASE = "https://github.com/PollockLab/where-to-blitz/releases/download/grid-outputs-v1"
 
 # Issue #17: the "Plan a trip" view (start point, travel budget, OSRM routing) is hidden for now —
 # the team wants a simple gap-visualisation tool, not a trip planner. The code stays in place and
@@ -1177,6 +1179,8 @@ let covActive=false;
 // (rescale 0,10) is baked into transparent WEBP tiles so the overlay sharpens as you zoom
 // to ~300 m, where the 1 km COG via TiTiler stayed coarse. Fungi has no dec25 layer ->
 // keep its older 1 km COG on the remote tiler until one lands.
+const TIER_SWITCH_Z=__TIER_SWITCH_Z__;   // 25 km vector tier at z <= this, 5 km raster above (#87 D5; Ryan tunes)
+const PM_BASE='__PMTILES_BASE__';   // release-asset base URL for all PMTiles (#87 P4)
 const COVPM=['All','Amphibia','Aves','Insecta','Mammalia','Plantae','Reptilia','Actinopterygii','Arachnida','Mollusca'];   // taxa with a local PMTiles (others -> All)
 // Raster PMTiles now ride the native MapLibre pmtiles:// protocol (registered once) instead of a custom
 // GridLayer that hand-decoded WEBP to canvas. The protocol reads each archive's TileJSON (native z9) and
@@ -1194,7 +1198,7 @@ function setCoverage(){
     map.addSource('cov',{type:'raster',tiles:['https://tiler.biodiversite-quebec.ca/cog/tiles/{z}/{x}/{y}?url='+encodeURIComponent('https://object-arbutus.cloud.computecanada.ca/bq-io/io/inat_canada_heatmaps/Fungi_density_inat_1km.tif')+'&rescale=0,10&colormap_name=magma&resampling=cubic'],tileSize:256,maxzoom:14,attribution:attr});
   }else{
     ensurePM();
-    map.addSource('cov',{type:'raster',url:'pmtiles://density/'+ct+'.pmtiles',tileSize:256,attribution:attr});
+    map.addSource('cov',{type:'raster',url:'pmtiles://'+PM_BASE+'/density_'+ct+'.pmtiles',tileSize:256,attribution:attr});
   }
   map.addLayer({id:'cov',type:'raster',source:'cov',paint:{'raster-opacity':covOpacity}},map.getLayer(CELL_LAYER)?CELL_LAYER:undefined);
   covActive=true;
@@ -1559,7 +1563,10 @@ out = (HTML.replace("__FILES__", json.dumps(FILES, separators=(",", ":")))
            .replace("__OBJ__", json.dumps(OBJ))
            .replace("__PRESETS__", json.dumps(PRESETS))
            .replace("__DEFAULT__", json.dumps(DEFAULT))
+           .replace("__PMTILES_BASE__", PMTILES_BASE)
+           .replace("__TIER_SWITCH_Z__", str(TIER_SWITCH_Z))
            .replace("__PLAN_ENABLED__", "true" if PLAN_ENABLED else "false")
            .replace("__COMPARE_ENABLED__", "true" if COMPARE_ENABLED else "false"))
-open("index.html", "w").write(out)
+with open("index.html", "w") as _fh:
+    _fh.write(out)
 print(f"wrote index.html  ({len(out) / 1024:.0f} KB)")
