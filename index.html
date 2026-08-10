@@ -301,7 +301,7 @@ details.adv>summary:hover{color:var(--ink)}
 <div id="map" role="application" data-i18n-aria="aria_map" aria-label="Interactive priority map (screen-reader users: use the Top cells list)"></div>
 <div id="viewtoggle" role="navigation" data-i18n-aria="aria_map_view" aria-label="Map view"><button id="vexplore" class="on" aria-pressed="true" data-i18n="view_explore">Explore</button><button id="vplan" aria-pressed="false" data-i18n="view_plan">Plan a trip</button><button id="vcompare" aria-pressed="false" data-i18n="view_compare">Compare goals</button></div>
 <div id="loading" role="status" aria-live="polite" data-i18n="loading">Loading the map…</div>
-<div id="maplegend" role="region" data-i18n-aria="aria_map_legend" aria-label="Map legend"><div class="ramp"></div><div class="lab"><span data-i18n="legend_low">well-sampled</span><span data-i18n="legend_high">biggest gaps</span></div><div class="hint" id="legendrel" style="display:none;color:#7a5b00" data-i18n="legend_rel">Colours rescaled to this view — not comparable across zoom levels.</div></div>
+<div id="maplegend" role="region" data-i18n-aria="aria_map_legend" aria-label="Map legend"><div class="ramp"></div><div class="lab"><span data-i18n="legend_low">well-sampled</span><span data-i18n="legend_high">biggest gaps</span></div></div>
 <div id="topctrls"><button id="langbtn" type="button" data-i18n-aria="aria_language" data-i18n-title="lang_switch" aria-label="Language" title="Switch language">FR</button><button id="howbtn" type="button" aria-expanded="false" aria-controls="howpanel" data-i18n-title="how_scored" title="How impact is scored & data sources"><span data-i18n="how_scored">How impact is scored & data sources</span></button></div>
 <div id="howpanel" role="region" data-i18n-aria="how_scored" aria-label="How impact is scored & data sources">
   <button id="howclose" type="button" data-i18n-aria="aria_close" data-i18n-title="aria_close" aria-label="Close" title="Close">×</button>
@@ -403,7 +403,6 @@ const I18N={
     show_panel:"Show the panel",
     zoom_scale:"Rescale colours to the current view",
     zoom_scale_hint:`Ranks cells against what's on screen, so local gaps stand out when you zoom in. Off = ranked across all of Canada (a dark cell means the same everywhere).`,
-    legend_rel:"Colours rescaled to this view — not comparable across zoom levels.",
     map_brightness:"Map brightness",
     data_opacity:"Density opacity",
     how_scored:"How impact is scored & data sources",
@@ -551,7 +550,6 @@ const I18N={
     show_panel:"Afficher le panneau",
     zoom_scale:"Recalibrer les couleurs sur la vue actuelle",
     zoom_scale_hint:`Classe les cellules par rapport à ce qui est à l'écran, pour faire ressortir les lacunes locales en zoomant. Désactivé = classement sur tout le Canada (une cellule foncée signifie la même chose partout).`,
-    legend_rel:"Couleurs recalibrées sur cette vue — non comparables entre niveaux de zoom.",
     map_brightness:"Luminosité de la carte",
     data_opacity:"Opacité des données",
     how_scored:"Calcul de l'impact et sources de données",
@@ -705,7 +703,6 @@ let GE_LOADED=false;
 async function loadGE(){if(GE_LOADED)return;const r=await fetchT(DATA_DIR+'webapp_data_gettingeven.json',15000),j=await r.json();
   for(const e of j.gettingeven)GE[gekey(e[0],e[1])]=[e[2],e[3]];GE_LOADED=true;}
 function geActive(){const e=document.getElementById('tgGettingEven');return!!(e&&e.checked);}
-function zoomScaleActive(){const e=document.getElementById('tgZoomScale');return e?e.checked:true;}   // issue #20 removed the toggle; behaviour stays on by default
 function caOnlyActive(){const e=document.getElementById('tgCanadaOnly');return e?e.checked:true;}        // issue #20 removed the toggle; behaviour stays on by default
 // US-side cells (approx, lazy-loaded): hidden when "Canada only" is on -- the cross-border band is a data edge, not a real gap (#5).
 let US_CELLS=null;
@@ -891,8 +888,14 @@ map.on('load',()=>{
   // canvas stroke-matches-fill trick, now native). #1/#44 colour logic stays in JS (colour()/geColour()).
   map.addLayer({id:CELL_LAYER,type:'fill',source:'cells',paint:{
     'fill-color':['coalesce',['feature-state','fc'],'rgba(0,0,0,0)'],
-    'fill-opacity':['coalesce',['feature-state','op'],0],
-    'fill-outline-color':['coalesce',['feature-state','fc'],'rgba(0,0,0,0)']}});
+    'fill-opacity':['coalesce',['feature-state','op'],0]}});
+  // Outlines ride a separate line layer so the grid raster can show through the transparent fill
+  // (#87 P3). Hidden above the tier switch - the 5 km raster carries the detail there.
+  map.addLayer({id:'cells-line',type:'line',source:'cells',maxzoom:TIER_SWITCH_Z,paint:{
+    'line-color':'rgba(15,22,32,0.25)','line-width':1}});
+  // Top-in-view outlines (D2 option c). No fill; just a marker ring on the nationally-best cells in view.
+  map.addLayer({id:'cells-top',type:'line',source:'cells',paint:{
+    'line-color':'#f0a000','line-width':2.5},filter:['==',['id'],-1]});
   map.on('click',CELL_LAYER,e=>{const f=e.features&&e.features[0];if(!f)return;const r=markers[f.id]&&markers[f.id].r;if(!r)return;
     if(caOnlyActive()&&US_CELLS&&US_CELLS.has(gekey(r[0],r[1])))return;state.view==='explore'?exploreCell(r[0],r[1]):planTap(r[0],r[1]);});
   map.on('mouseenter',CELL_LAYER,()=>{map.getCanvas().style.cursor='pointer';});
@@ -1013,44 +1016,17 @@ function recolour(){
   // a fake index gradient -- show a flat map instead.
   const flat=ord.length>0&&(ord[ord.length-1][0]-ord[0][0])<1e-9;   // guard empty markers (recolour runs during init before data loads)
   markers.forEach((m,i)=>{m.t=flat?0:rank[i]/n1;});   // national score, stable across pan/zoom
-  const rel=zoomScaleActive()&&!cov;
-  const lr=document.getElementById('legendrel');if(lr)lr.style.display=rel?'block':'none';   // absent while the GE categorical legend is swapped in
-  if(rel){
-    // Colour = rank within the current viewport so a Montrealer zoomed in sees local gaps; off-view
-    // cells go faint (they recolour on moveend). Hidden US cells excluded so border zooms aren't skewed.
-    const inb=viewportCells();
-    const dim=colour(0);markers.forEach(m=>setCellState(m.i,dim,.05));  // m.t (score) untouched
-    fillViewport(inb);
-    PREV_INB=new Set(inb);   // baseline for the incremental moveend path: everything else is already dim
-  } else {
-    PREV_INB=null;
-    // Whole-grid paint: one feature-state write per cell (fc+op). fill-outline matches the fill so the 38k
-    // cells tile seamlessly; no per-cell tooltip/handler (the single layer-level click handler covers all).
-    markers.forEach(m=>{const ct=m.t,o=cov?0:0.25+0.5*ct,c=colour(ct);setCellState(m.i,c,o);});
-  }
-  applyCanadaMask();renderCellTable();
+  // D2 (resolved): fixed national colours. m.t is the stable national percentile; the raster tiles
+  // carry the colour, so there is no per-cell restyle loop here at all. The vector fill only paints
+  // when the Getting Even categorical layer is active (handled above) or the coverage overlay is off
+  // and tiles are unavailable. Goal switches now issue zero setFeatureState calls (#87 P3 gate).
+  applyCanadaMask();renderCellTable();updateTopOutlines();setGridRaster();
 }
 // Cells currently in view (US-side excluded when "Canada only" is on, so border zooms aren't skewed).
 function viewportCells(){const b=map.getBounds();let inb=markers.filter(m=>b.contains([m.r[1],m.r[0]]));
   if(caOnlyActive()&&US_CELLS)inb=inb.filter(m=>!US_CELLS.has(gekey(m.r[0],m.r[1])));return inb;}
-// Colour the in-bounds cells by their rank WITHIN the viewport (same formula as the full path). m.t untouched.
-function fillViewport(inb){const vv=inb.map(m=>impact(m.r));
-  const od=vv.map((v,i)=>[v,i]).sort((a,b)=>a[0]-b[0]);const rk=new Array(vv.length);od.forEach((p,k)=>rk[p[1]]=k);const m1=Math.max(vv.length-1,1);
-  const fl=od.length>0&&(od[od.length-1][0]-od[0][0])<1e-9;
-  inb.forEach((m,i)=>{const ct=fl?0:rk[i]/m1,o=.25+.5*ct,c=colour(ct);setCellState(m.i,c,o);});}
-// In-bounds set from the last viewport-relative paint, so moveend only touches what changed (null = full repaint needed first).
-let PREV_INB=null;
-// Incremental moveend repaint: re-rank/re-colour only the in-view cells, dim only the cells that LEFT the
-// viewport since the last paint, and leave the national score (m.t), out-of-view cells and the cell table alone.
-function recolourViewport(){
-  if(PREV_INB===null){recolour();return;}   // no baseline yet (e.g. first paint, or a non-rel path ran): do the full establish
-  const inb=viewportCells(),now=new Set(inb);
-  const dim=colour(0);
-  PREV_INB.forEach(m=>{if(!now.has(m))setCellState(m.i,dim,.05);});  // cells that left view
-  fillViewport(inb);
-  PREV_INB=now;
-  applyCanadaMask();   // US cells that scrolled into view stay hidden; far cheaper than a full re-rank
-}
+// (D2) The viewport-relative repaint is gone: colours are fixed nationally and live in the raster
+// tiles. moveend only refreshes which top cells are outlined.
 // Swap #maplegend between the priority ramp (default) and a categorical Getting Even legend. Pale swatches get a 1px #ccc border.
 let GE_PRIORITY_LEGEND=null;
 // Legend low/high labels follow the dominant goal so they stay accurate per preset
@@ -1137,6 +1113,33 @@ let covActive=false;
 // keep its older 1 km COG on the remote tiler until one lands.
 const TIER_SWITCH_Z=9;   // 25 km vector tier at z <= this, 5 km raster above (#87 D5; Ryan tunes)
 const PM_BASE='https://github.com/PollockLab/where-to-blitz/releases/download/grid-outputs-v1';   // release-asset base URL for all PMTiles (#87 P4)
+// Grid raster tiers (#87 P3): one pre-coloured WEBP tileset per (taxon, goal), 25 km at/below
+// TIER_SWITCH_Z and 5 km above it. Colour is baked at build time from the fixed national ramps,
+// so a cell's colour is stable across pan/zoom (D2: viewport recolouring removed).
+function gridSlug(){return state.taxon.replace(/ /g,'_');}
+function goalSlug(){const i=(window.__activePreset>=0)?window.__activePreset:0;return PRESETS[i].name.toLowerCase().replace(/ /g,'_');}
+function setGridRaster(){
+  if(!_mapLoaded){whenMap(setGridRaster);return;}
+  ['grid25','grid5'].forEach(id=>{if(map.getLayer(id))map.removeLayer(id);if(map.getSource(id))map.removeSource(id);});
+  if(geActive())return;   // Getting Even paints its own categorical vector fill
+  const cov=document.getElementById('tgCoverage');if(cov&&cov.checked)return;   // density overlay replaces the grid fill
+  if(!markers.length)return;
+  ensurePM();
+  const base=PM_BASE+'/'+gridSlug()+'_'+goalSlug();
+  const attr='Blitz the Gap priority grid';
+  map.addSource('grid25',{type:'raster',url:'pmtiles://'+base+'_grid_25000m.pmtiles',tileSize:256,maxzoom:TIER_SWITCH_Z,attribution:attr});
+  map.addSource('grid5',{type:'raster',url:'pmtiles://'+base+'_grid_5000m.pmtiles',tileSize:256,minzoom:TIER_SWITCH_Z,attribution:attr});
+  map.addLayer({id:'grid25',type:'raster',source:'grid25',maxzoom:TIER_SWITCH_Z},CELL_LAYER);
+  map.addLayer({id:'grid5',type:'raster',source:'grid5',minzoom:TIER_SWITCH_Z},CELL_LAYER);
+}
+// Local-contrast aid (D2 option c): outline the top ~20 cells in the current view by the STABLE
+// national score. The map never recolours; the "best near me" answer is a list + outlines.
+function updateTopOutlines(){
+  if(!_mapLoaded||!map.getLayer('cells-top'))return;
+  if(geActive()||!markers.length){map.setFilter('cells-top',['==',['id'],-1]);return;}
+  const top=viewportCells().slice().sort((a,b)=>b.t-a.t).slice(0,20).map(m=>m.i);
+  map.setFilter('cells-top',['in',['id'],['literal',top]]);
+}
 const COVPM=['All','Amphibia','Aves','Insecta','Mammalia','Plantae','Reptilia','Actinopterygii','Arachnida','Mollusca'];   // taxa with a local PMTiles (others -> All)
 // Raster PMTiles now ride the native MapLibre pmtiles:// protocol (registered once) instead of a custom
 // GridLayer that hand-decoded WEBP to canvas. The protocol reads each archive's TileJSON (native z9) and
@@ -1187,7 +1190,7 @@ document.getElementById('tgGettingEven').addEventListener('change',e=>{if(e.targ
 {const z=document.getElementById('tgZoomScale');if(z)z.addEventListener('change',recolour);}
 {const c=document.getElementById('tgCanadaOnly');if(c)c.addEventListener('change',()=>{loadUS().then(recolour);});}
 // Re-rank against the new viewport only while view-relative colouring is on (avoids the per-pan cost otherwise).
-map.on('moveend',()=>{if(zoomScaleActive()&&!geActive())recolourViewport();});
+map.on('moveend',()=>{if(!geActive())updateTopOutlines();});
 // Issue #20: "How impact is scored & data sources" moved out of the sidebar to a floating map info button that expands a panel.
 (function(){const b=document.getElementById('howbtn'),p=document.getElementById('howpanel'),x=document.getElementById('howclose');if(!b||!p)return;
   const set=open=>{p.classList.toggle('open',open);b.setAttribute('aria-expanded',open?'true':'false');};
