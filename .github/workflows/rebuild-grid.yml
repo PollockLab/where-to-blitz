@@ -262,6 +262,17 @@ jobs:
       - name: Install deps
         if: ${{ steps.check_artifact.outputs.found != 'true' }}
         run: pip install -r requirements.txt
+      - name: Regenerate the Canada-only view mask from the rebuilt grid
+        # us_cells.json is the vector half of the border mask; the raster half is baked into
+        # the PMTiles by build_grid_pmtiles.py. Both come from border_mask.py, but only the
+        # raster half was rebuilt here - the vector half was a committed file that CI never
+        # touched, so editing border_mask.py silently re-split the two. They used to disagree
+        # at the border; this is what stops them drifting back apart.
+        if: ${{ steps.check_artifact.outputs.found != 'true' }}
+        run: |
+          set -euo pipefail
+          cp cluster_results/ca/us_cells.json /tmp/us_cells.committed.json
+          python build_canada_mask.py
       - name: Rebuild webapp (index.html)
         if: ${{ steps.check_artifact.outputs.found != 'true' }}
         run: python build_webapp.py
@@ -274,6 +285,17 @@ jobs:
             cluster_results/ca
             index.html
           retention-days: 7
+      - name: Fail if the committed view mask drifted from the rebuilt one
+        # Deliberately after the upload: the freshly derived mask is the correct one and ships
+        # either way, so a drift blocks the deploy (publish and deploy-site both need validate)
+        # without throwing away a 30-minute rebuild. Commit the regenerated file to clear it.
+        if: ${{ steps.check_artifact.outputs.found != 'true' }}
+        run: |
+          if ! diff -q /tmp/us_cells.committed.json cluster_results/ca/us_cells.json >/dev/null; then
+            echo "::error::us_cells.json is stale - border_mask.py changed without rerunning build_canada_mask.py. Run it and commit the result."
+            python -c "import json,sys; n=lambda p: len(json.load(open(p))['us_cells']); print('committed', n(sys.argv[1]), 'cells; rebuilt', n(sys.argv[2]))" /tmp/us_cells.committed.json cluster_results/ca/us_cells.json
+            exit 1
+          fi
 
       # The aggregate job runs only after all matrix jobs finish. Use actions/download-artifact
       # to fetch the per-group 5 km stacks that the aggregate run will prefer when building the
