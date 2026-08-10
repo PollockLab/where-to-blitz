@@ -17,6 +17,7 @@ Output: cluster_results/ca/pmtiles/<group>_<goal>_<res>.pmtiles
 """
 import argparse
 import concurrent.futures
+import math
 import subprocess
 import tempfile
 from pathlib import Path
@@ -27,6 +28,7 @@ import rasterio
 from rasterio.enums import ColorInterp, Resampling
 from rasterio.transform import array_bounds
 from rasterio.warp import calculate_default_transform, reproject
+from rasterio.warp import transform as warp_transform
 
 import border_mask
 from border_mask import COARSE_RES
@@ -82,14 +84,23 @@ _MASK_CACHE = {}
 def _write_mercator(path, bands, src_crs, src_transform, width, height):
     """Write the RGBA cell image as an EPSG:3857 GeoTIFF.
 
-    rio-pmtiles derives its tile envelope from the source corners transformed to WGS84. For a
-    LAEA source the extent's edges bow poleward between the corners, so the corner-only envelope
-    clipped the archive at the corner latitude (~61.7 N) and dropped every Arctic cell. Warping
-    here — GDAL's suggested output samples the edges, not just the corners — gives rio-pmtiles a
-    source whose bounds are already exact, and saves it warping every tile.
+    rio-pmtiles derives its tile envelope from the source corners transformed to WGS84 — the
+    plain corner transform, not the densifying one. A LAEA extent's edges bow poleward between
+    its corners, so that envelope clipped every archive at the corner latitude (~61.7 N) and
+    dropped the whole Arctic. Warping here fixes it, because GDAL's suggested output samples the
+    edges too. It costs roughly 2.7x the tiling time (Aves 5 km: 68 s from LAEA, 184 s from
+    mercator) and buys back the ~40% of the country the truncated envelope was dropping.
+
+    The destination resolution is pinned rather than left to GDAL's suggestion. Mercator units
+    stretch with latitude, and the suggested transform splits the difference across a 36-84 N
+    span — 10.5 km units, which is 7.6 km on the ground at the southern edge and would alias
+    away part of a 5 km grid. Sizing for the southernmost row keeps every cell resolvable.
     """
+    bounds = array_bounds(height, width, src_transform)
+    (_, _), (south, _) = warp_transform(src_crs, "EPSG:4326", bounds[::2], bounds[1::2])
+    dst_res = abs(src_transform.a) / math.cos(math.radians(south))
     dst_transform, dst_w, dst_h = calculate_default_transform(
-        src_crs, MERCATOR, width, height, *array_bounds(height, width, src_transform))
+        src_crs, MERCATOR, width, height, *bounds, resolution=dst_res)
     with rasterio.open(path, "w", driver="GTiff", width=dst_w, height=dst_h, count=4,
                        dtype="uint8", crs=MERCATOR, transform=dst_transform,
                        compress="deflate", tiled=True, blockxsize=512, blockysize=512) as dst:
