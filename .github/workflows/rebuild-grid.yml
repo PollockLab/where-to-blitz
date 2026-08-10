@@ -47,7 +47,7 @@ jobs:
         # Every module on the rebuild's critical path, minus three with pre-existing violations
         # that want a judgement call, not a reflex: build_hansen_ca.py (a deliberate blind catch
         # so one bad Hansen tile cannot sink the run), clip_chelsa_ca.py, build_density_pmtiles.py.
-        run: ruff check build_fullgrid_ca.py fullgrid_fields.py fullgrid_outputs.py grid_lattice.py grid_schema.py goal_presets.py national_breaks.py climate_kde.py border_mask.py build_canada_mask.py build_grid_pmtiles.py aggregate_25km_from_5km.py validate_artifacts.py build_webapp.py test_climate_kde.py test_legend_ramp.py test_ingest_stats.py
+        run: ruff check build_fullgrid_ca.py fullgrid_fields.py fullgrid_outputs.py grid_lattice.py grid_schema.py goal_presets.py national_breaks.py climate_kde.py border_mask.py build_canada_mask.py build_grid_pmtiles.py aggregate_25km_from_5km.py validate_artifacts.py build_webapp.py test_climate_kde.py test_legend_ramp.py test_laea_parity.py test_ingest_stats.py
       - name: Shell syntax
         run: bash -n rebuild_grid.sh prepare_inputs.sh publish_grid_release.sh
       - name: Tests
