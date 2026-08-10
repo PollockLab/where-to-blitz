@@ -312,6 +312,8 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && inputs.publish && !inputs.validate_only
     needs: [aggregate, validate]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write   # release asset upload (--clobber deletes + re-creates assets)
     steps:
       - uses: actions/checkout@v4
       - name: Download rebuilt site artifact
