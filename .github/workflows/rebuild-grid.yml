@@ -203,14 +203,26 @@ jobs:
           mkdir -p cluster_results/ca/grid_5000m cluster_results/ca/grid_25000m cluster_results/ca/pmtiles
           for d in grid_5000m-*/; do
             cp "$d"grid_5000m/*.tif cluster_results/ca/grid_5000m/
-            # the matrix job derived this group's 25 km stack too, so it overwrites the
-            # native fit-25km stack exactly as the serial aggregate step used to
-            cp "$d"grid_25000m/*.tif cluster_results/ca/grid_25000m/ 2>/dev/null || true
-            cp "$d"pmtiles/*.pmtiles cluster_results/ca/pmtiles/ 2>/dev/null || true
+            # The matrix job derived this group's 25 km stack from its own 5 km children, so it
+            # must overwrite the native fit-25km stack. This copy used to be `|| true`: when it
+            # silently did nothing the native stack shipped instead, the two tiers stopped
+            # nesting, and nothing said so until `validate` failed half an hour later.
+            cp "$d"grid_25000m/*.tif cluster_results/ca/grid_25000m/
+            cp "$d"pmtiles/*.pmtiles cluster_results/ca/pmtiles/
           done
           ls cluster_results/ca/grid_5000m | wc -l
           ls cluster_results/ca/grid_25000m | wc -l
           ls cluster_results/ca/pmtiles | wc -l
+          # Every 5 km stack must have a derived 25 km twin of the same name. Anything left over
+          # is a native stack no matrix job replaced, which is the failure above wearing a hat.
+          missing=$(comm -23 \
+            <(cd cluster_results/ca/grid_5000m && ls *.tif | sort) \
+            <(cd cluster_results/ca/grid_25000m && ls *.tif | sort))
+          if [ -n "$missing" ]; then
+            echo "::error::these groups have no derived 25 km stack, so the tiers will not nest:"
+            echo "$missing"
+            exit 1
+          fi
       - name: Compute inputs hash
         id: compute_inputs
         run: |
