@@ -203,11 +203,14 @@ jobs:
           mkdir -p cluster_results/ca/grid_5000m cluster_results/ca/grid_25000m cluster_results/ca/pmtiles
           for d in grid_5000m-*/; do
             cp "$d"grid_5000m/*.tif cluster_results/ca/grid_5000m/
-            # The matrix job derived this group's 25 km stack from its own 5 km children, so it
-            # must overwrite the native fit-25km stack. This copy used to be `|| true`: when it
-            # silently did nothing the native stack shipped instead, the two tiers stopped
-            # nesting, and nothing said so until `validate` failed half an hour later.
-            cp "$d"grid_25000m/*.tif cluster_results/ca/grid_25000m/
+            # Copy back only the 25 km stack this job actually derived. Each matrix job pulls the
+            # fit-25km artifact, so its grid_25000m holds all 11 *native* stacks and only its own
+            # group's is the derived one. Copying the whole directory therefore let each group
+            # overwrite the previous group's derived stack with a native one, and only the
+            # alphabetically last group survived - which is why 10 of 11 groups stopped nesting.
+            for f in "$d"grid_5000m/*.tif; do
+              cp "$d"grid_25000m/"$(basename "$f")" cluster_results/ca/grid_25000m/
+            done
             cp "$d"pmtiles/*.pmtiles cluster_results/ca/pmtiles/
           done
           ls cluster_results/ca/grid_5000m | wc -l
