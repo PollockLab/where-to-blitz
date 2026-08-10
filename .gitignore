@@ -23,5 +23,6 @@ local_cache/
 # Derived tiles/density we keep out of git (built in CI)
 grid/
 density/
+tiles/
 cluster_results/ca/*.pmtiles
 cluster_results/ca/pmtiles/
