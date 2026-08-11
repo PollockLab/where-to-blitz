@@ -50,7 +50,7 @@ jobs:
         # Every module on the rebuild's critical path, minus three with pre-existing violations
         # that want a judgement call, not a reflex: build_hansen_ca.py (a deliberate blind catch
         # so one bad Hansen tile cannot sink the run), clip_chelsa_ca.py, build_density_pmtiles.py.
-        run: ruff check build_fullgrid_ca.py fullgrid_fields.py fullgrid_outputs.py grid_lattice.py grid_schema.py goal_presets.py national_breaks.py climate_kde.py border_mask.py build_canada_mask.py build_grid_pmtiles.py aggregate_25km_from_5km.py validate_artifacts.py build_webapp.py test_climate_kde.py test_legend_ramp.py test_laea_parity.py test_ingest_stats.py
+        run: ruff check build_fullgrid_ca.py fullgrid_fields.py fullgrid_outputs.py grid_lattice.py grid_schema.py goal_presets.py national_breaks.py climate_kde.py border_mask.py build_canada_mask.py build_grid_values.py aggregate_25km_from_5km.py validate_artifacts.py build_webapp.py test_climate_kde.py test_legend_ramp.py test_laea_parity.py test_ingest_stats.py
       - name: Shell syntax
         run: bash -n rebuild_grid.sh prepare_inputs.sh publish_grid_release.sh
       - name: Tests
@@ -163,12 +163,10 @@ jobs:
         env:
           GRID_RES: 5000
         run: python build_fullgrid_ca.py --group "${{ matrix.group }}"
-      - name: Build 5km PMTiles for this group
-        run: python build_grid_pmtiles.py --group "${{ matrix.group }}" --res 5000
       - name: Derive this group's 25 km stack from its 5 km children
         run: python aggregate_25km_from_5km.py --group "${{ matrix.group }}"
-      - name: Build 25km PMTiles for this group
-        run: python build_grid_pmtiles.py --group "${{ matrix.group }}" --res 25000
+      - name: Export grid values for this group (both tiers)
+        run: python build_grid_values.py --group "${{ matrix.group }}"
       - name: Upload group artifact (both tiers)
         uses: actions/upload-artifact@v4
         with:
@@ -176,7 +174,7 @@ jobs:
           path: |
             cluster_results/ca/grid_5000m
             cluster_results/ca/grid_25000m
-            cluster_results/ca/pmtiles
+            cluster_results/ca/values
           retention-days: 7
 
   aggregate:
@@ -200,10 +198,10 @@ jobs:
         with:
           # Each grid_5000m-<group> artifact lands in its own dir (grid_5000m/ + pmtiles/ inside).
           path: .
-      - name: Merge per-group 5km stacks + tiles into cluster_results/ca
+      - name: Merge per-group 5km stacks + values into cluster_results/ca
         run: |
           set -euo pipefail
-          mkdir -p cluster_results/ca/grid_5000m cluster_results/ca/grid_25000m cluster_results/ca/pmtiles
+          mkdir -p cluster_results/ca/grid_5000m cluster_results/ca/grid_25000m cluster_results/ca/values
           for d in grid_5000m-*/; do
             cp "$d"grid_5000m/*.tif cluster_results/ca/grid_5000m/
             # Copy back only the 25 km stack this job actually derived. Each matrix job pulls the
@@ -214,11 +212,11 @@ jobs:
             for f in "$d"grid_5000m/*.tif; do
               cp "$d"grid_25000m/"$(basename "$f")" cluster_results/ca/grid_25000m/
             done
-            cp "$d"pmtiles/*.pmtiles cluster_results/ca/pmtiles/
+            cp "$d"values/*.png cluster_results/ca/values/
           done
           ls cluster_results/ca/grid_5000m | wc -l
           ls cluster_results/ca/grid_25000m | wc -l
-          ls cluster_results/ca/pmtiles | wc -l
+          ls cluster_results/ca/values | wc -l
           # Every 5 km stack must have a derived 25 km twin of the same name. Anything left over
           # is a native stack no matrix job replaced, which is the failure above wearing a hat.
           missing=$(comm -23 \
@@ -237,7 +235,7 @@ jobs:
           if [ -f cluster_results/ca/breaks.json ]; then breaks_content=$(cat cluster_results/ca/breaks.json); else breaks_content=""; fi
           sha1=$(git log -n1 --pretty=format:%H -- .github/workflows/rebuild-grid.yml 2>/dev/null || echo)
           sha2=$(git log -n1 --pretty=format:%H -- build_fullgrid_ca.py 2>/dev/null || echo)
-          sha3=$(git log -n1 --pretty=format:%H -- build_grid_pmtiles.py 2>/dev/null || echo)
+          sha3=$(git log -n1 --pretty=format:%H -- build_grid_values.py 2>/dev/null || echo)
           sha4=$(git log -n1 --pretty=format:%H -- rebuild_grid.sh 2>/dev/null || echo)
           INPUTS_HASH=$(printf "%s\n%s\n%s\n%s\n%s\n" "$REL" "$breaks_content" "$sha1" "$sha2" "$sha3" "$sha4" | sha256sum | awk '{print $1}')
           echo "inputs_hash=$INPUTS_HASH" >> $GITHUB_OUTPUT
@@ -282,7 +280,7 @@ jobs:
         run: pip install -r requirements.txt
       - name: Regenerate the Canada-only view mask from the rebuilt grid
         # us_cells.json is the vector half of the border mask; the raster half is baked into
-        # the PMTiles by build_grid_pmtiles.py. Both come from border_mask.py, but only the
+        # the values PNGs' alpha by build_grid_values.py. Both come from border_mask.py, but only the
         # raster half was rebuilt here - the vector half was a committed file that CI never
         # touched, so editing border_mask.py silently re-split the two. They used to disagree
         # at the border; this is what stops them drifting back apart.
@@ -372,8 +370,8 @@ jobs:
           if [ "$code" -ne "0" ]; then echo "Validation failed (exit $code)"; exit $code; else echo "Validation succeeded"; fi
 
   publish-release:
-    # Uploads the validated PMTiles to the grid-outputs release. Only runs on a manual
-    # dispatch with publish: true, after validate passes.
+    # Uploads the validated grid values + density PMTiles to the grid-outputs release. Only runs
+    # on a manual dispatch with publish: true, after validate passes.
     if: github.event_name == 'workflow_dispatch' && inputs.publish && !inputs.validate_only
     needs: [aggregate, validate]
     runs-on: ubuntu-latest
@@ -386,7 +384,7 @@ jobs:
         with:
           name: rebuilt-site-${{ needs.aggregate.outputs.inputs_hash }}
           path: artifacts
-      - name: Publish PMTiles to release
+      - name: Publish grid outputs to release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GRID_OUTPUTS_RELEASE: grid-outputs-v1
@@ -395,9 +393,8 @@ jobs:
           chmod +x publish_grid_release.sh
           # publish_grid_release.sh runs rebuild_grid.sh by default; SKIP_BUILD=1 because
           # the aggregate job already built everything - just point it at the artifacts.
-          mkdir -p cluster_results/ca density
-          cp -R artifacts/cluster_results/ca/pmtiles cluster_results/ca/ 2>/dev/null || true
-          cp -R artifacts/density/* density/ 2>/dev/null || true
+          mkdir -p cluster_results/ca
+          cp -R artifacts/cluster_results/ca/values cluster_results/ca/ 2>/dev/null || true
           SKIP_BUILD=1 ./publish_grid_release.sh
 
   deploy-site:
@@ -430,10 +427,10 @@ jobs:
           for f in blitz-logo.png og-image.png; do
             [ -f "$f" ] && cp "$f" _site/
           done
-          cp artifacts/cluster_results/ca/pmtiles/*.pmtiles _site/tiles/
           # density tiles carry a density_ prefix (matches the app's tiles/density_<Taxon>.pmtiles)
           for f in density/*.pmtiles; do cp "$f" "_site/tiles/density_$(basename "$f")"; done
           cp artifacts/cluster_results/ca/*.json _site/cluster_results/ca/
+          cp -R artifacts/cluster_results/ca/values _site/cluster_results/ca/
           du -sh _site
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
@@ -467,16 +464,19 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}-py-3.11
       - name: Install deps
         run: pip install -r requirements.txt
-      - name: Download latest PMTiles from release
+      - name: Download latest grid values from release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          mkdir -p cluster_results/ca/pmtiles density
-          # Download all PMTiles from grid-outputs-v1 release
-          gh release download grid-outputs-v1 --pattern "*.pmtiles" --dir cluster_results/ca/pmtiles --repo "$GITHUB_REPOSITORY" || true
-          gh release download grid-outputs-v1 --pattern "density_*.pmtiles" --dir density --repo "$GITHUB_REPOSITORY" || true
-          ls -lh cluster_results/ca/pmtiles/ || echo "No PMTiles found"
+          mkdir -p cluster_results/ca/values
+          # Grid colours ship as a values tarball on grid-outputs-v1 (density tiles are committed in density/)
+          if gh release download grid-outputs-v1 --pattern "grid_values.tar.gz" --dir . --repo "$GITHUB_REPOSITORY"; then
+            tar -xzf grid_values.tar.gz -C cluster_results/ca/values
+          else
+            echo "No grid_values.tar.gz on the release yet"
+          fi
+          ls cluster_results/ca/values/ | head || echo "No values found"
       - name: Rebuild webapp
         run: python build_webapp.py
       - name: Assemble _site
@@ -487,11 +487,11 @@ jobs:
           for f in blitz-logo.png og-image.png; do
             [ -f "$f" ] && cp "$f" _site/
           done
-          cp cluster_results/ca/pmtiles/*.pmtiles _site/tiles/ 2>/dev/null || echo "No PMTiles in local path"
           for f in density/*.pmtiles; do
             [ -f "$f" ] && cp "$f" "_site/tiles/density_$(basename "$f")" || true
           done
           cp cluster_results/ca/*.json _site/cluster_results/ca/ 2>/dev/null || echo "No JSON found"
+          [ -d cluster_results/ca/values ] && cp -R cluster_results/ca/values _site/cluster_results/ca/ || echo "No values found"
           du -sh _site
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

@@ -44,8 +44,8 @@ GRID_RES=25000 "$PY" build_fullgrid_ca.py
 "$PY" build_canada_mask.py
 # 4) build density overlay PMTiles (per-taxon density RGBA -> pmtiles)
 "$PY" build_density_pmtiles.py
-# 5) build grid PMTiles from the lattice stacks (per-group raster stacks -> pmtiles)
-"$PY" build_grid_pmtiles.py
+# 5) export per-(group, goal) cell colours for client-side grid rendering (#116)
+"$PY" build_grid_values.py
 # 6) regenerate the deployed single-page app
 "$PY" build_webapp.py
 echo "done — cluster_results/ca/ + index.html regenerated."

@@ -11,8 +11,11 @@ __pycache__/
 cluster_results/inat_*.csv
 *.log
 
-# Per-tier lattice stacks: the intermediate build_fullgrid_ca.py hands to build_grid_pmtiles.py (#87)
+# Per-tier lattice stacks: the intermediate build_fullgrid_ca.py hands to build_grid_values.py (#87)
 cluster_results/ca/grid_*m/
+
+# Per-(group, goal) cell-colour PNGs: rebuilt by CI, shipped via release + Pages (#116)
+cluster_results/ca/values/
 
 # claude-flow runtime/session state
 .claude-flow/

@@ -741,7 +741,7 @@ function co2lbl(kg){return (kg<=0&&MODES[state.mode].emit===0)?t('car_free'):'~'
 const ICONIC={Amphibia:'Amphibia',Aves:'Aves',Insecta:'Insecta',Mammalia:'Mammalia',Reptilia:'Reptilia',Plantae:'Plantae',Fungi:'Fungi',Actinopterygii:'Actinopterygii',Arachnida:'Arachnida',Mollusca:'Mollusca'};
 let prospectSeq=0;
 let _lastProspect=null;   // {lat,lon,whereKey} of the open cell panel, so a language switch can re-render it
-const LATTICE_X0=__LATTICE_X0__, LATTICE_Y1=__LATTICE_Y1__, LATTICE_W=__LATTICE_W__, LATTICE_H=__LATTICE_H__;   // injected from grid_lattice.py — the clickable lattice and the raster tiles are the same grid
+const LATTICE_X0=__LATTICE_X0__, LATTICE_Y1=__LATTICE_Y1__, LATTICE_W=__LATTICE_W__, LATTICE_H=__LATTICE_H__;   // injected from grid_lattice.py — the clickable lattice and the coloured grid are the same lattice
 function activeCellResM(){return map&&map.getZoom&&map.getZoom()>=TIER_SWITCH_Z?5000:25000;}
 function snapToLattice(lat,lon,resM){
   const c=LAEA.fwd(lat,lon), ncol=Math.floor(LATTICE_W/resM), nrow=Math.floor(LATTICE_H/resM);
@@ -930,7 +930,7 @@ map.on('load',()=>{
     'fill-color':['coalesce',['feature-state','fc'],'rgba(0,0,0,0)'],
     'fill-opacity':['coalesce',['feature-state','op'],0]}});
   // Outlines ride a separate line layer so the grid raster can show through the transparent fill
-  // (#87 P3). Hidden above the tier switch - the 5 km raster carries the detail there.
+  // (#87 P3). Hidden above the tier switch - the 5 km fill carries the detail there.
   // Below z6 a 25 km cell is only a few pixels, so 23k hairlines collapse into a black moiré that
   // buries the priority colours. Fade the lattice in only once a cell is big enough to aim at.
   map.addLayer({id:'cells-line',type:'line',source:'cells',minzoom:5,maxzoom:TIER_SWITCH_Z,paint:{
@@ -1021,7 +1021,7 @@ function contribStr(r){const c=contribs(r).slice(0,3).map(x=>x.nm.toLowerCase()+
 // Intrinsic-motivation framing; honest because it names the axis actually driving the score.
 
 // Cell polygons follow the projected LAEA lattice (WGS84 ellipsoidal, lat_0=45, lon_0=-100) -- the same
-// CRS the raster tiles are built in -- so vector outlines sit exactly on the raster cell edges. A lon/lat
+// CRS the values grids are built in -- so outlines and coloured fills are the same cell shapes. A lon/lat
 // rectangle is only axis-aligned in degrees; in Web Mercator a 25km LAEA cell is a rotated square.
 // Faithful port of proj4's ellipsoidal LAEA (oblique mode), validated against pyproj to ~1e-9 m.
 const LAEA=(()=>{
@@ -1085,11 +1085,11 @@ function recolour(){
   // a fake index gradient -- show a flat map instead.
   const flat=ord.length>0&&(ord[ord.length-1][0]-ord[0][0])<1e-9;   // guard empty markers (recolour runs during init before data loads)
   markers.forEach((m,i)=>{m.t=flat?0:rank[i]/n1;});   // national score, stable across pan/zoom
-  // D2 (resolved): fixed national colours. m.t is the stable national percentile; the raster tiles
-  // carry the colour, so there is no per-cell restyle loop here at all. The vector fill only paints
-  // when the Getting Even categorical layer is active (handled above) or the coverage overlay is off
-  // and tiles are unavailable. Goal switches now issue zero setFeatureState calls (#87 P3 gate).
-  applyCanadaMask();renderCellTable();updateTopOutlines();setGridRaster();
+  // D2 (resolved): fixed national colours. m.t is the stable national percentile; the baked values
+  // grids carry the colour (setGridFill paints them onto the cell polygons), so pan/zoom never
+  // recolours. The interaction fill (cells-fill) only paints when the Getting Even categorical
+  // layer is active (handled above).
+  applyCanadaMask();renderCellTable();updateTopOutlines();setGridFill();
 }
 // Cells currently in view (US-side excluded when "Canada only" is on, so border zooms aren't skewed).
 function viewportCells(){const b=map.getBounds();let inb=markers.filter(m=>b.contains([m.r[1],m.r[0]]));
@@ -1180,27 +1180,82 @@ let covActive=false;
 // (rescale 0,10) is baked into transparent WEBP tiles so the overlay sharpens as you zoom
 // to ~300 m, where the 1 km COG via TiTiler stayed coarse. Fungi has no dec25 layer ->
 // keep its older 1 km COG on the remote tiler until one lands.
-const TIER_SWITCH_Z=__TIER_SWITCH_Z__;   // 25 km vector tier at z <= this, 5 km raster above (#87 D5; Ryan tunes)
+const TIER_SWITCH_Z=__TIER_SWITCH_Z__;   // 25 km tier at z <= this, 5 km above (#87 D5; Ryan tunes)
 const PM_BASE='__PMTILES_BASE__';   // release-asset base URL for all PMTiles (#87 P4)
-// Grid raster tiers (#87 P3): one pre-coloured WEBP tileset per (taxon, goal), 25 km at/below
-// TIER_SWITCH_Z and 5 km above it. Colour is baked at build time from the fixed national ramps,
-// so a cell's colour is stable across pan/zoom (D2: viewport recolouring removed).
+// Grid colour tiers (#87 P3, #116): one small values PNG per (taxon, goal, tier), one pixel per
+// lattice cell, carrying viridis(goal blend) + validity alpha (build_grid_values.py). The colours
+// are painted onto the SAME LAEA cell polygons the app uses for outlines and clicks, so the fill
+// and the lattice cannot misalign -- the raster PMTiles route warped rotated cells into
+// axis-aligned Mercator pixels and the staircase never matched the vector lattice.
+// Colour is baked at build time from the fixed national ramps, so a cell's colour is stable
+// across pan/zoom (D2: viewport recolouring removed).
 function gridSlug(){return state.taxon.replace(/ /g,'_');}
 function goalSlug(){const i=(window.__activePreset>=0)?window.__activePreset:0;return PRESETS[i].name.toLowerCase().replace(/ /g,'_');}
-function setGridRaster(){
-  if(!_mapLoaded){whenMap(setGridRaster);return;}
-  ['grid25','grid5'].forEach(id=>{if(map.getLayer(id))map.removeLayer(id);if(map.getSource(id))map.removeSource(id);});
+const VALS={};   // decoded values PNGs, keyed <group>_<goal>_grid_<res>m
+async function loadVals(res){
+  const key=gridSlug()+'_'+goalSlug()+'_grid_'+res+'m';
+  if(VALS[key])return VALS[key];
+  const r=await fetchT(DATA_DIR+'values/'+key+'.png',20000);if(!r.ok)throw new Error('HTTP '+r.status+' loading '+key);
+  const img=await createImageBitmap(await r.blob());
+  const cv=document.createElement('canvas');cv.width=img.width;cv.height=img.height;
+  const cx=cv.getContext('2d',{willReadFrequently:true});cx.drawImage(img,0,0);
+  return VALS[key]={w:img.width,h:img.height,d:cx.getImageData(0,0,img.width,img.height).data};
+}
+function valColor(v,col,row){
+  if(col<0||row<0||col>=v.w||row>=v.h)return null;
+  const k=(row*v.w+col)*4;
+  return v.d[k+3]<128?null:'rgb('+v.d[k]+','+v.d[k+1]+','+v.d[k+2]+')';   // alpha 0 = nodata / foreign-border cell
+}
+let _gridSeq=0;
+function setGridFill(){
+  if(!_mapLoaded){whenMap(setGridFill);return;}
+  const seq=++_gridSeq;
+  ['grid25','grid5'].forEach(id=>{if(map.getLayer(id))map.removeLayer(id);});
+  if(map.getSource('cells5'))map.removeSource('cells5');
   if(geActive())return;   // Getting Even paints its own categorical vector fill
   const cov=document.getElementById('tgCoverage');if(cov&&cov.checked)return;   // density overlay replaces the grid fill
   if(!markers.length)return;
-  ensurePM();
-  const base=PM_BASE+'/'+gridSlug()+'_'+goalSlug();
-  const attr='Blitz the Gap priority grid';
-  map.addSource('grid25',{type:'raster',url:'pmtiles://'+base+'_grid_25000m.pmtiles',tileSize:256,maxzoom:TIER_SWITCH_Z,attribution:attr});
-  map.addSource('grid5',{type:'raster',url:'pmtiles://'+base+'_grid_5000m.pmtiles',tileSize:256,minzoom:TIER_SWITCH_Z,attribution:attr});
-  map.addLayer({id:'grid25',type:'raster',source:'grid25',maxzoom:TIER_SWITCH_Z,paint:{'raster-opacity':gridOpacity}},CELL_LAYER);
-  map.addLayer({id:'grid5',type:'raster',source:'grid5',minzoom:TIER_SWITCH_Z,paint:{'raster-opacity':gridOpacity}},CELL_LAYER);
+  // 25 km tier: feature-state colour on the existing 23k-cell source (same mechanism Getting Even uses).
+  map.addLayer({id:'grid25',type:'fill',source:'cells',maxzoom:TIER_SWITCH_Z,paint:{
+    'fill-color':['coalesce',['feature-state','gc'],'rgba(0,0,0,0)'],
+    'fill-opacity':gridOpacity}},CELL_LAYER);
+  // 5 km tier: viewport-built cell polygons (refreshCells5), rebuilt on moveend above the switch.
+  map.addSource('cells5',{type:'geojson',data:{type:'FeatureCollection',features:[]},attribution:'Blitz the Gap priority grid'});
+  map.addLayer({id:'grid5',type:'fill',source:'cells5',minzoom:TIER_SWITCH_Z,paint:{
+    'fill-color':['get','c'],
+    'fill-opacity':gridOpacity}},CELL_LAYER);
+  loadVals(25000).then(v=>{
+    if(seq!==_gridSeq)return;
+    markers.forEach(m=>{const s=snapToLattice(m.r[0],m.r[1],25000);
+      map.setFeatureState({source:'cells',id:m.i},{gc:s?valColor(v,s.col,s.row):null});});
+  }).catch(()=>{});
+  refreshCells5();
   updateOpacityControl();
+}
+let _c5seq=0;
+async function refreshCells5(){
+  if(!_mapLoaded||!map.getSource('cells5')||map.getZoom()<TIER_SWITCH_Z)return;
+  const seq=++_c5seq;
+  let v;try{v=await loadVals(5000);}catch(e){return;}
+  if(seq!==_c5seq||!map.getSource('cells5'))return;
+  const R=5000,b=map.getBounds(),W=b.getWest(),E=b.getEast(),S=b.getSouth(),N=b.getNorth();
+  // Viewport extent in LAEA: corners + edge midpoints (a Mercator rectangle's edges bow in LAEA).
+  let minX=1/0,maxX=-1/0,minY=1/0,maxY=-1/0;
+  [[W,S],[E,S],[W,N],[E,N],[(W+E)/2,S],[(W+E)/2,N],[W,(S+N)/2],[E,(S+N)/2]].forEach(p=>{
+    const c=LAEA.fwd(p[1],p[0]);
+    if(c[0]<minX)minX=c[0];if(c[0]>maxX)maxX=c[0];if(c[1]<minY)minY=c[1];if(c[1]>maxY)maxY=c[1];});
+  const c0=Math.max(0,Math.floor((minX-LATTICE_X0)/R)-1),c1=Math.min(v.w-1,Math.floor((maxX-LATTICE_X0)/R)+1);
+  const r0=Math.max(0,Math.floor((LATTICE_Y1-maxY)/R)-1),r1=Math.min(v.h-1,Math.floor((LATTICE_Y1-minY)/R)+1);
+  const feats=[];
+  if((c1-c0+1)*(r1-r0+1)<=40000){   // z >= TIER_SWITCH_Z keeps this in the low thousands; the cap guards pathological viewports
+    for(let row=r0;row<=r1;row++)for(let col=c0;col<=c1;col++){
+      const fc=valColor(v,col,row);if(!fc)continue;
+      const x=LATTICE_X0+col*R,y=LATTICE_Y1-row*R;   // exact lattice corners -> neighbours share vertices, no seams
+      const ring=[[x,y],[x+R,y],[x+R,y-R],[x,y-R],[x,y]].map(q=>{const g=LAEA.inv(q[0],q[1]);return[g[1],g[0]];});
+      feats.push({type:'Feature',properties:{c:fc},geometry:{type:'Polygon',coordinates:[ring]}});
+    }
+  }
+  map.getSource('cells5').setData({type:'FeatureCollection',features:feats});
 }
 // Local-contrast aid (D2 option c): outline the top ~20 cells in the current view by the STABLE
 // national score. The map never recolours; the "best near me" answer is a list + outlines.
@@ -1242,8 +1297,8 @@ function setBaseOpacity(v){baseOpacity=v;if(_mapLoaded&&map.getLayer('basemap'))
 function setCovOpacity(v){covOpacity=v;if(_mapLoaded&&map.getLayer('cov'))map.setPaintProperty('cov','raster-opacity',v);}
 function setGridOpacity(v){
   gridOpacity=v;
-  if(_mapLoaded&&map.getLayer('grid25'))map.setPaintProperty('grid25','raster-opacity',v);
-  if(_mapLoaded&&map.getLayer('grid5'))map.setPaintProperty('grid5','raster-opacity',v);
+  if(_mapLoaded&&map.getLayer('grid25'))map.setPaintProperty('grid25','fill-opacity',v);
+  if(_mapLoaded&&map.getLayer('grid5'))map.setPaintProperty('grid5','fill-opacity',v);
 }
 function updateOpacityControl(){
   const sl=document.getElementById('baseop'),lab=document.getElementById('bople'),val=document.getElementById('bopv');
@@ -1266,7 +1321,7 @@ document.getElementById('tgGettingEven').addEventListener('change',e=>{if(e.targ
 {const z=document.getElementById('tgZoomScale');if(z)z.addEventListener('change',recolour);}
 {const c=document.getElementById('tgCanadaOnly');if(c)c.addEventListener('change',()=>{loadUS().then(recolour);});}
 // Re-rank against the new viewport only while view-relative colouring is on (avoids the per-pan cost otherwise).
-map.on('moveend',()=>{if(!geActive())updateTopOutlines();});
+map.on('moveend',()=>{if(!geActive())updateTopOutlines();refreshCells5();});
 // Issue #20: "How impact is scored & data sources" moved out of the sidebar to a floating map info button that expands a panel.
 (function(){const b=document.getElementById('howbtn'),p=document.getElementById('howpanel'),x=document.getElementById('howclose');if(!b||!p)return;
   const set=open=>{p.classList.toggle('open',open);b.setAttribute('aria-expanded',open?'true':'false');};
@@ -1280,7 +1335,7 @@ map.on('moveend',()=>{if(!geActive())updateTopOutlines();});
   tog.addEventListener('click',()=>{const c=document.body.classList.toggle('panel-collapsed');setAria(c);setTimeout(()=>{try{map.resize();}catch(e){}},220);});})();
 document.getElementById('baseop').addEventListener('input',e=>{const v=parseFloat(e.target.value);
   if(covActive)setCovOpacity(v);   // #39: fade the magma data
-  else if(gridOverlayActive())setGridOpacity(v);   // priority raster opacity
+  else if(gridOverlayActive())setGridOpacity(v);   // priority grid opacity
   else setBaseOpacity(v);
   document.getElementById('bopv').textContent=Math.round(v*100)+'%';});
 document.getElementById('maxleg').addEventListener('change',e=>{state.maxLeg=parseFloat(e.target.value);replan();});

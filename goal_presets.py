@@ -1,8 +1,8 @@
 """Goal presets: the fixed axis blends behind the criteria dropdown (#20).
 
 Single source of truth shared by build_webapp.py (which injects them into index.html)
-and build_grid_pmtiles.py (which bakes the same blends into per-(taxon, goal) raster
-tiles, #87 P2/P3). Weight order matches build_fullgrid_ca.BANDS:
+and build_grid_values.py (which bakes the same blends into per-(taxon, goal) cell-colour
+grids, #87 P2/P3). Weight order matches build_fullgrid_ca.BANDS:
 [discover, conservation, env, staleness, urgency].
 """
 
