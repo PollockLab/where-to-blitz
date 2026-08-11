@@ -3,7 +3,7 @@
 Every per-group stack (cluster_results/ca/grid_<RES>m/<GROUP>.tif) is a 7-band
 float32 GeoTIFF with the bands below, in this order, 1-based. The webapp JSON row
 format is [lat, lon] + BANDS. Consumed by build_fullgrid_ca (writer),
-build_grid_pmtiles (tiler), aggregate_25km_from_5km (nesting), and
+build_grid_values (cell colours), aggregate_25km_from_5km (nesting), and
 validate_artifacts (nesting gate) - previously each kept its own copy.
 """
 

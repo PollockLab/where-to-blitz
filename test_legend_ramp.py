@@ -18,7 +18,7 @@ TEMPLATE = Path(__file__).resolve().parent / "webapp" / "index.html"
 # selector -> the colormap the corresponding raster is baked with
 RAMPS = {
     ".bar": "viridis",                 # "skip -> go here" bar, How-scored panel
-    "#maplegend .ramp": "viridis",     # priority legend, build_grid_pmtiles.py
+    "#maplegend .ramp": "viridis",     # priority legend, build_grid_values.py
     "#maplegend .ramp.magma": "magma",  # density overlay, build_density_pmtiles.py
 }
 

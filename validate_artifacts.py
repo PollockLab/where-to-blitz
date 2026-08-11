@@ -3,13 +3,13 @@
 
 Checks:
  - numeric nesting: grid_25000m stacks are the (k x k) block mean of grid_5000m stacks
- - pmtiles sizes: warns if any pmtiles > threshold (default 100 MB)
+ - values PNGs: every group has one cell-colour PNG per (goal, tier) (build_grid_values.py)
  - writes a JSON report (default: validate_report.json) with per-group results
  - exits with non-zero code if any numeric-nesting checks fail or required files missing
 
 Usage:
   python validate_artifacts.py /path/to/extracted/artifact_root \
-      --output validate_report.json --pmtiles-threshold-mb 100
+      --output validate_report.json
 
 The script is pure-Python (depends on rasterio and numpy).
 """
@@ -25,8 +25,11 @@ from typing import Any
 import numpy as np
 import rasterio
 
+from goal_presets import PRESETS
 from grid_lattice import mean_pool_block, sum_pool_block
 from grid_schema import SUM_BAND_INDICES as SUM_BANDS  # 1-based; n_train is extensive
+
+GOAL_SLUGS = [p["name"].lower().replace(" ", "_") for p in PRESETS]
 
 
 def compare_arrays(expected: np.ndarray, actual: np.ndarray, abs_tol: float, rel_tol: float) -> dict[str, Any]:
@@ -119,20 +122,19 @@ def main(argv=None) -> int:
     p = argparse.ArgumentParser()
     p.add_argument("root", nargs="?", default=".", help="extracted artifact root containing cluster_results/ca")
     p.add_argument("--output", default="validate_report.json", help="JSON output path")
-    p.add_argument("--pmtiles-threshold-mb", type=float, default=100.0, help="warn threshold in MB for pmtiles")
     p.add_argument("--abs-tol", type=float, default=1e-6, help="absolute tolerance for numeric nesting")
     p.add_argument("--rel-tol", type=float, default=1e-6, help="relative tolerance for numeric nesting")
     args = p.parse_args(argv)
 
     root = Path(args.root)
     outpath = Path(args.output)
-    report: dict[str, Any] = {"root": str(root), "groups": {}, "pmtiles": {}, "summary": {}}
+    report: dict[str, Any] = {"root": str(root), "groups": {}, "values": {}, "summary": {}}
     failures = 0
 
     ca = root / "cluster_results" / "ca"
     grid5000 = ca / "grid_5000m"
     grid25000 = ca / "grid_25000m"
-    pmtiles_dir = ca / "pmtiles"
+    values_dir = ca / "values"
 
     g25 = find_tif_groups(grid25000)
     g5 = find_tif_groups(grid5000)
@@ -164,22 +166,24 @@ def main(argv=None) -> int:
             failures += 1
         report["groups"][grp] = rec
 
-    # pmtiles: check sizes and presence
-    if pmtiles_dir.exists():
-        for p in sorted(pmtiles_dir.glob("*.pmtiles")):
-            size_mb = p.stat().st_size / 1e6
-            warn = size_mb > args.pmtiles_threshold_mb
-            report["pmtiles"][p.name] = {"path": str(p), "size_mb": size_mb, "warn": warn}
-            if warn:
-                report.setdefault("pmtiles_warnings", []).append(p.name)
-    else:
-        report["pmtiles_error"] = "pmtiles directory missing"
+    # values PNGs: the webapp paints cells from these; a missing one is a broken (group, goal, tier)
+    missing_values = []
+    for grp in groups:
+        for slug in GOAL_SLUGS:
+            for res in (25000, 5000):
+                name = f"{grp}_{slug}_grid_{res}m.png"
+                if not (values_dir / name).exists():
+                    missing_values.append(name)
+    if missing_values:
+        report["values"]["missing"] = missing_values
+        failures += len(missing_values)
+    report["values"]["n_found"] = len(list(values_dir.glob("*.png"))) if values_dir.exists() else 0
 
     # summary
     n_total = len(groups)
     n_pass = sum(1 for g in report["groups"].values() if g.get("pass"))
-    n_fail = n_total - n_pass
-    report["summary"].update({"n_groups": n_total, "n_pass": n_pass, "n_fail": n_fail, "pmtiles_warnings": len(report.get("pmtiles_warnings", []))})
+    n_fail = n_total - n_pass + len(missing_values)
+    report["summary"].update({"n_groups": n_total, "n_pass": n_pass, "n_fail": n_fail, "missing_values": len(missing_values)})
 
     # write report (numpy scalars leak in from the metrics; coerce them)
     def _jsonable(o):
@@ -200,7 +204,7 @@ def main(argv=None) -> int:
         return 2
 
     # print short summary
-    print(json.dumps({"n_groups": n_total, "n_pass": n_pass, "n_fail": n_fail, "pmtiles_warnings": len(report.get("pmtiles_warnings", []))}))
+    print(json.dumps({"n_groups": n_total, "n_pass": n_pass, "n_fail": n_fail, "missing_values": len(missing_values)}))
 
     return 0 if n_fail == 0 else 2
 

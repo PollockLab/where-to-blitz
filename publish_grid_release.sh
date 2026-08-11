@@ -23,24 +23,23 @@ if ! gh release view "$REL" --repo "$REPO" >/dev/null 2>&1; then
     --notes "PMTiles + grid outputs from rebuild_grid.sh. Inputs: ${GRID_INPUTS_RELEASE:-grid-inputs-v1}. Rebuilt $(date -u +%Y-%m-%d)."
 fi
 
-# Stage with explicit asset names: density tiles get a density_ prefix so they
-# can't collide with grid tiles (<group>_<metric>_grid_<res>m.pmtiles).
+# Stage with explicit asset names: density tiles get a density_ prefix; the per-(group, goal)
+# cell-colour PNGs travel as one grid_values.tar.gz (66 small files make poor release assets).
 STAGE=$(mktemp -d)
 trap 'rm -rf "$STAGE"' EXIT
 for f in density/*.pmtiles; do
   [ -e "$f" ] || continue
   cp "$f" "$STAGE/density_$(basename "$f")"
 done
-for f in cluster_results/ca/pmtiles/*.pmtiles; do
-  [ -e "$f" ] || continue
-  cp "$f" "$STAGE/$(basename "$f")"
-done
+if [ -d cluster_results/ca/values ]; then
+  tar -czf "$STAGE/grid_values.tar.gz" -C cluster_results/ca/values .
+fi
 
 n=0
-for f in "$STAGE"/*.pmtiles; do
+for f in "$STAGE"/*; do
   [ -e "$f" ] || continue
   echo "uploading $(basename "$f") ($(du -h "$f" | cut -f1)) ..."
   gh release upload "$REL" "$f" --clobber --repo "$REPO"
   n=$((n+1))
 done
-echo "published $n tiles -> https://github.com/$REPO/releases/tag/$REL"
+echo "published $n assets -> https://github.com/$REPO/releases/tag/$REL"

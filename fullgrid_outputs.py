@@ -24,7 +24,7 @@ def _tr(x):
 
 
 def write_stack(f, group, bands):
-    """7-band float32 lattice stack; NaN off-mask. Input for build_grid_pmtiles.py (#87 P2)."""
+    """7-band float32 lattice stack; NaN off-mask. Input for build_grid_values.py (#87 P2)."""
     os.makedirs(f.rast_dir, exist_ok=True)
     path = os.path.join(f.rast_dir, f"{group.replace(' ', '_')}.tif")
     with rasterio.open(path, "w", driver="GTiff", width=f.lat.ncol, height=f.lat.nrow,
