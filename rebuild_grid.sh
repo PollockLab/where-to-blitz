@@ -42,6 +42,9 @@ GRID_RES=25000 "$PY" build_fullgrid_ca.py
 # 3b) re-tag out-of-Canada cells for the Canada-only view mask (us_cells.json). MUST follow the grid build:
 #     if the grid's cell set changes, a stale mask leaks US coastal cells into the default view (#58 follow-up).
 "$PY" build_canada_mask.py
+# 3c) rebuild the Getting Even layer. MUST follow the grid build: it is keyed on cell centres,
+#     so a stale copy from an older lattice matches nothing and the layer renders entirely grey.
+"$PY" build_gettingeven.py
 # 4) build density overlay PMTiles (per-taxon density RGBA -> pmtiles)
 "$PY" build_density_pmtiles.py
 # 5) export per-(group, goal) cell colours for client-side grid rendering (#116)
