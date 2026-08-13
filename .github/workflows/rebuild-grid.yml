@@ -424,7 +424,7 @@ jobs:
           set -euo pipefail
           mkdir -p _site/tiles _site/cluster_results/ca
           cp artifacts/index.html _site/
-          for f in blitz-logo.png og-image.png; do
+          for f in blitz-logo.png og-image.png where-to-blitz-walkthrough.html; do
             [ -f "$f" ] && cp "$f" _site/
           done
           # density tiles carry a density_ prefix (matches the app's tiles/density_<Taxon>.pmtiles)
@@ -484,7 +484,7 @@ jobs:
           set -euo pipefail
           mkdir -p _site/tiles _site/cluster_results/ca
           cp index.html _site/
-          for f in blitz-logo.png og-image.png; do
+          for f in blitz-logo.png og-image.png where-to-blitz-walkthrough.html; do
             [ -f "$f" ] && cp "$f" _site/
           done
           for f in density/*.pmtiles; do
