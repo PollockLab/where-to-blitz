@@ -24,10 +24,12 @@ import json
 import os
 import sys
 
+import _rootpath  # noqa: F401
 import numpy as np
 import pandas as pd
-import voi_backtest as vb
 import voi_conservation as vc
+
+import voi_backtest as vb
 
 TT = "cluster_results/bc_travel_time.tif"
 
