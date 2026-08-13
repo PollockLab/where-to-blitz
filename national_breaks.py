@@ -20,7 +20,7 @@ Two consequences worth being explicit about:
     was already true of the percentile ranks they replace.
   - The raw quantities nest exactly, the displayed values do not. A 25 km density is the mean
     of its 25 children's densities, but the ramp is nonlinear, so the parent's colour is not
-    the mean of its children's colours. The nesting gate in build_grid_values.py therefore
+    the mean of its children's colours. The nesting gate in validate_artifacts.py therefore
     tests the raw band, not the painted one.
 
 Density, not record count, is the raw quantity behind `discover`: counts are sums over the

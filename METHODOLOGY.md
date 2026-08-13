@@ -146,7 +146,9 @@ above (`discover`, composite) rebuild that axis from only what was known before 
 gap — anchoring the shipped axis to a fixed snapshot or window — is tracked in
 [issue #80](https://github.com/PollockLab/where-to-blitz/issues/80).
 
-*Reproduce:* `python backtest_appscore.py` (BC) and `python backtest_east.py` (East) regenerate
+*Reproduce:* both scripts read `cluster_results/inat_*.csv`, which is gitignored and so absent from a
+clean clone; `python pull_inat_backtest.py` (BC) and `python pull_east.py` (East) fetch it first. Then
+`python backtest_appscore.py` (BC) and `python backtest_east.py` (East) regenerate
 `cluster_results/voi_appscore_results.json` and `…_east_results.json`; the table reads straight from
 those two files.
 
