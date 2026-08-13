@@ -419,6 +419,11 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && inputs.publish && !inputs.validate_only
     needs: [aggregate, validate]
     runs-on: ubuntu-latest
+    # One Pages deployment at a time: deploy-site (dispatch) and deploy-site-fast (push to
+    # main) target the same environment, and concurrent deploy-pages calls fail the loser.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
     permissions:
       pages: write
       id-token: write
@@ -459,6 +464,11 @@ jobs:
     if: github.event_name == 'push'
     needs: validate-light
     runs-on: ubuntu-latest
+    # One Pages deployment at a time: deploy-site (dispatch) and deploy-site-fast (push to
+    # main) target the same environment, and concurrent deploy-pages calls fail the loser.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
     permissions:
       pages: write
       id-token: write
