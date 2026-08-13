@@ -936,9 +936,6 @@ map.on('load',()=>{
   map.addLayer({id:'cells-line',type:'line',source:'cells',minzoom:5,maxzoom:TIER_SWITCH_Z,paint:{
     'line-color':'#0f1620','line-width':1,
     'line-opacity':['interpolate',['linear'],['zoom'],5,0,7,0.25]}});
-  // Top-in-view outlines (D2 option c). No fill; just a marker ring on the nationally-best cells in view.
-  map.addLayer({id:'cells-top',type:'line',source:'cells',maxzoom:TIER_SWITCH_Z,paint:{
-    'line-color':'#f0a000','line-width':2.5},filter:['==',['id'],-1]});
   map.on('click',CELL_LAYER,e=>{const f=e.features&&e.features[0];if(!f)return;const r=markers[f.id]&&markers[f.id].r;if(!r)return;
     if(caOnlyActive()&&US_CELLS&&US_CELLS.has(gekey(r[0],r[1])))return;state.view==='explore'?exploreCell(e.lngLat.lat,e.lngLat.lng):planTap(r[0],r[1]);});
   map.on('mouseenter',CELL_LAYER,()=>{map.getCanvas().style.cursor='pointer';});
@@ -1089,11 +1086,8 @@ function recolour(){
   // grids carry the colour (setGridFill paints them onto the cell polygons), so pan/zoom never
   // recolours. The interaction fill (cells-fill) only paints when the Getting Even categorical
   // layer is active (handled above).
-  applyCanadaMask();renderCellTable();updateTopOutlines();setGridFill();
+  applyCanadaMask();renderCellTable();setGridFill();
 }
-// Cells currently in view (US-side excluded when "Canada only" is on, so border zooms aren't skewed).
-function viewportCells(){const b=map.getBounds();let inb=markers.filter(m=>b.contains([m.r[1],m.r[0]]));
-  if(caOnlyActive()&&US_CELLS)inb=inb.filter(m=>!US_CELLS.has(gekey(m.r[0],m.r[1])));return inb;}
 // (D2) The viewport-relative repaint is gone: colours are fixed nationally and live in the raster
 // tiles. moveend only refreshes which top cells are outlined.
 // Swap #maplegend between the priority ramp (default) and a categorical Getting Even legend. Pale swatches get a 1px #ccc border.
@@ -1257,14 +1251,6 @@ async function refreshCells5(){
   }
   map.getSource('cells5').setData({type:'FeatureCollection',features:feats});
 }
-// Local-contrast aid (D2 option c): outline the top ~20 cells in the current view by the STABLE
-// national score. The map never recolours; the "best near me" answer is a list + outlines.
-function updateTopOutlines(){
-  if(!_mapLoaded||!map.getLayer('cells-top'))return;
-  if(geActive()||!markers.length){map.setFilter('cells-top',['==',['id'],-1]);return;}
-  const top=viewportCells().slice().sort((a,b)=>b.t-a.t).slice(0,20).map(m=>m.i);
-  map.setFilter('cells-top',['in',['id'],['literal',top]]);
-}
 const COVPM=['All','Amphibia','Aves','Insecta','Mammalia','Plantae','Reptilia','Actinopterygii','Arachnida','Mollusca'];   // taxa with a local PMTiles (others -> All)
 // Raster PMTiles now ride the native MapLibre pmtiles:// protocol (registered once) instead of a custom
 // GridLayer that hand-decoded WEBP to canvas. The protocol reads each archive's TileJSON (native z9) and
@@ -1320,8 +1306,7 @@ document.getElementById('tgCoverage').addEventListener('change',e=>{if(e.target.
 document.getElementById('tgGettingEven').addEventListener('change',e=>{if(e.target.checked)document.getElementById('tgCoverage').checked=false;loadGE().then(()=>{setCoverage();updateLegend();recolour();});});
 {const z=document.getElementById('tgZoomScale');if(z)z.addEventListener('change',recolour);}
 {const c=document.getElementById('tgCanadaOnly');if(c)c.addEventListener('change',()=>{loadUS().then(recolour);});}
-// Re-rank against the new viewport only while view-relative colouring is on (avoids the per-pan cost otherwise).
-map.on('moveend',()=>{if(!geActive())updateTopOutlines();refreshCells5();});
+map.on('moveend',()=>{refreshCells5();});
 // Issue #20: "How impact is scored & data sources" moved out of the sidebar to a floating map info button that expands a panel.
 (function(){const b=document.getElementById('howbtn'),p=document.getElementById('howpanel'),x=document.getElementById('howclose');if(!b||!p)return;
   const set=open=>{p.classList.toggle('open',open);b.setAttribute('aria-expanded',open?'true':'false');};
