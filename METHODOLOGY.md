@@ -213,7 +213,7 @@ ecological importance — that awaits the SDM/VOI score.
   collection. The `conservation` axis is therefore exposed only as a **per-cell sum of status weights
   over the 0.25° (~25 km) grid**: it shows that a cell is rich in at-risk species, never which species
   or where within the cell. The underlying CAN-SAR x GBIF point occurrences are aggregated away in
-  `join_conservation.py`; only the per-cell score reaches the public app. Coarse 25 km binning plus
+  `build_atrisk_layer.py`; only the per-cell score reaches the public app. Coarse 25 km binning plus
   all-taxa pooling are the mitigation, and remain in force for any future finer-resolution layer.
 - All five axes are now **real** (no placeholders) and were **cross-validated against the raw
   iNaturalist record dump at cluster scale**, which caught and fixed the staleness sourcing
@@ -226,6 +226,6 @@ ecological importance — that awaits the SDM/VOI score.
 | Axis | Builder / source file | External source |
 |------|----------------------|-----------------|
 | discover, env, urgency, travel | `build_fullgrid_ca.py` | iNat density COG (Biodiversité Québec STAC), CHELSA, Hansen, Weiss 2018 |
-| conservation | `build_atrisk_layer.py` + `join_conservation.py` | CAN-SAR (OSF) + GBIF occurrences |
+| conservation | `build_atrisk_layer.py`, joined in `fullgrid_fields.py` | CAN-SAR (OSF) + GBIF occurrences |
 | staleness | iNat open-data (cluster DuckDB) → `cluster_results/ca/ca_inat_metrics.csv` | iNaturalist open-data (AWS) |
 | composite + display | `build_webapp.py` (`impact`, `recolour`) | — |
