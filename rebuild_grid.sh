@@ -54,6 +54,10 @@ GRID_RES=5000  "$PY" build_fullgrid_ca.py
 "$PY" build_density_pmtiles.py
 # 5) export per-(group, goal) cell colours for client-side grid rendering (#116)
 "$PY" build_grid_values.py
-# 6) regenerate the deployed single-page app
+# 6) re-freeze the hashed manifest of what this build read and wrote. MUST follow the grid
+#    build: a manifest whose hashes predate the artifacts is worse than none, since it is the
+#    file a reader consults to trust the numbers.
+"$PY" build_provenance.py
+# 7) regenerate the deployed single-page app
 "$PY" build_webapp.py
 echo "done — cluster_results/ca/ + index.html regenerated."

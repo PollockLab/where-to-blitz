@@ -50,7 +50,7 @@ jobs:
         # Every module on the rebuild's critical path, minus three with pre-existing violations
         # that want a judgement call, not a reflex: build_hansen_ca.py (a deliberate blind catch
         # so one bad Hansen tile cannot sink the run), clip_chelsa_ca.py, build_density_pmtiles.py.
-        run: ruff check build_fullgrid_ca.py fullgrid_fields.py fullgrid_outputs.py grid_lattice.py grid_schema.py goal_presets.py national_breaks.py climate_kde.py border_mask.py build_canada_mask.py build_gettingeven.py build_grid_values.py aggregate_25km_from_5km.py validate_artifacts.py build_webapp.py test_climate_kde.py test_legend_ramp.py test_laea_parity.py test_gettingeven.py test_ingest_stats.py
+        run: ruff check build_fullgrid_ca.py fullgrid_fields.py fullgrid_outputs.py grid_lattice.py grid_schema.py goal_presets.py national_breaks.py climate_kde.py border_mask.py build_canada_mask.py build_gettingeven.py build_grid_values.py build_provenance.py aggregate_25km_from_5km.py validate_artifacts.py build_webapp.py test_climate_kde.py test_legend_ramp.py test_laea_parity.py test_gettingeven.py test_ingest_stats.py
       - name: Shell syntax
         run: bash -n rebuild_grid.sh prepare_inputs.sh publish_grid_release.sh
       - name: Tests
@@ -238,7 +238,8 @@ jobs:
           sha3=$(git log -n1 --pretty=format:%H -- build_grid_values.py 2>/dev/null || echo)
           sha4=$(git log -n1 --pretty=format:%H -- rebuild_grid.sh 2>/dev/null || echo)
           sha5=$(git log -n1 --pretty=format:%H -- build_gettingeven.py 2>/dev/null || echo)
-          INPUTS_HASH=$(printf "%s\n%s\n%s\n%s\n%s\n%s\n%s\n" "$REL" "$breaks_content" "$sha1" "$sha2" "$sha3" "$sha4" "$sha5" | sha256sum | awk '{print $1}')
+          sha6=$(git log -n1 --pretty=format:%H -- build_provenance.py 2>/dev/null || echo)
+          INPUTS_HASH=$(printf "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n" "$REL" "$breaks_content" "$sha1" "$sha2" "$sha3" "$sha4" "$sha5" "$sha6" | sha256sum | awk '{print $1}')
           echo "inputs_hash=$INPUTS_HASH" >> $GITHUB_OUTPUT
           echo "INPUTS_HASH=$INPUTS_HASH" >> $GITHUB_ENV
       - name: Check for existing rebuilt artifact
@@ -296,6 +297,11 @@ jobs:
         # no build step touched, so all 31804 of its keys missed and the layer went grey.
         if: ${{ steps.check_artifact.outputs.found != 'true' }}
         run: python build_gettingeven.py
+      - name: Re-freeze the provenance manifest over the rebuilt artifacts
+        # Hashes what this run read and wrote. Must follow the grid build and precede the
+        # upload, or the manifest describes the previous build's files.
+        if: ${{ steps.check_artifact.outputs.found != 'true' }}
+        run: python build_provenance.py
       - name: Rebuild webapp (index.html)
         if: ${{ steps.check_artifact.outputs.found != 'true' }}
         run: python build_webapp.py
