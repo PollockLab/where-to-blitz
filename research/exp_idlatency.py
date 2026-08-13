@@ -26,9 +26,11 @@ import glob
 import json
 import sys
 
-import backtest_appscore as bas
+import _rootpath  # noqa: F401
 import numpy as np
 import pandas as pd
+
+import backtest_appscore as bas
 import voi_backtest as vb
 
 RES = vb.RES

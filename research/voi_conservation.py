@@ -25,8 +25,10 @@ import glob
 import json
 import sys
 
+import _rootpath  # noqa: F401
 import numpy as np
 import pandas as pd
+
 import voi_backtest as vb
 
 
