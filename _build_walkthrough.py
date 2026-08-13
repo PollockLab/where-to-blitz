@@ -136,7 +136,7 @@ scored the way it is, and the evidence behind the headline.
 | Module | Responsible for |
 |---|---|
 | `build_fullgrid_ca.py` | The four raster goals per square — **discover, habitat coverage, urgency, travel** — plus `n_train`. Defines the grid + land mask. |
-| `build_atrisk_layer.py` + `join_conservation.py` | The **rare-species** goal: CAN-SAR (COSEWIC/SARA) species × their GBIF occurrences → per-square status-weighted at-risk richness, aggregated to 25 km. |
+| `build_atrisk_layer.py`, joined in `fullgrid_fields.py` | The **rare-species** goal: CAN-SAR (COSEWIC/SARA) species × their GBIF occurrences → per-square status-weighted at-risk richness, aggregated to 25 km. |
 | cluster DuckDB → `ca_inat_metrics.csv` → `build_staleness_layer.py` | The **freshness** goal: all-time vs last-5-years iNaturalist density per square. |
 | `build_webapp.py` | The single source of truth for the app. Combines the five goals into **impact** (a percentile rank), holds every UI string (EN/FR), the trip planner, and emits `index.html`. |
 | `build_provenance.py` | Freezes the national build to a hashed manifest (`provenance.json`). |
@@ -388,7 +388,7 @@ md(r"""
 **The choice that defines this axis is what we *refuse* to expose.** Pollock et al. 2025
 (*Nat Rev Biodiversity*, Box 3) warns that fine-grained "where do threatened species occur"
 maps can aid poaching and collection. So the underlying CAN-SAR × GBIF point occurrences are
-**aggregated away** in `join_conservation.py`; only a per-cell *sum of status weights over a
+**aggregated away** in `build_atrisk_layer.py`; only a per-cell *sum of status weights over a
 25 km cell* ever reaches the public app. It says "this region is rich in at-risk species,"
 never which species or where within the cell. Coarse binning + all-taxa pooling are the
 mitigation, and they stay in force for any future finer layer.

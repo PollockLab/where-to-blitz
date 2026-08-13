@@ -7874,7 +7874,7 @@ flowchart TB
 <td>The four raster goals per square — <strong>discover, habitat coverage, urgency, travel</strong> — plus <code>n_train</code>. Defines the grid + land mask.</td>
 </tr>
 <tr>
-<td><code>build_atrisk_layer.py</code> + <code>join_conservation.py</code></td>
+<td><code>build_atrisk_layer.py</code>, joined in <code>fullgrid_fields.py</code></td>
 <td>The <strong>rare-species</strong> goal: CAN-SAR (COSEWIC/SARA) species × their GBIF occurrences → per-square status-weighted at-risk richness, aggregated to 25 km.</td>
 </tr>
 <tr>
@@ -8468,7 +8468,7 @@ threatened species have been recorded in the surrounding area.</p>
 <p><strong>The choice that defines this axis is what we <em>refuse</em> to expose.</strong> Pollock et al. 2025
 (<em>Nat Rev Biodiversity</em>, Box 3) warns that fine-grained "where do threatened species occur"
 maps can aid poaching and collection. So the underlying CAN-SAR × GBIF point occurrences are
-<strong>aggregated away</strong> in <code>join_conservation.py</code>; only a per-cell <em>sum of status weights over a
+<strong>aggregated away</strong> in <code>build_atrisk_layer.py</code>; only a per-cell <em>sum of status weights over a
 25 km cell</em> ever reaches the public app. It says "this region is rich in at-risk species,"
 never which species or where within the cell. Coarse binning + all-taxa pooling are the
 mitigation, and they stay in force for any future finer layer.</p>
