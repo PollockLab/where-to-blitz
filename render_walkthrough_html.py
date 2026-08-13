@@ -6,8 +6,16 @@ Plain `nbconvert --to html` leaves every matplotlib figure without alt text (it 
 sources alt for markdown `![alt](src)` images, then back-fills outputs with a useless
 "No description has been provided for this image"). This wrapper renders the notebook,
 then gives each figure meaningful alt derived from the section heading it sits under —
-so the page is accessible to screen-reader users. Run after re-executing the notebook:
+so the page is accessible to screen-reader users.
 
+`where-to-blitz-walkthrough.html` is the only committed artifact of this chain; the
+notebook itself is an intermediate and is not tracked. Regeneration is manual, on
+purpose: `_build_walkthrough.py` renders one diagram through kroki.io and runs a live
+iNaturalist query, so putting it on the deploy path would make every push to main
+depend on two third-party services. Re-run it by hand whenever the numbers it quotes
+change, and commit the resulting HTML:
+
+    .venv/bin/python _build_walkthrough.py
     .venv/bin/python -m nbconvert --to notebook --execute --inplace where-to-blitz-walkthrough.ipynb
     .venv/bin/python render_walkthrough_html.py
 """

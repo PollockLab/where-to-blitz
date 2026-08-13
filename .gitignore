@@ -29,3 +29,16 @@ density/
 tiles/
 cluster_results/ca/*.pmtiles
 cluster_results/ca/pmtiles/
+
+# Generated notebooks: the _build_*.py scripts are the source, the .ipynb is an
+# intermediate. Only where-to-blitz-walkthrough.html (the public methodology page)
+# stays tracked; see render_walkthrough_html.py for how to regenerate it.
+where-to-blitz-walkthrough.ipynb
+openbiodiversity-serving-demo.ipynb
+openbiodiversity-serving-demo.html
+voi-backtest.ipynb
+voi-backtest.html
+where-to-go-engine.ipynb
+where-to-go-engine.html
+discovery-acquisition-experiment.ipynb
+discovery-acquisition-experiment.html
