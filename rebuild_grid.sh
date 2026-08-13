@@ -35,10 +35,15 @@ fi
 [ -f cluster_results/ca_bioclim.tif ]    || "$PY" clip_chelsa_ca.py     # CHELSA bioclimate (streamed /vsicurl)
 [ -f cluster_results/ca_forestloss.tif ] || "$PY" build_hansen_ca.py    # Hansen Global Forest Change
 # 3) build the grid: streams density COGs from the bucket, joins conservation/staleness from the committed CSVs.
-#    Two tiers on the same projected equal-area lattice (#87); build the fine tier first and aggregate
-#    to the coarser tier to guarantee nesting (5 km -> 25 km).
-GRID_RES=5000  "$PY" build_fullgrid_ca.py
+#    Two tiers on the same projected equal-area lattice (#87). Order matters, and it is the order the
+#    workflow uses (fit-25km, then matrix-build, then aggregate):
+#      - 25 km first, because that tier fits the national ramps every later step reads (build_fullgrid_ca.py:50).
+#        Run the other way round, the 5 km tier loads the breaks.json committed from the PREVIOUS release
+#        and the refit then overwrites it, leaving the two tiers on different ramps with no error raised.
+#      - then aggregate 5 km up, because the natively-built 25 km stacks do not nest (aggregate_25km_from_5km.py:6-10).
 GRID_RES=25000 "$PY" build_fullgrid_ca.py
+GRID_RES=5000  "$PY" build_fullgrid_ca.py
+"$PY" aggregate_25km_from_5km.py
 # 3b) re-tag out-of-Canada cells for the Canada-only view mask (us_cells.json). MUST follow the grid build:
 #     if the grid's cell set changes, a stale mask leaks US coastal cells into the default view (#58 follow-up).
 "$PY" build_canada_mask.py
