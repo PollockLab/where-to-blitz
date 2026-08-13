@@ -7,9 +7,9 @@ import os
 import time
 
 REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
-OUT_PATH = os.path.join(REPO_ROOT, "cluster_results", "ca", "provenance.json")
-
-GRID = {"res_deg": 0.25, "n_cells": 31804, "bbox": [-141.0, 41.0, -52.0, 84.0]}
+CA_DIR = os.path.join(REPO_ROOT, "cluster_results", "ca")
+OUT_PATH = os.path.join(CA_DIR, "provenance.json")
+INDEX_PATH = os.path.join(CA_DIR, "index.json")
 
 SOURCES = {
     "discover/env/urgency/travel": {
@@ -23,7 +23,7 @@ SOURCES = {
         "datasets": (
             "CAN-SAR (OSF DOI 10.17605/OSF.IO/E4A58, CC-BY) x GBIF Canadian occurrences"
         ),
-        "builder": "build_atrisk_layer.py + join_conservation.py",
+        "builder": "build_atrisk_layer.py -> ca_atrisk_richness.csv, joined in fullgrid_fields.py",
     },
     "staleness": {
         "datasets": "iNaturalist open-data research-grade (AWS dump)",
@@ -41,7 +41,25 @@ INPUT_PATTERNS = [
 
 OUTPUT_PATTERNS = [
     "cluster_results/ca/webapp_data_*.json",
+    "cluster_results/ca/breaks.json",
+    "cluster_results/ca/us_cells.json",
 ]
+
+
+def read_grid() -> dict:
+    """The lattice as the build itself declares it, from the shipped index.json (#87).
+
+    Hardcoding this is how the manifest came to claim a 0.25 degree grid of 31,804 cells
+    months after the app moved to the 25 km equal-area lattice.
+    """
+    with open(INDEX_PATH) as f:
+        index = json.load(f)
+    return {
+        "res_m": index["res_m"],
+        "n_cells": index["n_cells"],
+        "lattice": index["lattice"],
+        "crs": index["crs"],
+    }
 
 
 def sha256_file(path: str) -> str:
@@ -87,7 +105,7 @@ def main() -> None:
 
     doc = {
         "schema": "where-to-blitz/provenance@1",
-        "grid": GRID,
+        "grid": read_grid(),
         "sources": SOURCES,
         "files": files,
         "manifest_hash": manifest_hash(files),

@@ -1,23 +1,25 @@
 {
   "schema": "where-to-blitz/provenance@1",
   "grid": {
-    "res_deg": 0.25,
-    "n_cells": 31804,
-    "bbox": [
-      -141.0,
-      41.0,
-      -52.0,
-      84.0
-    ]
+    "res_m": 25000,
+    "n_cells": 23214,
+    "lattice": {
+      "x0": -2150000,
+      "y1": 4300000,
+      "ncol": 220,
+      "nrow": 181,
+      "cell_km2": 625.0
+    },
+    "crs": "PROJCS[\"WGS_1984_Lambert_Azimuthal_Equal_Area\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Lambert_Azimuthal_Equal_Area\"],PARAMETER[\"latitude_of_center\",45],PARAMETER[\"longitude_of_center\",-100],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]"
   },
   "sources": {
     "discover/env/urgency/travel": {
-      "datasets": "iNat density COG (Biodiversite Quebec, Dec-2025 vintage; Fungi on prior 1km), CHELSA bioclimate, Hansen Global Forest Change, Weiss et al. 2018 travel-time",
+      "datasets": "iNat density COG (Biodiversite Quebec STAC), CHELSA bioclimate, Hansen Global Forest Change, Weiss et al. 2018 travel-time",
       "builder": "build_fullgrid_ca.py"
     },
     "conservation": {
       "datasets": "CAN-SAR (OSF DOI 10.17605/OSF.IO/E4A58, CC-BY) x GBIF Canadian occurrences",
-      "builder": "build_atrisk_layer.py + join_conservation.py"
+      "builder": "build_atrisk_layer.py -> ca_atrisk_richness.csv, joined in fullgrid_fields.py"
     },
     "staleness": {
       "datasets": "iNaturalist open-data research-grade (AWS dump)",
@@ -25,6 +27,12 @@
     }
   },
   "files": [
+    {
+      "path": "cluster_results/ca/breaks.json",
+      "sha256": "141c97041fdd894bed8b4e9dcffebd10f8061dde641e0c9a912437f5c7cc8831",
+      "size_bytes": 57629,
+      "modified_date": "2026-08-10"
+    },
     {
       "path": "cluster_results/ca/ca_atrisk_richness.csv",
       "sha256": "bacb0ce6888c7268ca41b2b28e805a74884dc40ce57b5775de94ef0ba93d16ce",
@@ -111,82 +119,88 @@
     },
     {
       "path": "cluster_results/ca/index.json",
-      "sha256": "33bde53078bf875c4852101a4dd7d5cf93fc7b8560befccee720e77426a8364b",
-      "size_bytes": 2745,
-      "modified_date": "2026-06-13"
+      "sha256": "35e16b5b606d06bef8fc0e7c37488f5a0346399e72a32365d1b73060f8299494",
+      "size_bytes": 3920,
+      "modified_date": "2026-08-10"
+    },
+    {
+      "path": "cluster_results/ca/us_cells.json",
+      "sha256": "df02332e6c9a379c75ed60aace2879330abc0927d01953f1d263bcba8e6fc6fa",
+      "size_bytes": 86017,
+      "modified_date": "2026-08-10"
     },
     {
       "path": "cluster_results/ca/webapp_data_Actinopterygii.json",
-      "sha256": "5efca0d8c0f46eee945318eb6fe25f8fcf4dbf1cb88e842cf701976bd83fc395",
-      "size_bytes": 1690007,
-      "modified_date": "2026-06-13"
+      "sha256": "e21200ec2be2ce8e7666d1b946b37623341cea593bf3f95d92717fe90ae3cfbd",
+      "size_bytes": 1194110,
+      "modified_date": "2026-08-10"
     },
     {
       "path": "cluster_results/ca/webapp_data_All_biodiversity.json",
-      "sha256": "3a16448345ae0dfc325b874cf86f1c57f7b8ba21547484afa41e436047504340",
-      "size_bytes": 1702542,
-      "modified_date": "2026-06-13"
+      "sha256": "b3709ef244b8db16c5f857279be555ce0d4dc2f1ddc28af88f62aac21a6462b2",
+      "size_bytes": 1207364,
+      "modified_date": "2026-08-10"
     },
     {
       "path": "cluster_results/ca/webapp_data_Amphibia.json",
-      "sha256": "b6c6df3286632fb7b89ee04820f6c809808186ef82c60dbdca877eb3174f77e3",
-      "size_bytes": 1690786,
-      "modified_date": "2026-06-13"
+      "sha256": "24aeda67fd0ba9477eaccd8536232f20aa0bc5d02c530ebd81648288d0bd7bbf",
+      "size_bytes": 1194394,
+      "modified_date": "2026-08-10"
     },
     {
       "path": "cluster_results/ca/webapp_data_Arachnida.json",
-      "sha256": "a4c835b13d958b6e6c6bfd78d5daf80713f9c13757f6a9b706b7d81759525bf9",
-      "size_bytes": 1691168,
-      "modified_date": "2026-06-13"
+      "sha256": "04c0a5f43ee80dd738916f65215f1338704d6e8a5213430cb811287b5e2f3e89",
+      "size_bytes": 1194056,
+      "modified_date": "2026-08-10"
     },
     {
       "path": "cluster_results/ca/webapp_data_Aves.json",
-      "sha256": "36294d8324627b07cf7d6fa1a1abddcbbc02dc9b9b3de6c936e7d0bbd822beea",
-      "size_bytes": 1694439,
-      "modified_date": "2026-06-13"
+      "sha256": "18fb226877372b5402cc18bd8546a02882d093ee5caf0a6f6504f86daea18d57",
+      "size_bytes": 1199067,
+      "modified_date": "2026-08-10"
     },
     {
       "path": "cluster_results/ca/webapp_data_Fungi.json",
-      "sha256": "610958cc29cdafec93108467e25d865aa1761fba7e3745a080b45f17ba5d5a82",
-      "size_bytes": 1694028,
-      "modified_date": "2026-06-13"
+      "sha256": "e01e18cfcab4fa23c471803953a86de15dfdea76bf1a1472242ab74e1932fbe3",
+      "size_bytes": 1198075,
+      "modified_date": "2026-08-10"
     },
     {
       "path": "cluster_results/ca/webapp_data_Insecta.json",
-      "sha256": "6793d9c2d0ecb623d6bf392191fe1f8fb8cc4aabb77366355e543dbe96cf9c2a",
-      "size_bytes": 1696110,
-      "modified_date": "2026-06-13"
+      "sha256": "ceae8f1bc581d48d566919e4ca7ab02cfa6d7c9c4e3002688580dc58986b6cf9",
+      "size_bytes": 1200055,
+      "modified_date": "2026-08-10"
     },
     {
       "path": "cluster_results/ca/webapp_data_Mammalia.json",
-      "sha256": "9a835a0c44fe572fb3131eb8b94f2f4690180de147072585955e4e6810b43b84",
-      "size_bytes": 1692225,
-      "modified_date": "2026-06-13"
+      "sha256": "d33257f4d3ca9fca7e220207b5496e08ce0714f98681856fa2c163bf03eef64a",
+      "size_bytes": 1197418,
+      "modified_date": "2026-08-10"
     },
     {
       "path": "cluster_results/ca/webapp_data_Mollusca.json",
-      "sha256": "029db6d5914c1164b87ba29a613c744cc52603c873c48cb719e5d0a5b708eea4",
-      "size_bytes": 1690131,
-      "modified_date": "2026-06-13"
+      "sha256": "a2cfd878e5c1a9bfaa7090a32ae77d585b57238f23427a963964fa5ad6bfd188",
+      "size_bytes": 1193519,
+      "modified_date": "2026-08-10"
     },
     {
       "path": "cluster_results/ca/webapp_data_Plantae.json",
-      "sha256": "65342fcc736c38f1cb03f4036e854ae017f40d05650896357f614abd6ed8b287",
-      "size_bytes": 1699690,
-      "modified_date": "2026-06-13"
+      "sha256": "073151b791f47b1868ee485073b8c7626ed02b261a5a78821d78589ef961b4ec",
+      "size_bytes": 1204903,
+      "modified_date": "2026-08-10"
     },
     {
       "path": "cluster_results/ca/webapp_data_Reptilia.json",
-      "sha256": "69b3221dc76553c4543f8b90ef3aee986562a5c2b4edc47143ec3872d96e8ff3",
-      "size_bytes": 1690137,
-      "modified_date": "2026-06-13"
+      "sha256": "ce089b1749c5ac3b83573de850248018ee0ab3b9fd40c9dc450affc84428b3ea",
+      "size_bytes": 1193819,
+      "modified_date": "2026-08-10"
     },
     {
       "path": "cluster_results/ca/webapp_data_gettingeven.json",
-      "sha256": "cd8f6f56d5a2b97d9d3b06e050d51c8d32a2053330c47b7bd5e8ed67eaf0dd3d",
-      "size_bytes": 772454,
-      "modified_date": "2026-06-13"
+      "sha256": "5de259120b5d48f7ce551dc98a5c806afd6ceb2d8a2d167d3f81de1467311ab9",
+      "size_bytes": 557245,
+      "modified_date": "2026-08-13"
     }
   ],
-  "manifest_hash": "93f50ffa87672b4003109e3dceeb52863b385bd6b317790d79629d636e7e3425"
+  "manifest_hash": "f67acf37faa748c9f6ce61984f6f5c44018f5dc5ff87ea35b82f38ac8164e40b"
 }
