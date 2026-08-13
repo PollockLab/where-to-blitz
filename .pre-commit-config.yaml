@@ -1,0 +1,12 @@
+# CI runs this file, so the local hook and the CI gate are the same check.
+# `rev` and the ruff pin in requirements.txt move together.
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.1
+    hooks:
+      - id: ruff-check
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+      - id: check-merge-conflict
