@@ -1,5 +1,6 @@
 """Generalization pull: same backtest method, Eastern-Canada bbox (out-of-BC)."""
 import pandas as pd
+
 import pull_inat_backtest as p
 
 p.BC = {"swlat": 42.0, "swlng": -95.0, "nelat": 53.0, "nelng": -57.0}  # ON+QC+Maritimes

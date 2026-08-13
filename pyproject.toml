@@ -1,0 +1,17 @@
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+extend-exclude = [
+    ".venv",
+    "research",          # cluster experiment scripts, off the rebuild's critical path
+    "cluster_results",
+    "build_hansen_ca.py",       # deliberate blind catch: one bad tile must not sink a 2 h run
+    "clip_chelsa_ca.py",
+    "build_density_pmtiles.py",
+]
+
+[tool.ruff.lint]
+# Explicit, because ruff's defaults move between versions.
+select = ["E4", "E7", "E9", "F", "I"]
+# Pre-existing throughout the analysis scripts; not worth a repo-wide rewrite.
+ignore = ["E402", "E701", "E702", "E731"]

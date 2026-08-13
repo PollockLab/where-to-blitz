@@ -3,8 +3,9 @@ DISJOINT from BC (Eastern Canada). Same method, same app axes, same outcome —
 does directed>opportunistic survive out-of-sample geography?"""
 import json
 
-import backtest_appscore as bas
 import pandas as pd
+
+import backtest_appscore as bas
 
 results = []
 for tx in ["Aves", "Insecta", "Mammalia"]:
