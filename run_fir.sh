@@ -8,7 +8,11 @@
 
 # BTG design-04 discovery experiment — cross-cluster repro on Fir (DRAC H100).
 # Confirms the Mila finding (spatial coverage >= embedding-novelty for discovery)
-# on different hardware. Fir compute nodes have internet, so the script pulls
+# on different hardware. That holds for Amphibia, which is what
+# exp_discovery_acquisition.py hardcodes and so all this script can produce. It does
+# not generalise: across the 7-taxon sweep in cluster_results/, embedding novelty
+# wins on the species-rich taxa by wide margins. See research/README.md.
+# Fir compute nodes have internet, so the script pulls
 # iNat photos + model weights live; no pre-staging needed.
 module purge
 module load StdEnv/2023 python/3.11 cuda/12.2
