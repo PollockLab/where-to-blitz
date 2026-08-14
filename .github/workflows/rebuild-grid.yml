@@ -500,6 +500,10 @@ jobs:
             echo "No grid_values.tar.gz on the release yet"
           fi
           ls cluster_results/ca/values/ | head || echo "No values found"
+      # The values PNGs are gitignored, so this is the only job that can check them against
+      # the lattice before they reach the site.
+      - name: Gate artefact invariants
+        run: python -m pytest test_artifact_invariants.py -q
       - name: Rebuild webapp
         run: python build_webapp.py
       - name: Assemble _site
