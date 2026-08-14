@@ -90,6 +90,8 @@ def test_gettingeven_keys_exist_in_the_lattice_and_carry_known_categories():
 
 def test_values_pngs_cover_every_group_and_goal_at_the_lattice_shape():
     """The app indexes the PNG by lattice column/row, so a reshaped PNG shifts colours."""
+    if not (CA / "values").is_dir():
+        pytest.skip("values PNGs are gitignored; they arrive from the grid-outputs release")
     idx = _index()
     lat = idx["lattice"]
     missing, misshapen = [], []
