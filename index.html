@@ -966,7 +966,7 @@ const BASEMAPS={
   "Terrain":{tiles:SUB('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png','abc'),maxzoom:17},
   "Light":{tiles:SUB('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png','abcd'),maxzoom:20}   // base under the iNaturalist-density style; not a dropdown choice
 };
-let baseOpacity=1, gridOpacity=0.72, covOpacity=0.8;   // default grid opacity keeps basemap context visible
+let baseOpacity=1, gridOpacity=0.5, covOpacity=0.8;   // default grid opacity keeps basemap context visible
 function setBase(name){
   if(!_mapLoaded){whenMap(()=>setBase(name));return;}
   if(map.getLayer('basemap'))map.removeLayer('basemap');
@@ -1068,8 +1068,11 @@ function recolour(){
   if(geActive()){
     // Categorical layer: colour by most under-represented group (no magnitude). Flat opacity; stroke matches fill so cells tile seamlessly.
     markers.forEach(m=>{const c=geColour(m);setCellState(m.i,c,0.62);});
-    applyCanadaMask();renderCellTable();return;
+    applyCanadaMask();renderCellTable();setGridFill();return;   // setGridFill drops the priority grid so it can't show through the 0.62 fill
   }
+  // Getting Even just turned off: clear the categorical feature-state it painted, otherwise
+  // cells-fill keeps showing the old GE colours on top of the priority grid.
+  markers.forEach(m=>setCellState(m.i,null,0));
   // Decouple SCORE from COLOUR. m.t is always the stable NATIONAL percentile -- it drives the
   // popup impact and the accessible Top-cells list, neither of
   // which should change as you pan. Viewport-relative ranking (when on) recolours ONLY the fill so
