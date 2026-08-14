@@ -22,6 +22,7 @@ also strips data: URIs from <img src> in notebook markdown. A committed relative
 renders correctly on GitHub's notebook viewer and in the nbconvert HTML page (both at the repo/
 Pages root). The Mermaid source is preserved in a <details> block for editability and traceability.
 """
+
 import urllib.error
 import urllib.request
 
@@ -54,7 +55,8 @@ def _render_mermaid_to_file(diagram: str, path: str) -> None:
         raise RuntimeError(f"kroki.io request failed: {exc}") from exc
     with open(path, "wb") as f:
         f.write(png_bytes)
-    print(f"  wrote {path} ({len(png_bytes)//1024} KB)")
+    print(f"  wrote {path} ({len(png_bytes) // 1024} KB)")
+
 
 nb = NotebookBuilder(strip=True)
 md, code = nb.md, nb.co
@@ -138,7 +140,7 @@ scored the way it is, and the evidence behind the headline.
 | `build_fullgrid_ca.py` | The four raster goals per square — **discover, habitat coverage, urgency, travel** — plus `n_train`. Defines the grid + land mask. |
 | `build_atrisk_layer.py`, joined in `fullgrid_fields.py` | The **rare-species** goal: CAN-SAR (COSEWIC/SARA) species × their GBIF occurrences → per-square status-weighted at-risk richness, aggregated to 25 km. |
 | cluster DuckDB → `ca_inat_metrics.csv` → `build_staleness_layer.py` | The **freshness** goal: all-time vs last-5-years iNaturalist density per square. |
-| `build_webapp.py` | The single source of truth for the app. Combines the five goals into **impact** (a percentile rank), holds every UI string (EN/FR), the trip planner, and emits `index.html`. |
+| `build_webapp.py` | The single source of truth for the app. Combines the five goals into **impact**, holds every UI string (EN/FR), the trip planner, and emits `index.html`. |
 | `build_provenance.py` | Freezes the national build to a hashed manifest (`provenance.json`). |
 | `voi_backtest.py`, `backtest_appscore.py` | The validation layer: do gap-filling priorities actually discover more than going where it's already busy? |
 
@@ -175,7 +177,7 @@ def load_group(group="All biodiversity"):
 ALL = load_group("All biodiversity")
 print(f"loaded {len(ALL):,} cells × {len(COLS)} columns for 'All biodiversity'")
 
-# A reusable Canada scatter-map used throughout. Cells are points on the 0.25° grid;
+# A reusable Canada scatter-map used throughout. Cells are points on the 25 km lattice;
 # small squares read as a surface. ASPECT ~ 1/cos(59°N) keeps Canada from looking stretched.
 LON, LAT = ALL["lon"].to_numpy(), ALL["lat"].to_numpy()
 ASPECT = 1.7
@@ -192,13 +194,15 @@ ALL.head(3)
 md(r"""
 ## 1 · What's in it — contents at a glance
 
-Everything is one fixed geometry reused across life groups. A *cell* is the atom: a
-0.25° (~25 km) square of Canadian land carrying five priority axes plus travel cost.
+Everything is one fixed geometry reused across life groups. A *cell* is the atom: a 25 km
+equal-area square of Canadian land carrying five priority axes plus travel cost. The app
+also serves a 5 km tier, which is the same lattice split 5×5; this walkthrough reads the
+25 km tier.
 """)
 code(r"""
-bbox = INDEX["bbox"]
-print(f"Grid          : {INDEX['n_cells']:,} land cells, {INDEX['res']}° (~25 km)")
-print(f"Extent        : lon {bbox[0]}…{bbox[2]}, lat {bbox[1]}…{bbox[3]} (all of Canada + a US land sliver)")
+lat = INDEX["lattice"]
+print(f"Grid          : {INDEX['n_cells']:,} cells of {INDEX['res_m']//1000} km ({lat['cell_km2']:.0f} km² each)")
+print(f"Lattice       : {lat['ncol']} × {lat['nrow']} equal-area cells (all of Canada + a US land sliver)")
 print(f"Life groups   : {len(INDEX['groups'])} → {', '.join(INDEX['groups'])}")
 print(f"Per cell      : 5 axes (0–1) + travel_min + n_train")
 print(f"Provenance    : {PROV['manifest_hash'][:16]}…  ({len(PROV['files'])} files frozen)")
@@ -213,16 +217,6 @@ stale_corr = np.corrcoef(ALL['discover'], ALL['staleness'])[0,1]
 print(f"\n  staleness is NOT a copy of discover  →  corr(discover, staleness) = {stale_corr:+.3f}")
 print(f"  conservation is a real sparse layer →  {(ALL['conservation']>0).sum():,} cells carry at-risk richness")
 """)
-md(r"""
-> **Honesty note (verified above, not asserted).** All five axes are real in the committed
-> data. Two artifacts *lag* that truth and should be synced before release: the older
-> `index.json` `axes_status` still labels conservation/staleness as placeholders, and two
-> in-app slider hint strings (`OBJ[...]['q']`) still say "placeholder". The data, the
-> `provenance.json`, the `axis_method` help block, and the *Most Wanted* / *Revisit the Past*
-> presets all already use the real layers. (Flagged as a one-line product fix — it touches
-> live public copy, so it's the user's call, not auto-pushed.)
-""")
-
 # ---------------------------------------------------------------- the data
 md(r"""
 ## 2 · The data
@@ -240,10 +234,10 @@ anyone and must not depend on the private McGill iNat-Canada parquet.
 | urgency | **Hansen** Global Forest Change | forest-loss fraction (logging / fire / dieback) | 0.05° | public |
 | travel | **Weiss et al. 2018** accessibility | minutes to the nearest city | ~1 km | public (MalariaAtlas) |
 
-A subtle but load-bearing data choice: the **land mask** is the Weiss travel raster's
-ocean=nodata, intersected with Natural Earth coastlines *and* the iNat density COG footprint.
-That last intersection dropped ~839 deep-US no-data cells that would otherwise have shown as
-false gaps. The grid is a *decision*, not a given.
+A subtle but load-bearing data choice: the **land mask**. A cell is kept if it sits inside the
+iNat density COG footprint *and* either the Weiss raster calls it land or it carries records.
+Cells outside the COG are dropped rather than shown as false gaps. The grid is a *decision*,
+not a given.
 """)
 
 # ---- why US
@@ -254,9 +248,9 @@ One thing you notice immediately: there is real data across Washington, Oregon, 
 the Dakotas, Minnesota, Michigan, and Maine. That is **not a bug, but it is a known
 consequence of two deliberate choices**, worth being explicit about:
 
-1. **The grid is a rectangle whose southern edge is 41°N**, chosen to capture Canada's
-   *southernmost* biodiversity hotspots — Point Pelee (41.9°N), the Carolinian zone, southern
-   Vancouver Island. A latitude line at 41°N necessarily scoops up a band of the northern US.
+1. **The lattice is a rectangle in projected space**, and its southern edge reaches ~41°N so
+   that Canada's *southernmost* hotspots are covered — Point Pelee (41.9°N), the Carolinian
+   zone, southern Vancouver Island. Reaching that far south scoops up a band of the northern US.
 2. **The land mask is *geographic*, not *political*.** `build_fullgrid_ca.py` keeps a cell if
    the Weiss travel-time raster says it's land (ocean = nodata) — it does **not** clip to the
    Canada polygon. The Natural Earth refinement only removed ocean and Greenland, keeping
@@ -266,8 +260,8 @@ The important honesty point is *what the US data is and isn't*: the density laye
 **Canada-focused** `inat_canada_heatmaps` COG. Its footprint spills a little across the border,
 but the overwhelming majority of US cells sit **outside** the Canadian recording layer — so
 they read as "gaps" largely because *the Canadian density layer stops at the border*, not
-because they are genuinely under-recorded. (The team already dropped 839 *deep*-US cells that
-were entirely outside the COG.) The figure quantifies it.
+because they are genuinely under-recorded. (Deep-US cells outside the COG are dropped by the
+mask.) The figure quantifies it.
 
 **The sharp horizontal seam along ~49°N is this, made visible — it's a data-footprint edge,
 not ecology.** North of the border the Canadian density COG has records, so cells score on
@@ -334,7 +328,7 @@ titles = {
 fig, axs = plt.subplots(1, 5, figsize=(15, 3.6))
 for ax, k in zip(axs, AXES):
     canada_map(ax, ALL[k], titles[k], cmap="magma")
-fig.suptitle("The five priority axes — 'All biodiversity', 31,804 real cells (darker = higher priority)", y=1.02)
+fig.suptitle(f"The five priority axes — 'All biodiversity', {len(ALL):,} real cells (darker = higher priority)", y=1.02)
 plt.tight_layout(); plt.show()
 """)
 
@@ -431,7 +425,7 @@ md(r"""
 **How:** we describe each square by three CHELSA numbers (temperature, how much it swings
 through the year, and rainfall), then ask "how many *already-recorded* places have a climate
 like this one?" Few similar recorded places → high score. (Technically this is *climate
-surprisal*: a density estimate in 3-D climate space, ranked 0–1 — a rarely-seen climate is
+surprisal*: a density estimate in 3-D climate space, mapped to 0–1 through a national ramp — a rarely-seen climate is
 "surprising," so it scores high.)
 
 **The choice:** a geographic gap is not the same as a *climate* gap. Scoring climate rarity
@@ -441,7 +435,7 @@ code(r"""
 fig, axs = plt.subplots(1, 2, figsize=(12, 3.8))
 canada_map(axs[0], ALL["env"], "How rare each square's climate is", cmap="magma")
 axs[1].hist(ALL["env"], bins=60, color="#16a085")
-axs[1].set_title("Percentile-ranked → uses the full 0–1 range"); axs[1].set_xlabel("env"); axs[1].set_ylabel("cells")
+axs[1].set_title("Mapped through the national ramp → uses the full 0–1 range"); axs[1].set_xlabel("env"); axs[1].set_ylabel("cells")
 plt.tight_layout(); plt.show()
 """)
 
@@ -501,25 +495,26 @@ print(f"Fort McMurray-area cell urgency = {fm.urgency:.2f}  (vs national median 
 
 # ---------------------------------------------------------------- composite
 md(r"""
-## 4 · The score on the map — "impact 0–100"
+## 4 · The score — "impact 0–100"
 
 > **In plain terms:** move the sliders to say how much each goal matters to you. Each square
-> then gets a single **0–100 score**, where **100 is the highest-priority square on the map**
-> for your current settings (and the chosen life group). It's a *ranking of all the squares
-> against each other* — not a raw total — so the colours always use the full scale.
+> then gets a single **0–100 score** in its popup, where **100 is the highest-priority square
+> on the map** for your current settings and life group.
 
-**How it's built (two steps):**
+**How it's built:**
 1. **Blend** — multiply each goal's 0–1 value by your slider weight and add them up
    (`raw = w₁·discover + w₂·rare + …`). A square strong on the goals you care about gets a big raw number.
-2. **Rank** — line every square up by its blended number and show its *place in the line* as
-   0–100. Top square → 100, bottom → 0. (The ranking covers all squares of the selected life
-   group across Canada; it doesn't change when you pan or zoom.)
+2. **Colour** — the map paints that blended value itself, cut off at 1 and run through the
+   viridis ramp. It is baked into a PNG per life group and goal at build time, so panning and
+   zooming never change a square's colour.
+3. **Rank** — the popup shows the square's *place in the line* as 0–100. Top square → 100,
+   bottom → 0, across all squares of the selected life group in Canada.
 
-**Why the ranking step matters (the key choice).** A few Arctic squares are off-the-charts
-gaps. If we coloured by the raw total, those few would stretch the scale so every other square —
-including everywhere you could *actually reach* — turns the same dull near-zero, and the map
-would tell you "nowhere matters," which is both false and useless. Ranking spreads the full
-0–100 range across all the squares. The figure shows the *same* blended score both ways.
+**Why the cut-off matters (the key choice).** A few Arctic squares are off-the-charts gaps. If
+we stretched the scale between the lowest and the highest square, those few would push every
+other square — including everywhere you could *actually reach* — to the same dull near-zero,
+and the map would say "nowhere matters," which is false and useless. The figure shows the
+*same* blended score stretched (left) and ranked (right).
 """)
 code(r"""
 DEFAULT_W = {"discover": 0.8, "conservation": 0.0, "env": 0.7, "staleness": 0.0, "urgency": 0.3}  # 'Biodiversity impact' preset
@@ -528,12 +523,12 @@ minmax = (raw - raw.min()) / (raw.max() - raw.min()) * 100
 order = raw.argsort(); pct = np.empty_like(raw); pct[order] = np.linspace(0, 100, len(raw))
 
 fig, axs = plt.subplots(2, 2, figsize=(12, 7.4))
-canada_map(axs[0,0], minmax, "If we coloured by the RAW total", cmap="magma", vmax=100)
-canada_map(axs[0,1], pct,    "What the app shows: a RANKING", cmap="magma", vmax=100)
-axs[1,0].hist(minmax, bins=60, color="#c0392b"); axs[1,0].set_title("Raw total: a few Arctic gaps crush everything to ~0"); axs[1,0].set_xlabel("score 0–100"); axs[1,0].set_ylabel("squares")
-axs[1,1].hist(pct, bins=60, color="#27ae60"); axs[1,1].set_title("Ranking: full 0–100 range, usable for planning"); axs[1,1].set_xlabel("score 0–100")
+canada_map(axs[0,0], minmax, "If we stretched the raw total", cmap="magma", vmax=100)
+canada_map(axs[0,1], pct,    "Ranked: what the popup reports", cmap="magma", vmax=100)
+axs[1,0].hist(minmax, bins=60, color="#c0392b"); axs[1,0].set_title("Stretched: a few Arctic gaps crush everything to ~0"); axs[1,0].set_xlabel("score 0–100"); axs[1,0].set_ylabel("squares")
+axs[1,1].hist(pct, bins=60, color="#27ae60"); axs[1,1].set_title("Ranked: full 0–100 range, usable for planning"); axs[1,1].set_xlabel("score 0–100")
 crushed = (minmax < 5).mean()
-fig.suptitle(f"Same blended score, two ways to colour it — the raw total pins {crushed*100:.0f}% of squares below 5/100", y=1.0)
+fig.suptitle(f"Same blended score, two ways to scale it — stretching pins {crushed*100:.0f}% of squares below 5/100", y=1.0)
 plt.tight_layout(); plt.show()
 """)
 
