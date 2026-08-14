@@ -12,7 +12,7 @@ Blitz the Gap campaign at McGill — a planning aid, not ground truth.
 
 ## What it does
 
-- A 0.25° (~25 km) grid of **31,804 Canadian land cells**, each scored by a mix of goals you weight with sliders.
+- An equal-area grid of Canada: **23,214 cells of 25 km**, and **536,164 of 5 km** when you zoom in. Each cell is scored by a mix of goals you weight with sliders.
 - **Explore** the priority map, **plan a trip** (real driving/cycling/walking routes via OSRM, travel time, field time, CO₂), or **compare goals** side by side.
 - Tap a cell to see what species to record there and which common ones are still missing ("fill the gap"), pulled live from the iNaturalist API.
 - English / Canadian-French toggle; geolocation; challenge presets linked to the real Blitz the Gap iNaturalist sub-projects.
@@ -49,7 +49,7 @@ python build_webapp.py    # regenerates index.html from cluster_results/ca/
 Edit `build_webapp.py`, never `index.html` directly. The build is deterministic
 (no timestamps/randomness) — same inputs produce a byte-identical `index.html`.
 
-- `cluster_results/ca/index.json` — group → data-file map, bbox, methods metadata.
+- `cluster_results/ca/index.json` — group → data-file map, lattice definition, methods metadata.
 - `cluster_results/ca/webapp_data_<group>.json` — per-group cell data, fetched at runtime.
 - `cluster_results/ca/ca_density_*.tif` — density rasters (gitignored, regenerable via the `build_*_ca.py` scripts).
 

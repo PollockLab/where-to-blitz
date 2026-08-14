@@ -6,10 +6,15 @@ version with figures and the validation backtest, see the
 Each priority axis is scored **0–1 per cell**, then your chosen weights are combined
 into the **0–100 "impact"** shown on the map and in popups.
 
-- **Grid:** Canada on a **0.25° (~25 km) grid**, 31,804 land cells. Land vs. ocean is
-  decided by the Weiss travel-time raster (ocean = nodata).
+- **Grid:** an equal-area lattice (WGS84 Lambert Azimuthal Equal Area, centred 45°N 100°W).
+  Every cell is a square of the same size. Two tiers: **25 km, 23,214 cells** (the default view)
+  and **5 km, 536,164 cells** (from zoom 9). A cell is kept if it is inside the iNaturalist
+  density footprint and either holds land (Weiss travel-time raster) or holds records.
 - **Per group:** the same geometry is reused for all 11 life-group layers (All biodiversity,
   Plants, Insects, Birds, Fungi, Mammals, Fishes, Reptiles, Amphibians, Arachnids, Molluscs).
+- **Same colour at both zooms:** each axis maps raw values to 0–1 through one fixed national
+  ramp, fitted once on the 25 km tier (`breaks.json`). A cell's score depends on its own data,
+  never on which tier it was built in.
 
 ---
 
@@ -18,12 +23,13 @@ into the **0–100 "impact"** shown on the map and in popups.
 ### 1. Discover the most species — `discover`
 - **What it measures:** how under-sampled a cell is. High = few people have recorded there.
 - **Source:** per-group **iNaturalist observation-density** raster (Biodiversité Québec STAC,
-  1 km, sampled at each cell centre) — the same "light up the map" density the official
-  project uses. (Groups without their own density layer fall back to all-biodiversity density.)
-- **Formula:** `discover = normalize( 1 / (density + 0.001) )`, min–max scaled to 0–1.
-  So lower density → higher discover.
-- **Status:** REAL. Note: ~53% of cells have zero research-grade records (true gaps) and
-  correctly score highest.
+  1 km, averaged over the 1 km pixels inside each cell) — the same "light up the map" density the
+  official project uses. (Groups without their own density layer fall back to all-biodiversity
+  density.)
+- **Formula:** records per km², mapped through the national ramp. Cells with records take the
+  lower part of the scale, densest first; cells with no records take the top, ordered by `env`.
+- **Status:** REAL. 54% of cells have zero research-grade records for All biodiversity (62–87%
+  for the single groups); these are true gaps and score highest.
 
 ### 2. Find species at risk — `conservation`
 - **What it measures:** how many of Canada's at-risk species occur in a cell — "Canada's Most Wanted."
@@ -44,8 +50,8 @@ into the **0–100 "impact"** shown on the map and in popups.
   the iNaturalist density (as the sampling weight).
 - **Formula:** in 3-D climate space, estimate how densely *recorded* places resemble this
   cell's climate (a density-weighted Gaussian kernel, bandwidth `H`); `env = −log(that
-  weighted climate density)`, then **percentile-ranked 0–1**. High = a climate/habitat type
-  that is rarely recorded.
+  weighted climate density)`, then mapped to 0–1 through the national ramp. High = a
+  climate/habitat type that is rarely recorded.
 - **Status:** REAL.
 
 ### 4. Freshest gaps / Revisit the Past — `staleness`
@@ -63,8 +69,8 @@ into the **0–100 "impact"** shown on the map and in popups.
 ### 5. Sample before it's lost — `urgency`
 - **What it measures:** recent habitat change — record before it's gone.
 - **Source:** **Hansen Global Forest Change** forest-loss fraction (per-0.05° raster).
-- **Formula:** `urgency = normalize( forest-loss fraction )`, min–max 0–1. High = recent
-  forest loss (logging, fire, dieback).
+- **Formula:** forest-loss fraction, scaled 0–1 against fixed national bounds (0 to 0.85).
+  Cells above the top bound sit at 1. High = recent forest loss (logging, fire, dieback).
 - **Status:** REAL where the Canada loss raster is present.
 
 ---
@@ -73,9 +79,10 @@ into the **0–100 "impact"** shown on the map and in popups.
 
 1. You set a weight 0–1 for each of the five axes (or pick a challenge preset).
 2. Per cell: `raw_impact = Σ weight_i × axis_i`.
-3. The map colour and the **N/100** in popups are the **percentile rank** of `raw_impact`
-   across all cells — not a min–max — so a few extreme Arctic super-gaps don't crush every
-   reachable cell to ~0. Darker = higher rank.
+3. The **N/100** in popups is the **percentile rank** of `raw_impact` across all cells, not a
+   min–max, so a few extreme Arctic super-gaps don't crush every reachable cell to ~0.
+4. The map colour is `raw_impact` itself, clipped to 0–1 and painted through viridis. It is
+   baked per (group, goal) into a PNG at build time, so panning and zooming never change it.
 
 Challenge presets are just preset weight mixes, e.g. *Canada's Most Wanted* = conservation 1.0
 (+ minor discover/urgency); *Revisit the Past* = staleness 1.0. Each links to its iNaturalist project.
@@ -211,7 +218,7 @@ ecological importance — that awaits the SDM/VOI score.
   [10.1038/s44358-025-00022-3](https://doi.org/10.1038/s44358-025-00022-3)).** That review warns that
   fine-grained prediction of where threatened species occur can inadvertently aid poaching or
   collection. The `conservation` axis is therefore exposed only as a **per-cell sum of status weights
-  over the 0.25° (~25 km) grid**: it shows that a cell is rich in at-risk species, never which species
+  over a 0.25° (~25 km) bin**: it shows that a cell is rich in at-risk species, never which species
   or where within the cell. The underlying CAN-SAR x GBIF point occurrences are aggregated away in
   `build_atrisk_layer.py`; only the per-cell score reaches the public app. Coarse 25 km binning plus
   all-taxa pooling are the mitigation, and remain in force for any future finer-resolution layer.
