@@ -87,6 +87,10 @@ for i, (name, w) in enumerate(sev.items()):
     if (i + 1) % 25 == 0:
         print(f"  {i+1}/{len(sev)} species ({matched} with CA records, {miss} no GBIF match); {len(score)} cells")
 print(f"done: {matched} species mapped; {len(score)} cells host >=1 at-risk species")
+if not score:
+    # gget() swallows every GBIF error and returns {}, so a full outage looks like
+    # "no species are at risk anywhere" and would overwrite the live CSV with zeros.
+    raise SystemExit("no at-risk cells from GBIF: refusing to overwrite ca_atrisk_richness.csv")
 
 d = json.load(open("cluster_results/ca/webapp_data_All_biodiversity.json"))
 rows = next(v for v in d.values() if isinstance(v, list))
