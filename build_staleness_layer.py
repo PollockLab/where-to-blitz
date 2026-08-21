@@ -75,7 +75,11 @@ for k, a in allg.items():
     if a >= MIN:
         r = recg.get(k, 0)
         raw[k] = (1 - min(r, a) / a) * math.log1p(a)
-hi = max(raw.values()) if raw else 1.0
+if not raw:
+    # fetch_bins() returns [] on any tile error, so a GBIF outage looks like
+    # "nowhere is stale" and would overwrite the live CSV with zeros.
+    raise SystemExit("no cells above the density floor: refusing to overwrite ca_staleness.csv")
+hi = max(raw.values())
 
 import json
 
