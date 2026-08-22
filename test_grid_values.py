@@ -3,7 +3,8 @@
 The webapp paints its LAEA cell polygons with colours read back from the values PNGs
 (build_grid_values.py), replacing the warped raster PMTiles whose staircased edges could
 never match the vector lattice. That makes the PNG the single carrier of the goal
-colouring: if its bytes stop being viridis(clip(goal blend, 0, 1)) with a validity alpha,
+colouring: if its bytes stop being viridis(clip(blend / preset scale, 0, 1)) with a
+validity alpha,
 or the PNG encode stops being lossless, every cell on the map silently changes colour
 with nothing else failing. This holds the exported bytes to the blend definition.
 """
@@ -54,12 +55,12 @@ def test_rgba_is_viridis_of_the_goal_blend(stack, preset):
     for ax, w in zip(AXES, preset["w"], strict=True):
         if w:
             blend += w * np.nan_to_num(data[ax])
-    idx = (np.clip(blend, 0, 1) * 255).round().astype(np.uint8)
+    idx = (np.clip(blend / preset["scale"], 0, 1) * 255).round().astype(np.uint8)
 
     valid = np.isfinite(data["discover"])
     assert np.array_equal(rgba[..., 3] == 255, valid), "alpha must be the validity mask"
     assert np.array_equal(rgba[valid][:, :3], _LUT[idx[valid]]), \
-        "cell colours must be viridis(clip(goal blend, 0, 1)), same as the tiles baked"
+        "cell colours must be viridis(clip(blend / preset scale, 0, 1))"
 
 
 def test_png_roundtrip_is_lossless(stack, tmp_path):

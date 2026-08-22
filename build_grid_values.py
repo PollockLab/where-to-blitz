@@ -9,7 +9,8 @@ coloured cells and the clickable lattice are the same polygons, aligned by const
 at every zoom.
 
 Each PNG is the lattice grid itself, one pixel per cell (5 km: 1100x905, 25 km: 220x181),
-carrying the exact colour the tiles used to bake: viridis(clip(goal blend, 0, 1)), with
+carrying the exact colour the tiles used to bake: viridis(clip(blend / preset scale, 0, 1)),
+with
 alpha 0 for nodata/foreign-border cells. The webapp fetches the PNG, reads it back
 through a canvas, and paints its cell polygons with the per-cell colours.
 
@@ -71,7 +72,7 @@ def render_goal_rgba(tif, preset, res_m):
         if w:
             data += w * np.where(np.isfinite(axes[ax]), axes[ax], 0.0)
     valid = np.isfinite(axes["discover"]) & ~hidden  # hide foreign-border cells in both tiers
-    norm = np.where(valid, np.clip(data, 0, 1), 0)
+    norm = np.where(valid, np.clip(data / preset["scale"], 0, 1), 0)
     idx = (norm * 255).round().astype(np.uint8)
     rgba = np.dstack([_LUT[idx], np.where(valid, 255, 0).astype(np.uint8)])
     return rgba
