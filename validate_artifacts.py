@@ -3,7 +3,8 @@
 
 Checks:
  - numeric nesting: grid_25000m stacks are the (k x k) block mean of grid_5000m stacks
- - values PNGs: every group has one cell-colour PNG per (goal, tier) (build_grid_values.py)
+ - values PNGs: every group has one cell-colour PNG per (goal, tier) (build_grid_values.py),
+   and none of them has piled its cells onto the top of the viridis ramp
  - writes a JSON report (default: validate_report.json) with per-group results
  - exits with non-zero code if any numeric-nesting checks fail or required files missing
 
@@ -19,17 +20,41 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import warnings
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 import rasterio
+from rasterio.errors import NotGeoreferencedWarning
 
 from goal_presets import PRESETS
 from grid_lattice import mean_pool_block, sum_pool_block
 from grid_schema import SUM_BAND_INDICES as SUM_BANDS  # 1-based; n_train is extensive
 
 GOAL_SLUGS = [p["name"].lower().replace(" ", "_") for p in PRESETS]
+
+# A goal PNG whose visible cells pile onto the very top of the viridis ramp has lost its
+# top end: the blend ran past the clip and the map paints one flat colour across cells the
+# popups still rank apart. Species discovery did exactly this on 55% of visible cells until
+# each preset carried its own scale, and nothing in CI looked at a single pixel. Gate every
+# PNG, so the next preset that outgrows its scale fails the build instead of shipping.
+RAMP_TOP = (253, 231, 37)  # viridis(1.0), the colour every clipped cell collapses to
+SATURATION_MAX_FRAC = 0.05
+
+
+def top_of_ramp_fraction(png: Path) -> float:
+    """Share of a values PNG's visible cells painted the very top viridis colour."""
+    with warnings.catch_warnings():
+        # the values PNGs are lattice index space, not a georeferenced raster; that is the point
+        warnings.simplefilter("ignore", NotGeoreferencedWarning)
+        with rasterio.open(png) as src:
+            rgba = src.read()  # (4, h, w) uint8: RGB + validity alpha
+    visible = rgba[3] == 255
+    if not visible.any():
+        return 0.0
+    top = (rgba[0] == RAMP_TOP[0]) & (rgba[1] == RAMP_TOP[1]) & (rgba[2] == RAMP_TOP[2])
+    return float((top & visible).sum() / visible.sum())
 
 
 def compare_arrays(expected: np.ndarray, actual: np.ndarray, abs_tol: float, rel_tol: float) -> dict[str, Any]:
@@ -168,22 +193,32 @@ def main(argv=None) -> int:
 
     # values PNGs: the webapp paints cells from these; a missing one is a broken (group, goal, tier)
     missing_values = []
+    saturated = {}
     for grp in groups:
         for slug in GOAL_SLUGS:
             for res in (25000, 5000):
                 name = f"{grp}_{slug}_grid_{res}m.png"
-                if not (values_dir / name).exists():
+                png = values_dir / name
+                if not png.exists():
                     missing_values.append(name)
+                    continue
+                frac = top_of_ramp_fraction(png)
+                if frac > SATURATION_MAX_FRAC:
+                    saturated[name] = round(frac, 4)
     if missing_values:
         report["values"]["missing"] = missing_values
         failures += len(missing_values)
+    if saturated:
+        report["values"]["saturated"] = saturated
+        failures += len(saturated)
     report["values"]["n_found"] = len(list(values_dir.glob("*.png"))) if values_dir.exists() else 0
 
     # summary
     n_total = len(groups)
     n_pass = sum(1 for g in report["groups"].values() if g.get("pass"))
-    n_fail = n_total - n_pass + len(missing_values)
-    report["summary"].update({"n_groups": n_total, "n_pass": n_pass, "n_fail": n_fail, "missing_values": len(missing_values)})
+    n_fail = n_total - n_pass + len(missing_values) + len(saturated)
+    report["summary"].update({"n_groups": n_total, "n_pass": n_pass, "n_fail": n_fail,
+                              "missing_values": len(missing_values), "saturated_values": len(saturated)})
 
     # write report (numpy scalars leak in from the metrics; coerce them)
     def _jsonable(o):
@@ -204,7 +239,8 @@ def main(argv=None) -> int:
         return 2
 
     # print short summary
-    print(json.dumps({"n_groups": n_total, "n_pass": n_pass, "n_fail": n_fail, "missing_values": len(missing_values)}))
+    print(json.dumps({"n_groups": n_total, "n_pass": n_pass, "n_fail": n_fail,
+                      "missing_values": len(missing_values), "saturated_values": len(saturated)}))
 
     return 0 if n_fail == 0 else 2
 
