@@ -2,9 +2,11 @@
 post-split discovery happens?  ("directed beats opportunistic", the real claim.)
 
 `voi_backtest.py` proved a scarcity+staleness PROXY predicts leakage-free
-post-T new-species. This goes one step further and tests the score the app
-actually ships: the default "Biodiversity impact" preset
-`0.8*discover + 0.7*env + 0.3*urgency` (build_webapp.py PRESETS[0]).
+post-T new-species. This goes one step further and tests the scores the app
+actually ships, read straight from goal_presets.PRESETS so this file cannot
+drift away from the dropdown. It scored a hardcoded
+`0.8*discover + 0.7*env + 0.3*urgency` for months after the presets moved on,
+which is a blend no shipped preset has ever used.
 
 Leakage discipline (the crux):
 - The app's shipped `discover`/`staleness` axes are built from ALL-TIME iNat
@@ -16,6 +18,11 @@ Leakage discipline (the crux):
   leakage-free env+urgency, combine with the app's own preset weights.
 - CONSISTENCY CHECK = `app_shipped`: the literally-joined axes, reported with
   the leak caveat, to show the shipped score points the same way.
+- Those two carry the DEFAULT preset. Every other shipped preset is scored
+  alongside them under its own slug, so a preset the app ships can no longer go
+  unmeasured. A preset that weights `staleness` gets a `_shipped` key only:
+  staleness is built from observation timing and has no train-only stand-in the
+  way discover has `scarcity`.
 
 Outcome + controls (rarefied new-species@K, permutation null) are reused from
 voi_backtest so the two analyses are directly comparable.
@@ -27,13 +34,16 @@ import numpy as np
 import pandas as pd
 
 import voi_backtest as vb
+from goal_presets import AXES, DEFAULT, PRESETS
 
 RES = vb.RES                                  # 0.25 deg — SHARED grid with the app
 CA = "cluster_results/ca"
 # app row_format: ['lat','lon','discover','conservation','env','staleness','urgency','travel_min','n_train']
 AX = {"discover": 2, "conservation": 3, "env": 4, "staleness": 5, "urgency": 6}
-# default preset "Biodiversity impact" weights, order [discover, conservation, env, staleness, urgency]
-PRESET_W = {"discover": 0.8, "conservation": 0.0, "env": 0.7, "staleness": 0.0, "urgency": 0.3}
+# Axes the app derives from observation timing: scoring them against post-T outcomes leaks
+# unless a train-only stand-in exists. discover has one (voi_backtest's scarcity); staleness
+# does not, so presets weighting it are reported as-shipped only.
+LEAKY_WITHOUT_STANDIN = {"staleness"}
 # backtest taxon (iconic) -> app group file stem
 GROUP = {"Amphibia": "Amphibia", "Aves": "Aves", "Insecta": "Insecta",
          "Mammalia": "Mammalia", "Reptilia": "Reptilia"}
@@ -53,7 +63,7 @@ def load_app_axes(group):
 def join_axes(cells, app):
     """Attach app env/urgency/discover/conservation to backtest cells by (gi,gj).
     Cells off the app land grid (e.g. just outside the CA bbox) are dropped."""
-    keep, env, urg, disc, cons = [], [], [], [], []
+    keep, env, urg, disc, cons, stal = [], [], [], [], [], []
     for _, row in cells.iterrows():
         a = app.get((int(row.gi), int(row.gj)))
         keep.append(a is not None)
@@ -61,18 +71,22 @@ def join_axes(cells, app):
         urg.append(a["urgency"] if a else np.nan)
         disc.append(a["discover"] if a else np.nan)
         cons.append(a["conservation"] if a else np.nan)
-    cells = cells.assign(app_env=env, app_urgency=urg,
-                         app_discover=disc, app_conservation=cons)
+        stal.append(a["staleness"] if a else np.nan)
+    cells = cells.assign(app_env=env, app_urgency=urg, app_discover=disc,
+                         app_conservation=cons, app_staleness=stal)
     return cells[pd.Series(keep, index=cells.index)].copy()
 
 
-def composite(cells, discover_col):
-    """App default-preset composite with a choice of discover source."""
-    w = PRESET_W
-    return (w["discover"] * vb.norm(cells[discover_col])
-            + w["env"] * vb.norm(cells.app_env)
-            + w["urgency"] * vb.norm(cells.app_urgency)
-            + w["conservation"] * vb.norm(cells.app_conservation))
+def composite(cells, weights, discover_col):
+    """One preset's blend over the app's own axes, with a choice of discover source."""
+    col = {"discover": cells[discover_col], "conservation": cells.app_conservation,
+           "env": cells.app_env, "staleness": cells.app_staleness,
+           "urgency": cells.app_urgency}
+    total = 0.0
+    for ax, w in zip(AXES, weights, strict=True):
+        if w:
+            total = total + w * vb.norm(col[ax])
+    return total
 
 
 def eff_ratio(rk, score):
@@ -103,8 +117,8 @@ def analyse(name, df, K=5):
         return None
 
     # the two app composites: leakage-free (headline) and as-shipped (consistency)
-    rk["app_leakfree"] = composite(rk, "scarcity")      # train-only discover proxy
-    rk["app_shipped"] = composite(rk, "app_discover")   # all-time discover (LEAKY)
+    rk["app_leakfree"] = composite(rk, DEFAULT, "scarcity")     # train-only discover proxy
+    rk["app_shipped"] = composite(rk, DEFAULT, "app_discover")  # all-time discover (LEAKY)
 
     out = {"taxon": name, "n_cells": len(cells), "n_rarefied": len(rk),
            "K": K, "perm_p_floor": 1.0 / vb.N_PERM,
@@ -120,6 +134,19 @@ def analyse(name, df, K=5):
         "urgency": vb.norm(rk.app_urgency),
         "opportunistic_density": vb.norm(rk.density),   # NEGATIVE control
     }
+    # ...plus every other preset the dropdown offers, under its own slug
+    for p in PRESETS:
+        if p["w"] == DEFAULT:
+            continue
+        slug = p["name"].lower().replace(" ", "_")
+        weighted = {ax for ax, w in zip(AXES, p["w"], strict=True) if w}
+        if "discover" not in weighted:
+            # no all-time discover in the blend, so there is no shipped/leak-free split
+            scores[slug] = composite(rk, p["w"], "app_discover")
+            continue
+        scores[f"{slug}_shipped"] = composite(rk, p["w"], "app_discover")
+        if not weighted & LEAKY_WITHOUT_STANDIN:
+            scores[f"{slug}_leakfree"] = composite(rk, p["w"], "scarcity")
     res = {}
     for key, sc in scores.items():
         rho, p, _mu, _sd = vb.perm_test(sc.values, rk.rare_newK.values,
@@ -148,8 +175,7 @@ if __name__ == "__main__":
         fp = lambda p: f"<{pf:.4f}" if p is not None and p < pf else (f"{p:.4f}" if p is not None else "nan")
         s = out["scores"]
         print(f"\n=== {name} === cells={out['n_cells']} rarefied={out['n_rarefied']} new_sp={out['total_new_species']}")
-        for key in ["app_leakfree", "app_shipped", "discover_leakfree", "env", "urgency", "opportunistic_density"]:
-            d = s[key]
+        for key, d in s.items():
             er = d["eff_ratio_top_bottom"]
             print(f"  {key:22s} rho={d['spearman']:+.3f} perm_p={fp(d['perm_p']):>8} "
                   f"eff_top/bot={(f'{er:.2f}x') if er else '  n/a'}")
