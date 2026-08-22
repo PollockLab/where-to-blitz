@@ -139,7 +139,7 @@ scored the way it is, and the evidence behind the headline.
 |---|---|
 | `build_fullgrid_ca.py` | The four raster goals per square — **discover, habitat coverage, urgency, travel** — plus `n_train`. Defines the grid + land mask. |
 | `build_atrisk_layer.py`, joined in `fullgrid_fields.py` | The **rare-species** goal: CAN-SAR (COSEWIC/SARA) species × their GBIF occurrences → per-square status-weighted at-risk richness, aggregated to 25 km. |
-| cluster DuckDB → `ca_inat_metrics.csv` → `build_staleness_layer.py` | The **freshness** goal: all-time vs last-5-years iNaturalist density per square. |
+| cluster DuckDB → `ca_inat_metrics.csv` → `ca_staleness.csv` | The **freshness** goal: all-time vs last-5-years iNaturalist density per square. |
 | `build_webapp.py` | The single source of truth for the app. Combines the five goals into **impact**, holds every UI string (EN/FR), the trip planner, and emits `index.html`. |
 | `build_provenance.py` | Freezes the national build to a hashed manifest (`provenance.json`). |
 | `voi_backtest.py`, `backtest_appscore.py` | The validation layer: do gap-filling priorities actually discover more than going where it's already busy? |

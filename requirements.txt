@@ -19,4 +19,3 @@ jupyter==1.1.1
 ipykernel==7.3.0
 pytest
 ruff==0.16.1            # lint; keep in step with .pre-commit-config.yaml's rev
-mapbox-vector-tile==2.1.0
