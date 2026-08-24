@@ -282,6 +282,8 @@ details.adv>summary:hover{color:var(--ink)}
   <label class="toggle" style="display:none"><input type="checkbox" id="tgCoverage"> <span data-i18n="inat_coverage">iNaturalist coverage</span></label><!-- driven by the "iNaturalist sampling density" map style (#20) -->
   <label class="toggle" style="display:none"><input type="checkbox" id="tgGettingEven"> <span data-i18n="getting_even">Getting Even — which group to record</span></label><!-- driven by the "Getting Even" criterion (#20) -->
   <div class="infobox" id="geinfo" data-i18n-html="ge_method"></div>
+  <label class="toggle" id="zoomScaleRow" style="display:none;margin:9px 0 0"><input type="checkbox" id="tgZoomScale" checked> <span data-i18n="zoom_scale">Rescale colours to the current view</span></label>
+  <div id="zoomScaleHint" style="display:none;color:var(--mut);font-size:11px;line-height:1.4" data-i18n="zoom_scale_hint"></div>
   <div id="opacityRow" style="display:none"><!-- #46: only shown while a data overlay (density style) is active; basemap brightness is otherwise locked at 100% -->
   <div style="display:flex;justify-content:space-between;margin:9px 0 0"><span id="bople" style="font-size:12.5px" data-i18n="data_opacity">Density opacity</span><span class="v" id="bopv" style="color:var(--acc)">80%</span></div>
   <input type="range" id="baseop" min="0.1" max="1" step="0.05" value="1" data-i18n-aria="aria_data_opacity" aria-label="Density opacity">
@@ -293,7 +295,7 @@ details.adv>summary:hover{color:var(--ink)}
 <div id="map" role="application" data-i18n-aria="aria_map" aria-label="Interactive priority map (screen-reader users: use the Top cells list)"></div>
 <div id="viewtoggle" role="navigation" data-i18n-aria="aria_map_view" aria-label="Map view"><button id="vexplore" class="on" aria-pressed="true" data-i18n="view_explore">Explore</button><button id="vplan" aria-pressed="false" data-i18n="view_plan">Plan a trip</button><button id="vcompare" aria-pressed="false" data-i18n="view_compare">Compare goals</button></div>
 <div id="loading" role="status" aria-live="polite" data-i18n="loading">Loading the map…</div>
-<div id="maplegend" role="region" data-i18n-aria="aria_map_legend" aria-label="Map legend"><div class="ramp"></div><div class="lab"><span data-i18n="legend_low">well-sampled</span><span data-i18n="legend_high">biggest gaps</span></div></div>
+<div id="maplegend" role="region" data-i18n-aria="aria_map_legend" aria-label="Map legend"><div class="ramp"></div><div class="lab"><span data-i18n="legend_low">well-sampled</span><span data-i18n="legend_high">biggest gaps</span></div><div class="hint" id="legendscope"></div></div>
 <div id="topctrls"><button id="langbtn" type="button" data-i18n-aria="aria_language" data-i18n-title="lang_switch" aria-label="Language" title="Switch language">FR</button><button id="howbtn" type="button" aria-expanded="false" aria-controls="howpanel" data-i18n-title="how_scored" title="How impact is scored & data sources"><span data-i18n="how_scored">How impact is scored & data sources</span></button></div>
 <div id="howpanel" role="region" data-i18n-aria="how_scored" aria-label="How impact is scored & data sources">
   <button id="howclose" type="button" data-i18n-aria="aria_close" data-i18n-title="aria_close" aria-label="Close" title="Close">×</button>
@@ -387,6 +389,7 @@ const I18N={
     show_panel:"Show the panel",
     zoom_scale:"Rescale colours to the current view",
     zoom_scale_hint:"Ranks cells against what's on screen. Off = ranked across all of Canada.",
+    legend_scope_view:"scaled to this view", legend_scope_ca:"scaled across Canada",
     map_brightness:"Map brightness",
     data_opacity:"Density opacity",
     how_scored:"How impact is scored & data sources",
@@ -526,6 +529,7 @@ const I18N={
     show_panel:"Afficher le panneau",
     zoom_scale:"Recalibrer les couleurs sur la vue actuelle",
     zoom_scale_hint:"Classe les cellules par rapport à ce qui est à l'écran. Désactivé = classement sur tout le Canada.",
+    legend_scope_view:"calibré sur cette vue", legend_scope_ca:"calibré sur tout le Canada",
     map_brightness:"Luminosité de la carte",
     data_opacity:"Opacité des données",
     how_scored:"Calcul de l'impact et sources de données",
@@ -1059,14 +1063,13 @@ function recolour(){
   // a fake index gradient -- show a flat map instead.
   const flat=ord.length>0&&(ord[ord.length-1][0]-ord[0][0])<1e-9;   // guard empty markers (recolour runs during init before data loads)
   markers.forEach((m,i)=>{m.t=flat?0:rank[i]/n1;});   // national score, stable across pan/zoom
-  // D2 (resolved): fixed national colours. m.t is the stable national percentile; the baked values
-  // grids carry the colour (setGridFill paints them onto the cell polygons), so pan/zoom never
-  // recolours. The interaction fill (cells-fill) only paints when the Getting Even categorical
-  // layer is active (handled above).
+  // m.t is the stable national percentile; the baked values grids carry the colour (setGridFill
+  // paints them onto the cell polygons). With "Rescale colours to the current view" on, moveend
+  // restretches that FILL against the visible cells -- m.t is untouched either way. The interaction
+  // fill (cells-fill) only paints when the Getting Even categorical layer is active (handled above).
   applyCanadaMask();renderCellTable();setGridFill();
 }
-// (D2) The viewport-relative repaint is gone: colours are fixed nationally and live in the raster
-// tiles. moveend only refreshes which top cells are outlined.
+// The viewport-relative repaint lives on the moveend handler below, next to the 5 km rebuild.
 // Swap #maplegend between the priority ramp (default) and a categorical Getting Even legend. Pale swatches get a 1px #ccc border.
 let GE_PRIORITY_LEGEND=null;
 // Legend low/high labels follow the dominant goal so they stay accurate per preset
@@ -1075,7 +1078,11 @@ function updateLegendLabels(){const ml=document.getElementById('maplegend');if(!
   const cov=document.getElementById('tgCoverage');if(cov&&cov.checked)return;
   let bi=0,bv=-1;OBJ.forEach((o,i)=>{const v=state.w[o.key]||0;if(v>bv){bv=v;bi=i;}});
   const lab=(t('axis_legend')||[])[bi];const sp=ml.querySelectorAll('.lab span');
-  if(lab&&sp.length>=2){sp[0].textContent=lab[0];sp[1].textContent=lab[1];}}
+  if(lab&&sp.length>=2){sp[0].textContent=lab[0];sp[1].textContent=lab[1];}
+  // The ramp means two different things in the two modes, so the legend says which one it is.
+  // STRETCH is null whenever the guard declined to stretch, so this discloses that fallback too.
+  const sc=document.getElementById('legendscope');
+  if(sc)sc.textContent=t(STRETCH?'legend_scope_view':'legend_scope_ca');}
 function updateLegend(){
   const ml=document.getElementById('maplegend');if(!ml)return;
   if(GE_PRIORITY_LEGEND===null)GE_PRIORITY_LEGEND=ml.innerHTML;   // capture the as-built priority legend once
@@ -1158,8 +1165,8 @@ const PM_BASE='tiles';   // release-asset base URL for all PMTiles (#87 P4)
 // are painted onto the SAME LAEA cell polygons the app uses for outlines and clicks, so the fill
 // and the lattice cannot misalign -- the raster PMTiles route warped rotated cells into
 // axis-aligned Mercator pixels and the staircase never matched the vector lattice.
-// Colour is baked at build time from the fixed national ramps, so a cell's colour is stable
-// across pan/zoom (D2: viewport recolouring removed).
+// Colour is baked at build time from the fixed national ramps; the viewport stretch re-ranks those
+// baked values on screen (gridColour) rather than refetching anything.
 function gridSlug(){return state.taxon.replace(/ /g,'_');}
 function goalSlug(){const i=(window.__activePreset>=0)?window.__activePreset:0;return PRESETS[i].name.toLowerCase().replace(/ /g,'_');}
 const VALS={};   // decoded values PNGs, keyed <group>_<goal>_grid_<res>m
@@ -1177,6 +1184,51 @@ function valColor(v,col,row){
   const k=(row*v.w+col)*4;
   return v.d[k+3]<128?null:'rgb('+v.d[k]+','+v.d[k+1]+','+v.d[k+2]+')';   // alpha 0 = nodata / foreign-border cell
 }
+// #1 / D2 (restored, opt-out): zoomed into a well-sampled region every cell lands in one narrow
+// slice of the national ramp, so the map reads as flat purple and there is nothing to act on.
+// The values PNG stores viridis(score), and viridis' GREEN channel is strictly non-decreasing
+// across all 256 LUT entries (0 inversions, 213 distinct levels), so the baked green ORDERS cells
+// exactly like the underlying score. That is enough to re-rank what is on screen with no second
+// fetch, no re-tile, and no pipeline change. Only the FILL is rescaled -- m.t stays the national
+// percentile, so the popup impact and the Top-cells list still mean the same thing everywhere (#1).
+const VIR=[[68,1,84],[65,68,135],[42,120,142],[34,168,132],[122,209,81],[253,231,37]];   // the same six stops as '#maplegend .ramp', so the map and the legend cannot drift apart
+function virColour(t){const x=Math.max(0,Math.min(1,t))*(VIR.length-1),i=Math.min(VIR.length-2,Math.floor(x)),f=x-i,a=VIR[i],b=VIR[i+1];
+  return 'rgb('+Math.round(a[0]+(b[0]-a[0])*f)+','+Math.round(a[1]+(b[1]-a[1])*f)+','+Math.round(a[2]+(b[2]-a[2])*f)+')';}
+function valG(v,col,row){   // -1 = off the raster, or nodata / foreign-border (alpha 0)
+  if(col<0||row<0||col>=v.w||row>=v.h)return -1;
+  const k=(row*v.w+col)*4;
+  return v.d[k+3]<128?-1:v.d[k+1];
+}
+function zoomScaleActive(){const z=document.getElementById('tgZoomScale');return!!(z&&z.checked);}
+// The in-view distribution as a sorted array of green levels; null = national colours (toggle off,
+// or the guard below fired). Whichever tier is on screen owns it -- the tiers never overlap.
+// var, not let: updateLegendLabels() reads this from the init path, which runs above this line.
+// A let/const binding is in its temporal dead zone there, and the throw aborts the rest of the script.
+var STRETCH=null;
+const STRETCH_MIN_CELLS=24, STRETCH_MIN_SPAN=4;   // span in green levels (viridis spans 1..231)
+// Guard: a view whose cells really are near-identical has no signal to stretch, and spreading it
+// over the full ramp would manufacture hotspots out of quantisation noise. Fall back to national.
+function makeStretch(gs){
+  if(!zoomScaleActive()||gs.length<STRETCH_MIN_CELLS)return null;
+  const a=Int16Array.from(gs);a.sort();
+  return (a[a.length-1]-a[0])<STRETCH_MIN_SPAN?null:a;
+}
+// Percentile rank of g within the in-view distribution, not a min-max stretch: a handful of Arctic
+// super-gaps at the edge of a wide view would otherwise crush everything reachable back to one
+// colour -- the same reason the national score at recolour() ranks instead of scaling.
+function stretchT(g){
+  const a=STRETCH;let lo=0,hi=a.length;
+  while(lo<hi){const mid=(lo+hi)>>1;if(a[mid]<g)lo=mid+1;else hi=mid;}   // first index >= g
+  let up=lo;while(up<a.length&&a[up]===g)up++;                           // a tie block shares its midpoint
+  return ((lo+up)/2)/a.length;
+}
+// Cells outside the view clamp to the ends of the ramp instead of being dimmed, so the map stays
+// whole and the visible extent owns the full colour range.
+function gridColour(v,col,row){
+  if(!STRETCH)return valColor(v,col,row);   // national: the exact baked LUT colour, byte for byte
+  const g=valG(v,col,row);
+  return g<0?null:virColour(stretchT(g));
+}
 let _gridSeq=0;
 function setGridFill(){
   if(!_mapLoaded){whenMap(setGridFill);return;}
@@ -1189,19 +1241,39 @@ function setGridFill(){
   // 25 km tier: feature-state colour on the existing 23k-cell source (same mechanism Getting Even uses).
   map.addLayer({id:'grid25',type:'fill',source:'cells',maxzoom:TIER_SWITCH_Z,paint:{
     'fill-color':['coalesce',['feature-state','gc'],'rgba(0,0,0,0)'],
+    'fill-color-transition':{duration:250},   // a restretch eases in; a hard swap on every moveend reads as a glitch
     'fill-opacity':gridOpacity}},CELL_LAYER);
   // 5 km tier: viewport-built cell polygons (refreshCells5), rebuilt on moveend above the switch.
   map.addSource('cells5',{type:'geojson',data:{type:'FeatureCollection',features:[]},attribution:'Blitz the Gap priority grid'});
   map.addLayer({id:'grid5',type:'fill',source:'cells5',minzoom:TIER_SWITCH_Z,paint:{
     'fill-color':['get','c'],
+    'fill-color-transition':{duration:250},
     'fill-opacity':gridOpacity}},CELL_LAYER);
   loadVals(25000).then(v=>{
     if(seq!==_gridSeq)return;
-    markers.forEach(m=>{const s=snapToLattice(m.r[0],m.r[1],25000);
-      map.setFeatureState({source:'cells',id:m.i},{gc:s?valColor(v,s.col,s.row):null});});
+    if(map.getZoom()<TIER_SWITCH_Z)STRETCH=makeStretch(sample25(v));   // above the switch the 5 km tier is the visible one and sets STRETCH itself
+    paintGrid25(v);
+    updateLegendLabels();
   }).catch(()=>{});
   refreshCells5();
   updateOpacityControl();
+}
+// The 25 km tier colours a fixed national source through feature-state, so a restretch is a
+// repaint of the same cells rather than a rebuild.
+function sample25(v){
+  const b=map.getBounds(),gs=[];
+  markers.forEach(m=>{if(!b.contains([m.r[1],m.r[0]]))return;
+    const s=snapToLattice(m.r[0],m.r[1],25000);if(!s)return;
+    const g=valG(v,s.col,s.row);if(g>=0)gs.push(g);});
+  return gs;
+}
+function paintGrid25(v){
+  markers.forEach(m=>{const s=snapToLattice(m.r[0],m.r[1],25000);
+    map.setFeatureState({source:'cells',id:m.i},{gc:s?gridColour(v,s.col,s.row):null});});
+}
+function restretch25(){
+  if(!_mapLoaded||!map.getLayer('grid25')||map.getZoom()>=TIER_SWITCH_Z)return;
+  loadVals(25000).then(v=>{STRETCH=makeStretch(sample25(v));paintGrid25(v);updateLegendLabels();}).catch(()=>{});
 }
 let _c5seq=0;
 async function refreshCells5(){
@@ -1217,16 +1289,22 @@ async function refreshCells5(){
     if(c[0]<minX)minX=c[0];if(c[0]>maxX)maxX=c[0];if(c[1]<minY)minY=c[1];if(c[1]>maxY)maxY=c[1];});
   const c0=Math.max(0,Math.floor((minX-LATTICE_X0)/R)-1),c1=Math.min(v.w-1,Math.floor((maxX-LATTICE_X0)/R)+1);
   const r0=Math.max(0,Math.floor((LATTICE_Y1-maxY)/R)-1),r1=Math.min(v.h-1,Math.floor((LATTICE_Y1-minY)/R)+1);
-  const feats=[];
+  const cells=[];
   if((c1-c0+1)*(r1-r0+1)<=40000){   // z >= TIER_SWITCH_Z keeps this in the low thousands; the cap guards pathological viewports
     for(let row=r0;row<=r1;row++)for(let col=c0;col<=c1;col++){
-      const fc=valColor(v,col,row);if(!fc)continue;
-      const x=LATTICE_X0+col*R,y=LATTICE_Y1-row*R;   // exact lattice corners -> neighbours share vertices, no seams
-      const ring=[[x,y],[x+R,y],[x+R,y-R],[x,y-R],[x,y]].map(q=>{const g=LAEA.inv(q[0],q[1]);return[g[1],g[0]];});
-      feats.push({type:'Feature',properties:{c:fc},geometry:{type:'Polygon',coordinates:[ring]}});
+      const g=valG(v,col,row);if(g<0)continue;
+      cells.push([col,row,g]);
     }
   }
+  STRETCH=makeStretch(cells.map(c=>c[2]));   // the cells about to be drawn ARE the view, so they define the scale
+  const feats=cells.map(c=>{
+    const col=c[0],row=c[1];
+    const x=LATTICE_X0+col*R,y=LATTICE_Y1-row*R;   // exact lattice corners -> neighbours share vertices, no seams
+    const ring=[[x,y],[x+R,y],[x+R,y-R],[x,y-R],[x,y]].map(q=>{const g=LAEA.inv(q[0],q[1]);return[g[1],g[0]];});
+    return{type:'Feature',properties:{c:STRETCH?virColour(stretchT(c[2])):valColor(v,col,row)},geometry:{type:'Polygon',coordinates:[ring]}};
+  });
   map.getSource('cells5').setData({type:'FeatureCollection',features:feats});
+  updateLegendLabels();
 }
 const COVPM=['All','Amphibia','Aves','Insecta','Mammalia','Plantae','Reptilia','Actinopterygii','Arachnida','Mollusca'];   // taxa with a local PMTiles (others -> All)
 // Raster PMTiles now ride the native MapLibre pmtiles:// protocol (registered once) instead of a custom
@@ -1269,6 +1347,10 @@ function updateOpacityControl(){
   const ov=dataOverlayActive();
   const row=document.getElementById('opacityRow');
   if(row)row.style.display=ov?'':'none';   // #46(b): the slider only appears with a data overlay; lock basemap brightness at 100% otherwise
+  const gv=gridOverlayActive();   // the density raster and Getting Even carry their own fixed scales -- nothing to rescale
+  const zr=document.getElementById('zoomScaleRow'),zh=document.getElementById('zoomScaleHint');
+  if(zr)zr.style.display=gv?'':'none';
+  if(zh)zh.style.display=gv?'':'none';
   if(!ov)setBaseOpacity(1);
   const v=ov?(covActive?covOpacity:gridOpacity):baseOpacity;
   sl.value=v;
@@ -1281,9 +1363,14 @@ function updateOpacityControl(){
 document.getElementById('tgCoverage').addEventListener('change',e=>{if(e.target.checked)document.getElementById('tgGettingEven').checked=false;updateLegend();setCoverage();recolour();
   if(!e.target.checked&&bmSel.value==='__inat__'){bmSel.value='Standard';setBase('Standard');}});   // coverage turned off elsewhere (e.g. GE) -> reset the style dropdown
 document.getElementById('tgGettingEven').addEventListener('change',e=>{if(e.target.checked)document.getElementById('tgCoverage').checked=false;loadGE().then(()=>{setCoverage();updateLegend();recolour();});});
-{const z=document.getElementById('tgZoomScale');if(z)z.addEventListener('change',recolour);}
+{const z=document.getElementById('tgZoomScale');if(z)z.addEventListener('change',setGridFill);}   // the fill lives in the grid layers now, not in recolour()
 {const c=document.getElementById('tgCanadaOnly');if(c)c.addEventListener('change',()=>{loadUS().then(recolour);});}
-map.on('moveend',()=>{refreshCells5();});
+let _mvT=null;
+map.on('moveend',()=>{
+  refreshCells5();   // seq-guarded and async; it sets STRETCH from the 5 km cells it is about to draw
+  if(_mvT)clearTimeout(_mvT);
+  _mvT=setTimeout(restretch25,150);   // recolour once the view settles -- restretching mid-pan makes the ramp crawl under the cursor
+});
 // Issue #20: "How impact is scored & data sources" moved out of the sidebar to a floating map info button that expands a panel.
 (function(){const b=document.getElementById('howbtn'),p=document.getElementById('howpanel'),x=document.getElementById('howclose');if(!b||!p)return;
   const set=open=>{p.classList.toggle('open',open);b.setAttribute('aria-expanded',open?'true':'false');};
