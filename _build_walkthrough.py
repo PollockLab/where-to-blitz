@@ -711,9 +711,35 @@ These constraints shaped the contents above; they are the reason some things are
   are sampling effort, not ground-truth abundance, and are labelled that way throughout.
 """)
 
+# ---------------------------------------------------------------- the stack
+md(r"""
+## 10 · How it's delivered — the stack
+
+> **In plain terms:** everything above is computed once and frozen into files. The website
+> *is* those files. There is **no server and no database**, so nothing can quietly change
+> under you.
+
+Python builds the lattice and fills it; `build_webapp.py` inlines the result into one
+self-contained `index.html`, byte-identical for the same inputs. The page is plain JavaScript
+with MapLibre GL JS and pmtiles.js, on GitHub Pages. The five map layers are not the same
+kind of thing, which is the one non-obvious part:
+
+| Layer | Served as | Built by |
+|---|---|---|
+| Base map | XYZ raster tiles (CARTO / ArcGIS / OpenTopoMap) | — |
+| Cell geometry | GeoJSON polygons, in the LAEA lattice of Section 2 | `grid_lattice.py` |
+| Cell colours | One PNG per (group, goal, tier), **one pixel per cell**, painted onto those polygons | `build_grid_values.py` |
+| Density overlay | Raster PMTiles, magma baked in at build time | `build_density_pmtiles.py` |
+| Density, *Fungi only* | Live TiTiler over a 1 km COG on Arbutus | — |
+
+Colours are a PNG rather than tiles because warping rotated LAEA cells into Mercator pixels
+left a staircase that never matched the lattice (#116). Fungi alone reads a live COG because
+it has no 100 m layer yet. Both docstrings carry the full reasoning.
+""")
+
 # ---------------------------------------------------------------- reproduce
 md(r"""
-## 10 · Reproduce everything
+## 11 · Reproduce everything
 
 ```bash
 # 1. environment (no credentials needed; all sources public)
