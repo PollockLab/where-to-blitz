@@ -81,3 +81,34 @@ def test_lattice_is_injected_not_hardcoded():
     assert line, "the built lattice constants are missing or malformed"
     assert [int(g) for g in line.groups()] == [
         grid_lattice.X0, grid_lattice.Y1, grid_lattice.WIDTH_M, grid_lattice.HEIGHT_M]
+
+
+def _i18n_keys():
+    """The key sets of I18N.en and I18N.fr, and every key the markup asks for."""
+    src = TEMPLATE.read_text()
+    i = src.index("const I18N")
+    depth = 0
+    for n, ch in enumerate(src[i:]):
+        depth += ch == "{"
+        depth -= ch == "}"
+        if depth == 0 and n > 10:
+            seg = src[i:i + n]
+            break
+    en, fr = seg[seg.index("en:{"):seg.index("fr:{")], seg[seg.index("fr:{"):]
+    # keys start a line or follow a comma; both forms occur in the dict
+    kx = lambda t: set(re.findall(r"(?:\n\s+|, )([a-z0-9_]+):", t))  # noqa: E731
+    used = set(re.findall(r'data-i18n(?:-html|-ph|-title)?="([a-z0-9_]+)"', src))
+    return kx(en), kx(fr), used
+
+
+def test_i18n_is_key_for_key_between_english_and_french():
+    """A key present in one language only renders as the raw key, or as nothing at all."""
+    en, fr, _ = _i18n_keys()
+    assert not en - fr, f"no French for: {sorted(en - fr)}"
+    assert not fr - en, f"no English for: {sorted(fr - en)}"
+
+
+def test_every_i18n_attribute_names_a_key_that_exists():
+    """applyI18N() overwrites these nodes at init; a missing key blanks the panel silently."""
+    en, _, used = _i18n_keys()
+    assert not used - en, f"markup asks for absent keys: {sorted(used - en)}"
