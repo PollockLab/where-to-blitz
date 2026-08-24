@@ -21,7 +21,7 @@ OBJ = [
     },
     {
         "key": "conservation",
-        "name": "Find rare species",
+        "name": "Find species at risk",
         "q": "go where COSEWIC/SARA species at risk concentrate",
     },
     {
