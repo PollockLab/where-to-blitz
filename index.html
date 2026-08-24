@@ -1395,7 +1395,8 @@ function setClimate(){
   if(map.getSource('climate-gap'))map.removeSource('climate-gap');
   if(!climateOn()){updateOpacityControl();return;}
   ensurePM();
-  map.addSource('climate-gap',{type:'raster',url:'pmtiles://'+PM_BASE+'/climate_gap.pmtiles',tileSize:256});
+  map.addSource('climate-gap',{type:'raster',url:'pmtiles://'+PM_BASE+'/climate_gap.pmtiles',tileSize:256,
+    attribution:'Climate gap layer &copy; Pollock Lab · climate data <a href="https://chelsa-climate.org" target="_blank" rel="noopener">CHELSA</a>'});
   map.addLayer({id:'climate-gap',type:'raster',source:'climate-gap',paint:{'raster-opacity':climateOpacity}},map.getLayer(CELL_LAYER)?CELL_LAYER:undefined);
   updateOpacityControl();
 }
