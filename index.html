@@ -1383,18 +1383,20 @@ function setCoverage(){
   map.addLayer({id:'cov',type:'raster',source:'cov',paint:{'raster-opacity':covOpacity}},map.getLayer(CELL_LAYER)?CELL_LAYER:undefined);
   updateOpacityControl();
 }
-// Climate Gap: one PMTiles raster, no per-taxon variant. Same shape as setCoverage above — read
-// `overlay`, tear the layer down, rebuild it only if this overlay is the active one. It also hides
-// the cell fill, because the raster covers the same ground and the two would read as one muddy layer.
+// Climate Gap: one PMTiles raster, no per-taxon variant. Same shape as setCoverage above: read
+// `overlay`, tear the layer down, rebuild it only if this overlay is the active one. Same insert
+// point too, under cells-fill, so the planned-route lines stay on top of the raster.
+// cells-fill keeps its layout visibility: outside Getting Even recolour() leaves every cell at
+// feature-state opacity 0, so the layer is already invisible, and hiding it would only cost the
+// cell click and hover handlers that ride on it.
 function setClimate(){
   if(!_mapLoaded){whenMap(setClimate);return;}
   if(map.getLayer('climate-gap'))map.removeLayer('climate-gap');
   if(map.getSource('climate-gap'))map.removeSource('climate-gap');
-  if(map.getLayer(CELL_LAYER))map.setLayoutProperty(CELL_LAYER,'visibility',climateOn()?'none':'visible');
   if(!climateOn()){updateOpacityControl();return;}
   ensurePM();
   map.addSource('climate-gap',{type:'raster',url:'pmtiles://'+PM_BASE+'/climate_gap.pmtiles',tileSize:256});
-  map.addLayer({id:'climate-gap',type:'raster',source:'climate-gap',paint:{'raster-opacity':climateOpacity}});
+  map.addLayer({id:'climate-gap',type:'raster',source:'climate-gap',paint:{'raster-opacity':climateOpacity}},map.getLayer(CELL_LAYER)?CELL_LAYER:undefined);
   updateOpacityControl();
 }
 function setClimateOpacity(v){climateOpacity=v;if(_mapLoaded&&map.getLayer('climate-gap'))map.setPaintProperty('climate-gap','raster-opacity',v);}
