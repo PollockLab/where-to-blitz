@@ -18,6 +18,22 @@ into the **0–100 "impact"** shown on the map and in popups.
 
 ---
 
+## Glossary
+
+| Term | Means |
+|---|---|
+| **cell** | One square of the grid. The unit everything is scored on: 25 km by default, 5 km from zoom 9. |
+| **lattice** | The projected equal-area grid the cells sit on (`grid_lattice.py`). WGS84 Lambert Azimuthal Equal Area, 45°N 100°W, snapped to a 25 km multiple so the 25 km tier is an exact 5×5 aggregate of the 5 km tier. |
+| **goal** (= **axis**) | One reason to go somewhere, scored 0–1 per cell. The five keys are `discover`, `conservation`, `env`, `staleness`, `urgency` (`goal_presets.py`). |
+| **impact** | The 0–100 number shown on the map and in popups: your weighted blend of the five goals, expressed as a percentile rank across the cells shown. |
+| **preset** | A named weight mix over the five goals, each linked to a real Blitz the Gap iNaturalist sub-project (`goal_presets.py`). |
+| **gap** | A cell that is under-recorded for the goal in play. "Blitz the gap" = go to one and record there. |
+| **Getting Even** | A separate layer, not a goal: it colours each cell by the taxonomic group most under-represented *there*, birds excluded (`build_gettingeven.py`). It answers *what* to record in a cell, not *where* to go. |
+| **VOI** | Value of information — how much a new observation would improve what we know. The intended end state for species suggestions; today's ranking is an interpretable stand-in (see #48 below). |
+| **appscore** | The composite the app actually ships, read straight from `goal_presets.PRESETS`, as distinct from the generic proxy `voi_backtest.py` tests. `backtest_appscore.py` scores it so the backtest cannot drift from the dropdown. |
+
+---
+
 ## The five priority axes
 
 ### 1. Discover the most species — `discover`

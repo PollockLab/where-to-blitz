@@ -19,24 +19,15 @@ Blitz the Gap campaign at McGill — a planning aid, not ground truth.
 
 ## How cells are scored
 
-Each cell carries five axes; you blend them into a 0–100 impact score (a percentile rank across the cells shown).
+Five goals per cell, each scored 0–1; you blend them with sliders into a 0–100 impact score
+(a percentile rank across the cells shown). All five are built from real data.
 
-| Axis | Source | Status |
-|------|--------|--------|
-| Discover (under-sampling) | iNaturalist observation density | real |
-| Cover every habitat (climate coverage) | CHELSA climate | real |
-| Sample before it's lost (urgency) | Hansen forest loss | real |
-| Travel time | Weiss et al. 2018 | real |
-| Find rare species (conservation) | CAN-SAR (COSEWIC/SARA) × GBIF occurrences | real |
-| Freshest gaps (staleness) | iNaturalist recent vs all-time density | real |
+**Does the priority actually work?** On a leakage-free backtest of the 2025 BC pilot,
+the highest-ranked cells turn up roughly 2–3× more new species than the lowest
+at equal effort, and it holds out-of-sample in Eastern Canada.
 
-All five goal axes are real; none are placeholders.
-
-**Does the priority actually work?** On a leakage-free backtest of the 2025 BC pilot, yes: at equal
-effort the highest-ranked cells turn up roughly **2–3× more new species** than the lowest (Spearman
-ρ 0.47–0.69, holds out-of-sample in Eastern Canada). See
-[METHODOLOGY.md](METHODOLOGY.md#validation--does-priority-actually-predict-discovery) for the per-taxon
-numbers and honest scope.
+[METHODOLOGY.md](METHODOLOGY.md) has the glossary, the per-axis formulas and sources, the
+per-taxon validation numbers, and the scope those numbers hold within.
 
 ## Build
 
@@ -87,6 +78,9 @@ Opening `index.html` as a `file://` URL does not work either; use the local serv
 
 ## Responsible use
 
-A planning aid, not a census. Sensitive/at-risk species are gated out of suggestions
-(`taxon_geoprivacy=open`, `threatened=false`). Obscure sensitive locations and respect
-[Indigenous data sovereignty](https://native-land.ca) before any public use.
+A planning aid, not a census. Sensitive and at-risk species are gated out of suggestions
+(`taxon_geoprivacy=open`, `threatened=false`), and the at-risk layer is only ever exposed as a
+per-cell score, never as point locations. Obscure sensitive locations and respect
+[Indigenous data sovereignty](https://native-land.ca) before any public use. The reasoning,
+including the dual-use guard it implements, is in
+[METHODOLOGY.md](METHODOLOGY.md#honesty-notes).

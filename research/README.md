@@ -8,9 +8,9 @@ first; the file inventory and how to run them are at the bottom.
 **Embedding novelty versus geography depends on how species-rich the taxon is.**
 The original Amphibia run said geography wins: discovery-AUC of random 22.1,
 embedding novelty 23.2, spatial coverage 23.3, combined 24.1. That result
-reproduced on separate hardware (Mila V100 and DRAC Fir H100) and is what
-`run_fir.sh`'s header comment still claims. The 7-taxon sweep does not support
-it as a general finding. Holding config fixed (1200 obs, budget 300, 200 seeds,
+reproduced on separate hardware (Mila V100 and DRAC Fir H100), which is all
+`run_fir.sh` can produce — `exp_discovery_acquisition.py` hardcodes Amphibia.
+The 7-taxon sweep does not support it as a general finding. Holding config fixed (1200 obs, budget 300, 200 seeds,
 DINOv2):
 
 | taxon | species | random | spatial | embedding | embed − spatial |
