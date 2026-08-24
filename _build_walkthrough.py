@@ -73,17 +73,15 @@ bioblitz. It turns one question — *"where should I go to record biodiversity s
 observation adds the most to what we know about the natural world?"* — into a map you can weight,
 explore, and plan a real low-carbon trip on.
 
-If you build, score, or run the campaign — this is the methodology and the data underneath it,
-laid out so you can check every choice and reproduce every number. Prefer a terse formula
-reference? See [`METHODOLOGY.md`](https://github.com/PollockLab/where-to-blitz/blob/main/METHODOLOGY.md).
+The methodology and the data underneath it, laid out so you can check every choice and
+reproduce every number. For the terse formula reference and the glossary, see
+[`METHODOLOGY.md`](https://github.com/PollockLab/where-to-blitz/blob/main/METHODOLOGY.md).
 
-> It is a **work-in-progress prototype and a planning aid, not ground truth.**
-> It is a *planning aid*. The responsible-use guardrails are part of the design, not an afterthought (last section).
+> A **work-in-progress prototype and a planning aid, not ground truth.** The responsible-use
+> guardrails are in the last section.
 
-This walkthrough is **not** about the modelling pipeline in the abstract. The moat is the
-**set of choices** that make the map trustworthy and the **contents** those choices produce.
-Each section pairs a design decision with the real data it acts on. Everything below runs
-from the committed build — re-execute top to bottom to reproduce every figure.
+Each section pairs a design decision with the real data it acts on. Everything below runs from
+the committed build — re-execute top to bottom to reproduce every figure.
 """)
 
 # ---------------------------------------------------------------- zoom out
@@ -627,11 +625,11 @@ is a defensible choice, and any estimated route is labelled.)
 
 # ---------------------------------------------------------------- validation
 md(r"""
-## 8 · Does the core idea actually work? — we tested it like a forecast
+## 8 · Does the core idea actually work?
 
 > **In plain terms:** the whole tool bets that **sending people to under-recorded squares turns
-> up more new species than sending them where it's already busy.** We didn't just assert that —
-> we checked it against a real bioblitz, like grading a weather forecast after the fact.
+> up more new species than sending them where it's already busy.** So we graded it like a
+> weather forecast, against a real bioblitz after the fact.
 
 **How the test works** (on the real 2025 BC pilot, iNat project 228908):
 
@@ -671,13 +669,13 @@ print(f"Average agreement — app's gap-filling map : {m_app:+.2f}  (correct on 
 print(f"Average agreement — 'go where it's busy'  : {m_busy:+.2f}  (the near-exact opposite)")
 """)
 md(r"""
-**Two honest findings to highlight:**
+**Two findings worth naming:**
 
 1. **The signal is real but lives almost entirely in the under-sampling axis.** `discover` on
    its own matches or beats the full default preset; `env` and `urgency` are ~uncorrelated with
    *this* discovery objective (they optimise *other* goals by design). So the default
-   `0.8·discover + 0.7·env + 0.3·urgency` slightly **dilutes** discovery — re-tuning the default
-   toward discover is an open product decision, surfaced not silently "fixed."
+   `0.8·discover + 0.7·env + 0.3·urgency` slightly **dilutes** discovery. Re-tuning the default
+   toward discover is an open product decision.
 2. **It replicates out of region.** Re-running on a disjoint Eastern-Canada window (ON/QC/
    Maritimes) reproduces the directed > opportunistic result — it is not a BC artifact.
 """)
@@ -695,7 +693,7 @@ print(f"\nDirected stays positive on {er['app (gap-filling)'].gt(0).sum()}/{len(
 
 # ---------------------------------------------------------------- responsible use
 md(r"""
-## 9 · Responsible use — guardrails as design, not disclaimer
+## 9 · Responsible use
 
 These constraints shaped the contents above; they are the reason some things are *coarse* or
 *absent* on purpose:
@@ -759,9 +757,8 @@ except Exception as e:
 
 md(r"""
 ---
-*Built deterministically by `_build_walkthrough.py` from the committed where-to-blitz build.
-Every number traces to a file in `cluster_results/`; nothing is from memory. Prototype and
-planning aid, not ground truth.*
+*Built by `_build_walkthrough.py` from the committed where-to-blitz build. Every number
+traces to a file in `cluster_results/`.*
 """)
 
 nb.write("where-to-blitz-walkthrough.ipynb")
