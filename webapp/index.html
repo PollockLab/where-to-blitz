@@ -289,21 +289,10 @@ details.adv>summary:hover{color:var(--ink)}
     <div style="color:var(--mut);font-size:11px;line-height:1.4" data-i18n="vector_hint">Vector basemap — toggle layers like Maputnik. Other styles are raster (roads baked in).</div>
   </div>
   <label class="toggle" style="display:none"><input type="checkbox" id="tgCoverage"> <span data-i18n="inat_coverage">iNaturalist coverage</span></label><!-- driven by the "iNaturalist sampling density" map style (#20) -->
-
-
-
-
   <label class="toggle" style="display:none"><input type="checkbox" id="tgGettingEven"> <span data-i18n="getting_even">Getting Even — which group to record</span></label><!-- driven by the "Getting Even" criterion (#20) -->
   <div style="display:none" data-i18n="ge_hint">Each cell is coloured by the most under-represented taxonomic group there (birds excluded — already well covered by eBird) — our finer-resolution take on the official "Getting Even" challenge. From iNaturalist observation density: a sample, not a census.</div>
   <div class="infobox" id="geinfo" data-i18n-html="ge_method"></div>
-
-
-
-  <!-- Ryan edit: html for checkbox for climate gap layer -->
-  <label class="toggle" style="display:none"><input type="checkbox" id="tgClimateGap"> <span data-i18n="climate_gap">Climate Gap — under-sampled climates</span></label>
-
-
-
+  <label class="toggle" style="display:none"><input type="checkbox" id="tgClimateGap"> <span data-i18n="climate_gap">Climate Gap — under-sampled climates</span></label><!-- driven by the "Climate Gap" criterion -->
   <div id="opacityRow" style="display:none"><!-- #46: only shown while a data overlay (density style) is active; basemap brightness is otherwise locked at 100% -->
   <div style="display:flex;justify-content:space-between;margin:9px 0 0"><span id="bople" style="font-size:12.5px" data-i18n="data_opacity">Density opacity</span><span class="v" id="bopv" style="color:var(--acc)">80%</span></div>
   <input type="range" id="baseop" min="0.1" max="1" step="0.05" value="1" data-i18n-aria="aria_data_opacity" aria-label="Density opacity">
@@ -410,11 +399,9 @@ const I18N={
     ge_all:"All groups under-sampled",
     canada_only:"Canada only",
     canada_only_hint:"Hides cells across the US border, where the bright band is a data edge (the Canadian layer stops at the border), not a real gap. Approximate boundary.",
-
-    // Ryan edit for climate gap: adding strings
     climate_gap:"Climate Gap — under-sampled climates",
     crit_climate:"Climate Gap (under-sampled climates)",
-
+    climate_legend_hint:"Climate surprisal raster: bright where the cell's climate is rare among existing records, wherever it sits on the map.",
     more_presets:"More ▾",
     fewer_presets:"Fewer ▴",
     methodology_link:"Full methodology & data — trace every number →",
@@ -562,11 +549,9 @@ const I18N={
     ge_all:"Tous sous-échantillonnés",
     canada_only:"Canada seulement",
     canada_only_hint:"Masque les cellules au sud de la frontière, où la bande vive est une limite de données (la couche canadienne s'arrête à la frontière), pas une vraie lacune. Frontière approximative.",
-
-    // Ryan edit : adding french climate gap strings
     climate_gap:"Lacune climatique — climats sous-échantillonnés",
     crit_climate:"Lacune climatique (climats sous-échantillonnés)",
-
+    climate_legend_hint:"Raster de surprise climatique : clair là où le climat de la cellule est rare parmi les relevés existants, où qu'elle se trouve sur la carte.",
     more_presets:"Plus ▾",
     fewer_presets:"Moins ▴",
     methodology_link:"Méthodologie complète et données — traçez chaque chiffre →",
@@ -726,7 +711,27 @@ const gekey=(lat,lon)=>lat.toFixed(3)+','+lon.toFixed(3);
 let GE_LOADED=false;
 async function loadGE(){if(GE_LOADED)return;const r=await fetchT(DATA_DIR+'webapp_data_gettingeven.json',15000),j=await r.json();
   for(const e of j.gettingeven)GE[gekey(e[0],e[1])]=[e[2],e[3]];GE_LOADED=true;}
-function geActive(){const e=document.getElementById('tgGettingEven');return!!(e&&e.checked);}
+// One data overlay at a time. Coverage used to read its own hidden checkbox, Getting Even read
+// its own, and the priority grid was whatever was left, so every listener had to reach across and
+// clear the others by hand and each new overlay cost a fresh pairing against every existing one.
+// `overlay` is the single source of truth and setOverlay is its only writer: the checkboxes and
+// the style dropdown follow it, never the reverse.
+const OVERLAY_TOGGLE={coverage:'tgCoverage',gettingeven:'tgGettingEven',climate:'tgClimateGap'};
+let overlay='priority';   // 'priority' (the goal grid) | 'coverage' | 'gettingeven' | 'climate'
+function geActive(){return overlay==='gettingeven';}
+function covOn(){return overlay==='coverage';}
+function climateOn(){return overlay==='climate';}
+function setOverlay(kind){
+  overlay=OVERLAY_TOGGLE[kind]?kind:'priority';
+  for(const[k,id]of Object.entries(OVERLAY_TOGGLE)){const el=document.getElementById(id);if(el)el.checked=(overlay===k);}
+  // the style dropdown's iNat entry is the coverage overlay under another name; keep the two agreed.
+  // Read the element rather than the bmSel const: this function is hoisted above that declaration.
+  const sel=document.getElementById('basemap');
+  if(sel){const want=covOn()?'__inat__':(sel.value==='__inat__'?'Standard':sel.value);
+    if(sel.value!==want){sel.value=want;setBase(want==='__inat__'?'Light':want);}}
+  const paint=()=>{setCoverage();setClimate();updateLegend();recolour();};
+  geActive()?loadGE().then(paint):paint();
+}
 function caOnlyActive(){const e=document.getElementById('tgCanadaOnly');return e?e.checked:true;}        // issue #20 removed the toggle; behaviour stays on by default
 // US-side cells (approx, lazy-loaded): hidden when "Canada only" is on -- the cross-border band is a data edge, not a real gap (#5).
 let US_CELLS=null;
@@ -988,10 +993,7 @@ const BASEMAPS={
   "Terrain":{tiles:SUB('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png','abc'),maxzoom:17},
   "Light":{tiles:SUB('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png','abcd'),maxzoom:20}   // base under the iNaturalist-density style; not a dropdown choice
 };
-// default grid opacity keeps basemap context visible
-// Ryan edit to add 2 new glob vars for climate gap
-let baseOpacity=1, gridOpacity=0.72, covOpacity=0.8, climateOpacity=0.85, climateActive=false; 
-
+let baseOpacity=1, gridOpacity=0.5, covOpacity=0.8, climateOpacity=0.85;   // default grid opacity keeps basemap context visible
 function setBase(name){
   if(!_mapLoaded){whenMap(()=>setBase(name));return;}
   if(map.getLayer('basemap'))map.removeLayer('basemap');
@@ -1089,7 +1091,6 @@ function renderCellTable(){
   el.querySelectorAll('tr[data-la]').forEach(tr=>{const go=()=>{const la=+tr.dataset.la,lo=+tr.dataset.lo;map.jumpTo({center:[lo,la],zoom:8});state.view==='plan'?planTap(la,lo):exploreCell(la,lo);};tr.onclick=go;tr.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}};});
 }
 function recolour(){
-  const cov=document.getElementById('tgCoverage')&&document.getElementById('tgCoverage').checked;
   if(geActive()){
     // Categorical layer: colour by most under-represented group (no magnitude). Flat opacity; stroke matches fill so cells tile seamlessly.
     markers.forEach(m=>{const c=geColour(m);setCellState(m.i,c,0.62);});
@@ -1122,8 +1123,7 @@ function recolour(){
 let GE_PRIORITY_LEGEND=null;
 // Legend low/high labels follow the dominant goal so they stay accurate per preset
 // (e.g. Conservation -> "no at-risk .. many at-risk", Species discovery -> "recently recorded .. long overdue").
-function updateLegendLabels(){const ml=document.getElementById('maplegend');if(!ml||geActive())return;
-  const cov=document.getElementById('tgCoverage');if(cov&&cov.checked)return;
+function updateLegendLabels(){const ml=document.getElementById('maplegend');if(!ml||geActive()||covOn())return;
   let bi=0,bv=-1;OBJ.forEach((o,i)=>{const v=state.w[o.key]||0;if(v>bv){bv=v;bi=i;}});
   const lab=(t('axis_legend')||[])[bi];const sp=ml.querySelectorAll('.lab span');
   if(lab&&sp.length>=2){sp[0].textContent=lab[0];sp[1].textContent=lab[1];}}
@@ -1134,20 +1134,20 @@ function updateLegend(){
     const sw=(c,lab)=>`<div style="display:flex;align-items:center;gap:6px;margin:2px 0"><span style="width:13px;height:13px;border-radius:3px;background:${c};border:1px solid #ccc;flex:none"></span><span>${lab}</span></div>`;
     ml.innerHTML='<div class="lt">'+t('getting_even')+'</div>'+
       t('ge_cats').map((nm,i)=>sw(GE_PAL[i],nm)).join('')+sw(GE_ALL,t('ge_all'));
-  }else if(document.getElementById('tgCoverage')&&document.getElementById('tgCoverage').checked){
+  }else if(covOn()){
     // The density overlay is a magma raster of iNaturalist record density, not the priority ramp — show its own scale.
     ml.innerHTML='<div class="ramp magma"></div><div class="lab"><span>'+t('density_low')+'</span><span>'+t('density_high')+'</span></div><div class="hint">'+t('density_legend_hint')+'</div>';
+  }else if(climateOn()){
+    // Climate Gap is a raster baked outside this repo, so its ramp is neither of the two above:
+    // name the layer and say what the brightness means rather than paint a swatch we cannot verify.
+    ml.innerHTML='<div class="lt">'+t('climate_gap')+'</div><div class="hint">'+t('climate_legend_hint')+'</div>';
   }else{
     ml.innerHTML=GE_PRIORITY_LEGEND;updateLegendLabels();
     const lt=document.getElementById('legendtap');if(lt)lt.textContent=t(legendTapKey());
   }
 }
 
-
-
 // controls
-
-
 const taxonSel=document.getElementById('taxon');
 function rebuildTaxonOptions(){const cur=state.taxon;taxonSel.innerHTML='';
   Object.keys(FILES).forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=groupName(k);taxonSel.appendChild(o);});
@@ -1178,34 +1178,22 @@ function markPreset(name){if(!critSel||name===null)return;   // reflect the acti
 function rebuildCriteria(){if(!critSel)return;const cur=critSel.value;critSel.innerHTML='';
   PRESETS.forEach((p,i)=>{const o=document.createElement('option');o.value=String(i);o.textContent=presetName(i);o.title=presetBlurb(i);critSel.appendChild(o);});
   const ge=document.createElement('option');ge.value='ge';ge.textContent=t('crit_ge');critSel.appendChild(ge);
-
-  // Ryan edit for climate gap: add in dropdown option
   const clim=document.createElement('option');clim.value='climate';clim.textContent=t('crit_climate');critSel.appendChild(clim);
-
   if(cur)critSel.value=cur;}
 rebuildCriteria();
 function applyChallenge(p){const i=PRESETS.indexOf(p);window.__activePreset=i;
   applyWeights(p.w,presetName(i));state.project=p.proj;
   const cb=document.getElementById('challengeBlurb');if(cb)cb.innerHTML=presetBlurb(i)+' <a href="https://www.inaturalist.org/projects/'+p.proj+'" target="_blank" rel="noopener" style="color:var(--acc);white-space:nowrap">'+t('join')+'</a>';}
-
-
-// Ryan edit to critSel.onchange to integrate climate gap:
-if(critSel)critSel.onchange=()=>{const v=critSel.value, ge=document.getElementById('tgGettingEven'), clim=document.getElementById('tgClimateGap');
+if(critSel)critSel.onchange=()=>{const v=critSel.value;
   if(v==='ge'){
-    if(clim&&clim.checked){clim.checked=false;clim.dispatchEvent(new Event('change'));}
     if(state.taxon!=='All biodiversity'&&FILES['All biodiversity']){taxonSel.value='All biodiversity';taxonSel.onchange();}
-    if(ge&&!ge.checked){ge.checked=true;ge.dispatchEvent(new Event('change'));}
+    setOverlay('gettingeven');
   }else if(v==='climate'){
-    if(ge&&ge.checked){ge.checked=false;ge.dispatchEvent(new Event('change'));}
-    if(clim&&!clim.checked){clim.checked=true;clim.dispatchEvent(new Event('change'));}
+    setOverlay('climate');
   }else{
-    if(ge&&ge.checked){ge.checked=false;ge.dispatchEvent(new Event('change'));}
-    if(clim&&clim.checked){clim.checked=false;clim.dispatchEvent(new Event('change'));}
+    if(geActive()||climateOn())setOverlay('priority');
     applyChallenge(PRESETS[+v]);
   }};
-
-
-
 applyChallenge(PRESETS[0]);
 
 const bmSel=document.getElementById('basemap');
@@ -1213,10 +1201,9 @@ const bmSel=document.getElementById('basemap');
 const MAP_STYLES=[['Standard','style_standard'],['Satellite','style_satellite'],['Terrain','style_terrain'],['__inat__','style_inat_density']];
 function rebuildStyles(){const cur=bmSel.value||'Standard';bmSel.innerHTML='';MAP_STYLES.forEach(([v,k])=>{const o=document.createElement('option');o.value=v;o.textContent=t(k);bmSel.appendChild(o);});bmSel.value=cur;}
 rebuildStyles();
-bmSel.onchange=()=>{const v=bmSel.value, cov=document.getElementById('tgCoverage');
-  if(v==='__inat__'){setBase('Light');if(cov&&!cov.checked){cov.checked=true;cov.dispatchEvent(new Event('change'));}}
-  else{setBase(v);if(cov&&cov.checked){cov.checked=false;cov.dispatchEvent(new Event('change'));}}};
-let covActive=false;
+bmSel.onchange=()=>{const v=bmSel.value;
+  if(v==='__inat__'){setBase('Light');setOverlay('coverage');}
+  else{setBase(v);if(covOn())setOverlay('priority');}};
 // dec25 100 m density is served as local raster PMTiles (issue #10): the magma colormap
 // (rescale 0,10) is baked into transparent WEBP tiles so the overlay sharpens as you zoom
 // to ~300 m, where the 1 km COG via TiTiler stayed coarse. Fungi has no dec25 layer ->
@@ -1254,11 +1241,7 @@ function setGridFill(){
   ['grid25','grid5'].forEach(id=>{if(map.getLayer(id))map.removeLayer(id);});
   if(map.getSource('cells5'))map.removeSource('cells5');
   if(geActive())return;   // Getting Even paints its own categorical vector fill
-
-  // Ryan climate gap edit: same as getting even, replaces grid
-  if(climateActive)return;   // Climate Gap raster replaces the grid fill too
-
-  const cov=document.getElementById('tgCoverage');if(cov&&cov.checked)return;   // density overlay replaces the grid fill
+  if(covOn()||climateOn())return;   // the density and Climate Gap rasters replace the grid fill
   if(!markers.length)return;
   // 25 km tier: feature-state colour on the existing 23k-cell source (same mechanism Getting Even uses).
   map.addLayer({id:'grid25',type:'fill',source:'cells',maxzoom:TIER_SWITCH_Z,paint:{
@@ -1308,11 +1291,11 @@ const COVPM=['All','Amphibia','Aves','Insecta','Mammalia','Plantae','Reptilia','
 // MapLibre overzooms past it; the magma alpha is baked in, so it composites straight over the basemap.
 let _pmReg=false;
 function ensurePM(){if(_pmReg)return;_pmReg=true;maplibregl.addProtocol('pmtiles',new pmtiles.Protocol().tile);}
-function removeCov(){if(map.getLayer('cov'))map.removeLayer('cov');if(map.getSource('cov'))map.removeSource('cov');covActive=false;}
+function removeCov(){if(map.getLayer('cov'))map.removeLayer('cov');if(map.getSource('cov'))map.removeSource('cov');}
 function setCoverage(){
   if(!_mapLoaded){whenMap(setCoverage);return;}
   removeCov();
-  if(!document.getElementById('tgCoverage').checked){updateOpacityControl();return;}
+  if(!covOn()){updateOpacityControl();return;}
   const ct=COVPM.includes(state.taxon)?state.taxon:'All';
   const attr='iNaturalist density &copy; Biodiversit\u00e9 Qu\u00e9bec';
   if(state.taxon==='Fungi'){   // no dec25 layer -> remote 1 km COG
@@ -1322,52 +1305,35 @@ function setCoverage(){
     map.addSource('cov',{type:'raster',url:'pmtiles://'+PM_BASE+'/density_'+ct+'.pmtiles',tileSize:256,attribution:attr});
   }
   map.addLayer({id:'cov',type:'raster',source:'cov',paint:{'raster-opacity':covOpacity}},map.getLayer(CELL_LAYER)?CELL_LAYER:undefined);
-  covActive=true;
   updateOpacityControl();
 }
+// Climate Gap: one PMTiles raster, no per-taxon variant. Same shape as setCoverage above — read
+// `overlay`, tear the layer down, rebuild it only if this overlay is the active one. It also hides
+// the cell fill, because the raster covers the same ground and the two would read as one muddy layer.
+function setClimate(){
+  if(!_mapLoaded){whenMap(setClimate);return;}
+  if(map.getLayer('climate-gap'))map.removeLayer('climate-gap');
+  if(map.getSource('climate-gap'))map.removeSource('climate-gap');
+  if(map.getLayer(CELL_LAYER))map.setLayoutProperty(CELL_LAYER,'visibility',climateOn()?'none':'visible');
+  if(!climateOn()){updateOpacityControl();return;}
+  ensurePM();
+  map.addSource('climate-gap',{type:'raster',url:'pmtiles://'+PM_BASE+'/climate_gap.pmtiles',tileSize:256});
+  map.addLayer({id:'climate-gap',type:'raster',source:'climate-gap',paint:{'raster-opacity':climateOpacity}});
+  updateOpacityControl();
+}
+function setClimateOpacity(v){climateOpacity=v;if(_mapLoaded&&map.getLayer('climate-gap'))map.setPaintProperty('climate-gap','raster-opacity',v);}
 // #39: the opacity slider drives the data overlay when one is active (so it fades the magma to
 // reveal road/water/place context), else it falls back to basemap brightness. Switches label,
 // aria-label, slider value + % readout to match the active target.
 function gridOverlayActive(){return _mapLoaded&&!!(map.getLayer('grid25')||map.getLayer('grid5'));}
-
-
-// Ryan edit to dataOverlayActive() : integrate climate gap layer
-function dataOverlayActive(){return covActive||climateActive||gridOverlayActive();}
-
-
+function dataOverlayActive(){return covOn()||climateOn()||gridOverlayActive();}
 function setBaseOpacity(v){baseOpacity=v;if(_mapLoaded&&map.getLayer('basemap'))map.setPaintProperty('basemap','raster-opacity',v);}
 function setCovOpacity(v){covOpacity=v;if(_mapLoaded&&map.getLayer('cov'))map.setPaintProperty('cov','raster-opacity',v);}
-
-
-
-
-// Ryan edit: add functionality of climate gap layer
-function setClimateOpacity(v){climateOpacity=v;if(_mapLoaded&&map.getLayer('climate-gap'))map.setPaintProperty('climate-gap','raster-opacity',v);}
-function removeClimateGapLayer(){
-  if(map.getLayer('climate-gap'))map.removeLayer('climate-gap');
-  if(map.getSource('climate-gap'))map.removeSource('climate-gap');
-  climateActive=false;
-}
-function addClimateGapLayer(){
-  if(!_mapLoaded){whenMap(addClimateGapLayer);return;}
-  removeClimateGapLayer();
-  ensurePM();
-  map.addSource('climate-gap',{type:'raster',url:'pmtiles://'+PM_BASE+'/climate_gap.pmtiles',tileSize:256});
-  map.addLayer({id:'climate-gap',type:'raster',source:'climate-gap',paint:{'raster-opacity':climateOpacity}});
-  climateActive=true;
-}
-
-
-
 function setGridOpacity(v){
   gridOpacity=v;
   if(_mapLoaded&&map.getLayer('grid25'))map.setPaintProperty('grid25','fill-opacity',v);
   if(_mapLoaded&&map.getLayer('grid5'))map.setPaintProperty('grid5','fill-opacity',v);
 }
-
-
-
-// Ryan edit: edit the line for const v (value) to reflect climate gap insertion. 
 function updateOpacityControl(){
   const sl=document.getElementById('baseop'),lab=document.getElementById('bople'),val=document.getElementById('bopv');
   if(!sl||!lab||!val)return;
@@ -1375,7 +1341,7 @@ function updateOpacityControl(){
   const row=document.getElementById('opacityRow');
   if(row)row.style.display=ov?'':'none';   // #46(b): the slider only appears with a data overlay; lock basemap brightness at 100% otherwise
   if(!ov)setBaseOpacity(1);
-  const v=ov?(covActive?covOpacity:climateActive?climateOpacity:gridOpacity):baseOpacity;
+  const v=ov?(covOn()?covOpacity:climateOn()?climateOpacity:gridOpacity):baseOpacity;
   sl.value=v;
   lab.textContent=t(ov?'data_opacity':'map_brightness');
   sl.setAttribute('aria-label',t(ov?'aria_data_opacity':'aria_map_brightness'));
@@ -1383,40 +1349,10 @@ function updateOpacityControl(){
   sl.setAttribute('data-i18n-aria',ov?'aria_data_opacity':'aria_map_brightness');
   val.textContent=Math.round(v*100)+'%';
 }
-
-
-// Ryan edit to tgCoverage listener: integrate climate gap layer
-document.getElementById('tgCoverage').addEventListener('change',e=>{
-  if(e.target.checked){document.getElementById('tgGettingEven').checked=false;
-    if(document.getElementById('tgClimateGap').checked){document.getElementById('tgClimateGap').checked=false;removeClimateGapLayer();map.setLayoutProperty(CELL_LAYER,'visibility','visible');recolour();}}
-  updateLegend();setCoverage();recolour();
-  if(!e.target.checked&&bmSel.value==='__inat__'){bmSel.value='Standard';setBase('Standard');}}); // coverage turned off elsewhere (e.g. GE) -> reset the style dropdown
-
-// Ryan edit to this listener to integrate climate gap layer
-document.getElementById('tgGettingEven').addEventListener('change',e=>{
-  if(e.target.checked){document.getElementById('tgCoverage').checked=false;
-    if(document.getElementById('tgClimateGap').checked){document.getElementById('tgClimateGap').checked=false;removeClimateGapLayer();map.setLayoutProperty(CELL_LAYER,'visibility','visible');recolour();}}
-  loadGE().then(()=>{setCoverage();updateLegend();recolour();});});
-
-
-// Ryan edit for climate gap layer: insert new listener for climate gap
-document.getElementById('tgClimateGap').addEventListener('change',e=>{
-  if(e.target.checked){
-    document.getElementById('tgCoverage').checked=false;
-    document.getElementById('tgGettingEven').checked=false;
-    climateActive=true;
-    setGridFill();
-    map.setLayoutProperty(CELL_LAYER,'visibility','none');
-    addClimateGapLayer();
-  }else{
-    removeClimateGapLayer();
-    map.setLayoutProperty(CELL_LAYER,'visibility','visible');
-    recolour();
-  }
-  updateOpacityControl();
-});
-
-
+// every overlay checkbox is wired the same way, so wire them from the same table setOverlay reads.
+// setOverlay writes .checked directly, and a scripted .checked fires no 'change', so this cannot loop.
+for(const[kind,id]of Object.entries(OVERLAY_TOGGLE)){const el=document.getElementById(id);
+  if(el)el.addEventListener('change',e=>setOverlay(e.target.checked?kind:'priority'));}
 {const z=document.getElementById('tgZoomScale');if(z)z.addEventListener('change',recolour);}
 {const c=document.getElementById('tgCanadaOnly');if(c)c.addEventListener('change',()=>{loadUS().then(recolour);});}
 map.on('moveend',()=>{refreshCells5();});
@@ -1431,17 +1367,12 @@ map.on('moveend',()=>{refreshCells5();});
   const setAria=c=>{const lab=t(c?'show_panel':'hide_panel');tog.setAttribute('aria-label',lab);tog.title=lab;tog.textContent=c?'›':'‹';};
   setAria(false);
   tog.addEventListener('click',()=>{const c=document.body.classList.toggle('panel-collapsed');setAria(c);setTimeout(()=>{try{map.resize();}catch(e){}},220);});})();
-
-
-// Ryan edit: edit the input handler for baseop slider to integrate climate gap layer
 document.getElementById('baseop').addEventListener('input',e=>{const v=parseFloat(e.target.value);
-  if(covActive)setCovOpacity(v);
-  else if(climateActive)setClimateOpacity(v);
-  else if(gridOverlayActive())setGridOpacity(v);
+  if(covOn())setCovOpacity(v);   // #39: fade the magma data
+  else if(climateOn())setClimateOpacity(v);
+  else if(gridOverlayActive())setGridOpacity(v);   // priority grid opacity
   else setBaseOpacity(v);
   document.getElementById('bopv').textContent=Math.round(v*100)+'%';});
-
-
 document.getElementById('maxleg').addEventListener('change',e=>{state.maxLeg=parseFloat(e.target.value);replan();});
 document.getElementById('minratio').addEventListener('change',e=>{state.minRatio=parseFloat(e.target.value);replan();});
 
