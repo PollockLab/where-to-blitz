@@ -438,6 +438,8 @@ jobs:
           name: rebuilt-site-${{ needs.aggregate.outputs.inputs_hash }}
           path: artifacts
       - name: Assemble _site
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           mkdir -p _site/tiles _site/cluster_results/ca
@@ -447,6 +449,10 @@ jobs:
           done
           # density tiles carry a density_ prefix (matches the app's tiles/density_<Taxon>.pmtiles)
           for f in density/*.pmtiles; do cp "$f" "_site/tiles/density_$(basename "$f")"; done
+          # Climate Gap is a single raster on the release, not a per-taxon density tile, so the
+          # loop above never picks it up. Without this the criterion serves a 404 and blanks the map.
+          gh release download grid-outputs-v1 --pattern "climate_gap.pmtiles" --dir _site/tiles --repo "$GITHUB_REPOSITORY" --clobber
+          test -s _site/tiles/climate_gap.pmtiles
           cp artifacts/cluster_results/ca/*.json _site/cluster_results/ca/
           cp -R artifacts/cluster_results/ca/values _site/cluster_results/ca/
           du -sh _site
@@ -507,6 +513,8 @@ jobs:
       - name: Rebuild webapp
         run: python build_webapp.py
       - name: Assemble _site
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           mkdir -p _site/tiles _site/cluster_results/ca
@@ -517,6 +525,10 @@ jobs:
           for f in density/*.pmtiles; do
             [ -f "$f" ] && cp "$f" "_site/tiles/density_$(basename "$f")" || true
           done
+          # Climate Gap is a single raster on the release, not a per-taxon density tile, so the
+          # loop above never picks it up. Without this the criterion serves a 404 and blanks the map.
+          gh release download grid-outputs-v1 --pattern "climate_gap.pmtiles" --dir _site/tiles --repo "$GITHUB_REPOSITORY" --clobber
+          test -s _site/tiles/climate_gap.pmtiles
           cp cluster_results/ca/*.json _site/cluster_results/ca/
           cp -R cluster_results/ca/values _site/cluster_results/ca/
           du -sh _site
