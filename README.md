@@ -45,6 +45,22 @@ deterministic (no timestamps/randomness) — same inputs produce a byte-identica
 - `cluster_results/ca/webapp_data_<group>.json` — per-group cell data, fetched at runtime.
 - `cluster_results/ca/ca_density_*.tif` — density rasters (gitignored, regenerable via the `build_*_ca.py` scripts).
 
+### How it fits together
+
+No server, no database: Python writes files, the browser reads them. The five map layers are
+not the same kind of thing, which is the one non-obvious part:
+
+| Layer | Served as | Built by |
+|---|---|---|
+| Base map | XYZ raster tiles (CARTO / ArcGIS / OpenTopoMap) | — |
+| Cell geometry | GeoJSON polygons in the LAEA lattice | `grid_lattice.py` |
+| Cell colours | `values/*.png`, one pixel per cell, painted onto those polygons | `build_grid_values.py` |
+| Density overlay | Raster PMTiles under `density/`, served same-origin | `build_density_pmtiles.py` |
+| Density, Fungi only | Live TiTiler over a 1 km COG on Arbutus | — |
+
+Why colours are a PNG and not tiles: `build_grid_values.py` docstring (#116).
+Why Fungi differs: `build_density_pmtiles.py` docstring.
+
 ### Run it locally
 
 A fresh clone looks empty on the map: `cluster_results/ca/*.json` is in git, but `tiles/` and
@@ -53,7 +69,7 @@ what the app fetches, so nothing needs renaming:
 
 ```bash
 gh release download grid-outputs-v1 --repo PollockLab/where-to-blitz \
-  --dir tiles --pattern "climate_gap.pmtiles" --pattern "density_All.pmtiles" --clobber
+  --dir tiles --pattern "density_All.pmtiles" --clobber
 gh release download grid-outputs-v1 --repo PollockLab/where-to-blitz \
   --pattern grid_values.tar.gz --clobber
 mkdir -p cluster_results/ca/values && tar -xzf grid_values.tar.gz -C cluster_results/ca/values
@@ -71,7 +87,7 @@ vector grid still draws, which is what makes it confusing: only the rasters go m
 server in one line — it must print `206`:
 
 ```bash
-curl -s -o /dev/null -w '%{http_code}\n' -r 0-99 http://localhost:8765/tiles/climate_gap.pmtiles
+curl -s -o /dev/null -w '%{http_code}\n' -r 0-99 http://localhost:8765/tiles/density_All.pmtiles
 ```
 
 Opening `index.html` as a `file://` URL does not work either; use the local server.
