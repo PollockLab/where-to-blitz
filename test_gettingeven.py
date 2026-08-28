@@ -149,3 +149,38 @@ def test_only_the_too_sparse_cells_are_grey():
             assert r[2] >= 0 and r[3] is not None, f"cell with {t} records has no group"
         elif t < floor:
             assert r[2] == -1 and r[3] is None, f"cell with {t} records was scored anyway"
+
+
+def test_methodology_quotes_the_real_thin_cell_counts():
+    """METHODOLOGY prices the record floor in exact cell counts, so a rebuild must move them.
+
+    The claim it supports is that 18% of the coloured map is decided by the national mean and
+    sd rather than by the cell. If a rebuild changes the lattice or the density vintage and
+    the prose keeps the old counts, the doc understates or overstates how much of the map is a
+    tie-break, and nothing else here reads those sentences.
+    """
+    doc = (HERE / "METHODOLOGY.md").read_text()
+    if "thin cell's colour means" not in doc:
+        pytest.skip("METHODOLOGY does not price the floor")
+    ge = _ge()
+    if ge.get("richness_gate"):
+        pytest.skip(f"built with the richness gate on: {ge['richness_gate']}")
+    total = _per_group_records()["All biodiversity"]
+    floor = ge.get("min_records", 1)
+    rows = ge["gettingeven"]
+
+    scored = [i for i, t in enumerate(total) if t >= floor]
+    thin = [i for i in scored if total[i] == 1]
+    named = {}
+    for i in thin:
+        named[ge["cats"][rows[i][2]]] = named.get(ge["cats"][rows[i][2]], 0) + 1
+
+    assert f"{len(thin):,} of the {len(scored):,} scored cells" in doc, (
+        f"METHODOLOGY should say {len(thin):,} of the {len(scored):,} scored cells hold one record"
+    )
+    # The tie-break claim is that every one-record cell lands on the same two groups.
+    assert set(named) == {"Plants", "Invertebrates"}, (
+        f"one-record cells now resolve to {sorted(named)}, so the two names in the doc are wrong"
+    )
+    for cat, n in named.items():
+        assert f"{cat} ({n:,})" in doc, f"METHODOLOGY should say {cat} ({n:,})"
