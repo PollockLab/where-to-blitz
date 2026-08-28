@@ -256,7 +256,10 @@ size, but it is a different estimator from the published one and it rewrites wel
 too: on the 3,486 cells holding 100 records or more, a 3x3 pooled priority matches the unpooled one
 on 58.8%, a 5x5 on 51.0%.
 
-The floor bites hardest at the tier the map shows when zoomed in. At 5 km, 26.1% of the 96,275 scored cells hold one record and 59.0% hold fewer than ten, against 17.6% and 39.8% at 25 km; the median scored cell holds 5 records at 5 km and 22 at 25 km. `probe_gettingeven.py` produces all of these numbers.
+The floor bites hardest at the tier the map shows when zoomed in. At 5 km, 26.1% of the 96,275 scored cells hold one record and 59.0% hold fewer than ten, against 17.6% and 39.8% at 25 km; the median scored cell holds 5 records at 5 km and 22 at 25 km. The neighbour statistic holds there too, and more strongly: 53.5% of the 80,459 comparable
+5 km cells differ from their majority against a 67.2% null, and the one-record cells
+disagree least of any band at 49.6%. `probe_gettingeven.py` produces all of these numbers,
+recomputing the 25 km figures from the rasters as a check on the JSON path.
 
 **Not yet transferred:** Eckert also drops a group from the running where its modelled richness sits
 in the national bottom quartile — no point sending herpers where there are few herps. Those three

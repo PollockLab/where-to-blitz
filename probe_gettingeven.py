@@ -144,3 +144,69 @@ for res in (25000, 5000):
     n = n[p >= 0]
     print(f"  {res // 1000:>2} km: scored {len(n):>7,}   one record {100 * (n == 1).mean():4.1f}%"
           f"   under ten {100 * (n < 10).mean():4.1f}%   median {np.median(n):.0f} records")
+
+
+def tier(res):
+    """Priority, record count and scored mask for a built tier, straight off the rasters.
+
+    Unscored cells are nodata in gettingeven.tif, so a plain astype(int) turns them into
+    garbage category indices that then vote. Mask on isfinite before casting.
+    """
+    with rasterio.open(f"{D}/grid_{res}m/gettingeven.tif") as s:
+        p = s.read(1).astype(float)
+    with rasterio.open(f"{D}/grid_{res}m/All_biodiversity.tif") as s:
+        n = s.read(7).astype(float)
+    ok = np.isfinite(p) & (p >= 0) & np.isfinite(n)
+    return np.where(ok, p, -1).astype(int), np.nan_to_num(n), ok
+
+
+def neighbour_disagreement(pri, ok, draws=20, seed=0):
+    """Share differing from the eight-neighbour majority, and the label-permutation null."""
+    def majority(p):
+        v = np.zeros((len(CATS), *p.shape))
+        n = np.zeros(p.shape)
+        for dr, dc in NEIGH:
+            sp = np.roll(np.roll(p, dr, 0), dc, 1)
+            so = np.roll(np.roll(ok, dr, 0), dc, 1).copy()
+            if dr:
+                (so[:1] if dr > 0 else so[-1:])[:] = False
+            if dc:
+                (so[:, :1] if dc > 0 else so[:, -1:])[:] = False
+            n += so
+            for i in range(len(CATS)):
+                v[i] += so & (sp == i)
+        return np.argmax(v, 0), n
+
+    m, n = majority(pri)
+    comp = ok & (n >= MIN_VOTERS)
+    dis = comp & (pri != m)
+    gen = np.random.default_rng(seed)
+    nul = []
+    for _ in range(draws):
+        q = pri.copy()
+        shuffled = pri[ok].copy()
+        gen.shuffle(shuffled)
+        q[ok] = shuffled
+        mq, _ = majority(q)
+        nul.append((comp & (q != mq))[comp].mean())
+    return comp, dis, np.array(nul)
+
+
+# The 25 km run above is built from the per-group JSONs. Rebuilding it from the rasters
+# reproduces it and reaches the 5 km tier, where the thin cells are a quarter of the map.
+print("\nneighbour disagreement per tier, from the rasters")
+for res in (25000, 5000):
+    try:
+        pri, n, ok = tier(res)
+    except rasterio.RasterioIOError:
+        print(f"  {res // 1000:>2} km: not built")
+        continue
+    comp, dis, nul = neighbour_disagreement(pri, ok)
+    print(f"  {res // 1000:>2} km: {comp.sum():,} comparable cells, {100 * dis[comp].mean():.1f}% "
+          f"differ, null {100 * nul.mean():.1f}% +/- {100 * nul.std():.1f}%")
+    for a, b in zip(rb, rb[1:]):
+        m = comp & (n >= a) & (n < b)
+        if not m.any():
+            continue
+        lab = f"{a}" if b == a + 1 else (f"{a}+" if b > 10**8 else f"{a}-{b - 1}")
+        print(f"    {lab:>13}  {m.sum():7,}  {100 * dis[m].mean():5.1f}%")
