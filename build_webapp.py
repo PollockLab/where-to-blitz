@@ -6,6 +6,7 @@ start point + flexible time budget (minutes / hours / days); real driving routes
 option. Answers "from here, with this much time, where do I maximise my impact?"."""
 
 import json
+import os
 
 # Canada-wide: fetch per-group at runtime (national grid fetched per-group at runtime is too big to inline).
 # Inject only the group->filename map; the browser fetches each group's JSON on demand.
@@ -67,6 +68,11 @@ COMPARE_ENABLED = False  # Issue #71: the "Compare goals" view is stashed (kept 
 with open("webapp/index.html") as _fh:
     HTML = _fh.read()
 
+# CARTO's raster basemaps watermark every tile unless the request carries our key. It is a
+# client-side key by nature (it ships in the page), so it is a repo secret rather than a
+# committed string: CI passes CARTO_API_KEY in, a local build leaves it empty and watermarked.
+CARTO_API_KEY = os.environ.get("CARTO_API_KEY", "")
+
 
 out = (
     HTML.replace("__FILES__", json.dumps(FILES, separators=(",", ":")))
@@ -74,6 +80,7 @@ out = (
     .replace("__PRESETS__", json.dumps(PRESETS))
     .replace("__DEFAULT__", json.dumps(DEFAULT))
     .replace("__PMTILES_BASE__", PMTILES_BASE)
+    .replace("__CARTO_KEY__", CARTO_API_KEY)
     .replace("__TIER_SWITCH_Z__", str(TIER_SWITCH_Z))
     # The app snaps clicks to the same lattice the tiles are cut on. These were hardcoded in
     # the template, so the clickable cells could drift off the raster without anything saying so.

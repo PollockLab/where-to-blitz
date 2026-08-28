@@ -887,7 +887,7 @@ function colour(t){t=Math.max(0,Math.min(1,t));const x=t*(RAMP.length-1),i=Math.
 function fmth(h){if(h>=24){const d=Math.floor(h/24),hr=Math.round(h%24);return d+'d'+(hr?(' '+hr+'h'):'');}const m=Math.round(h*60);return m>=60?Math.floor(m/60)+'h'+String(m%60).padStart(2,'0'):m+' min';}
 function haversine(a,b,c,d){const R=6371,r=Math.PI/180,x=(c-a)*r,y=(d-b)*r,h=Math.sin(x/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin(y/2)**2;return 2*R*Math.asin(Math.sqrt(h));}
 
-const ATTR='&copy; OpenStreetMap contributors · routing &copy; OSRM';
+const ATTR='&copy; <a href="https://carto.com/attributions">CARTO</a> · &copy; OpenStreetMap contributors · routing &copy; OSRM';   // CARTO attribution is a condition of the free basemap tier
 // MapLibre zoom = Leaflet zoom - 1 (256-px raster tiles): the old Leaflet zoom 4 maps to 3 here.
 const map=new maplibregl.Map({container:'map',style:{version:8,sources:{},layers:[]},center:[-96,58],zoom:3,minZoom:1,maxZoom:18,attributionControl:false});
 map.addControl(new maplibregl.AttributionControl({compact:true,customAttribution:ATTR}),'bottom-right');
@@ -938,11 +938,15 @@ document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;
 // (round-robined) and {r} retina is dropped. The dead vector-basemap branch (#layertoggles, never wired to a
 // real style) is gone with the maplibre-gl-leaflet shim.
 const SUB=(u,s)=>s?s.split('').map(c=>u.replace('{s}',c)):[u];
+// CARTO raster basemaps need an API key or they serve a watermarked tile. build_webapp.py injects
+// it from the CARTO_API_KEY secret at deploy time; empty in a local build, which just re-watermarks.
+const CARTO_KEY='__CARTO_KEY__';
+const CARTO=u=>CARTO_KEY?u+'?key='+CARTO_KEY:u;
 const BASEMAPS={
-  "Standard":{tiles:SUB('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png','abcd'),maxzoom:20},
+  "Standard":{tiles:SUB(CARTO('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'),'abcd'),maxzoom:20},
   "Satellite":{tiles:SUB('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'),maxzoom:19},
   "Terrain":{tiles:SUB('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png','abc'),maxzoom:17},
-  "Light":{tiles:SUB('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png','abcd'),maxzoom:20}   // base under the iNaturalist-density style; not a dropdown choice
+  "Light":{tiles:SUB(CARTO('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png'),'abcd'),maxzoom:20}   // base under the iNaturalist-density style; not a dropdown choice
 };
 let baseOpacity=1, gridOpacity=0.5, covOpacity=0.8;   // default grid opacity keeps basemap context visible
 function setBase(name){

@@ -304,6 +304,9 @@ jobs:
         run: python build_provenance.py
       - name: Rebuild webapp (index.html)
         if: ${{ steps.check_artifact.outputs.found != 'true' }}
+        env:
+          # Unset in forks and in local builds; the app then falls back to watermarked CARTO tiles.
+          CARTO_API_KEY: ${{ secrets.CARTO_API_KEY }}
         run: python build_webapp.py
       - name: Upload rebuilt site artifacts
         if: ${{ steps.check_artifact.outputs.found != 'true' }}
@@ -505,6 +508,8 @@ jobs:
       - name: Gate artefact invariants
         run: python -m pytest test_artifact_invariants.py -q
       - name: Rebuild webapp
+        env:
+          CARTO_API_KEY: ${{ secrets.CARTO_API_KEY }}
         run: python build_webapp.py
       - name: Assemble _site
         run: |
