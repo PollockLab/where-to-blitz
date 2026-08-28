@@ -128,3 +128,19 @@ empty=onmask&(T<1)
 print("empty cells:",int(empty.sum()))
 for k in (3,5,7):
     print(f"   with a >=30-record cell inside {k}x{k}:", int((empty&(pool((T>=30).astype(float),k)>0)).sum()))
+
+# The app shows 25 km zoomed out and 5 km zoomed in, so the floor matters most at the
+# tier a user looks at closest. n_train is band 7 of the per-group grid rasters.
+print("\nhow thin the scored cells are, per tier")
+for res in (25000, 5000):
+    try:
+        with rasterio.open(f"{D}/grid_{res}m/All_biodiversity.tif") as s:
+            n = s.read(7).astype(float)
+        with rasterio.open(f"{D}/grid_{res}m/gettingeven.tif") as s:
+            p = s.read(1)
+    except rasterio.RasterioIOError as e:
+        print(f"  {res // 1000:>2} km: not built ({e.__class__.__name__})")
+        continue
+    n = n[p >= 0]
+    print(f"  {res // 1000:>2} km: scored {len(n):>7,}   one record {100 * (n == 1).mean():4.1f}%"
+          f"   under ten {100 * (n < 10).mean():4.1f}%   median {np.median(n):.0f} records")

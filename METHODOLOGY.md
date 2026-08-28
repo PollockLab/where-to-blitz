@@ -254,7 +254,9 @@ null that keeps the national mix of groups and destroys the spatial arrangement,
 by 18.8 points. Pooling a cell with its neighbours would restore what a census district did by its
 size, but it is a different estimator from the published one and it rewrites well-sampled cells
 too: on the 3,486 cells holding 100 records or more, a 3x3 pooled priority matches the unpooled one
-on 58.8%, a 5x5 on 51.0%. `probe_gettingeven.py` produces these numbers.
+on 58.8%, a 5x5 on 51.0%.
+
+The floor bites hardest at the tier the map shows when zoomed in. At 5 km, 26.1% of the 96,275 scored cells hold one record and 59.0% hold fewer than ten, against 17.6% and 39.8% at 25 km; the median scored cell holds 5 records at 5 km and 22 at 25 km. `probe_gettingeven.py` produces all of these numbers.
 
 **Not yet transferred:** Eckert also drops a group from the running where its modelled richness sits
 in the national bottom quartile — no point sending herpers where there are few herps. Those three
