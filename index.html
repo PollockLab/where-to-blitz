@@ -377,7 +377,7 @@ const I18N={
       <li>That share, divided by the cell's overall recording rate, puts an average group at <b style="color:var(--ink)">1</b>.</li>
       <li>Groups well below 1 are under-recorded next to their neighbours. Normalising is what surfaces the real gaps even where everything is under-recorded — one cell can't hold a whole region's diversity.</li>
       </ul>
-      The map colours each cell by its worst group; tap for the full ranking, tap a group to map it.`,
+      The map's colours come from a second, offline pass over the whole grid: each group's share of a cell's records, standardised against that group's share across every other cell, and the cell takes the lowest-scoring group. That is the 2025 <i>Getting Even</i> calculation, on these cells. Grey means too few records to judge. Tap for the live ranking, tap a group to map it.`,
     ge_cats:["Fishes","Fungi","Reptiles & Amphibians","Invertebrates","Mammals","Plants"],
     ge_all:"All groups under-sampled",
     canada_only:"Canada only",
@@ -517,7 +517,7 @@ const I18N={
       <li>Cette part, divisée par le taux d'enregistrement global de la cellule, place un groupe moyen à <b style="color:var(--ink)">1</b>.</li>
       <li>Les groupes bien en dessous de 1 sont sous-documentés par rapport à leurs voisins. C'est cette normalisation qui fait ressortir les vraies lacunes même là où tout est sous-documenté — une cellule ne peut contenir toute la diversité d'une région.</li>
       </ul>
-      La carte colore chaque cellule selon son groupe le plus faible; touchez pour le classement complet, touchez un groupe pour le cartographier.`,
+      Les couleurs de la carte proviennent d'un second calcul, hors ligne, sur toute la grille&nbsp;: la part de chaque groupe dans les observations d'une cellule, normalisée par rapport à la part de ce groupe dans toutes les autres cellules, la cellule prenant le groupe au score le plus bas. C'est le calcul <i>Combler l'écart</i> de 2025, appliqué à ces cellules. Le gris signifie trop peu d'observations pour trancher. Touchez pour le classement en direct, touchez un groupe pour le cartographier.`,
     ge_cats:["Poissons","Champignons","Reptiles et amphibiens","Invertébrés","Mammifères","Plantes"],
     ge_all:"Tous sous-échantillonnés",
     canada_only:"Canada seulement",

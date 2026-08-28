@@ -18,6 +18,17 @@ CA = HERE / "cluster_results" / "ca"
 TEMPLATE = HERE / "webapp" / "index.html"
 GE_FILE = CA / "webapp_data_gettingeven.json"
 
+# Restated, not imported: a test that reads the builder's own grouping cannot catch the builder
+# regrouping taxa (Mollusca quietly leaving Invertebrates, say).
+GE_GROUPS = {
+    "Fishes": ["Actinopterygii"],
+    "Fungi": ["Fungi"],
+    "Reptiles & Amphibians": ["Amphibia", "Reptilia"],
+    "Invertebrates": ["Arachnida", "Insecta", "Mollusca"],
+    "Mammals": ["Mammalia"],
+    "Plants": ["Plantae"],
+}
+
 
 def _gekey(lat, lon):
     """The JS key, reproduced: Number.toFixed(3) on both coordinates."""
@@ -77,3 +88,64 @@ def test_categories_match_the_palette_and_both_languages():
     assert [c.strip().strip('"') for c in labels[0].split(",")] == cats, (
         "the English ge_cats no longer matches the order the data file was built in"
     )
+
+
+def _per_group_records():
+    """Every group's per-cell record count, straight from the files the app loads."""
+    index = json.loads((CA / "index.json").read_text())
+    ntr = index["row_format"].index("n_train")
+
+    def column(group):
+        rows = json.loads((CA / index["files"][group]).read_text())[group]
+        return [r[ntr] for r in rows]
+
+    return {g: column(g) for g in index["files"]}
+
+
+def test_the_shipped_layer_is_the_published_metric():
+    """Re-derive Eckert's metric independently and demand the shipped file agrees, cell by cell.
+
+    The layer's whole claim is that it is the 2025 Getting Even calculation on this year's
+    cells. Nothing else here can tell a z-score of local share from the share-ratio heuristic
+    it replaced: both produce a plausible six-colour map. So the metric itself is asserted --
+    proportion, standardise per group, take the argmin -- computed here from the per-group
+    files rather than by calling the builder.
+    """
+    ge = _ge()
+    if ge.get("richness_gate"):
+        pytest.skip(f"built with the richness gate on: {ge['richness_gate']}")
+    groups = _per_group_records()
+    total = groups["All biodiversity"]
+    floor = ge.get("min_records", 1)
+    scored = [i for i, t in enumerate(total) if t >= floor]
+
+    z = []
+    for cat in ge["cats"]:
+        counts = [sum(groups[g][i] for g in GE_GROUPS[cat]) for i in range(len(total))]
+        prop = [counts[i] / total[i] for i in scored]
+        mean = sum(prop) / len(prop)
+        sd = (sum((p - mean) ** 2 for p in prop) / len(prop)) ** 0.5
+        z.append([(p - mean) / sd for p in prop])
+
+    rows = ge["gettingeven"]
+    for k, i in enumerate(scored):
+        want = min(range(len(z)), key=lambda c: z[c][k])
+        assert rows[i][2] == want, (
+            f"cell {rows[i][0]},{rows[i][1]}: layer says {ge['cats'][rows[i][2]]}, the "
+            f"published metric says {ge['cats'][want]}"
+        )
+        assert rows[i][3] == pytest.approx(z[want][k], abs=5e-4), (
+            "the shipped z is not the winning category's z-score"
+        )
+
+
+def test_only_the_too_sparse_cells_are_grey():
+    """Grey must mean "too few records to judge", not "the builder had nothing to say"."""
+    ge = _ge()
+    total = _per_group_records()["All biodiversity"]
+    floor = ge.get("min_records", 1)
+    for t, r in zip(total, ge["gettingeven"]):
+        if t >= floor and not ge.get("richness_gate"):
+            assert r[2] >= 0 and r[3] is not None, f"cell with {t} records has no group"
+        elif t < floor:
+            assert r[2] == -1 and r[3] is None, f"cell with {t} records was scored anyway"

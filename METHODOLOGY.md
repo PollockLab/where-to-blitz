@@ -225,6 +225,34 @@ ecological importance — that awaits the SDM/VOI score.
 
 ---
 
+## The Getting Even layer (#59)
+
+A separate layer, not one of the five axes: it answers *what* to record in a cell, not *where* to
+go. It is the calculation Lucas Eckert ran for the 2025 *Getting Even* challenge, moved from
+census districts onto this app's equal-area cells (`build_gettingeven.py`):
+
+1. **Proportion** — each group's share of the cell's iNaturalist records, over records of all taxa.
+2. **z-score** — that share standardised against the same group's share across every other cell,
+   one standardisation per group.
+3. **Priority** — the cell takes the group with the lowest z: the group most under-recorded *here
+   relative to how often it is recorded elsewhere*. The standardisation is the point; on raw shares
+   almost every cell comes back fungi or fish.
+
+Birds are excluded, as in the published 2025 map — eBird already covers them. Cells with no records
+are grey rather than scored; `GE_MIN_RECORDS` raises that floor, at the cost of more grey. The
+metric itself is re-derived independently and asserted cell-by-cell in `test_gettingeven.py`.
+
+**Not yet transferred:** Eckert also drops a group from the running where its modelled richness sits
+in the national bottom quartile — no point sending herpers where there are few herps. Those three
+richness rasters (`ar.richness.tif`, `mammal.richness.tif`, `plant.richness.stacks.tif`) are in the
+lab SharePoint, not in any public bucket, so the step is implemented but off: point
+`GE_RICHNESS_HERP` / `GE_RICHNESS_MAMMAL` / `GE_RICHNESS_PLANT` at them and it runs. Until then the
+shipped layer records `"richness_gate": []` and the build prints `NOT APPLIED`.
+
+The tap panel is a *different* calculation — a live iNaturalist query about the species in the cell
+versus its ~50 km neighbourhood (see "Which species to record in a cell" above). The colours come
+from this offline layer; the ranking in the panel does not.
+
 ## Honesty notes
 
 - This is a **work-in-progress prototype, not an official Blitz the Gap tool** (so flagged in-app).
@@ -251,4 +279,5 @@ ecological importance — that awaits the SDM/VOI score.
 | discover, env, urgency, travel | `build_fullgrid_ca.py` | iNat density COG (Biodiversité Québec STAC), CHELSA, Hansen, Weiss 2018 |
 | conservation | `build_atrisk_layer.py`, joined in `fullgrid_fields.py` | CAN-SAR (OSF) + GBIF occurrences |
 | staleness | iNat open-data (cluster DuckDB) → `cluster_results/ca/ca_inat_metrics.csv` | iNaturalist open-data (AWS) |
+| Getting Even | `build_gettingeven.py` | per-group iNat density COGs, via the grid build; Eckert 2025 metric |
 | composite + display | `build_webapp.py` (`impact`, `recolour`) | — |
