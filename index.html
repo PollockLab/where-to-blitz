@@ -623,7 +623,6 @@ function applyI18N(){
 function relabelDynamic(){
   // re-render the JS-built widgets whose static strings come from the dict
   if(typeof rebuildTaxonOptions==='function')rebuildTaxonOptions();
-  if(typeof rebuildObjs==='function')rebuildObjs();
   if(typeof rebuildCriteria==='function')rebuildCriteria();
   if(typeof rebuildStyles==='function')rebuildStyles();
   if(typeof rebuildModes==='function')rebuildModes();
@@ -1140,16 +1139,7 @@ taxonSel.onchange=()=>{const prev=state.taxon;state.taxon=taxonSel.value;
     .catch(()=>{state.taxon=prev;taxonSel.value=prev;if(pr){pr.dataset.idle='1';pr.innerHTML='<div class="hd" style="margin-top:10px">'+t('prospects_idle')+'</div>';}})   // load failed: revert dropdown, don't leave a half-switched map
     .finally(()=>{if(typeof showLoading==='function')showLoading(false);});};
 
-const objsDiv=document.getElementById('objs');
-function rebuildObjs(){if(!objsDiv)return;objsDiv.innerHTML='';   // issue #20 removed the fine-tune sliders; presets are the criteria selector now
-  OBJ.forEach((o,i)=>{const d=document.createElement('div');d.className='obj';
-    d.innerHTML=`<div class="top"><span class="nm">${objName(i)}</span><span class="v" id="v_${o.key}">${state.w[o.key].toFixed(2)}</span></div>
-      <div class="q">${objQ(i)}</div><input type="range" id="s_${o.key}" min="0" max="1" step="0.05" value="${state.w[o.key]}" aria-label="${objName(i)}">`;
-    objsDiv.appendChild(d);
-    d.querySelector('input').addEventListener('input',e=>{state.w[o.key]=parseFloat(e.target.value);
-      document.getElementById('v_'+o.key).textContent=state.w[o.key].toFixed(2);markPreset(null);recolour();replan();});});}
-rebuildObjs();
-function applyWeights(arr,name){OBJ.forEach((o,i)=>{state.w[o.key]=arr[i];const s=document.getElementById('s_'+o.key),v=document.getElementById('v_'+o.key);if(s)s.value=arr[i];if(v)v.textContent=arr[i].toFixed(2);});markPreset(name);recolour();updateLegendLabels();replan();}
+function applyWeights(arr,name){OBJ.forEach((o,i)=>{state.w[o.key]=arr[i];});markPreset(name);recolour();updateLegendLabels();replan();}
 // Issue #20: criteria is a dropdown (was preset chips). Getting Even is one of the options;
 // picking it forces "All biodiversity" (the layer is taxon-independent) and shows the GE map.
 const critSel=document.getElementById('criteria');

@@ -1,6 +1,6 @@
 """Builds index.html — an interactive trip planner for the Blitz the Gap
 "where should I go to record biodiversity?" map. MapLibre GL basemap (OpenStreetMap +
-style switcher); a weight slider per goal blended into a live "impact" score; a
+style switcher); a preset weight mix over the goals blended into an "impact" score; a
 start point + flexible time budget (minutes / hours / days); real driving routes
 (OSRM) with drive time, field time, and travel CO2; and a low-carbon ranking
 option. Answers "from here, with this much time, where do I maximise my impact?"."""
