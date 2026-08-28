@@ -1,14 +1,9 @@
 """Gate the METHODOLOGY validation table against the result files it claims to read.
 
 METHODOLOGY.md publishes a per-taxon table of backtest numbers and tells the reader it
-"reads straight from a committed result file". Nothing enforced that. The table sat for
-months quoting a composite (`discover` 0.8 + `env` 0.7 + `urgency` 0.3) that no shipped
-preset had used since `backtest_appscore.py` started reading `goal_presets.PRESETS`, and
-rerunning the backtest moved every cell count and every rho without touching the prose.
-
-These tests parse the markdown table and compare it to the two JSONs. Rounding is the
-table's own: rho to two decimals, yield to one. A rerun that shifts a number now fails
-here instead of quietly making the document wrong.
+"reads straight from a committed result file". These tests parse that table and compare it
+to the two JSONs. Rounding is the table's own: rho to two decimals, yield to one. A backtest
+rerun that shifts a number fails here instead of making the document silently wrong.
 """
 
 import json
@@ -76,8 +71,7 @@ def test_row_matches_the_committed_result(row):
 
 @pytest.mark.parametrize("path", [DOC, README], ids=lambda p: p.name)
 def test_headline_range_covers_every_row(path):
-    """Both documents quote one rho range and one yield range. Both must bracket the table.
-    README states the same claim as METHODOLOGY and drifted from it once already."""
+    """Both documents quote one rho range and one yield range. Both must bracket the table."""
     doc = path.read_text()
     rho = [s["scores"]["app_leakfree"]["spearman"] for s in _scores().values()]
     ratio = [s["scores"]["app_leakfree"]["eff_ratio_top_bottom"] for s in _scores().values()]
@@ -88,21 +82,20 @@ def test_headline_range_covers_every_row(path):
 
 
 def test_methodology_quotes_the_shipped_preset_weights():
-    """METHODOLOGY spells out each preset's weights in prose. That prose was wrong on all
-    three presets until this test existed."""
+    """METHODOLOGY spells out each preset's weights in prose. A weight change must move both."""
     doc = DOC.read_text()
     for p in PRESETS:
         terms = [f"`{ax}` {float(w)}" for ax, w in zip(AXES, p["w"], strict=True) if w]
         assert " + ".join(terms) in doc, f"{p['name']}: expected {' + '.join(terms)}"
-    # env is weighted nowhere, and the document must say so rather than imply it is live
-    assert all(p["w"][AXES.index("env")] == 0 for p in PRESETS)
-    assert "`env` carries weight 0 in" in doc
+    # The doc claims env is unweighted. It may say that only while it stays true.
+    unweighted = all(p["w"][AXES.index("env")] == 0 for p in PRESETS)
+    assert ("`env` carries weight 0 in" in doc) == unweighted
 
 
 def test_composite_column_would_be_a_duplicate():
-    """The dropped Composite column: the default preset is discover-only, so app_leakfree
-    IS discover_leakfree. If a preset change ever breaks that, the table needs the column
-    back and this test says so."""
+    """The table has no Composite column because the default preset is discover-only, so
+    app_leakfree IS discover_leakfree. If a preset change breaks that, the table needs the
+    column and this test says so."""
     for key, rec in _scores().items():
         s = rec["scores"]
         assert s["app_leakfree"]["spearman"] == s["discover_leakfree"]["spearman"], key

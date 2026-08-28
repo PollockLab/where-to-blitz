@@ -668,12 +668,11 @@ print(f"Average agreement — 'go where it's busy'  : {m_busy:+.2f}  (the near-e
 md(r"""
 **Two findings worth naming:**
 
-1. **The signal lives entirely in the under-sampling axis, and the default now says so.** An
-   earlier default of `0.8·discover + 0.7·env + 0.3·urgency` diluted discovery: `env` and
-   `urgency` are near-uncorrelated with *this* objective, because they optimise *other* goals by
-   design. *Spatial Gap*, the default today, is `discover` 1.0 and nothing else, so the green and
-   the blue lines in the table are one line. The remaining gap is the red one: **what the map
-   actually shows** ranks by all-time density, which is weaker than the leak-free score above it.
+1. **The signal lives entirely in the under-sampling axis.** *Spatial Gap*, the default preset,
+   is `discover` 1.0 and nothing else, so the green and the blue lines in the table are one line.
+   `env` and `urgency` are near-uncorrelated with *this* objective, because they optimise *other*
+   goals by design. The open gap is the red line: **what the map actually shows** ranks by
+   all-time density, which is weaker than the leak-free score above it.
 2. **It replicates out of region.** Re-running on a disjoint Eastern-Canada window (ON/QC/
    Maritimes) reproduces the directed > opportunistic result — it is not a BC artifact.
 """)
