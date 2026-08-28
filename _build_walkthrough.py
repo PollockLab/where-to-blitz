@@ -515,8 +515,8 @@ and the map would say "nowhere matters," which is false and useless. The figure 
 *same* blended score stretched (left) and ranked (right).
 """)
 code(r"""
-DEFAULT_W = {"discover": 0.8, "conservation": 0.0, "env": 0.7, "staleness": 0.0, "urgency": 0.3}  # 'Biodiversity impact' preset
-raw = sum(DEFAULT_W[a] * ALL[a].to_numpy(float) for a in AXES)
+from goal_presets import DEFAULT              # the shipped default preset, not a copy of it
+raw = sum(w * ALL[a].to_numpy(float) for a, w in zip(AXES, DEFAULT) if w)
 minmax = (raw - raw.min()) / (raw.max() - raw.min()) * 100
 order = raw.argsort(); pct = np.empty_like(raw); pct[order] = np.linspace(0, 100, len(raw))
 
@@ -646,8 +646,10 @@ for r in app:
     s = r["scores"]
     rows.append({"taxon": r["taxon"],
                  "app (gap-filling)": s["app_leakfree"]["spearman"],
-                 "discover only":     s["discover_leakfree"]["spearman"],
+                 "what the map shows": s["app_shipped"]["spearman"],
                  "go-where-busy":     s["opportunistic_density"]["spearman"]})
+# "discover only" is deliberately not a fourth bar: the default preset is discover 1.0 and
+# nothing else, so discover_leakfree and app_leakfree are the same number.
 bt = pd.DataFrame(rows).set_index("taxon")
 
 fig, ax = plt.subplots(figsize=(9.5, 4.4))
@@ -666,11 +668,12 @@ print(f"Average agreement — 'go where it's busy'  : {m_busy:+.2f}  (the near-e
 md(r"""
 **Two findings worth naming:**
 
-1. **The signal is real but lives almost entirely in the under-sampling axis.** `discover` on
-   its own matches or beats the full default preset; `env` and `urgency` are ~uncorrelated with
-   *this* discovery objective (they optimise *other* goals by design). So the default
-   `0.8·discover + 0.7·env + 0.3·urgency` slightly **dilutes** discovery. Re-tuning the default
-   toward discover is an open product decision.
+1. **The signal lives entirely in the under-sampling axis, and the default now says so.** An
+   earlier default of `0.8·discover + 0.7·env + 0.3·urgency` diluted discovery: `env` and
+   `urgency` are near-uncorrelated with *this* objective, because they optimise *other* goals by
+   design. *Spatial Gap*, the default today, is `discover` 1.0 and nothing else, so the green and
+   the blue lines in the table are one line. The remaining gap is the red one: **what the map
+   actually shows** ranks by all-time density, which is weaker than the leak-free score above it.
 2. **It replicates out of region.** Re-running on a disjoint Eastern-Canada window (ON/QC/
    Maritimes) reproduces the directed > opportunistic result — it is not a BC artifact.
 """)
