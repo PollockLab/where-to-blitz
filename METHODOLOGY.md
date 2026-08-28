@@ -180,8 +180,15 @@ among cells with no observations at all, the `discover` ranking is the `env` ran
 in this section.
 
 *Reproduce:* both scripts read `cluster_results/inat_*.csv`, which is gitignored and so absent from a
-clean clone; `python pull_inat_backtest.py` (BC) and `python pull_east.py` (East) fetch it first, over a
-window with a fixed end date so the pull is repeatable. Then `python backtest_appscore.py` (BC) and
+clean clone. The eight files the table is built from are release assets:
+
+```bash
+gh release download grid-inputs-v1 --repo PollockLab/where-to-blitz \
+  --dir cluster_results --pattern "inat_*.csv" --clobber
+```
+
+`python pull_inat_backtest.py` (BC) and `python pull_east.py` (East) re-fetch them from iNaturalist
+instead, over a window with a fixed end date so the pull is repeatable. Then `python backtest_appscore.py` (BC) and
 `python backtest_east.py` (East) regenerate `cluster_results/voi_appscore_results.json` and
 `..._east_results.json`; the table above reads straight from those two files and `test_methodology_table.py`
 fails if it drifts from them.
