@@ -163,7 +163,7 @@ PROV  = json.load(open(CA / "provenance.json"))
 
 # row_format from the shipped index — the contract every webapp_data_*.json obeys.
 COLS = INDEX["row_format"]            # [lat,lon,discover,conservation,env,staleness,urgency,travel_min,n_train]
-AXES = ["discover", "conservation", "env", "staleness", "urgency"]
+from goal_presets import AXES     # the one definition, shared with the app build
 print("row format :", COLS)
 print("axes       :", AXES)
 
@@ -355,7 +355,7 @@ naive = 1.0 / (dens + 1e-3)
 naive = (naive - naive.min()) / (naive.max() - naive.min())   # min–max norm(1/density)
 shipped = ALL["discover"].to_numpy(float)                      # the de-saturated rank
 
-fig, axs = plt.subplots(1, 3, figsize=(14, 3.8))
+fig, axs = plt.subplots(1, len(PRESETS), figsize=(14, 3.8))
 axs[0].hist(naive, bins=60, color="#c0392b"); axs[0].set_title("Naive  norm(1/density)\nbimodal: a binary mask")
 axs[0].set_xlabel("axis value"); axs[0].set_ylabel("cells")
 axs[1].hist(shipped, bins=60, color="#2980b9"); axs[1].set_title("Shipped  under-sampling rank\nsmooth: a plannable gradient")
@@ -495,12 +495,12 @@ print(f"Fort McMurray-area cell urgency = {fm.urgency:.2f}  (vs national median 
 md(r"""
 ## 4 · The score — "impact 0–100"
 
-> **In plain terms:** move the sliders to say how much each goal matters to you. Each square
+> **In plain terms:** pick a preset to say which goals matter to you. Each square
 > then gets a single **0–100 score** in its popup, where **100 is the highest-priority square
 > on the map** for your current settings and life group.
 
 **How it's built:**
-1. **Blend** — multiply each goal's 0–1 value by your slider weight and add them up
+1. **Blend** — multiply each goal's 0–1 value by the preset's weight and add them up
    (`raw = w₁·discover + w₂·rare + …`). A square strong on the goals you care about gets a big raw number.
 2. **Colour** — the map paints that blended value itself, cut off at 1 and run through the
    viridis ramp. It is baked into a PNG per life group and goal at build time, so panning and
@@ -536,20 +536,15 @@ md(r"""
 
 A where-to-go map is a *value choice*, not a measurement: discovery, conservation, and
 habitat coverage point to different places. Rather than hide that behind one "best" map, the
-app ships the axes as sliders and offers named presets, **each linked to a real, verified
+app ships a small set of named presets, **each linked to a real, verified
 Blitz the Gap iNaturalist sub-project** so the planning tool and the campaign stay in sync.
 """)
 code(r"""
-PRESETS = [
-    ("Biodiversity impact", [0.8,0,0.7,0,0.3], "blitz-the-gap-2026-general"),
-    ("The Other 99%",       [1,0,0.3,0,0],     "blitz-the-gap-the-other-99"),
-    ("Most Wanted",         [0.1,1,0,0,0.3],   "blitz-the-gap-canada-s-most-wanted"),
-    ("Too Hot to Handle",   [0.2,0,0.2,0,1],   "blitz-the-gap-too-hot-to-handle"),
-    ("Climate Gap",         [0.2,0,1,0,0],     "blitz-the-gap-closing-the-climate-gap"),
-    ("Revisit the Past",    [0.3,0,0,1,0],     "blitz-the-gap-revisiting-the-past"),
-]
+# straight from goal_presets.py, the same list build_webapp.py injects into index.html
+from goal_presets import PRESETS
 pd.set_option("display.max_colwidth", 60)
-pdf = pd.DataFrame([(n, *w, proj) for n,w,proj in PRESETS], columns=["preset",*AXES,"iNat project"])
+pdf = pd.DataFrame([(p["name"], *p["w"], p["proj"]) for p in PRESETS],
+                   columns=["preset",*AXES,"iNat project"])
 display(pdf)
 
 # Two presets, two genuinely different maps — same geometry, different weighting.
@@ -557,9 +552,9 @@ def impact_pct(weights):
     raw = sum(weights[i]*ALL[AXES[i]].to_numpy(float) for i in range(5))
     o = raw.argsort(); p = np.empty_like(raw); p[o] = np.linspace(0,100,len(raw)); return p
 fig, axs = plt.subplots(1, 3, figsize=(14, 3.8))
-for ax,(name,w,_) in zip(axs, [PRESETS[1], PRESETS[2], PRESETS[3]]):
-    canada_map(ax, impact_pct(w), name, cmap="magma", vmax=100)
-fig.suptitle("Same cells, different values → different trips (The Other 99% · Most Wanted · Too Hot to Handle)", y=1.03)
+for ax,p in zip(axs, PRESETS):
+    canada_map(ax, impact_pct(p["w"]), p["name"], cmap="magma", vmax=100)
+fig.suptitle("Same cells, different values \u2192 different trips (" + " \u00b7 ".join(p["name"] for p in PRESETS) + ")", y=1.03)
 plt.tight_layout(); plt.show()
 """)
 
@@ -567,7 +562,7 @@ plt.tight_layout(); plt.show()
 md(r"""
 ## 6 · Do the goals actually point to different places?
 
-> **In plain terms:** if the five goals all sent you to the same squares, the sliders would be
+> **In plain terms:** if the five goals all sent you to the same squares, the presets would be
 > for show. They don't. The grid below measures *how much any two goals agree on where to go*:
 > **+1 = the same places, 0 = unrelated, −1 = opposite places.** Most pairs are near 0 or
 > negative — they're genuinely different goals, which is why it's worth choosing between them.

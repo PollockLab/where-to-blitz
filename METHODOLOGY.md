@@ -25,11 +25,11 @@ into the **0–100 "impact"** shown on the map and in popups.
 | **cell** | One square of the grid. The unit everything is scored on: 25 km by default, 5 km from zoom 9. |
 | **lattice** | The projected equal-area grid the cells sit on (`grid_lattice.py`). WGS84 Lambert Azimuthal Equal Area, 45°N 100°W, snapped to a 25 km multiple so the 25 km tier is an exact 5×5 aggregate of the 5 km tier. |
 | **goal** (= **axis**) | One reason to go somewhere, scored 0–1 per cell. The five keys are `discover`, `conservation`, `env`, `staleness`, `urgency` (`goal_presets.py`). |
-| **impact** | The 0–100 number shown on the map and in popups: your weighted blend of the five goals, expressed as a percentile rank across the cells shown. |
+| **impact** | The 0–100 number shown on the map and in popups: the preset's blend of the five goals, expressed as a percentile rank across every cell in the country. It is national and stable: panning and zooming never change a cell's number. |
 | **preset** | A named weight mix over the five goals, each linked to a real Blitz the Gap iNaturalist sub-project (`goal_presets.py`). |
 | **gap** | A cell that is under-recorded for the goal in play. "Blitz the gap" = go to one and record there. |
 | **Getting Even** | A separate layer, not a goal: it colours each cell by the taxonomic group most under-represented *there*, birds excluded (`build_gettingeven.py`). It answers *what* to record in a cell, not *where* to go. |
-| **VOI** | Value of information — how much a new observation would improve what we know. The intended end state for species suggestions; today's ranking is an interpretable stand-in (see #48 below). |
+| **VOI** | Value of information — how much a new observation would improve what we know. The intended end state for species suggestions; today's ranking is an interpretable stand-in (see "Which species to record in a cell" below). |
 | **appscore** | The composite the app actually ships, read straight from `goal_presets.PRESETS`, as distinct from the generic proxy `voi_backtest.py` tests. `backtest_appscore.py` scores it so the backtest cannot drift from the dropdown. |
 
 ---
@@ -93,27 +93,31 @@ into the **0–100 "impact"** shown on the map and in popups.
 
 ## The composite score ("impact", 0–100)
 
-1. You set a weight 0–1 for each of the five axes (or pick a challenge preset).
+1. You pick a preset. Each one fixes a weight 0–1 for each of the five axes; the earlier per-axis
+   sliders were replaced by the preset dropdown, so the weights are no longer user-editable.
 2. Per cell: `raw_impact = Σ weight_i × axis_i`.
-3. The **N/100** in popups is the **percentile rank** of `raw_impact` across all cells, not a
-   min–max, so a few extreme Arctic super-gaps don't crush every reachable cell to ~0.
+3. The **N/100** in popups is the **percentile rank** of `raw_impact` across all cells nationally, not a
+   min–max, so a few extreme Arctic super-gaps don't crush every reachable cell to ~0. It is computed
+   once over the whole country, so a cell keeps its number as you pan and zoom.
 4. The map colour is `raw_impact` itself, clipped to 0–1 and painted through viridis. It is
    baked per (group, goal) into a PNG at build time, so panning and zooming never change it.
 
-Challenge presets are just preset weight mixes, e.g. *Canada's Most Wanted* = conservation 1.0
-(+ minor discover/urgency); *Revisit the Past* = staleness 1.0. Each links to its iNaturalist project.
+The three presets, straight from `goal_presets.PRESETS`: *Spatial Gap* = `discover` 1.0;
+*Species discovery* ("Revisiting the Past") = `discover` 1.0 + `staleness` 0.6;
+*Conservation* ("Canada's Most Wanted") = `conservation` 1.0 + `urgency` 0.4. `env` carries weight 0 in
+all three, so no preset reads it. Each links to its iNaturalist project.
 
 ---
 
 ## Validation — does priority actually predict discovery?
 
-**Tested, not asserted.** At equal effort, the cells this tool ranks highest discover **up to 3× more
-new species** than the cells it ranks lowest — Spearman **ρ ≈ 0.47–0.69**, permutation **p < 0.001**,
-and it holds out-of-sample in Eastern Canada. The per-taxon numbers are in the table below; every one
-reads straight from a committed result file.
+**Tested, not asserted.** At equal effort, the cells this tool ranks highest discover **1.1x to 3.0x
+more new species** than the cells it ranks lowest, Spearman **rho 0.40 to 0.67**, permutation
+**p < 0.001** on every taxon, and it holds out-of-sample in Eastern Canada. The per-taxon numbers are
+in the table below; every one reads straight from a committed result file.
 
-The premise — *a record in an under-sampled cell adds more than one where people already crowd* —
-is tested, not asserted, on a **leakage-free temporal split** of the BC 2025 pilot (iNaturalist
+The premise, *a record in an under-sampled cell adds more than one where people already crowd*,
+is tested on a **leakage-free temporal split** of the BC 2025 pilot (iNaturalist
 project 228908): score each cell from observations **up to** a cutoff T, then measure
 **new-to-cell species recorded after T**, rarefied to **equal effort** (K = 5 observations per
 cell) so busy cells get no free credit for sheer volume. Significance is a permutation null, and
@@ -121,59 +125,66 @@ the whole thing is re-run **out-of-sample on Eastern Canada** (disjoint from BC)
 `voi_backtest.py`, `backtest_appscore.py` (BC), `backtest_east.py` (East).
 
 - **Under-sampling predicts discovery.** At equal effort, the train-only `discover` axis ranks
-  cells by new-species yield at Spearman **ρ ≈ 0.47–0.69** across five taxa (amphibians, birds,
-  insects, mammals, reptiles), all permutation **p < 0.01**, and holds out-of-sample in the East.
+  cells by new-species yield at Spearman **rho 0.40 to 0.67** across five taxa (amphibians, birds,
+  insects, mammals, reptiles), all permutation **p < 0.001**, and holds out-of-sample in the East.
 - **Chasing the crowds is the same finding, read backwards.** The `discover` axis is by construction
   an inverse of observation density, so all-time density (the opportunistic "light up the map" signal,
-  used as a negative control) lands at the *exact mirror* value, **ρ ≈ −0.47 to −0.69**. It is not a
-  second, independent test — it is the one result stated the other way: steering toward busy cells is
-  precisely the wrong move. That sign flip is the "blitz the gap" result.
-- **The leak-free composite validates** at **ρ ≈ 0.21–0.52** (all p ≤ 0.03): the blended impact
-  score points the same way, once its `discover` axis is rebuilt from only what was known at T.
+  labelled a negative control) lands at the *exact mirror* value, **rho -0.40 to -0.67**. It is not a
+  second, independent test, and it cannot fail: it is the one result stated the other way. Steering
+  toward busy cells is precisely the wrong move. That sign flip is the "blitz the gap" result.
+- **The composite is the `discover` axis.** *Spatial Gap*, the default preset, is `discover` 1.0 and
+  nothing else, so the app's blended impact score and its `discover` axis are the same number to the
+  last decimal. The backtest still scores them under separate keys (`app_leakfree`, `discover_leakfree`)
+  so a future preset change shows up as a divergence rather than passing unnoticed.
 - **Read it per-effort, not by raw count.** Because more people visit busy cells, those cells
-  still accumulate *more* new species in absolute terms — raw count anti-correlates with priority.
+  still accumulate *more* new species in absolute terms, so raw count anti-correlates with priority.
   The validated, decision-relevant claim is the one about *your* trip: **a given amount of effort
   discovers more in a gap cell.**
 
 ### The numbers, per taxon
 
-| Taxon | Region | Cells (rarefied) | `discover` ρ | Composite ρ | Shipped ρ | Yield, top vs bottom |
-|---|---|---:|---:|---:|---:|---:|
-| Amphibians | BC | 91 | 0.48 | 0.42 | 0.09 n.s. | 2.0× |
-| Birds | BC | 126 | 0.61 | 0.24 | 0.10 n.s. | 1.8× |
-| Insects | BC | 106 | 0.53 | 0.21 | 0.02 n.s. | 1.3× |
-| Mammals | BC | 141 | 0.61 | 0.30 | 0.26 | 2.7× |
-| Reptiles | BC | 59 | 0.65 | 0.52 | 0.27 | 2.5× |
-| Birds | East | 178 | 0.58 | 0.37 | 0.09 n.s. | 1.4× |
-| Insects | East | 136 | 0.47 | 0.30 | −0.11 n.s. | 1.1× |
-| Mammals | East | 213 | 0.69 | 0.52 | 0.28 | 3.0× |
+| Taxon | Region | Cells (rarefied) | Leak-free rho | Shipped rho | Yield, top vs bottom |
+|---|---|---:|---:|---:|---:|
+| Amphibians | BC | 77 | 0.52 | 0.09 n.s. | 2.1x |
+| Birds | BC | 106 | 0.64 | 0.28 | 1.9x |
+| Insects | BC | 86 | 0.50 | 0.24 | 1.3x |
+| Mammals | BC | 122 | 0.65 | 0.47 | 2.9x |
+| Reptiles | BC | 55 | 0.64 | 0.28 | 3.0x |
+| Birds | East | 189 | 0.59 | 0.13 n.s. | 1.4x |
+| Insects | East | 110 | 0.40 | 0.05 n.s. | 1.1x |
+| Mammals | East | 185 | 0.67 | 0.37 | 3.0x |
 
-*How to read a row:* take **mammals in the East** — rank its 213 cells by the `discover` axis, send the
-same five observations to each, and the top-ranked cells turn up **3× as many new species** as the
-bottom-ranked ones. **ρ** is the rank correlation between priority and discovery (1.0 = perfect, 0 =
-none); **Yield** is that effect in plain terms — new species found per equal effort, best cells over
-worst. Every `discover` correlation clears permutation **p < 0.001**; the composite clears **p ≤ 0.03**
-(weakest: BC insects, 0.029). `n.s.` = not statistically significant (p > 0.05). The `discover`,
-`Shipped`, and `Yield` columns are single-axis and preset-independent; the `Composite` column scores the
-backtest's blend (`discover` 0.8 + `env` 0.7 + `urgency` 0.3), close to but not identical to the live
-*Spatial Gap* default (`discover` 1.0 + `env` 0.5) — refreshing it to the current preset is part of
-[issue #80](https://github.com/PollockLab/where-to-blitz/issues/80).
+*How to read a row:* take **mammals in the East**, rank its 185 cells by the leak-free score, send the
+same five observations to each, and the top-ranked cells turn up **3.0x as many new species** as the
+bottom-ranked ones. **rho** is the rank correlation between priority and discovery (1.0 = perfect, 0 =
+none). **Yield** is that effect in plain terms, new species found per equal effort, best cells over
+worst, and it is the leak-free score's yield. Every leak-free correlation clears permutation
+**p < 0.001**. `n.s.` = not statistically significant (p > 0.05). There is no separate composite column:
+the default preset weights `discover` 1.0 and nothing else, so the composite and the axis are identical
+(see the bullet above). The weakest cell in the table is **East insects at 1.1x**, and it is the honest
+floor of the claim.
 
-**What the live map shows today is weaker than what validates.** The `Shipped ρ` column scores the
-all-time-density blend the map currently ranks by. It validates for **mammals** (ρ 0.26–0.28, p ≤ 0.002)
-and marginally for BC reptiles, but for **birds, insects, and amphibians it is statistically
-indistinguishable from random** (p > 0.2). The reason is mechanical: the shipped `discover` axis is
-`1/(all-time density)`, so a just-sampled cell instantly looks "covered" and sheds priority — defensible
-prospectively, but it means the *shown* score is not the one the backtest validates. The strong columns
-above (`discover`, composite) rebuild that axis from only what was known before the cutoff T. Closing the
-gap — anchoring the shipped axis to a fixed snapshot or window — is tracked in
-[issue #80](https://github.com/PollockLab/where-to-blitz/issues/80).
+**What the live map shows is weaker than what validates.** The `Shipped rho` column scores the
+all-time-density blend the map currently ranks by. It reaches significance on five of the eight rows
+(BC birds p = 0.004, BC insects p = 0.028, BC mammals p < 0.001, BC reptiles p = 0.043, East mammals
+p < 0.001) and is indistinguishable from random on the other three (BC amphibians p = 0.46, East birds
+p = 0.08, East insects p = 0.61). Its yields are correspondingly smaller, 0.95x to 2.1x against the
+leak-free 1.1x to 3.0x. The reason is mechanical: the shipped `discover` axis is `1/(all-time density)`,
+so a just-sampled cell instantly looks "covered" and sheds priority. That is defensible prospectively,
+but it means the *shown* score is weaker than the one the backtest validates. Anchoring the shipped axis
+to a fixed snapshot or window is the open fix.
+
+**The `env` axis is computed and shipped but not validated.** Across all eight taxon-region pairs its
+correlation with discovery runs **-0.24 to +0.18** and reaches p < 0.05 exactly once, on East insects,
+with the *wrong* sign. It also carries weight 0 in all three shipped presets, so nothing the user can
+select reads it. It stays in the data as a build artefact; it backs no claim here.
 
 *Reproduce:* both scripts read `cluster_results/inat_*.csv`, which is gitignored and so absent from a
-clean clone; `python pull_inat_backtest.py` (BC) and `python pull_east.py` (East) fetch it first. Then
-`python backtest_appscore.py` (BC) and `python backtest_east.py` (East) regenerate
-`cluster_results/voi_appscore_results.json` and `…_east_results.json`; the table reads straight from
-those two files.
+clean clone; `python pull_inat_backtest.py` (BC) and `python pull_east.py` (East) fetch it first, over a
+window with a fixed end date so the pull is repeatable. Then `python backtest_appscore.py` (BC) and
+`python backtest_east.py` (East) regenerate `cluster_results/voi_appscore_results.json` and
+`..._east_results.json`; the table above reads straight from those two files and `test_methodology_table.py`
+fails if it drifts from them.
 
 *Scope (honest):* retrospective over *collected* iNaturalist observations — it inherits observer
 bias (controlled via rate-per-observation and effort rarefaction, not eliminated); "new species"
@@ -194,7 +205,7 @@ extrapolation).
   can actually reach a gap within your time budget — chosen from your start, not assumed.
 - **CO₂:** driving ≈ 0.18 kg/km; cycling/walking zero.
 
-## Which species to record in a cell (#48)
+## Which species to record in a cell
 
 Tapping a cell suggests *what to record there*. The axes above rank **where** to go; this ranks
 **which species** add the most once you are there. It is an **intermediate, interpretable metric** —

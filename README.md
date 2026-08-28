@@ -12,19 +12,22 @@ Blitz the Gap campaign at McGill — a planning aid, not ground truth.
 
 ## What it does
 
-- An equal-area grid of Canada: **23,214 cells of 25 km**, and **536,164 of 5 km** when you zoom in. Each cell is scored by a mix of goals you weight with sliders.
+- An equal-area grid of Canada: **23,214 cells of 25 km**, and **536,164 of 5 km** when you zoom in. Each cell is scored by a preset mix of goals.
 - **Explore** the priority map, **plan a trip** (real driving/cycling/walking routes via OSRM, travel time, field time, CO₂), or **compare goals** side by side.
 - Tap a cell to see what species to record there and which common ones are still missing ("fill the gap"), pulled live from the iNaturalist API.
 - English / Canadian-French toggle; geolocation; challenge presets linked to the real Blitz the Gap iNaturalist sub-projects.
 
 ## How cells are scored
 
-Five goals per cell, each scored 0–1; you blend them with sliders into a 0–100 impact score
-(a percentile rank across the cells shown). All five are built from real data.
+Five goals per cell, each scored 0–1; a preset blends them into a 0–100 impact score
+(a percentile rank across every cell in the country, so it does not change as you pan or zoom).
+All five are computed from real data, though `env` carries weight 0 in every shipped preset.
 
 **Does the priority actually work?** On a leakage-free backtest of the 2025 BC pilot,
-the highest-ranked cells turn up roughly 2–3× more new species than the lowest
-at equal effort, and it holds out-of-sample in Eastern Canada.
+the highest-ranked cells turn up **1.1× to 3.0× more new species** than the lowest at equal effort
+(Spearman rho 0.40 to 0.67, permutation p < 0.001 on every taxon), and it holds out-of-sample in
+Eastern Canada. Mammals and reptiles are the strong cases at 3.0×; insects are the weak one, 1.3× in
+BC and 1.1× in the East.
 
 [METHODOLOGY.md](METHODOLOGY.md) has the glossary, the per-axis formulas and sources, the
 per-taxon validation numbers, and the scope those numbers hold within.
