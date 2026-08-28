@@ -13,6 +13,8 @@ import numpy as np
 import pytest
 from matplotlib.colors import to_hex
 
+from goal_presets import AXES, PRESETS
+
 TEMPLATE = Path(__file__).resolve().parent / "webapp" / "index.html"
 
 # selector -> the colormap the corresponding raster is baked with
@@ -83,8 +85,8 @@ def test_lattice_is_injected_not_hardcoded():
         grid_lattice.X0, grid_lattice.Y1, grid_lattice.WIDTH_M, grid_lattice.HEIGHT_M]
 
 
-def _i18n_keys():
-    """The key sets of I18N.en and I18N.fr, and every key the markup asks for."""
+def _i18n_segments():
+    """The source text of I18N.en and of I18N.fr."""
     src = TEMPLATE.read_text()
     i = src.index("const I18N")
     depth = 0
@@ -94,7 +96,13 @@ def _i18n_keys():
         if depth == 0 and n > 10:
             seg = src[i:i + n]
             break
-    en, fr = seg[seg.index("en:{"):seg.index("fr:{")], seg[seg.index("fr:{"):]
+    return seg[seg.index("en:{"):seg.index("fr:{")], seg[seg.index("fr:{"):]
+
+
+def _i18n_keys():
+    """The key sets of I18N.en and I18N.fr, and every key the markup asks for."""
+    src = TEMPLATE.read_text()
+    en, fr = _i18n_segments()
     # keys start a line or follow a comma; both forms occur in the dict
     kx = lambda t: set(re.findall(r"(?:\n\s+|, )([a-z0-9_]+):", t))  # noqa: E731
     used = set(re.findall(r'data-i18n(?:-html|-ph|-title)?="([a-z0-9_]+)"', src))
@@ -112,3 +120,23 @@ def test_every_i18n_attribute_names_a_key_that_exists():
     """applyI18N() overwrites these nodes at init; a missing key blanks the panel silently."""
     en, _, used = _i18n_keys()
     assert not used - en, f"markup asks for absent keys: {sorted(used - en)}"
+
+
+# JS array literal of double-quoted strings, e.g. preset_name:["a","b"]
+ARRAY = r':\[((?:"(?:[^"\\]|\\.)*"\s*,?\s*)*)\]'
+# i18n array key -> the Python list whose length it must match
+POSITIONAL = {"preset_name": PRESETS, "preset_blurb": PRESETS,
+              "obj_name": AXES, "obj_q": AXES}
+
+
+@pytest.mark.parametrize(("lang", "key"),
+                         [(lang, key) for lang in ("en", "fr") for key in POSITIONAL])
+def test_positional_i18n_array_has_one_entry_per_item(lang, key):
+    """presetName(i) and objName(i) index these arrays. A short array renders `undefined`
+    in the dropdown, and no other test looks at their length."""
+    seg = _i18n_segments()[lang == "fr"]
+    m = re.search(re.escape(key) + ARRAY, seg)
+    assert m, f"no {key} array in I18N.{lang}"
+    entries = re.findall(r'"(?:[^"\\]|\\.)*"', m.group(1))
+    assert len(entries) == len(POSITIONAL[key]), (
+        f"I18N.{lang}.{key} has {len(entries)} entries for {len(POSITIONAL[key])} items")
