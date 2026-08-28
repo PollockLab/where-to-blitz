@@ -93,8 +93,8 @@ into the **0–100 "impact"** shown on the map and in popups.
 
 ## The composite score ("impact", 0–100)
 
-1. You pick a preset. Each one fixes a weight 0–1 for each of the five axes; the earlier per-axis
-   sliders were replaced by the preset dropdown, so the weights are no longer user-editable.
+1. You pick a preset. Each one fixes a weight 0–1 for each of the five axes. The weights are not
+   user-editable.
 2. Per cell: `raw_impact = Σ weight_i × axis_i`.
 3. The **N/100** in popups is the **percentile rank** of `raw_impact` across all cells nationally, not a
    min–max, so a few extreme Arctic super-gaps don't crush every reachable cell to ~0. It is computed
@@ -129,9 +129,9 @@ the whole thing is re-run **out-of-sample on Eastern Canada** (disjoint from BC)
   insects, mammals, reptiles), all permutation **p < 0.001**, and holds out-of-sample in the East.
 - **Chasing the crowds is the same finding, read backwards.** The `discover` axis is by construction
   an inverse of observation density, so all-time density (the opportunistic "light up the map" signal,
-  labelled a negative control) lands at the *exact mirror* value, **rho -0.40 to -0.67**. It is not a
-  second, independent test, and it cannot fail: it is the one result stated the other way. Steering
-  toward busy cells is precisely the wrong move. That sign flip is the "blitz the gap" result.
+  labelled a negative control) lands at the *exact mirror* value, **rho -0.40 to -0.67**. It is one
+  result stated two ways, not two independent tests. Steering toward busy cells is the wrong move.
+  That sign flip is the "blitz the gap" result.
 - **The composite is the `discover` axis.** *Spatial Gap*, the default preset, is `discover` 1.0 and
   nothing else, so the app's blended impact score and its `discover` axis are the same number to the
   last decimal. The backtest still scores them under separate keys (`app_leakfree`, `discover_leakfree`)
@@ -159,10 +159,8 @@ same five observations to each, and the top-ranked cells turn up **3.0x as many 
 bottom-ranked ones. **rho** is the rank correlation between priority and discovery (1.0 = perfect, 0 =
 none). **Yield** is that effect in plain terms, new species found per equal effort, best cells over
 worst, and it is the leak-free score's yield. Every leak-free correlation clears permutation
-**p < 0.001**. `n.s.` = not statistically significant (p > 0.05). There is no separate composite column:
-the default preset weights `discover` 1.0 and nothing else, so the composite and the axis are identical
-(see the bullet above). The weakest cell in the table is **East insects at 1.1x**, and it is the honest
-floor of the claim.
+**p < 0.001**. `n.s.` = not statistically significant (p > 0.05). The weakest row is **East insects at
+1.1x**, and it is the floor of the claim.
 
 **What the live map shows is weaker than what validates.** The `Shipped rho` column scores the
 all-time-density blend the map currently ranks by. It reaches significance on five of the eight rows
@@ -176,8 +174,10 @@ to a fixed snapshot or window is the open fix.
 
 **The `env` axis is computed and shipped but not validated.** Across all eight taxon-region pairs its
 correlation with discovery runs **-0.24 to +0.18** and reaches p < 0.05 exactly once, on East insects,
-with the *wrong* sign. It also carries weight 0 in all three shipped presets, so nothing the user can
-select reads it. It stays in the data as a build artefact; it backs no claim here.
+with the *wrong* sign. No shipped preset gives it weight, so it enters no blend the user can select.
+It is not inert: `national_breaks.discover()` orders the block of cells with zero records by `env`, so
+among cells with no observations at all, the `discover` ranking is the `env` ranking. It backs no claim
+in this section.
 
 *Reproduce:* both scripts read `cluster_results/inat_*.csv`, which is gitignored and so absent from a
 clean clone; `python pull_inat_backtest.py` (BC) and `python pull_east.py` (East) fetch it first, over a
