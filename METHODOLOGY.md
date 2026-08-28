@@ -242,6 +242,20 @@ Birds are excluded, as in the published 2025 map — eBird already covers them. 
 are grey rather than scored; `GE_MIN_RECORDS` raises that floor, at the cost of more grey. The
 metric itself is re-derived independently and asserted cell-by-cell in `test_gettingeven.py`.
 
+**What a thin cell's colour means.** At 25 km, 1,876 of the 10,679 scored cells hold exactly one
+record. Five groups then sit at a share of zero and the lowest z comes from the national mean and
+standard deviation rather than from the cell, so all 1,876 come back Plants (1,210) or
+Invertebrates (666). That is 18% of the coloured map decided by a tie-break. It is not, however,
+what makes the map look busy: of the 9,641 scored cells with at least three scored neighbours,
+54.9% carry a different priority group from their neighbour majority, and that share does not rise
+as records fall (54.4% at one record, 60.8% at 11-30, 45.6% at 301 and up). Against a permutation
+null that keeps the national mix of groups and destroys the spatial arrangement, 72.1% ± 0.5% over
+50 draws, every record-count band agrees with its neighbours more than chance, the one-record band
+by 18.8 points. Pooling a cell with its neighbours would restore what a census district did by its
+size, but it is a different estimator from the published one and it rewrites well-sampled cells
+too: on the 3,486 cells holding 100 records or more, a 3x3 pooled priority matches the unpooled one
+on 58.8%, a 5x5 on 51.0%. `probe_gettingeven.py` produces these numbers.
+
 **Not yet transferred:** Eckert also drops a group from the running where its modelled richness sits
 in the national bottom quartile — no point sending herpers where there are few herps. Those three
 richness rasters (`ar.richness.tif`, `mammal.richness.tif`, `plant.richness.stacks.tif`) are in the
