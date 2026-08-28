@@ -20,11 +20,15 @@ SEASON = ("2025-04-01", "2025-09-30")
 PER_PAGE = 200
 SLEEP = 0.5
 CAP_PAGES = 32                                # ~6400 obs per window per taxon
+# Freeze the created-date cutoff so a rerun reproduces the committed CSVs. SEASON already fixes
+# the OBSERVED window, but iNat backfills and regrades observations afterwards, so a pull without
+# this keeps growing. pull_east.py calls pull_window too, so this one constant covers both regions.
+PULL_UNTIL = "2026-08-01"
 
 
 def pull_window(iconic, d1, d2, cap=CAP_PAGES):
     params = dict(project_id=PROJECT, quality_grade="research", iconic_taxa=iconic,
-                  d1=d1, d2=d2, per_page=PER_PAGE, order_by="id", order="desc", **BC)
+                  d1=d1, d2=d2, created_d2=PULL_UNTIL, per_page=PER_PAGE, order_by="id", order="desc", **BC)
     rows, id_below, pages = [], None, 0
     while pages < cap:
         p = dict(params)
