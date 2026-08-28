@@ -17,8 +17,11 @@ from pathlib import Path
 
 import pytest
 
+from goal_presets import AXES, PRESETS
+
 HERE = Path(__file__).parent
 DOC = HERE / "METHODOLOGY.md"
+README = HERE / "README.md"
 RESULTS = {
     "BC": HERE / "cluster_results" / "voi_appscore_results.json",
     "East": HERE / "cluster_results" / "voi_appscore_east_results.json",
@@ -71,13 +74,29 @@ def test_row_matches_the_committed_result(row):
     assert flagged == (s["app_shipped"]["perm_p"] > NS_P)
 
 
-def test_headline_range_covers_every_row():
-    """The prose quotes one rho range and one yield range. Both must bracket the table."""
-    doc = DOC.read_text()
+@pytest.mark.parametrize("path", [DOC, README], ids=lambda p: p.name)
+def test_headline_range_covers_every_row(path):
+    """Both documents quote one rho range and one yield range. Both must bracket the table.
+    README states the same claim as METHODOLOGY and drifted from it once already."""
+    doc = path.read_text()
     rho = [s["scores"]["app_leakfree"]["spearman"] for s in _scores().values()]
     ratio = [s["scores"]["app_leakfree"]["eff_ratio_top_bottom"] for s in _scores().values()]
     assert f"rho {min(rho):.2f} to {max(rho):.2f}" in doc
-    assert f"{min(ratio):.1f}x to {max(ratio):.1f}x" in doc
+    # README writes the multiplier with a times sign, METHODOLOGY with an x
+    assert (f"{min(ratio):.1f}x to {max(ratio):.1f}x" in doc
+            or f"{min(ratio):.1f}\u00d7 to {max(ratio):.1f}\u00d7" in doc)
+
+
+def test_methodology_quotes_the_shipped_preset_weights():
+    """METHODOLOGY spells out each preset's weights in prose. That prose was wrong on all
+    three presets until this test existed."""
+    doc = DOC.read_text()
+    for p in PRESETS:
+        terms = [f"`{ax}` {float(w)}" for ax, w in zip(AXES, p["w"], strict=True) if w]
+        assert " + ".join(terms) in doc, f"{p['name']}: expected {' + '.join(terms)}"
+    # env is weighted nowhere, and the document must say so rather than imply it is live
+    assert all(p["w"][AXES.index("env")] == 0 for p in PRESETS)
+    assert "`env` carries weight 0 in" in doc
 
 
 def test_composite_column_would_be_a_duplicate():
