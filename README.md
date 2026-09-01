@@ -50,7 +50,7 @@ deterministic (no timestamps/randomness) — same inputs produce a byte-identica
 
 ### How it fits together
 
-No server, no database: Python writes files, the browser reads them. The five map layers are
+No server, no database: Python writes files, the browser reads them. The six map layers are
 not the same kind of thing, which is the one non-obvious part:
 
 | Layer | Served as | Built by |
@@ -60,9 +60,12 @@ not the same kind of thing, which is the one non-obvious part:
 | Cell colours | `values/*.png`, one pixel per cell, painted onto those polygons | `build_grid_values.py` |
 | Density overlay | Raster PMTiles under `density/`, served same-origin | `build_density_pmtiles.py` |
 | Density, Fungi only | Live TiTiler over a 1 km COG on Arbutus | — |
+| Climate Gap overlay | A single raster PMTiles, `climate_gap.pmtiles`, served same-origin | not built here: baked from CHELSA outside the repo and uploaded to the release |
 
 Why colours are a PNG and not tiles: `build_grid_values.py` docstring (#116).
 Why Fungi differs: `build_density_pmtiles.py` docstring.
+Climate Gap is the one layer no script in this repo regenerates, so the release asset is its only
+source; both `_site` assembly jobs `test -s` it rather than let a missing file blank the map.
 
 ### Run it locally
 
