@@ -277,8 +277,6 @@ details.adv>summary:hover{color:var(--ink)}
   <label class="toggle" style="display:none"><input type="checkbox" id="tgCoverage"> <span data-i18n="inat_coverage">iNaturalist coverage</span></label><!-- driven by the "iNaturalist sampling density" map style (#20) -->
   <label class="toggle" style="display:none"><input type="checkbox" id="tgGettingEven"> <span data-i18n="getting_even">Getting Even — which group to record</span></label><!-- driven by the "Getting Even" criterion (#20) -->
   <div class="infobox" id="geinfo" data-i18n-html="ge_method"></div>
-  <label class="toggle" id="zoomScaleRow" style="display:none;margin:9px 0 0"><input type="checkbox" id="tgZoomScale" checked> <span data-i18n="zoom_scale">Rescale colours to the current view</span></label>
-  <div id="zoomScaleHint" style="display:none;color:var(--mut);font-size:11px;line-height:1.4" data-i18n="zoom_scale_hint"></div>
   <label class="toggle" style="display:none"><input type="checkbox" id="tgClimateGap"> <span data-i18n="climate_gap">Climate Gap — under-sampled climates</span></label><!-- driven by the "Climate Gap" criterion -->
   <div id="opacityRow" style="display:none"><!-- #46: only shown while a data overlay (density style) is active; basemap brightness is otherwise locked at 100% -->
   <div style="display:flex;justify-content:space-between;margin:9px 0 0"><span id="bople" style="font-size:12.5px" data-i18n="data_opacity">Density opacity</span><span class="v" id="bopv" style="color:var(--acc)">80%</span></div>
@@ -297,6 +295,7 @@ details.adv>summary:hover{color:var(--ink)}
   <button id="howclose" type="button" data-i18n-aria="aria_close" data-i18n-title="aria_close" aria-label="Close" title="Close">×</button>
   <div class="legend" style="margin-top:2px"><span data-i18n="skip">skip</span><div class="bar"></div><span data-i18n="go_here">go here</span></div>
   <div style="color:var(--mut);font-size:11px;line-height:1.45;margin-top:7px" data-i18n-html="impact_expl"></div>
+  <div style="color:var(--mut);font-size:11px;line-height:1.45;margin-top:9px" data-i18n-html="colour_expl"></div>
   <div style="color:var(--mut);font-size:11px;line-height:1.5;margin-top:9px" data-i18n-html="axis_method"></div>
   <div style="margin-top:9px"><a href="https://pollocklab.github.io/where-to-blitz/where-to-blitz-walkthrough.html" target="_blank" rel="noopener" style="color:var(--acc);font-size:12px;font-weight:600" data-i18n="methodology_link">Full methodology &amp; data — trace every number →</a></div>
   <p class="foot" data-i18n-html="foot"></p>
@@ -386,14 +385,13 @@ const I18N={
     methodology_link:"Full methodology & data — trace every number →",
     hide_panel:"Hide the panel (more map)",
     show_panel:"Show the panel",
-    zoom_scale:"Rescale colours to the current view",
-    zoom_scale_hint:"Ranks cells against what's on screen. Off = ranked across all of Canada.",
     legend_scope_view:"scaled to this view", legend_scope_ca:"scaled across Canada",
     map_brightness:"Map brightness",
     data_opacity:"Density opacity",
     how_scored:"How impact is scored & data sources",
     skip:"skip", go_here:"go here",
     impact_expl:`Your sliders weight the five goals, then cells are <b style="color:var(--ink)">ranked against each other</b> as <b style="color:var(--ink)">impact 0–100</b> — a percentile, so 100 is the best cell shown. Hover a cell to see what drives it.`,
+    colour_expl:`<b style="color:var(--ink)">Colour follows the view.</b> Cells are shaded against the others on screen, so zooming in re-ranks what you see and a busy region stops reading as flat purple. The impact number stays national, and the legend says which scale is live: <i>scaled to this view</i>, or <i>scaled across Canada</i> when a view holds too few cells, or too little spread, to rank.`,
     axis_method:`<b style="color:var(--ink)">Each goal, scored 0–1 per cell:</b><br>• <b style="color:var(--ink)">Discover the most species</b> — few have recorded here: inverse iNaturalist density.<br>• <b style="color:var(--ink)">Find species at risk</b> — at-risk species recorded nearby, weighted by status: CAN-SAR (COSEWIC/SARA) × GBIF.<br>• <b style="color:var(--ink)">Cover every habitat</b> — this cell's climate is rarely recorded: CHELSA.<br>• <b style="color:var(--ink)">Freshest gaps</b> — much recorded long ago, little lately: iNaturalist recent vs all-time.<br>• <b style="color:var(--ink)">Sample before it's lost</b> — recent forest loss: Hansen Global Forest Change.`,
     foot:`<b style="color:var(--ink)">How it works:</b> <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">Blitz the Gap</a> is a Canada-wide bioblitz — go to a high-priority cell, record what you see on <a href="https://www.inaturalist.org" target="_blank" rel="noopener" style="color:var(--acc)">iNaturalist</a>, and your research-grade sightings flow into the <a href="https://www.inaturalist.org/projects/blitz-the-gap-2026-general" target="_blank" rel="noopener" style="color:var(--acc)">2026 project</a>. Led by the <a href="https://pollocklab.github.io/blitz-the-gap/" target="_blank" rel="noopener" style="color:var(--acc)">Pollock Lab</a> at McGill; a companion tool, not an official project page.<br><br>Routes from OSRM (FOSSGIS), travel time from Weiss 2018. Driving CO₂ ≈ 0.18&nbsp;kg/km; cycling and walking zero. <b style="color:var(--ink)">iNaturalist records show where people looked, not what lives there</b> — a planning aid, not a census.<br><br>This map spans many <b style="color:var(--ink)">Indigenous territories</b> — see whose at <a href="https://native-land.ca" target="_blank" rel="noopener" style="color:var(--acc)">native-land.ca</a>, obscure sensitive-species locations, and seek consent before recording on their lands.`,
     top_cells:"Top cells (accessible list)",
@@ -529,14 +527,13 @@ const I18N={
     methodology_link:"Méthodologie complète et données — traçez chaque chiffre →",
     hide_panel:"Masquer le panneau (plus de carte)",
     show_panel:"Afficher le panneau",
-    zoom_scale:"Recalibrer les couleurs sur la vue actuelle",
-    zoom_scale_hint:"Classe les cellules par rapport à ce qui est à l'écran. Désactivé = classement sur tout le Canada.",
     legend_scope_view:"calibré sur cette vue", legend_scope_ca:"calibré sur tout le Canada",
     map_brightness:"Luminosité de la carte",
     data_opacity:"Opacité des données",
     how_scored:"Calcul de l'impact et sources de données",
     skip:"à éviter", go_here:"y aller",
     impact_expl:`Vos curseurs pondèrent les cinq objectifs, puis les cellules sont <b style="color:var(--ink)">classées les unes par rapport aux autres</b> en <b style="color:var(--ink)">impact 0–100</b> — un centile, donc 100 = la meilleure cellule affichée. Survolez une cellule pour voir ce qui la motive.`,
+    colour_expl:`<b style="color:var(--ink)">La couleur suit la vue.</b> Chaque cellule est classée par rapport aux autres à l'écran : un zoom recalcule donc l'affichage, et une région bien couverte cesse d'être uniformément violette. Le score d'impact reste national, et la légende indique l'échelle active : <i>calibré sur cette vue</i>, ou <i>calibré sur tout le Canada</i> quand la vue contient trop peu de cellules, ou trop peu d'écart, pour être classée.`,
     axis_method:`<b style="color:var(--ink)">Chaque objectif, noté 0–1 par cellule&nbsp;:</b><br>• <b style="color:var(--ink)">Découvrir le plus d'espèces</b> — peu de gens ont observé ici&nbsp;: densité iNaturalist inversée.<br>• <b style="color:var(--ink)">Trouver des espèces en péril</b> — espèces en péril observées à proximité, pondérées par statut&nbsp;: CAN-SAR (COSEWIC/SARA) × GBIF.<br>• <b style="color:var(--ink)">Couvrir chaque habitat</b> — le climat de la cellule est rarement observé&nbsp;: CHELSA.<br>• <b style="color:var(--ink)">Lacunes les plus fraîches</b> — beaucoup observé autrefois, peu récemment&nbsp;: densité iNaturalist récente vs historique.<br>• <b style="color:var(--ink)">Échantillonner avant qu'il soit trop tard</b> — perte forestière récente&nbsp;: Hansen Global Forest Change.`,
     foot:`<b style="color:var(--ink)">Fonctionnement&nbsp;:</b> <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">Blitz the Gap</a> est un bioblitz pancanadien — rendez-vous dans une cellule prioritaire, notez ce que vous voyez sur <a href="https://www.inaturalist.org" target="_blank" rel="noopener" style="color:var(--acc)">iNaturalist</a>, et vos observations de qualité recherche alimentent le <a href="https://www.inaturalist.org/projects/blitz-the-gap-2026-general" target="_blank" rel="noopener" style="color:var(--acc)">projet 2026</a>. Mené par le <a href="https://pollocklab.github.io/blitz-the-gap/" target="_blank" rel="noopener" style="color:var(--acc)">Pollock Lab</a> de l'Université McGill; un outil complémentaire, non officiel.<br><br>Itinéraires d'OSRM (FOSSGIS), temps de déplacement de Weiss 2018. CO₂ en voiture ≈ 0,18&nbsp;kg/km; vélo et marche nuls. <b style="color:var(--ink)">Les observations iNaturalist montrent où les gens ont cherché, pas ce qui vit là</b> — un outil de planification, pas un inventaire.<br><br>Cette carte couvre de nombreux <b style="color:var(--ink)">territoires autochtones</b> — voyez lesquels sur <a href="https://native-land.ca" target="_blank" rel="noopener" style="color:var(--acc)">native-land.ca</a>, masquez les lieux d'espèces sensibles, et obtenez le consentement avant d'observer sur leurs terres.`,
     top_cells:"Meilleures cellules (liste accessible)",
@@ -1248,9 +1245,8 @@ function valG(v,col,row){   // -1 = off the raster, or nodata / foreign-border (
   const k=(row*v.w+col)*4;
   return v.d[k+3]<128?-1:v.d[k+1];
 }
-function zoomScaleActive(){const z=document.getElementById('tgZoomScale');return!!(z&&z.checked);}
-// The in-view distribution as a sorted array of green levels; null = national colours (toggle off,
-// or the guard below fired). Whichever tier is on screen owns it -- the tiers never overlap.
+// The in-view distribution as a sorted array of green levels; null = national colours (the guard
+// below fired). Whichever tier is on screen owns it -- the tiers never overlap.
 // var, not let: updateLegendLabels() reads this from the init path, which runs above this line.
 // A let/const binding is in its temporal dead zone there, and the throw aborts the rest of the script.
 var STRETCH=null;
@@ -1258,7 +1254,7 @@ const STRETCH_MIN_CELLS=24, STRETCH_MIN_SPAN=4;   // span in green levels (virid
 // Guard: a view whose cells really are near-identical has no signal to stretch, and spreading it
 // over the full ramp would manufacture hotspots out of quantisation noise. Fall back to national.
 function makeStretch(gs){
-  if(!zoomScaleActive()||gs.length<STRETCH_MIN_CELLS)return null;
+  if(gs.length<STRETCH_MIN_CELLS)return null;
   const a=Int16Array.from(gs);a.sort();
   return (a[a.length-1]-a[0])<STRETCH_MIN_SPAN?null:a;
 }
@@ -1419,10 +1415,6 @@ function updateOpacityControl(){
   const ov=dataOverlayActive();
   const row=document.getElementById('opacityRow');
   if(row)row.style.display=ov?'':'none';   // #46(b): the slider only appears with a data overlay; lock basemap brightness at 100% otherwise
-  const gv=gridOverlayActive();   // the density raster and Getting Even carry their own fixed scales -- nothing to rescale
-  const zr=document.getElementById('zoomScaleRow'),zh=document.getElementById('zoomScaleHint');
-  if(zr)zr.style.display=gv?'':'none';
-  if(zh)zh.style.display=gv?'':'none';
   if(!ov)setBaseOpacity(1);
   const v=ov?(covOn()?covOpacity:climateOn()?climateOpacity:gridOpacity):baseOpacity;
   sl.value=v;
@@ -1436,7 +1428,6 @@ function updateOpacityControl(){
 // setOverlay writes .checked directly, and a scripted .checked fires no 'change', so this cannot loop.
 for(const[kind,id]of Object.entries(OVERLAY_TOGGLE)){const el=document.getElementById(id);
   if(el)el.addEventListener('change',e=>setOverlay(e.target.checked?kind:'priority'));}
-{const z=document.getElementById('tgZoomScale');if(z)z.addEventListener('change',setGridFill);}   // the fill lives in the grid layers now, not in recolour()
 {const c=document.getElementById('tgCanadaOnly');if(c)c.addEventListener('change',()=>{loadUS().then(recolour);});}
 let _mvT=null,_geTier=null;
 map.on('moveend',()=>{
