@@ -215,6 +215,17 @@ def _png(res_m):
     return tier, path, np.asarray(Image.open(path))
 
 
+def _lattice(tier):
+    """The lattice the PNG records, from the sidecar rather than from a raster.
+
+    The stacks live in the grid release, not in the repo, so reopening one here made these two
+    tests fail in the light CI job that has only the tracked files. The sidecar carries the CRS
+    the builder used, and test_the_png_is_on_the_lattice_the_app_draws holds it to index.json.
+    """
+    lat = tier["lattice"]
+    return Lattice(lat["res_m"], rasterio.crs.CRS.from_wkt(lat["crs"]))
+
+
 def _rowcol(rows, lattice):
     """Where the app's cells land on the lattice, by the same projection the app uses."""
     x, y = rasterio.warp.transform("EPSG:4326", lattice.crs,
@@ -232,11 +243,8 @@ def test_the_png_says_what_the_shipped_json_says():
     """
     ge = _ge()
     tier, _, img = _png(25000)
-    index = json.loads((CA / "index.json").read_text())
-    with rasterio.open(CA / "grid_25000m" / "All_biodiversity.tif") as ds:
-        lattice = Lattice(index["res_m"], ds.crs)
     rows = ge["gettingeven"]
-    row, col = _rowcol(rows, lattice)
+    row, col = _rowcol(rows, _lattice(tier))
     cat, alpha = img[row, col, 0], img[row, col, 3]
     want = np.array([PNG_UNSCORED if r[2] < 0 else r[2] for r in rows])
     wrong = np.flatnonzero((cat != want) & (alpha > 0))
@@ -257,12 +265,9 @@ def test_the_png_hides_exactly_the_cells_the_vector_mask_hides():
     rebuild-grid.yml).
     """
     ge = _ge()
-    _, _, img = _png(25000)
-    index = json.loads((CA / "index.json").read_text())
-    with rasterio.open(CA / "grid_25000m" / "All_biodiversity.tif") as ds:
-        lattice = Lattice(index["res_m"], ds.crs)
+    tier, _, img = _png(25000)
     rows = ge["gettingeven"]
-    row, col = _rowcol(rows, lattice)
+    row, col = _rowcol(rows, _lattice(tier))
     hidden = {_gekey(r[0], r[1]) for r, a in zip(rows, img[row, col, 3]) if not a}
     us = set(json.loads((CA / "us_cells.json").read_text())["us_cells"])
     cells = {_gekey(r[0], r[1]) for r in rows}
