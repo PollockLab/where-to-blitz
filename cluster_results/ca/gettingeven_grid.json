@@ -1,0 +1,59 @@
+{
+ "cats": [
+  "Fishes",
+  "Fungi",
+  "Reptiles & Amphibians",
+  "Invertebrates",
+  "Mammals",
+  "Plants"
+ ],
+ "tiers": {
+  "25000": {
+   "gated_categories": [
+    "Reptiles & Amphibians",
+    "Mammals",
+    "Plants"
+   ],
+   "lattice": {
+    "crs": "PROJCS[\"WGS_1984_Lambert_Azimuthal_Equal_Area\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Lambert_Azimuthal_Equal_Area\"],PARAMETER[\"latitude_of_center\",45],PARAMETER[\"longitude_of_center\",-100],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
+    "ncol": 220,
+    "nrow": 181,
+    "res_m": 25000,
+    "x0": -2150000,
+    "y1": 4300000
+   },
+   "min_records": 1.0,
+   "png": "gettingeven_grid_25000m.png",
+   "richness_gate": [
+    "Reptiles & Amphibians (<0.766, 2,670 cells)",
+    "Mammals (<15.5, 2,670 cells)",
+    "Plants (<91.6, 2,670 cells)"
+   ],
+   "sha256": "f530bf8147942b7bc120b8840b14d05f1d41dbf47974d7979df74745a0c30af3"
+  },
+  "5000": {
+   "gated_categories": [
+    "Reptiles & Amphibians",
+    "Mammals",
+    "Plants"
+   ],
+   "lattice": {
+    "crs": "PROJCS[\"WGS_1984_Lambert_Azimuthal_Equal_Area\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Lambert_Azimuthal_Equal_Area\"],PARAMETER[\"latitude_of_center\",45],PARAMETER[\"longitude_of_center\",-100],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
+    "ncol": 1100,
+    "nrow": 905,
+    "res_m": 5000,
+    "x0": -2150000,
+    "y1": 4300000
+   },
+   "min_records": 1.0,
+   "png": "gettingeven_grid_5000m.png",
+   "richness_gate": [
+    "Reptiles & Amphibians (<1.76, 24,069 cells)",
+    "Mammals (<16.9, 24,069 cells)",
+    "Plants (<108, 24,045 cells)"
+   ],
+   "sha256": "1e28d91c4ac6f09ba1968ecf613b1a5ddb8947e8d3a7df0090a0b396917aa5d7"
+  }
+ },
+ "unscored_index": 255
+}

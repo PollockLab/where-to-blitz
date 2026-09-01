@@ -283,6 +283,17 @@ one-record cells lowest of any band at 46.9%, and it deserves the same discount:
 null has only been run at 25 km, where it removed most of that band's margin. `probe_gettingeven.py` produces all of these numbers,
 recomputing the 25 km figures from the rasters as a check on the JSON path.
 
+**The two tiers do not have to agree, and mostly they do not (#122).** Each tier standardises and
+gates over its own cell population, so a 5 km cell's z score is its group's share relative to the
+other 5 km cells, not to the 25 km cell it sits in. Of the 96,275 scored 5 km cells whose 25 km
+parent is also scored, 60.0% name a different group. That is above the 29.4% agreement the 5 km mix
+of groups would give by chance, but not far above it, and it is not an artefact of thin cells or of
+the gate: the best-sampled 5 km cells, those holding 301 records or more, still differ from their
+parent 45.8% of the time, and recomputing both tiers with the richness gate off moves the figure only
+to 59.5% (the gate changes the group of 14.1% of cells, and it changes the same share at both tiers). Zooming past `TIER_SWITCH_Z` is therefore a change of question, not a sharpening of the
+same one: it asks which group is under-recorded here relative to other 5 km cells. `probe_gettingeven.py`
+prints the per-band table.
+
 **The richness gate, on since 2026-09-01.** Eckert also drops a group from the running where its
 modelled richness sits in the national bottom quartile — no point sending herpers where there are few
 herps. Ryan supplied the three rasters on #59: `ar.richness.tif` and `mammal.richness.tif` are 1 km
