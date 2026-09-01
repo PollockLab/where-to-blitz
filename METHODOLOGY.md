@@ -245,20 +245,42 @@ metric itself is re-derived independently and asserted cell-by-cell in `test_get
 **What a thin cell's colour means.** At 25 km, 1,876 of the 10,679 scored cells hold exactly one
 record. Five groups then sit at a share of zero and the lowest z comes from the national mean and
 standard deviation rather than from the cell, so all 1,876 come back Plants (1,210) or
-Invertebrates (666). That is 18% of the coloured map decided by a tie-break. It is not, however,
-what makes the map look busy: of the 9,641 scored cells with at least three scored neighbours,
-54.9% carry a different priority group from their neighbour majority, and that share does not rise
-as records fall (54.4% at one record, 60.8% at 11-30, 45.6% at 301 and up). Against a permutation
-null that keeps the national mix of groups and destroys the spatial arrangement, 72.1% ± 0.5% over
-50 draws, every record-count band agrees with its neighbours more than chance, the one-record band
-by 18.8 points. Pooling a cell with its neighbours would restore what a census district did by its
+Invertebrates (666). That is 18% of the coloured map decided by a tie-break.
+
+The first version of this section read that tie-break as harmless. Of the 9,641 scored cells with
+at least three scored neighbours, 54.9% carry a different priority group from their neighbour
+majority, and that share does not rise as records fall (54.4% at one record, 60.8% at 11-30, 45.6%
+at 301 and up); against a permutation null that keeps the national mix of groups and destroys the
+spatial arrangement, 72.1% ± 0.5% over 50 draws, every band beat chance and the one-record band beat
+it by the widest margin of all, 18.8 points. Three sharper tests say that margin was an artefact of
+the null and of the comparison, not evidence that thin cells carry signal.
+
+*The null was too generous.* It hands a one-record cell any of the six groups, but a one-record cell
+can only answer the group its single record belongs to, and in practice that is Plants or
+Invertebrates. Shuffling the labels inside each record band instead, so the null carries the band's
+own mix, the one-record band's margin falls from 18.8 points to 4.0 and the two-record band's to 2.3,
+while the well-sampled bands keep theirs (15.7 points at 31-100 records, 21.3 at 301 and up).
+
+*The neighbours were thin too.* Judged against the majority of the neighbours holding 100 records or
+more, the only vote worth trusting, 4,313 cells qualify and 53.5% differ. Split by the cell's own
+records, the one-record cells differ on 73.1% (of 52) and the two-record cells on 84.4% (of 32),
+against 43.3% for cells holding 301 or more.
+
+*A thin cell mostly does not recover its own answer.* Take the 2,339 cells holding 300 records or
+more, thin each to n records drawn from its own record set, and rescore. At one record the thinned
+cell lands on the group the full record set chose 35.8% ± 0.5% of the time, against 28.0% for
+guessing Plants every time. Five records reach 41.1% and twenty reach 51.4%.
+
+So a one-record cell's colour is close to a coin weighted by the national mix, and the floor is a
+data problem as well as a legend problem. Pooling a cell with its neighbours would restore what a census district did by its
 size, but it is a different estimator from the published one and it rewrites well-sampled cells
 too: on the 3,486 cells holding 100 records or more, a 3x3 pooled priority matches the unpooled one
 on 58.8%, a 5x5 on 51.0%.
 
-The floor bites hardest at the tier the map shows when zoomed in. At 5 km, 26.1% of the 96,275 scored cells hold one record and 59.0% hold fewer than ten, against 17.6% and 39.8% at 25 km; the median scored cell holds 5 records at 5 km and 22 at 25 km. The neighbour statistic holds there too, and more strongly: 53.5% of the 80,459 comparable
-5 km cells differ from their majority against a 67.2% null, and the one-record cells
-disagree least of any band at 49.6%. `probe_gettingeven.py` produces all of these numbers,
+The floor bites hardest at the tier the map shows when zoomed in. At 5 km, 26.1% of the 96,275 scored cells hold one record and 59.0% hold fewer than ten, against 17.6% and 39.8% at 25 km; the median scored cell holds 5 records at 5 km and 22 at 25 km. The neighbour statistic reads the same way there, 52.1% of the 80,459
+comparable 5 km cells differing from their majority against a 65.8% national-mix null, with the
+one-record cells lowest of any band at 46.9%, and it deserves the same discount: the band-restricted
+null has only been run at 25 km, where it removed most of that band's margin. `probe_gettingeven.py` produces all of these numbers,
 recomputing the 25 km figures from the rasters as a check on the JSON path.
 
 **The richness gate, on since 2026-09-01.** Eckert also drops a group from the running where its
