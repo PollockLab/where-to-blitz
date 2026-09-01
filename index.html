@@ -187,8 +187,10 @@ details.adv>summary:hover{color:var(--ink)}
 #maplegend .lab{display:flex;justify-content:space-between;font-size:12.5px;color:#46566a}
 #maplegend .hint{margin-top:3px;color:#46566a;font-size:10.5px}/* #82: two sizes under the .lab labels (12.5px) */
 .maplibregl-ctrl-bottom-left{left:14px;bottom:14px;z-index:1060}
-@media(max-width:640px){#maplegend{left:auto;right:8px;bottom:auto;top:calc(50vh + 8px);min-width:0;max-width:158px;padding:6px 8px}}
-@media(max-width:640px){.maplibregl-ctrl-bottom-left{left:8px;bottom:8px}}
+@media(max-width:640px){#maplegend{left:auto;right:8px;bottom:8px;top:auto;min-width:0;max-width:158px;padding:6px 8px}}/* the corner is free now that attribution moved bottom-left: same position at every breakpoint */
+@media(max-width:640px){.maplibregl-ctrl-bottom-left{left:8px;bottom:8px}
+  /* expanded, the attribution runs nearly the full width; keep it clear of the legend's 158px column instead of under it */
+  .maplibregl-ctrl-attrib.maplibregl-compact-show{box-sizing:border-box;max-width:calc(100vw - 190px)}}
 #loading{position:fixed;left:50%;top:46%;transform:translate(-50%,-50%);z-index:1200;background:rgba(255,255,255,.96);border-radius:10px;padding:11px 17px;box-shadow:0 3px 14px rgba(0,0,0,.25);font-size:14px;font-weight:600;color:#1b2a3a}
 @media(max-width:640px){#loading{left:50%;top:74vh}}
 #howbtn{display:flex;align-items:center;gap:6px;background:#fff;color:#1b2a3a;border:0;border-radius:9px;box-shadow:0 2px 9px rgba(0,0,0,.28);padding:7px 11px;font-size:12.5px;font-weight:650;cursor:pointer;max-width:260px}
