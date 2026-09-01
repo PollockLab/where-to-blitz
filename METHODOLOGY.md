@@ -225,6 +225,102 @@ ecological importance — that awaits the SDM/VOI score.
 
 ---
 
+## The Getting Even layer (#59)
+
+A separate layer, not one of the five axes: it answers *what* to record in a cell, not *where* to
+go. It is the calculation Lucas Eckert ran for the 2025 *Getting Even* challenge, moved from
+census districts onto this app's equal-area cells (`build_gettingeven.py`):
+
+1. **Proportion** — each group's share of the cell's iNaturalist records, over records of all taxa.
+2. **z-score** — that share standardised against the same group's share across every other cell,
+   one standardisation per group.
+3. **Priority** — the cell takes the group with the lowest z: the group most under-recorded *here
+   relative to how often it is recorded elsewhere*. The standardisation is the point; on raw shares
+   almost every cell comes back fungi or fish.
+
+Birds are excluded, as in the published 2025 map — eBird already covers them. Cells with no records
+are grey rather than scored; `GE_MIN_RECORDS` raises that floor, at the cost of more grey. The
+metric itself is re-derived independently and asserted cell-by-cell in `test_gettingeven.py`.
+
+**What a thin cell's colour means.** At 25 km, 1,876 of the 10,679 scored cells hold exactly one
+record. Five groups then sit at a share of zero and the lowest z comes from the national mean and
+standard deviation rather than from the cell, so all 1,876 come back Plants (1,210) or
+Invertebrates (666). That is 18% of the coloured map decided by a tie-break.
+
+The first version of this section read that tie-break as harmless. Of the 9,641 scored cells with
+at least three scored neighbours, 54.9% carry a different priority group from their neighbour
+majority, and that share does not rise as records fall (54.4% at one record, 60.8% at 11-30, 45.6%
+at 301 and up); against a permutation null that keeps the national mix of groups and destroys the
+spatial arrangement, 72.1% ± 0.5% over 50 draws, every band beat chance and the one-record band beat
+it by the widest margin of all, 18.8 points. Three sharper tests say that margin was an artefact of
+the null and of the comparison, not evidence that thin cells carry signal.
+
+*The null was too generous.* It hands a one-record cell any of the six groups, but a one-record cell
+can only answer the group its single record belongs to, and in practice that is Plants or
+Invertebrates. Shuffling the labels inside each record band instead, so the null carries the band's
+own mix, the one-record band's margin falls from 18.8 points to 4.0 and the two-record band's to 2.3,
+while the well-sampled bands keep theirs (15.7 points at 31-100 records, 21.3 at 301 and up).
+
+*The neighbours were thin too.* Judged against the majority of the neighbours holding 100 records or
+more, the only vote worth trusting, 4,313 cells qualify and 53.5% differ. Split by the cell's own
+records, the one-record cells differ on 73.1% (of 52) and the two-record cells on 84.4% (of 32),
+against 43.3% for cells holding 301 or more.
+
+*A thin cell mostly does not recover its own answer.* Take the 2,339 cells holding 300 records or
+more, thin each to n records drawn from its own record set, and rescore. At one record the thinned
+cell lands on the group the full record set chose 35.8% ± 0.5% of the time, against 28.0% for
+guessing Plants every time. Five records reach 41.1% and twenty reach 51.4%.
+
+So a one-record cell's colour is close to a coin weighted by the national mix, and the floor is a
+data problem as well as a legend problem. Pooling a cell with its neighbours would restore what a census district did by its
+size, but it is a different estimator from the published one and it rewrites well-sampled cells
+too: on the 3,486 cells holding 100 records or more, a 3x3 pooled priority matches the unpooled one
+on 58.8%, a 5x5 on 51.0%.
+
+The floor bites hardest at the tier the map shows when zoomed in. At 5 km, 26.1% of the 96,275 scored cells hold one record and 59.0% hold fewer than ten, against 17.6% and 39.8% at 25 km; the median scored cell holds 5 records at 5 km and 22 at 25 km. The neighbour statistic reads the same way there, 52.1% of the 80,459
+comparable 5 km cells differing from their majority against a 65.8% national-mix null, with the
+one-record cells lowest of any band at 46.9%, and it deserves the same discount: the band-restricted
+null has only been run at 25 km, where it removed most of that band's margin. `probe_gettingeven.py` produces all of these numbers,
+recomputing the 25 km figures from the rasters as a check on the JSON path.
+
+**The richness gate, on since 2026-09-01.** Eckert also drops a group from the running where its
+modelled richness sits in the national bottom quartile — no point sending herpers where there are few
+herps. Ryan supplied the three rasters on #59: `ar.richness.tif` and `mammal.richness.tif` are 1 km
+Lambert conformal conic, band `sum`; `plant.richness.stacks.tif` is 5 km Lambert azimuthal equal
+area, and the builder reads its first band, `modelled.richness`. `reproject_mean` warps each onto the
+lattice from its own CRS, so nothing has to be pre-aligned.
+
+The quartile is taken the way the R script takes it. A cell the richness raster does not reach
+becomes 0 before the quantile rather than being left out of it (`richness[is.na(richness) &
+!is.na(base.5k)] <- 0`), so those cells count in the denominator as well as falling below the limit.
+That matters: 966 of the 10,679 scored cells sit outside the herp and mammal rasters, and excluding
+them from the quantile lifts the limit enough to drop 3,394 cells instead of the R script's 2,670.
+
+At 25 km the gate drops 2,670 cells per group, a quarter of the scored cells by construction, at
+limits of 0.766 herp species, 15.5 mammal species and 91.6 modelled plant species. It moves 14.1% of
+the scored cells to a different group:
+
+| | Fishes | Fungi | Herps | Inverts | Mammals | Plants |
+|---|---|---|---|---|---|---|
+| gate off | 82 | 1,519 | 199 | 3,390 | 1,955 | 3,534 |
+| gate on | 208 | 1,970 | 207 | 4,218 | 1,775 | 2,301 |
+
+**The gate cannot be rebuilt in CI yet.** The rasters are on the lab SharePoint, not on the public
+`bq-io/blitz-the-gap` bucket the `Rebuild grid` workflow reads, so a CI rebuild sees no richness and
+produces a valid-looking ungated map. `_refuse_silent_ungating` in `build_gettingeven.py` turns that
+silent revert into a failed build: an ungated run refuses to overwrite a shipped layer whose
+`richness_gate` is non-empty, unless `GE_ALLOW_UNGATED=1` says to. Hosting the rasters is tracked
+separately; until that lands, a rebuild of this layer needs the three env vars set by hand.
+
+Turning the gate on skips `test_the_shipped_layer_is_the_published_metric` and
+`test_methodology_quotes_the_real_thin_cell_counts`, because neither can re-derive a gated layer
+without the rasters. Both gates on this layer are therefore off in a gated build. That is the cost of
+shipping the gate before the rasters are hosted, and it goes away with them.
+
+The tap panel is a *different* calculation — a live iNaturalist query about the species in the cell
+versus its ~50 km neighbourhood (see "Which species to record in a cell" above). The colours come
+from this offline layer; the ranking in the panel does not.
+
 ## Honesty notes
 
 - This is a **work-in-progress prototype, not an official Blitz the Gap tool** (so flagged in-app).
@@ -251,4 +347,5 @@ ecological importance — that awaits the SDM/VOI score.
 | discover, env, urgency, travel | `build_fullgrid_ca.py` | iNat density COG (Biodiversité Québec STAC), CHELSA, Hansen, Weiss 2018 |
 | conservation | `build_atrisk_layer.py`, joined in `fullgrid_fields.py` | CAN-SAR (OSF) + GBIF occurrences |
 | staleness | iNat open-data (cluster DuckDB) → `cluster_results/ca/ca_inat_metrics.csv` | iNaturalist open-data (AWS) |
+| Getting Even | `build_gettingeven.py` | per-group iNat density COGs, via the grid build; Eckert 2025 metric |
 | composite + display | `build_webapp.py` (`impact`, `recolour`) | — |
