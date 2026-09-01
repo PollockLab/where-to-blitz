@@ -261,12 +261,39 @@ The floor bites hardest at the tier the map shows when zoomed in. At 5 km, 26.1%
 disagree least of any band at 49.6%. `probe_gettingeven.py` produces all of these numbers,
 recomputing the 25 km figures from the rasters as a check on the JSON path.
 
-**Not yet transferred:** Eckert also drops a group from the running where its modelled richness sits
-in the national bottom quartile — no point sending herpers where there are few herps. Those three
-richness rasters (`ar.richness.tif`, `mammal.richness.tif`, `plant.richness.stacks.tif`) are in the
-lab SharePoint, not in any public bucket, so the step is implemented but off: point
-`GE_RICHNESS_HERP` / `GE_RICHNESS_MAMMAL` / `GE_RICHNESS_PLANT` at them and it runs. Until then the
-shipped layer records `"richness_gate": []` and the build prints `NOT APPLIED`.
+**The richness gate, on since 2026-09-01.** Eckert also drops a group from the running where its
+modelled richness sits in the national bottom quartile — no point sending herpers where there are few
+herps. Ryan supplied the three rasters on #59: `ar.richness.tif` and `mammal.richness.tif` are 1 km
+Lambert conformal conic, band `sum`; `plant.richness.stacks.tif` is 5 km Lambert azimuthal equal
+area, and the builder reads its first band, `modelled.richness`. `reproject_mean` warps each onto the
+lattice from its own CRS, so nothing has to be pre-aligned.
+
+The quartile is taken the way the R script takes it. A cell the richness raster does not reach
+becomes 0 before the quantile rather than being left out of it (`richness[is.na(richness) &
+!is.na(base.5k)] <- 0`), so those cells count in the denominator as well as falling below the limit.
+That matters: 966 of the 10,679 scored cells sit outside the herp and mammal rasters, and excluding
+them from the quantile lifts the limit enough to drop 3,394 cells instead of the R script's 2,670.
+
+At 25 km the gate drops 2,670 cells per group, a quarter of the scored cells by construction, at
+limits of 0.766 herp species, 15.5 mammal species and 91.6 modelled plant species. It moves 14.1% of
+the scored cells to a different group:
+
+| | Fishes | Fungi | Herps | Inverts | Mammals | Plants |
+|---|---|---|---|---|---|---|
+| gate off | 82 | 1,519 | 199 | 3,390 | 1,955 | 3,534 |
+| gate on | 208 | 1,970 | 207 | 4,218 | 1,775 | 2,301 |
+
+**The gate cannot be rebuilt in CI yet.** The rasters are on the lab SharePoint, not on the public
+`bq-io/blitz-the-gap` bucket the `Rebuild grid` workflow reads, so a CI rebuild sees no richness and
+produces a valid-looking ungated map. `_refuse_silent_ungating` in `build_gettingeven.py` turns that
+silent revert into a failed build: an ungated run refuses to overwrite a shipped layer whose
+`richness_gate` is non-empty, unless `GE_ALLOW_UNGATED=1` says to. Hosting the rasters is tracked
+separately; until that lands, a rebuild of this layer needs the three env vars set by hand.
+
+Turning the gate on skips `test_the_shipped_layer_is_the_published_metric` and
+`test_methodology_quotes_the_real_thin_cell_counts`, because neither can re-derive a gated layer
+without the rasters. Both gates on this layer are therefore off in a gated build. That is the cost of
+shipping the gate before the rasters are hosted, and it goes away with them.
 
 The tap panel is a *different* calculation — a live iNaturalist query about the species in the cell
 versus its ~50 km neighbourhood (see "Which species to record in a cell" above). The colours come

@@ -176,8 +176,13 @@ def apply_richness_gate(z, lat, rowcol, scored):
         if not os.path.exists(path):
             raise SystemExit(f"{RICHNESS_ENV[cat]}={path}: no such file")
         rich = reproject_mean(path, lat, nonneg=True)[0].astype(float)[rowcol]
-        limit = np.nanpercentile(np.where(scored, rich, np.nan), RICHNESS_PCT)
-        drop = scored & ~(rich >= limit)          # ~(>=) also drops cells with no richness value
+        # The R script fills a cell its richness raster does not reach with 0 before taking the
+        # quartile (`richness[is.na(richness) & !is.na(base.5k)] <- 0`), so those cells sit in the
+        # denominator as well as below the limit. Excluding them from the quantile instead lifts
+        # the limit and over-drops: 3,394 cells against the R script's 2,670 at 25 km.
+        rich = np.where(np.isfinite(rich), rich, 0.0)
+        limit = np.percentile(rich[scored], RICHNESS_PCT)
+        drop = scored & (rich < limit)
         z[i][drop] = np.nan
         gated.append(f"{cat} (<{limit:.3g}, {int(drop.sum()):,} cells)")
     return gated
@@ -204,6 +209,26 @@ def write_raster(lat, rowcol, idx, best):
     return path
 
 
+def _refuse_silent_ungating(path, gated):
+    """Fail loudly when an ungated build would overwrite a gated shipped layer.
+
+    The richness rasters live on the lab's SharePoint, not on the public bucket CI reads, so a
+    rebuild that cannot see them produces a valid-looking ungated map and reverts the shipped one
+    without a word. That is how the layer went grey once before, see the "Rebuild the Getting Even
+    layer" step in rebuild-grid.yml. Until the rasters are hosted (issue below), turn the silent
+    revert into a failed build.
+    """
+    if gated or os.environ.get("GE_ALLOW_UNGATED") == "1" or not os.path.exists(path):
+        return
+    with open(path) as fh:
+        shipped = json.load(fh).get("richness_gate") or []
+    if shipped:
+        raise SystemExit(
+            f"{path} was built with the richness gate on ({'; '.join(shipped)}) and this build "
+            f"has no richness rasters, so writing it would silently revert the layer. Set "
+            f"{', '.join(RICHNESS_ENV.values())}, or pass GE_ALLOW_UNGATED=1 to overwrite on purpose.")
+
+
 def write_json(coords, idx, best, gated):
     """The app's rows, in the app's order: [lat, lon, category index, z]. z is null when grey.
 
@@ -213,6 +238,7 @@ def write_json(coords, idx, best, gated):
     rows = [[lat, lon, int(c), None if c < 0 else round(float(z), 3)]
             for (lat, lon), c, z in zip(coords, idx, best)]
     path = os.path.join(OUT_DIR, "webapp_data_gettingeven.json")
+    _refuse_silent_ungating(path, gated)
     with open(path, "w") as fh:
         json.dump({"gettingeven": rows, "cats": CATS, "min_records": MIN_RECORDS,
                    "richness_gate": gated}, fh, separators=(",", ":"))
