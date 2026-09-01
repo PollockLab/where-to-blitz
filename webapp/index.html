@@ -682,6 +682,26 @@ const gekey=(lat,lon)=>lat.toFixed(3)+','+lon.toFixed(3);
 let GE_LOADED=false;
 async function loadGE(){if(GE_LOADED)return;const r=await fetchT(DATA_DIR+'webapp_data_gettingeven.json',15000),j=await r.json();
   for(const e of j.gettingeven)GE[gekey(e[0],e[1])]=[e[2],e[3]];GE_LOADED=true;}
+// The 5 km tier (#122). Same format as the priority grid's values PNGs: one pixel per lattice
+// cell, category index in the RED channel, alpha 0 where there is no cell (off the lattice, or
+// foreign). The 25 km JSON's format is ~250k coordinate-keyed rows at 5 km, some 14 MB; this is
+// ~200 kB and it is painted onto the very polygons the app already draws. The palette stays here
+// in GE_PAL rather than being baked into the file, so a legend change is not a rebuild.
+const GE_VALS={}, GE_UNSCORED=255;   // GE_UNSCORED matches PNG_UNSCORED in build_gettingeven.py
+async function loadGEVals(res){
+  const key='gettingeven_grid_'+res+'m';
+  if(GE_VALS[key])return GE_VALS[key];
+  return GE_VALS[key]=await readPng(DATA_DIR+key+'.png');
+}
+// -1 means "draw nothing here": no cell, or a cell holding too few records to name a group. At
+// 25 km the second case is the grey "all under-sampled" swatch, but at 5 km most of the country
+// is unscored, and painting "not scored" the same grey as "scored, and the answer is everything"
+// would claim something the data does not say. So 5 km leaves it to the basemap.
+function geCat(v,col,row){
+  if(col<0||row<0||col>=v.w||row>=v.h)return -1;
+  const k=(row*v.w+col)*4;
+  return (v.d[k+3]<128||v.d[k]===GE_UNSCORED)?-1:v.d[k];
+}
 function geActive(){const e=document.getElementById('tgGettingEven');return!!(e&&e.checked);}
 function caOnlyActive(){const e=document.getElementById('tgCanadaOnly');return e?e.checked:true;}        // issue #20 removed the toggle; behaviour stays on by default
 // US-side cells (approx, lazy-loaded): hidden when "Canada only" is on -- the cross-border band is a data edge, not a real gap (#5).
@@ -1049,7 +1069,11 @@ function recolour(){
   const cov=document.getElementById('tgCoverage')&&document.getElementById('tgCoverage').checked;
   if(geActive()){
     // Categorical layer: colour by most under-represented group (no magnitude). Flat opacity; stroke matches fill so cells tile seamlessly.
-    markers.forEach(m=>{const c=geColour(m);setCellState(m.i,c,0.62);});
+    // Above the tier switch the 5 km fill is the visible one, so the 25 km cells drop to opacity 0
+    // rather than being removed: cells-fill is also the click target, and a 0.62 layer of 25 km
+    // colour underneath would show through wherever a 5 km cell is unscored (#122).
+    const op=(map&&map.getZoom&&map.getZoom()>=TIER_SWITCH_Z)?0:0.62;
+    markers.forEach(m=>{const c=geColour(m);setCellState(m.i,c,op);});
     applyCanadaMask();renderCellTable();setGridFill();return;   // setGridFill drops the priority grid so it can't show through the 0.62 fill
   }
   // Getting Even just turned off: clear the categorical feature-state it painted, otherwise
@@ -1174,14 +1198,19 @@ const PM_BASE='__PMTILES_BASE__';   // release-asset base URL for all PMTiles (#
 function gridSlug(){return state.taxon.replace(/ /g,'_');}
 function goalSlug(){const i=(window.__activePreset>=0)?window.__activePreset:0;return PRESETS[i].name.toLowerCase().replace(/ /g,'_');}
 const VALS={};   // decoded values PNGs, keyed <group>_<goal>_grid_<res>m
-async function loadVals(res){
-  const key=gridSlug()+'_'+goalSlug()+'_grid_'+res+'m';
-  if(VALS[key])return VALS[key];
-  const r=await fetchT(DATA_DIR+'values/'+key+'.png',20000);if(!r.ok)throw new Error('HTTP '+r.status+' loading '+key);
+// One pixel per lattice cell, read back through a canvas: the shared decoder for every
+// lattice-index PNG (the priority grid's values, and Getting Even's categories since #122).
+async function readPng(url){
+  const r=await fetchT(url,20000);if(!r.ok)throw new Error('HTTP '+r.status+' loading '+url);
   const img=await createImageBitmap(await r.blob());
   const cv=document.createElement('canvas');cv.width=img.width;cv.height=img.height;
   const cx=cv.getContext('2d',{willReadFrequently:true});cx.drawImage(img,0,0);
-  return VALS[key]={w:img.width,h:img.height,d:cx.getImageData(0,0,img.width,img.height).data};
+  return {w:img.width,h:img.height,d:cx.getImageData(0,0,img.width,img.height).data};
+}
+async function loadVals(res){
+  const key=gridSlug()+'_'+goalSlug()+'_grid_'+res+'m';
+  if(VALS[key])return VALS[key];
+  return VALS[key]=await readPng(DATA_DIR+'values/'+key+'.png');
 }
 function valColor(v,col,row){
   if(col<0||row<0||col>=v.w||row>=v.h)return null;
@@ -1239,21 +1268,25 @@ function setGridFill(){
   const seq=++_gridSeq;
   ['grid25','grid5'].forEach(id=>{if(map.getLayer(id))map.removeLayer(id);});
   if(map.getSource('cells5'))map.removeSource('cells5');
-  if(geActive())return;   // Getting Even paints its own categorical vector fill
   const cov=document.getElementById('tgCoverage');if(cov&&cov.checked)return;   // density overlay replaces the grid fill
   if(!markers.length)return;
-  // 25 km tier: feature-state colour on the existing 23k-cell source (same mechanism Getting Even uses).
-  map.addLayer({id:'grid25',type:'fill',source:'cells',maxzoom:TIER_SWITCH_Z,paint:{
-    'fill-color':['coalesce',['feature-state','gc'],'rgba(0,0,0,0)'],
-    'fill-color-transition':{duration:250},   // a restretch eases in; a hard swap on every moveend reads as a glitch
-    'fill-opacity':gridOpacity}},CELL_LAYER);
+  // Getting Even keeps its 25 km fill on the cells-fill feature-state that recolour() paints, so
+  // only the 5 km tier is built here (#122). Everything below the switch is untouched by that.
+  const ge=geActive();
+  if(!ge){
+    // 25 km tier: feature-state colour on the existing 23k-cell source (same mechanism Getting Even uses).
+    map.addLayer({id:'grid25',type:'fill',source:'cells',maxzoom:TIER_SWITCH_Z,paint:{
+      'fill-color':['coalesce',['feature-state','gc'],'rgba(0,0,0,0)'],
+      'fill-color-transition':{duration:250},   // a restretch eases in; a hard swap on every moveend reads as a glitch
+      'fill-opacity':gridOpacity}},CELL_LAYER);
+  }
   // 5 km tier: viewport-built cell polygons (refreshCells5), rebuilt on moveend above the switch.
   map.addSource('cells5',{type:'geojson',data:{type:'FeatureCollection',features:[]},attribution:'Blitz the Gap priority grid'});
   map.addLayer({id:'grid5',type:'fill',source:'cells5',minzoom:TIER_SWITCH_Z,paint:{
     'fill-color':['get','c'],
     'fill-color-transition':{duration:250},
-    'fill-opacity':gridOpacity}},CELL_LAYER);
-  loadVals(25000).then(v=>{
+    'fill-opacity':ge?0.62:gridOpacity}},CELL_LAYER);   // 0.62 is the flat categorical opacity the 25 km tier uses
+  if(!ge)loadVals(25000).then(v=>{
     if(seq!==_gridSeq)return;
     if(map.getZoom()<TIER_SWITCH_Z)STRETCH=makeStretch(sample25(v));   // above the switch the 5 km tier is the visible one and sets STRETCH itself
     paintGrid25(v);
@@ -1283,7 +1316,8 @@ let _c5seq=0;
 async function refreshCells5(){
   if(!_mapLoaded||!map.getSource('cells5')||map.getZoom()<TIER_SWITCH_Z)return;
   const seq=++_c5seq;
-  let v;try{v=await loadVals(5000);}catch(e){return;}
+  const ge=geActive();
+  let v;try{v=await (ge?loadGEVals(5000):loadVals(5000));}catch(e){return;}
   if(seq!==_c5seq||!map.getSource('cells5'))return;
   const R=5000,b=map.getBounds(),W=b.getWest(),E=b.getEast(),S=b.getSouth(),N=b.getNorth();
   // Viewport extent in LAEA: corners + edge midpoints (a Mercator rectangle's edges bow in LAEA).
@@ -1296,16 +1330,17 @@ async function refreshCells5(){
   const cells=[];
   if((c1-c0+1)*(r1-r0+1)<=40000){   // z >= TIER_SWITCH_Z keeps this in the low thousands; the cap guards pathological viewports
     for(let row=r0;row<=r1;row++)for(let col=c0;col<=c1;col++){
-      const g=valG(v,col,row);if(g<0)continue;
+      const g=ge?geCat(v,col,row):valG(v,col,row);if(g<0)continue;   // GE: no cell, or too few records -> draw nothing
       cells.push([col,row,g]);
     }
   }
-  STRETCH=makeStretch(cells.map(c=>c[2]));   // the cells about to be drawn ARE the view, so they define the scale
+  if(!ge)STRETCH=makeStretch(cells.map(c=>c[2]));   // the cells about to be drawn ARE the view, so they define the scale
   const feats=cells.map(c=>{
     const col=c[0],row=c[1];
     const x=LATTICE_X0+col*R,y=LATTICE_Y1-row*R;   // exact lattice corners -> neighbours share vertices, no seams
     const ring=[[x,y],[x+R,y],[x+R,y-R],[x,y-R],[x,y]].map(q=>{const g=LAEA.inv(q[0],q[1]);return[g[1],g[0]];});
-    return{type:'Feature',properties:{c:STRETCH?virColour(stretchT(c[2])):valColor(v,col,row)},geometry:{type:'Polygon',coordinates:[ring]}};
+    const fill=ge?(GE_PAL[c[2]]||GE_ALL):(STRETCH?virColour(stretchT(c[2])):valColor(v,col,row));
+    return{type:'Feature',properties:{c:fill},geometry:{type:'Polygon',coordinates:[ring]}};
   });
   map.getSource('cells5').setData({type:'FeatureCollection',features:feats});
   updateLegendLabels();
@@ -1369,9 +1404,11 @@ document.getElementById('tgCoverage').addEventListener('change',e=>{if(e.target.
 document.getElementById('tgGettingEven').addEventListener('change',e=>{if(e.target.checked)document.getElementById('tgCoverage').checked=false;loadGE().then(()=>{setCoverage();updateLegend();recolour();});});
 {const z=document.getElementById('tgZoomScale');if(z)z.addEventListener('change',setGridFill);}   // the fill lives in the grid layers now, not in recolour()
 {const c=document.getElementById('tgCanadaOnly');if(c)c.addEventListener('change',()=>{loadUS().then(recolour);});}
-let _mvT=null;
+let _mvT=null,_geTier=null;
 map.on('moveend',()=>{
   refreshCells5();   // seq-guarded and async; it sets STRETCH from the 5 km cells it is about to draw
+  // Getting Even swaps tiers rather than restretching, so the crossing itself is the repaint trigger.
+  if(geActive()){const tier=activeCellResM();if(tier!==_geTier){_geTier=tier;recolour();}}
   if(_mvT)clearTimeout(_mvT);
   _mvT=setTimeout(restretch25,150);   // recolour once the view settles -- restretching mid-pan makes the ramp crawl under the cursor
 });

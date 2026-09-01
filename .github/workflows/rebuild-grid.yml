@@ -451,6 +451,10 @@ jobs:
           # density tiles carry a density_ prefix (matches the app's tiles/density_<Taxon>.pmtiles)
           for f in density/*.pmtiles; do cp "$f" "_site/tiles/density_$(basename "$f")"; done
           cp artifacts/cluster_results/ca/*.json _site/cluster_results/ca/
+          # The Getting Even fill at both tiers (#122). Unguarded on purpose: it is a tracked
+          # file, so a missing one means the build lost it, and the app would silently lose the
+          # 5 km layer rather than the deploy failing.
+          cp artifacts/cluster_results/ca/*.png _site/cluster_results/ca/
           cp -R artifacts/cluster_results/ca/values _site/cluster_results/ca/
           du -sh _site
       - name: Upload Pages artifact
@@ -523,6 +527,7 @@ jobs:
             [ -f "$f" ] && cp "$f" "_site/tiles/density_$(basename "$f")" || true
           done
           cp cluster_results/ca/*.json _site/cluster_results/ca/
+          cp cluster_results/ca/*.png _site/cluster_results/ca/   # the Getting Even fill (#122)
           cp -R cluster_results/ca/values _site/cluster_results/ca/
           du -sh _site
       - name: Upload Pages artifact

@@ -30,7 +30,6 @@ import numpy as np
 import rasterio
 
 import border_mask
-from border_mask import COARSE_RES
 from goal_presets import AXES, PRESETS
 from grid_schema import BAND_INDEX
 
@@ -42,20 +41,6 @@ BANDS = {ax: BAND_INDEX[ax] for ax in AXES}
 _VIRIDIS = matplotlib.colormaps["viridis"]
 _LUT = (np.asarray([_VIRIDIS(i / 255.0) for i in range(256)])[:, :3] * 255).round().astype(np.uint8)
 
-_MASK_CACHE = {}
-
-
-def _hidden_mask(height, width, res_m, crs, origin_x, origin_y):
-    """Cells outside Canada at this tier's own resolution (see border_mask)."""
-    key = (str(crs), origin_x, origin_y, height, width, res_m)
-    if key not in _MASK_CACHE:
-        if res_m == COARSE_RES:
-            fine = border_mask.hidden_fine(crs, origin_x, origin_y, height * 5, width * 5)
-            _MASK_CACHE[key] = border_mask.hidden_coarse(fine)
-        else:
-            _MASK_CACHE[key] = border_mask.hidden_fine(crs, origin_x, origin_y, height, width)
-    return _MASK_CACHE[key]
-
 
 def render_goal_rgba(tif, preset, res_m):
     """The RGBA cell image for one goal blend: viridis colour + validity alpha.
@@ -65,7 +50,7 @@ def render_goal_rgba(tif, preset, res_m):
     """
     with rasterio.open(tif) as src:
         height, width = src.height, src.width
-        hidden = _hidden_mask(height, width, res_m, src.crs, src.transform.c, src.transform.f)
+        hidden = border_mask.hidden_for_tier(height, width, res_m, src.crs, src.transform.c, src.transform.f)
         axes = {ax: src.read(BANDS[ax]).astype(np.float64) for ax in AXES}
     data = np.zeros((height, width), dtype=np.float64)
     for ax, w in zip(AXES, preset["w"], strict=True):

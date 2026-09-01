@@ -43,6 +43,11 @@ OUTPUT_PATTERNS = [
     "cluster_results/ca/webapp_data_*.json",
     "cluster_results/ca/breaks.json",
     "cluster_results/ca/us_cells.json",
+    # The Getting Even fill and its build record (#122). The PNG is lattice index space, so a
+    # lattice change re-points every pixel instead of making a lookup miss; freezing its hash
+    # here is how a reader can tell which build the shipped colours came from.
+    "cluster_results/ca/gettingeven_grid_*.png",
+    "cluster_results/ca/gettingeven_grid.json",
 ]
 
 

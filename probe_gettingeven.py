@@ -370,3 +370,38 @@ for res in (25000, 5000):
             continue
         lab = f"{a}" if b == a + 1 else (f"{a}+" if b > 10**8 else f"{a}-{b - 1}")
         print(f"    {lab:>13}  {m.sum():7,}  {100 * dis[m].mean():5.1f}%")
+
+
+# --- Do the two tiers name the same group in the same place?
+# Each tier standardises and gates over its own cells, so a 5 km cell can legitimately answer
+# differently from the 25 km cell containing it, and a user zooming past TIER_SWITCH_Z sees the
+# colour change. The lattice makes the comparison exact: a 25 km cell is the 5x5 block of 5 km
+# cells at (row // 5, col // 5), no resampling involved. Reported against the same "always guess
+# the parent's group" baseline the holdout above uses, because agreement on a map where one group
+# wins a third of the cells is not free.
+print("\ndo the tiers agree, 5 km cell against the 25 km cell containing it")
+try:
+    fine, nfine, okfine = tier(5000)
+    coarse, _, okcoarse = tier(25000)
+except rasterio.RasterioIOError:
+    print("  both tiers must be built")
+else:
+    k = 25000 // 5000
+    parent = np.repeat(np.repeat(coarse, k, 0), k, 1)[: fine.shape[0], : fine.shape[1]]
+    pok = np.repeat(np.repeat(okcoarse, k, 0), k, 1)[: fine.shape[0], : fine.shape[1]]
+    comp = okfine & pok
+    same = comp & (fine == parent)
+    # Chance is not zero agreement: two cells drawn independently from the 5 km mix of groups
+    # land together at sum(share^2), so that is the bar the observed agreement has to clear.
+    share = np.bincount(fine[comp], minlength=len(CATS)) / comp.sum()
+    print(
+        f"  {comp.sum():,} scored 5 km cells have a scored 25 km parent; "
+        f"{100 * (1 - same[comp].mean()):.1f}% name a different group "
+        f"({100 * same[comp].mean():.1f}% agree, against {100 * (share**2).sum():.1f}% by chance)"
+    )
+    for a, b in zip(rb, rb[1:]):
+        m = comp & (nfine >= a) & (nfine < b)
+        if not m.any():
+            continue
+        lab = f"{a}" if b == a + 1 else (f"{a}+" if b > 10**8 else f"{a}-{b - 1}")
+        print(f"    {lab:>13}  {m.sum():7,}  {100 * (1 - same[m].mean()):5.1f}% differ")

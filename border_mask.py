@@ -100,3 +100,23 @@ def hidden_coarse(fine_hidden):
     h, w = fine_hidden.shape
     ch, cw = h // FACTOR, w // FACTOR
     return fine_hidden[:ch * FACTOR, :cw * FACTOR].reshape(ch, FACTOR, cw, FACTOR).all(axis=(1, 3))
+
+
+_TIER_CACHE = {}
+
+
+def hidden_for_tier(height, width, res_m, crs, origin_x, origin_y):
+    """Cells outside Canada at this tier's own resolution, cached per lattice.
+
+    The 25 km verdict is inherited from its 5 km children rather than recomputed on the coarse
+    grid, which is the whole point of hidden_coarse above: classifying at 25 km directly punches
+    diagonal holes through the Canadian side of the border.
+    """
+    key = (str(crs), origin_x, origin_y, height, width, res_m)
+    if key not in _TIER_CACHE:
+        if res_m == COARSE_RES:
+            fine = hidden_fine(crs, origin_x, origin_y, height * FACTOR, width * FACTOR)
+            _TIER_CACHE[key] = hidden_coarse(fine)
+        else:
+            _TIER_CACHE[key] = hidden_fine(crs, origin_x, origin_y, height, width)
+    return _TIER_CACHE[key]
