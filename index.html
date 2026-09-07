@@ -63,10 +63,13 @@ input[type=range]{width:100%;accent-color:var(--acc);margin:0}
 /* Issue #69: the sidebar goes light to match openbiodiversity.ca. Remap the panel's theme vars (so the
    many inline color:var(--ink) emphasis spans stay visible on white) plus the few hard-coded dark control
    colours. Map chrome — legend, how-panel, popups — keeps the dark theme. */
-#panel{--ink:#16202c;--mut:#5d6b7a;--panel:#fff;color:var(--ink);border-color:#dfe5ec;box-shadow:0 6px 22px rgba(20,40,70,.16)}
+#panel{--ink:#16202c;--mut:#5d6b7a;--panel:#fff;--acc:#4f6b47;--gd:#15803d;--gold:#a16207;color:var(--ink);border-color:#dfe5ec;box-shadow:0 6px 22px rgba(20,40,70,.16)}
 #panel select{background:#f4f7fa;border-color:#d4dde6}
 #panel .infobox{background:#f4f7fa;border-color:#d4dde6}
 #panel details.adv{border-top-color:#e2e8ef}
+#panel #plan,#panel .startrow button.on{color:#fff}   /* the light --gd is dark enough that #04220f no longer reads on it */
+#panel #trips .row{background:#f4f7fa;border-color:#d4dde6}
+#panel #searchResults{background:#fff;border-color:#d4dde6;box-shadow:0 4px 14px rgba(20,40,70,.18)}
 #panel .infobtn{border-color:#9aa7b5}
 /* Issue #69: single language toggle, lifted out of the panel to sit left of the How-scored button. */
 #topctrls{position:fixed;right:14px;top:calc(12px + var(--bh));z-index:1200;display:flex;align-items:stretch;gap:8px}
@@ -222,7 +225,7 @@ details.adv>summary:hover{color:var(--ink)}
   <div class="sec" data-i18n="your_trip">Your trip</div>
   <div style="position:relative">
     <input id="placeSearch" type="text" placeholder="Search a town or address" data-i18n-ph="search_ph" autocomplete="off" data-i18n-aria="aria_search" aria-label="Search for a start place" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="searchResults" aria-autocomplete="list"
-      style="width:100%;padding:8px 9px;background:#0e1722;color:var(--ink);border:1px solid #2a3a4d;border-radius:7px;font-size:14px">
+      style="width:100%;padding:8px 9px;background:#f4f7fa;color:var(--ink);border:1px solid #d4dde6;border-radius:7px;font-size:14px">
     <div id="searchResults" role="listbox" data-i18n-aria="aria_search_results" aria-label="Search results"></div>
   </div>
   <div class="startrow" style="margin-top:6px">
