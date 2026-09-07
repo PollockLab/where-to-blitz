@@ -345,7 +345,7 @@ const I18N={
     aria_language:"Language", lang_switch:"Switch language", aria_about_data:"About the data", aria_lifegroup:"Species group", aria_criteria:"Goal",
     aria_search:"Search for a start place", aria_search_results:"Search results", aria_time_unit:"Time unit",
     aria_time_budget:"Time budget", aria_max_travel:"Max travel each way", aria_worth_drive:"Worth the drive",
-    aria_map_style:"Map style", aria_map_brightness:"Map brightness", aria_data_opacity:"Density opacity", aria_top_cells:"Top cells (accessible list)",
+    aria_map_style:"Map style", aria_map_brightness:"Map brightness", aria_data_opacity:"Density opacity", aria_climate_opacity:"Climate layer opacity", aria_top_cells:"Top cells (accessible list)",
     aria_map:"Interactive priority map (screen-reader users: use the Top cells list)", aria_map_view:"Map view",
     aria_map_legend:"Map legend", aria_close:"Close",
     rank_aria:(i,la,lo,sc)=>`Rank ${i}: latitude ${la}, longitude ${lo}, score ${sc} of 100`,
@@ -406,6 +406,7 @@ const I18N={
     legend_scope_view:"scaled to this view", legend_scope_ca:"scaled across Canada",
     map_brightness:"Map brightness",
     data_opacity:"Density opacity",
+    climate_opacity:"Climate layer opacity",
     how_scored:"How impact is scored & data sources",
     skip:"skip", go_here:"go here",
     impact_expl:`Your sliders weight the five goals, then cells are <b style="color:var(--ink)">ranked against each other</b> as <b style="color:var(--ink)">impact 0–100</b> — a percentile, so 100 is the best cell shown. Hover a cell to see what drives it.`,
@@ -487,7 +488,7 @@ const I18N={
     aria_language:"Langue", lang_switch:"Changer de langue", aria_about_data:"À propos des données", aria_lifegroup:"Groupe d'espèces", aria_criteria:"Objectif",
     aria_search:"Rechercher un lieu de départ", aria_search_results:"Résultats de recherche", aria_time_unit:"Unité de temps",
     aria_time_budget:"Temps disponible", aria_max_travel:"Trajet max (aller)", aria_worth_drive:"Vaut le déplacement",
-    aria_map_style:"Style de carte", aria_map_brightness:"Luminosité de la carte", aria_data_opacity:"Opacité des données", aria_top_cells:"Meilleures cellules (liste accessible)",
+    aria_map_style:"Style de carte", aria_map_brightness:"Luminosité de la carte", aria_data_opacity:"Opacité des données", aria_climate_opacity:"Opacité de la couche climatique", aria_top_cells:"Meilleures cellules (liste accessible)",
     aria_map:"Carte de priorité interactive (lecteurs d'écran : utilisez la liste des meilleures cellules)", aria_map_view:"Vue de la carte",
     aria_map_legend:"Légende de la carte", aria_close:"Fermer",
     rank_aria:(i,la,lo,sc)=>`Rang ${i} : latitude ${la}, longitude ${lo}, score ${sc} sur 100`,
@@ -548,6 +549,7 @@ const I18N={
     legend_scope_view:"calibré sur cette vue", legend_scope_ca:"calibré sur tout le Canada",
     map_brightness:"Luminosité de la carte",
     data_opacity:"Opacité des données",
+    climate_opacity:"Opacité de la couche climatique",
     how_scored:"Calcul de l'impact et sources de données",
     skip:"à éviter", go_here:"y aller",
     impact_expl:`Vos curseurs pondèrent les cinq objectifs, puis les cellules sont <b style="color:var(--ink)">classées les unes par rapport aux autres</b> en <b style="color:var(--ink)">impact 0–100</b> — un centile, donc 100 = la meilleure cellule affichée. Survolez une cellule pour voir ce qui la motive.`,
@@ -1446,10 +1448,12 @@ function updateOpacityControl(){
   if(!ov)setBaseOpacity(1);
   const v=ov?(covOn()?covOpacity:climateOpacity):baseOpacity;
   sl.value=v;
-  lab.textContent=t(ov?'data_opacity':'map_brightness');
-  sl.setAttribute('aria-label',t(ov?'aria_data_opacity':'aria_map_brightness'));
-  lab.setAttribute('data-i18n',ov?'data_opacity':'map_brightness');   // keep applyI18N repaint in sync with the active target
-  sl.setAttribute('data-i18n-aria',ov?'aria_data_opacity':'aria_map_brightness');
+  // one slider, three possible targets: name the one it is actually driving.
+  const key=covOn()?'data_opacity':climateOn()?'climate_opacity':'map_brightness';
+  lab.textContent=t(key);
+  sl.setAttribute('aria-label',t('aria_'+key));
+  lab.setAttribute('data-i18n',key);   // keep applyI18N repaint in sync with the active target
+  sl.setAttribute('data-i18n-aria','aria_'+key);
   val.textContent=Math.round(v*100)+'%';
   sl.setAttribute('aria-valuetext',val.textContent);
 }
