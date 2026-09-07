@@ -63,10 +63,13 @@ input[type=range]{width:100%;accent-color:var(--acc);margin:0}
 /* Issue #69: the sidebar goes light to match openbiodiversity.ca. Remap the panel's theme vars (so the
    many inline color:var(--ink) emphasis spans stay visible on white) plus the few hard-coded dark control
    colours. Map chrome — legend, how-panel, popups — keeps the dark theme. */
-#panel{--ink:#16202c;--mut:#5d6b7a;--panel:#fff;color:var(--ink);border-color:#dfe5ec;box-shadow:0 6px 22px rgba(20,40,70,.16)}
+#panel{--ink:#16202c;--mut:#5d6b7a;--panel:#fff;--acc:#4f6b47;--gd:#15803d;--gold:#a16207;color:var(--ink);border-color:#dfe5ec;box-shadow:0 6px 22px rgba(20,40,70,.16)}
 #panel select{background:#f4f7fa;border-color:#d4dde6}
 #panel .infobox{background:#f4f7fa;border-color:#d4dde6}
 #panel details.adv{border-top-color:#e2e8ef}
+#panel #plan,#panel .startrow button.on{color:#fff}   /* the light --gd is dark enough that #04220f no longer reads on it */
+#panel #trips .row{background:#f4f7fa;border-color:#d4dde6}
+#panel #searchResults{background:#fff;border-color:#d4dde6;box-shadow:0 4px 14px rgba(20,40,70,.18)}
 #panel .infobtn{border-color:#9aa7b5}
 /* Issue #69: single language toggle, lifted out of the panel to sit left of the How-scored button. */
 #topctrls{position:fixed;right:14px;top:calc(12px + var(--bh));z-index:1200;display:flex;align-items:stretch;gap:8px}
@@ -165,6 +168,7 @@ details.adv>summary:hover{color:var(--ink)}
 #insights .idis b{color:var(--ink)}
 .sechd{display:flex;align-items:center;gap:6px;margin:14px 0 8px}
 .sechd .sec{margin:0}
+h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader navigation; .sec carries the look */
 .infobtn{cursor:pointer;width:16px;height:16px;border-radius:50%;border:1px solid var(--mut);color:var(--mut);font:italic 700 11px/14px Georgia,serif;text-align:center;flex:0 0 auto;user-select:none}
 .infobtn:hover{border-color:var(--acc);color:var(--acc)}
 .infobox{display:none;background:#0e1722;border:1px solid #2a3a4d;border-radius:8px;padding:9px 11px;margin:0 0 8px;font-size:12.5px;line-height:1.5;color:var(--mut)}
@@ -179,6 +183,10 @@ details.adv>summary:hover{color:var(--ink)}
   #viewtoggle{left:50%;top:auto;bottom:12px}
   #insights{left:0;top:0;height:100%;padding:54px 12px 24px}
   .infobtn{width:24px;height:24px;line-height:22px;font-size:13px}
+  /* the panel is stacked, not floating, so left:300px drops the chevron on top of its own
+     content. Park it in the map's free top-right corner, which slides up when the panel goes. */
+  #panelToggle{left:auto;right:8px;top:calc(var(--bh) + 50vh + 8px)}
+  body.panel-collapsed #panelToggle{left:auto;right:8px;top:calc(var(--bh) + 8px)}
 }
 #maplegend{position:fixed;bottom:24px;right:14px;z-index:1050;background:rgba(255,255,255,.93);border-radius:9px;padding:6px 10px;box-shadow:0 2px 10px rgba(0,0,0,.22);font-size:14px;color:#16233a;min-width:188px;max-width:244px;line-height:1.25}
 #maplegend .lt{font-weight:700;font-size:14px}/* retained: reused by the Getting Even categorical legend title (the priority-legend title div was removed for #47) */
@@ -187,6 +195,7 @@ details.adv>summary:hover{color:var(--ink)}
 #maplegend .lab{display:flex;justify-content:space-between;font-size:12.5px;color:#46566a}
 #maplegend .hint{margin-top:3px;color:#46566a;font-size:10.5px}/* #82: two sizes under the .lab labels (12.5px) */
 .maplibregl-ctrl-bottom-left{left:14px;bottom:14px;z-index:1060}
+.maplibregl-ctrl-attrib a{text-decoration:underline}   /* link-in-text-block: colour alone does not separate them from the surrounding text */
 @media(max-width:640px){#maplegend{left:auto;right:8px;bottom:8px;top:auto;min-width:0;max-width:158px;padding:6px 8px}}/* the corner is free now that attribution moved bottom-left: same position at every breakpoint */
 @media(max-width:640px){.maplibregl-ctrl-bottom-left{left:8px;bottom:8px}
   /* expanded, the attribution runs nearly the full width; keep it clear of the legend's 158px column instead of under it */
@@ -212,17 +221,18 @@ details.adv>summary:hover{color:var(--ink)}
     <h1 data-i18n-html="title_full">Where to<br><a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc);text-decoration:underline">Blitz the Gap</a></h1>
     <img class="logo" src="blitz-logo.png" alt="" width="56" height="56">
   </div>
-  <div class="sechd"><span class="sec" data-i18n="sec_taxon">Species group</span></div>
+  <div class="sechd"><h2 class="sec" data-i18n="sec_taxon">Species group</h2></div>
   <select id="taxon" class="full" data-i18n-aria="aria_lifegroup" aria-label="Species group" style="margin-bottom:8px"></select>
-  <div class="sechd"><span class="sec" data-i18n="sec_goal">Goal</span><span class="infobtn" data-i18n-title="info_btn" title="Where do these scores come from?" role="button" tabindex="0" data-i18n-aria="aria_about_data" aria-label="About the data" aria-expanded="false" onclick="const b=document.getElementById('taxinfo').classList.toggle('open');this.setAttribute('aria-expanded',b)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">i</span></div>
+  <div class="sechd"><h2 class="sec" data-i18n="sec_goal">Goal</h2><span class="infobtn" data-i18n-title="info_btn" title="Where do these scores come from?" role="button" tabindex="0" data-i18n-aria="aria_about_data" aria-label="About the data" aria-expanded="false" onclick="const b=document.getElementById('taxinfo').classList.toggle('open');this.setAttribute('aria-expanded',b)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">i</span></div>
   <div class="infobox" id="taxinfo" data-i18n-html="taxinfo"></div>
-  <select id="criteria" class="full" data-i18n-aria="aria_criteria" aria-label="Criteria" style="margin-bottom:8px"></select>
+  <select id="criteria" class="full" data-i18n-aria="aria_criteria" aria-label="Goal" style="margin-bottom:8px"></select>
+  <div id="goalnote" role="status" data-i18n="goal_inactive" style="display:none;font-size:11.5px;line-height:1.4;color:var(--mut);margin:-4px 0 8px">The map is showing iNaturalist records. Pick a goal to go back to the goal map.</div>
 
   <div id="tripui">
-  <div class="sec" data-i18n="your_trip">Your trip</div>
+  <h2 class="sec" data-i18n="your_trip">Your trip</h2>
   <div style="position:relative">
     <input id="placeSearch" type="text" placeholder="Search a town or address" data-i18n-ph="search_ph" autocomplete="off" data-i18n-aria="aria_search" aria-label="Search for a start place" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="searchResults" aria-autocomplete="list"
-      style="width:100%;padding:8px 9px;background:#0e1722;color:var(--ink);border:1px solid #2a3a4d;border-radius:7px;font-size:14px">
+      style="width:100%;padding:8px 9px;background:#f4f7fa;color:var(--ink);border:1px solid #d4dde6;border-radius:7px;font-size:14px">
     <div id="searchResults" role="listbox" data-i18n-aria="aria_search_results" aria-label="Search results"></div>
   </div>
   <div class="startrow" style="margin-top:6px">
@@ -269,7 +279,7 @@ details.adv>summary:hover{color:var(--ink)}
   <div id="prospects" data-idle="1"></div>
   </div>
 
-  <div class="sechd"><span class="sec" data-i18n="map_style">Map style</span></div>
+  <div class="sechd"><h2 class="sec" data-i18n="map_style">Map style</h2></div>
   <select id="basemap" class="full" data-i18n-aria="aria_map_style" aria-label="Map style" style="margin-bottom:8px"></select>
   <div id="layertoggles" style="display:none;margin-top:8px">
     <label class="toggle" style="margin:4px 0"><input type="checkbox" id="tgRoads" checked> <span data-i18n="roads">Roads</span></label>
@@ -285,7 +295,7 @@ details.adv>summary:hover{color:var(--ink)}
   <input type="range" id="baseop" min="0.1" max="1" step="0.05" value="1" data-i18n-aria="aria_data_opacity" aria-label="Density opacity">
   </div>
 
-  <div id="celltable" class="sronly" role="region" data-i18n-aria="aria_top_cells" aria-label="Top cells (accessible list)"></div>
+  <div id="celltable" class="sronly" role="region" tabindex="0" data-i18n-aria="aria_top_cells" aria-label="Top cells (accessible list)"></div>
 </div></div>
 <button id="panelToggle" type="button" data-i18n-aria="hide_panel" data-i18n-title="hide_panel" aria-label="Hide the panel" title="Hide the panel">‹</button>
 <div id="map" role="application" data-i18n-aria="aria_map" aria-label="Interactive priority map (screen-reader users: use the Top cells list)"></div>
@@ -318,7 +328,7 @@ const I18N={
   en:{
     title_full:`Where to<br><a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc);text-decoration:underline">Blitz the Gap</a>`,
     sub:"Choose what counts as <b>impact</b>, then <b>explore</b> the priority map — or <b>plan a trip</b> to the best spot you can reach and get back from.",
-    sec_group:"Life group & goal", sec_taxon:"Species group", sec_goal:"Goal",
+    sec_group:"Life group & goal", sec_taxon:"Species group", sec_goal:"Goal", goal_inactive:"The map is showing iNaturalist records. Pick a goal to go back to the goal map.",
     info_btn:"Where do these scores come from?",
     taxinfo:`<b style="color:var(--ink)">Higher priority = a place where one new sighting adds more to what we know.</b> Canada-wide, on an equal-area grid: 25&nbsp;km cells, 5&nbsp;km when you zoom in. <b>How impact is scored</b>, top right, lists the data behind each goal. <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">How Blitz the Gap works →</a>`,
     finetune:"Fine-tune the five goals",
@@ -326,7 +336,7 @@ const I18N={
     search_ph:"Search a town or address",
     my_location:"Locate me",
     start_alt:"Trip start — drag to move", start_tip:"Start — drag me, or tap the map",
-    aria_language:"Language", lang_switch:"Switch language", aria_about_data:"About the data", aria_lifegroup:"Species group", aria_criteria:"Criteria",
+    aria_language:"Language", lang_switch:"Switch language", aria_about_data:"About the data", aria_lifegroup:"Species group", aria_criteria:"Goal",
     aria_search:"Search for a start place", aria_search_results:"Search results", aria_time_unit:"Time unit",
     aria_time_budget:"Time budget", aria_max_travel:"Max travel each way", aria_worth_drive:"Worth the drive",
     aria_map_style:"Map style", aria_map_brightness:"Map brightness", aria_data_opacity:"Density opacity", aria_top_cells:"Top cells (accessible list)",
@@ -402,7 +412,7 @@ const I18N={
     load_error:"⚠ Couldn't load the map — check your connection.",
     retry:"↻ Retry",
     legend_title:"Where to blitz", legend_low:"well-sampled", legend_high:"biggest gaps",
-    density_low:"few records", density_high:"many records", density_legend_hint:"iNaturalist records (sharpens to ~300 m)",
+    density_low:"few records", density_high:"many records", density_legend_hint:"iNaturalist records (sharpens to ~300 m)", density_obscured_hint:"Solid blocks are records whose locations iNaturalist obscures, spread evenly over the box they are reported in.",
     axis_legend:[["well-sampled","biggest gaps"],["no species at risk","many at risk"],["climate well-covered","climate under-sampled"],["recently recorded","long overdue"],["stable","recently changed"]],
     legend_hint:`Brighter = higher priority. <span id="legendtap">Tap a cell to see what to record.</span>`,
     // dynamic
@@ -460,7 +470,7 @@ const I18N={
   fr:{
     title_full:`Où aller pour<br><a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc);text-decoration:underline">Blitz the Gap</a>`,
     sub:"Choisissez ce qui compte comme <b>impact</b>, puis <b>explorez</b> la carte des priorités — ou <b>planifiez une sortie</b> vers le meilleur endroit que vous pouvez atteindre et d'où vous pouvez revenir.",
-    sec_group:"Groupe d'espèces et objectif", sec_taxon:"Groupe d'espèces", sec_goal:"Objectif",
+    sec_group:"Groupe d'espèces et objectif", sec_taxon:"Groupe d'espèces", sec_goal:"Objectif", goal_inactive:"La carte affiche les observations iNaturalist. Choisissez un objectif pour revenir à la carte des objectifs.",
     info_btn:"D'où viennent ces scores?",
     taxinfo:`<b style="color:var(--ink)">Priorité élevée = un endroit où une nouvelle observation ajoute le plus à nos connaissances.</b> À l'échelle du Canada, sur une grille à surface égale&nbsp;: cellules de 25&nbsp;km, 5&nbsp;km en zoomant. <b>Calcul de l'impact</b>, en haut à droite, donne les données derrière chaque objectif. <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">Fonctionnement de Blitz the Gap →</a>`,
     finetune:"Ajuster les cinq objectifs",
@@ -468,7 +478,7 @@ const I18N={
     search_ph:"Rechercher une ville ou une adresse",
     my_location:"Me localiser",
     start_alt:"Départ de la sortie — glissez pour déplacer", start_tip:"Départ — glissez-moi, ou touchez la carte",
-    aria_language:"Langue", lang_switch:"Changer de langue", aria_about_data:"À propos des données", aria_lifegroup:"Groupe d'espèces", aria_criteria:"Critère",
+    aria_language:"Langue", lang_switch:"Changer de langue", aria_about_data:"À propos des données", aria_lifegroup:"Groupe d'espèces", aria_criteria:"Objectif",
     aria_search:"Rechercher un lieu de départ", aria_search_results:"Résultats de recherche", aria_time_unit:"Unité de temps",
     aria_time_budget:"Temps disponible", aria_max_travel:"Trajet max (aller)", aria_worth_drive:"Vaut le déplacement",
     aria_map_style:"Style de carte", aria_map_brightness:"Luminosité de la carte", aria_data_opacity:"Opacité des données", aria_top_cells:"Meilleures cellules (liste accessible)",
@@ -544,7 +554,7 @@ const I18N={
     load_error:"⚠ Impossible de charger la carte — vérifiez votre connexion.",
     retry:"↻ Réessayer",
     legend_title:"Où aller", legend_low:"bien échantillonné", legend_high:"plus grandes lacunes",
-    density_low:"peu d'observations", density_high:"beaucoup d'observations", density_legend_hint:"observations iNaturalist (jusqu'à ~300 m)",
+    density_low:"peu d'observations", density_high:"beaucoup d'observations", density_legend_hint:"observations iNaturalist (jusqu'à ~300 m)", density_obscured_hint:"Les blocs uniformes sont des observations dont iNaturalist masque la localisation, réparties également sur la case déclarée.",
     axis_legend:[["bien échantillonné","plus grandes lacunes"],["aucune espèce en péril","beaucoup en péril"],["climat bien couvert","climat sous-échantillonné"],["observé récemment","en retard depuis longtemps"],["stable","changé récemment"]],
     legend_hint:`Plus clair = priorité plus élevée. <span id="legendtap">Touchez une cellule pour voir quoi observer.</span>`,
     // dynamic
@@ -720,9 +730,15 @@ function setOverlay(kind){
   const sel=document.getElementById('basemap');
   if(sel){const want=covOn()?'__inat__':(sel.value==='__inat__'?'Standard':sel.value);
     if(sel.value!==want){sel.value=want;setBase(want==='__inat__'?'Light':want);}}
+  setGridLines();
+  {const n=document.getElementById('goalnote');if(n)n.style.display=covOn()?'':'none';}
   const paint=()=>{setCoverage();setClimate();updateLegend();recolour();};
   geActive()?loadGE().then(paint):paint();
 }
+// The 25 km lattice outline is the shape of the goal grid, so it explains the cells it traces.
+// Under a raster overlay (iNat density, climate gap) it traces nothing the pixels below it share,
+// and just reads as chart junk over the data. Hide it while one of those is up.
+function setGridLines(){if(_mapLoaded&&map.getLayer('cells-line'))map.setLayoutProperty('cells-line','visibility',(covOn()||climateOn())?'none':'visible');}
 function caOnlyActive(){const e=document.getElementById('tgCanadaOnly');return e?e.checked:true;}        // issue #20 removed the toggle; behaviour stays on by default
 // US-side cells (approx, lazy-loaded): hidden when "Canada only" is on -- the cross-border band is a data edge, not a real gap (#5).
 let US_CELLS=null;
@@ -963,6 +979,7 @@ map.on('load',()=>{
   map.on('mouseenter',CELL_LAYER,()=>{map.getCanvas().style.cursor='pointer';});
   map.on('mouseleave',CELL_LAYER,()=>{map.getCanvas().style.cursor='';});
   setBase('Standard');
+  setGridLines();   // the layer only exists now, so an overlay chosen before load could not apply it
   _onMap.forEach(fn=>{try{fn();}catch(e){}});_onMap.length=0;
 });
 // Esc / map-click popup close -> deselect (issue #16). MapLibre has no global popup events, so each popup we
@@ -1014,7 +1031,7 @@ function iconEl(html){const d=document.createElement('div');d.style.lineHeight='
 const startElHtml='<div style="width:18px;height:18px;border-radius:50%;background:rgb(139,168,132);border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.45)"></div>';
 const destElHtml='<svg width="26" height="38" viewBox="0 0 26 38"><path d="M13 0C6 0 0 6 0 13c0 9 13 25 13 25s13-16 13-25C26 6 20 0 13 0z" fill="#f0a000" stroke="#fff" stroke-width="2"/><circle cx="13" cy="13" r="5" fill="#fff"/></svg>';
 function destMarkerAt(lat,lon){const el=iconEl(destElHtml);el.style.cursor='pointer';return new maplibregl.Marker({element:el,anchor:'bottom'}).setLngLat([lon,lat]);}
-const startEl=iconEl(startElHtml);startEl.title=t('start_tip');startEl.setAttribute('aria-label',t('start_alt'));
+const startEl=iconEl(startElHtml);startEl.title=t('start_tip');startEl.setAttribute('role','img');startEl.setAttribute('aria-label',t('start_alt'));
 const startMarker=new maplibregl.Marker({element:startEl,draggable:true,anchor:'center'}).setLngLat([state.start[1],state.start[0]]).addTo(map);
 startMarker.on('drag',()=>{const ll=startMarker.getLngLat();state.start=[ll.lat,ll.lng];});
 startMarker.on('dragend',()=>{const ll=startMarker.getLngLat();setStart(ll.lat,ll.lng);});
@@ -1142,7 +1159,7 @@ function updateLegend(){
       t('ge_cats').map((nm,i)=>sw(GE_PAL[i],nm)).join('')+sw(GE_ALL,t('ge_all'));
   }else if(covOn()){
     // The density overlay is a magma raster of iNaturalist record density, not the priority ramp — show its own scale.
-    ml.innerHTML='<div class="ramp magma"></div><div class="lab"><span>'+t('density_low')+'</span><span>'+t('density_high')+'</span></div><div class="hint">'+t('density_legend_hint')+'</div>';
+    ml.innerHTML='<div class="ramp magma"></div><div class="lab"><span>'+t('density_low')+'</span><span>'+t('density_high')+'</span></div><div class="hint">'+t('density_legend_hint')+'</div><div class="hint">'+t('density_obscured_hint')+'</div>';
   }else if(climateOn()){
     // Climate Gap is a raster baked outside this repo, so its ramp is neither of the two above:
     // name the layer and say what the brightness means rather than paint a swatch we cannot verify.
@@ -1188,7 +1205,7 @@ if(critSel)critSel.onchange=()=>{const v=critSel.value;
   }else if(v==='climate'){
     setOverlay('climate');
   }else{
-    if(geActive()||climateOn())setOverlay('priority');
+    if(overlay!=='priority')setOverlay('priority');   // covOn() included: picking a goal means show the goal grid
     applyChallenge(PRESETS[+v]);
   }};
 applyChallenge(PRESETS[0]);
@@ -1406,15 +1423,14 @@ function setClimateOpacity(v){climateOpacity=v;if(_mapLoaded&&map.getLayer('clim
 // #39: the opacity slider drives the data overlay when one is active (so it fades the magma to
 // reveal road/water/place context), else it falls back to basemap brightness. Switches label,
 // aria-label, slider value + % readout to match the active target.
-function gridOverlayActive(){return _mapLoaded&&!!(map.getLayer('grid25')||map.getLayer('grid5'));}
-function dataOverlayActive(){return covOn()||climateOn()||gridOverlayActive();}
+// #46(b), ryanhenryhull: "keep the slider only while the density style is active, and lock basemap
+// brightness at 100% otherwise". The goal grid is a raster too, so folding gridOverlayActive() in
+// here put the slider back on screen in the default Explore view, labelled "Density opacity" while
+// driving the goal grid. The two raster data overlays are the ones that get a slider; the goal grid
+// keeps its fixed 0.5, which is what leaves the basemap readable underneath.
+function dataOverlayActive(){return covOn()||climateOn();}
 function setBaseOpacity(v){baseOpacity=v;if(_mapLoaded&&map.getLayer('basemap'))map.setPaintProperty('basemap','raster-opacity',v);}
 function setCovOpacity(v){covOpacity=v;if(_mapLoaded&&map.getLayer('cov'))map.setPaintProperty('cov','raster-opacity',v);}
-function setGridOpacity(v){
-  gridOpacity=v;
-  if(_mapLoaded&&map.getLayer('grid25'))map.setPaintProperty('grid25','fill-opacity',v);
-  if(_mapLoaded&&map.getLayer('grid5'))map.setPaintProperty('grid5','fill-opacity',v);
-}
 function updateOpacityControl(){
   const sl=document.getElementById('baseop'),lab=document.getElementById('bople'),val=document.getElementById('bopv');
   if(!sl||!lab||!val)return;
@@ -1422,13 +1438,14 @@ function updateOpacityControl(){
   const row=document.getElementById('opacityRow');
   if(row)row.style.display=ov?'':'none';   // #46(b): the slider only appears with a data overlay; lock basemap brightness at 100% otherwise
   if(!ov)setBaseOpacity(1);
-  const v=ov?(covOn()?covOpacity:climateOn()?climateOpacity:gridOpacity):baseOpacity;
+  const v=ov?(covOn()?covOpacity:climateOpacity):baseOpacity;
   sl.value=v;
   lab.textContent=t(ov?'data_opacity':'map_brightness');
   sl.setAttribute('aria-label',t(ov?'aria_data_opacity':'aria_map_brightness'));
   lab.setAttribute('data-i18n',ov?'data_opacity':'map_brightness');   // keep applyI18N repaint in sync with the active target
   sl.setAttribute('data-i18n-aria',ov?'aria_data_opacity':'aria_map_brightness');
   val.textContent=Math.round(v*100)+'%';
+  sl.setAttribute('aria-valuetext',val.textContent);
 }
 // every overlay checkbox is wired the same way, so wire them from the same table setOverlay reads.
 // setOverlay writes .checked directly, and a scripted .checked fires no 'change', so this cannot loop.
@@ -1457,9 +1474,9 @@ map.on('moveend',()=>{
 document.getElementById('baseop').addEventListener('input',e=>{const v=parseFloat(e.target.value);
   if(covOn())setCovOpacity(v);   // #39: fade the magma data
   else if(climateOn())setClimateOpacity(v);
-  else if(gridOverlayActive())setGridOpacity(v);   // priority grid opacity
   else setBaseOpacity(v);
-  document.getElementById('bopv').textContent=Math.round(v*100)+'%';});
+  const bopv=document.getElementById('bopv');bopv.textContent=Math.round(v*100)+'%';
+  e.target.setAttribute('aria-valuetext',bopv.textContent);});
 document.getElementById('maxleg').addEventListener('change',e=>{state.maxLeg=parseFloat(e.target.value);replan();});
 document.getElementById('minratio').addEventListener('change',e=>{state.minRatio=parseFloat(e.target.value);replan();});
 
