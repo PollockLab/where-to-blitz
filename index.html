@@ -654,14 +654,25 @@ function relabelDynamic(){
   if(typeof rebuildCriteria==='function')rebuildCriteria();
   if(typeof rebuildStyles==='function')rebuildStyles();
   if(typeof rebuildModes==='function')rebuildModes();
-  // re-apply the active preset to refresh language-dependent strings — but not while Getting Even is the active criterion
-  if(typeof window.__activePreset==='number'&&!(typeof geActive==='function'&&geActive()))applyChallenge(PRESETS[window.__activePreset]);
+  // Re-apply the active preset to refresh language-dependent strings, but not while #criteria is on
+  // one of its non-preset entries. applyChallenge -> markPreset writes the preset index back into the
+  // dropdown, so a language switch under Climate Gap silently reset the dropdown to goal 0 while the
+  // climate layer stayed on the map. The old guard named Getting Even only, which was the same entry
+  // class one member short. Test the dropdown's own value instead: preset entries are numeric, the
+  // others ('ge', 'climate') are not, so a future non-preset entry is covered without a new clause.
+  const cs=document.getElementById('criteria');
+  if(typeof window.__activePreset==='number'&&!(cs&&isNaN(+cs.value)))applyChallenge(PRESETS[window.__activePreset]);
   // budget label unit suffix
   if(typeof refreshBudget==='function')refreshBudget();
   // legend "tap" hint follows current view
   const lt=document.getElementById('legendtap');if(lt)lt.textContent=t(legendTapKey());
-  // re-render Getting Even categorical legend in the new language (no-op when inactive)
-  if(typeof updateLegend==='function'&&typeof geActive==='function'&&geActive())updateLegend();
+  // Re-render the legend in the new language. The density and climate legends are written with
+  // t() into innerHTML, so they carry no data-i18n attributes for applyI18n to find: without this
+  // call they kept the old language until the user toggled the overlay off and on again. The
+  // guard used to be geActive(), which covered only the third of the four legends that had the
+  // same problem. updateLegend() picks the right branch itself, so it needs no guard beyond
+  // "is it defined yet".
+  if(typeof updateLegend==='function')updateLegend();
   // start marker's tooltip/title/alt (created once at init) follow the language
   if(typeof startMarker!=='undefined'&&startMarker){const se=startMarker.getElement();if(se){se.setAttribute('title',t('start_tip'));se.setAttribute('aria-label',t('start_alt'));}}
   // start-place prospects idle text (only if untouched)
@@ -750,7 +761,13 @@ function setOverlay(kind){
   setGridLines();
   {const n=document.getElementById('goalnote');if(n)n.style.display=covOn()?'':'none';}
   const paint=()=>{setCoverage();setClimate();updateLegend();recolour();};
-  geActive()?loadGE().then(paint):paint();
+  // loadGE() had no rejection path: when its fetch failed (offline, a 404, a blocked scheme) paint()
+  // never ran, so `overlay` said gettingeven while the map and the legend still showed the previous
+  // layer and the checkbox agreed with neither. Fall back the way the taxon dropdown already does on
+  // a failed load: put the overlay and the dropdown back where they were. Read #criteria off the DOM
+  // rather than the critSel const, for the same reason the basemap select is read that way above.
+  geActive()?loadGE().then(paint,()=>{setOverlay('priority');
+    const cs=document.getElementById('criteria');if(cs)cs.value=String(window.__activePreset||0);}):paint();
 }
 // The 25 km lattice outline is the shape of the goal grid, so it explains the cells it traces.
 // Under a raster overlay (iNat density, climate gap) it traces nothing the pixels below it share,
