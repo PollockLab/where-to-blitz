@@ -1421,15 +1421,14 @@ function setClimateOpacity(v){climateOpacity=v;if(_mapLoaded&&map.getLayer('clim
 // #39: the opacity slider drives the data overlay when one is active (so it fades the magma to
 // reveal road/water/place context), else it falls back to basemap brightness. Switches label,
 // aria-label, slider value + % readout to match the active target.
-function gridOverlayActive(){return _mapLoaded&&!!(map.getLayer('grid25')||map.getLayer('grid5'));}
-function dataOverlayActive(){return covOn()||climateOn()||gridOverlayActive();}
+// #46(b), ryanhenryhull: "keep the slider only while the density style is active, and lock basemap
+// brightness at 100% otherwise". The goal grid is a raster too, so folding gridOverlayActive() in
+// here put the slider back on screen in the default Explore view, labelled "Density opacity" while
+// driving the goal grid. The two raster data overlays are the ones that get a slider; the goal grid
+// keeps its fixed 0.5, which is what leaves the basemap readable underneath.
+function dataOverlayActive(){return covOn()||climateOn();}
 function setBaseOpacity(v){baseOpacity=v;if(_mapLoaded&&map.getLayer('basemap'))map.setPaintProperty('basemap','raster-opacity',v);}
 function setCovOpacity(v){covOpacity=v;if(_mapLoaded&&map.getLayer('cov'))map.setPaintProperty('cov','raster-opacity',v);}
-function setGridOpacity(v){
-  gridOpacity=v;
-  if(_mapLoaded&&map.getLayer('grid25'))map.setPaintProperty('grid25','fill-opacity',v);
-  if(_mapLoaded&&map.getLayer('grid5'))map.setPaintProperty('grid5','fill-opacity',v);
-}
 function updateOpacityControl(){
   const sl=document.getElementById('baseop'),lab=document.getElementById('bople'),val=document.getElementById('bopv');
   if(!sl||!lab||!val)return;
@@ -1437,7 +1436,7 @@ function updateOpacityControl(){
   const row=document.getElementById('opacityRow');
   if(row)row.style.display=ov?'':'none';   // #46(b): the slider only appears with a data overlay; lock basemap brightness at 100% otherwise
   if(!ov)setBaseOpacity(1);
-  const v=ov?(covOn()?covOpacity:climateOn()?climateOpacity:gridOpacity):baseOpacity;
+  const v=ov?(covOn()?covOpacity:climateOpacity):baseOpacity;
   sl.value=v;
   lab.textContent=t(ov?'data_opacity':'map_brightness');
   sl.setAttribute('aria-label',t(ov?'aria_data_opacity':'aria_map_brightness'));
@@ -1473,9 +1472,9 @@ map.on('moveend',()=>{
 document.getElementById('baseop').addEventListener('input',e=>{const v=parseFloat(e.target.value);
   if(covOn())setCovOpacity(v);   // #39: fade the magma data
   else if(climateOn())setClimateOpacity(v);
-  else if(gridOverlayActive())setGridOpacity(v);   // priority grid opacity
   else setBaseOpacity(v);
-  document.getElementById('bopv').textContent=Math.round(v*100)+'%';});
+  const bopv=document.getElementById('bopv');bopv.textContent=Math.round(v*100)+'%';
+  e.target.setAttribute('aria-valuetext',bopv.textContent);});
 document.getElementById('maxleg').addEventListener('change',e=>{state.maxLeg=parseFloat(e.target.value);replan();});
 document.getElementById('minratio').addEventListener('change',e=>{state.minRatio=parseFloat(e.target.value);replan();});
 
