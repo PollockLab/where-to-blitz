@@ -729,9 +729,14 @@ function setOverlay(kind){
   const sel=document.getElementById('basemap');
   if(sel){const want=covOn()?'__inat__':(sel.value==='__inat__'?'Standard':sel.value);
     if(sel.value!==want){sel.value=want;setBase(want==='__inat__'?'Light':want);}}
+  setGridLines();
   const paint=()=>{setCoverage();setClimate();updateLegend();recolour();};
   geActive()?loadGE().then(paint):paint();
 }
+// The 25 km lattice outline is the shape of the goal grid, so it explains the cells it traces.
+// Under a raster overlay (iNat density, climate gap) it traces nothing the pixels below it share,
+// and just reads as chart junk over the data. Hide it while one of those is up.
+function setGridLines(){if(_mapLoaded&&map.getLayer('cells-line'))map.setLayoutProperty('cells-line','visibility',(covOn()||climateOn())?'none':'visible');}
 function caOnlyActive(){const e=document.getElementById('tgCanadaOnly');return e?e.checked:true;}        // issue #20 removed the toggle; behaviour stays on by default
 // US-side cells (approx, lazy-loaded): hidden when "Canada only" is on -- the cross-border band is a data edge, not a real gap (#5).
 let US_CELLS=null;
@@ -972,6 +977,7 @@ map.on('load',()=>{
   map.on('mouseenter',CELL_LAYER,()=>{map.getCanvas().style.cursor='pointer';});
   map.on('mouseleave',CELL_LAYER,()=>{map.getCanvas().style.cursor='';});
   setBase('Standard');
+  setGridLines();   // the layer only exists now, so an overlay chosen before load could not apply it
   _onMap.forEach(fn=>{try{fn();}catch(e){}});_onMap.length=0;
 });
 // Esc / map-click popup close -> deselect (issue #16). MapLibre has no global popup events, so each popup we
