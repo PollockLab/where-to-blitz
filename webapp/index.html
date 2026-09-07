@@ -23,7 +23,11 @@
   integrity="sha384-QfbOCebHNw8pQiPAOd2IFee2v2A5VYZxBk0+JGZ5H+3mfzVIp6zsQNkTsfGJot93" crossorigin="anonymous"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0f1620;--panel:#172230;--ink:#e8eef5;--mut:#9fb2c6;--acc:rgb(139,168,132);--gd:#22c55e;--gold:#f0a000}
+:root{--bg:#0f1620;--panel:#172230;--ink:#e8eef5;--mut:#9fb2c6;--acc:rgb(139,168,132);--gd:#22c55e;--gold:#f0a000;
+  /* --acc and --gd are tuned for the dark map chrome and drop to 2.6:1 and 2.2:1 on white. Every
+     light surface rebinds them to these instead, so a rule can keep saying var(--acc) and be right
+     in both places. #4f6b47 is 5.95:1 on white, #15803d 5.02:1, both ways round. */
+  --acc-ink:#4f6b47;--gd-ink:#15803d;--gold-ink:#a16207}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;font-family:'Inter',-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink)}
 h1,.sec,.sechd .sec,.popsec,#viewtoggle button,#langbtn{font-family:'Space Grotesk','Inter',sans-serif}
@@ -63,7 +67,7 @@ input[type=range]{width:100%;accent-color:var(--acc);margin:0}
 /* Issue #69: the sidebar goes light to match openbiodiversity.ca. Remap the panel's theme vars (so the
    many inline color:var(--ink) emphasis spans stay visible on white) plus the few hard-coded dark control
    colours. Map chrome — legend, how-panel, popups — keeps the dark theme. */
-#panel{--ink:#16202c;--mut:#5d6b7a;--panel:#fff;--acc:#4f6b47;--gd:#15803d;--gold:#a16207;color:var(--ink);border-color:#dfe5ec;box-shadow:0 6px 22px rgba(20,40,70,.16)}
+#panel{--ink:#16202c;--mut:#5d6b7a;--panel:#fff;--acc:var(--acc-ink);--gd:var(--gd-ink);--gold:var(--gold-ink);color:var(--ink);border-color:#dfe5ec;box-shadow:0 6px 22px rgba(20,40,70,.16)}
 #panel select{background:#f4f7fa;border-color:#d4dde6}
 #panel .infobox{background:#f4f7fa;border-color:#d4dde6}
 #panel details.adv{border-top-color:#e2e8ef}
@@ -71,6 +75,8 @@ input[type=range]{width:100%;accent-color:var(--acc);margin:0}
 #panel #trips .row{background:#f4f7fa;border-color:#d4dde6}
 #panel #searchResults{background:#fff;border-color:#d4dde6;box-shadow:0 4px 14px rgba(20,40,70,.18)}
 #panel .infobtn{border-color:#9aa7b5}
+/* the rest of the light surfaces: the floating chrome over the map, and the map popups */
+#topctrls,#viewtoggle,#loading,.maplibregl-popup-content{--acc:var(--acc-ink);--gd:var(--gd-ink);--gold:var(--gold-ink)}
 /* Issue #69: single language toggle, lifted out of the panel to sit left of the How-scored button. */
 #topctrls{position:fixed;right:14px;top:calc(12px + var(--bh));z-index:1200;display:flex;align-items:stretch;gap:8px}
 #langbtn{background:#fff;color:#1b2a3a;border:0;border-radius:9px;box-shadow:0 2px 9px rgba(0,0,0,.28);padding:7px 13px;font-size:12.5px;font-weight:700;letter-spacing:.04em;cursor:pointer}
@@ -1788,7 +1794,7 @@ function bootSeq(){return loadGroup(state.taxon).then(()=>{buildMarkers();setVie
     const go=()=>{if(at){const p=at.split(',').map(Number);if(p.length===2&&isFinite(p[0])&&isFinite(p[1])&&p[0]>=BB.minlat&&p[0]<=BB.maxlat&&p[1]>=BB.minlon&&p[1]<=BB.maxlon){map.jumpTo({center:[p[1],p[0]],zoom:7});exploreCell(p[0],p[1]);}}};
     if(g&&FILES[g]&&g!==state.taxon){state.taxon=g;taxonSel.value=g;loadGroup(g).then(()=>{buildMarkers();go();}).catch(()=>{});}else{go();}
     if(!at)locateMe();   // default Explore to the user's location (no shared cell to restore)
-  }catch(e){}}).catch(()=>{const el=document.getElementById('loading');if(el){el.style.display='block';el.innerHTML=t('load_error')+' <a href="#" onclick="bootRetry();return false;" style="color:#7fd1ff">'+t('retry')+'</a>';}});}
+  }catch(e){}}).catch(()=>{const el=document.getElementById('loading');if(el){el.style.display='block';el.innerHTML=t('load_error')+' <a href="#" onclick="bootRetry();return false;" style="color:var(--acc);text-decoration:underline">'+t('retry')+'</a>';}});}
 function bootRetry(){const el=document.getElementById('loading');if(el){el.style.display='block';el.textContent=t('loading');}bootSeq();}
 bootSeq();
 window._map=map;   // console handle for tuning TIER_SWITCH_Z by eye (#87 D5: Ryan screenshots z8/9/10)
