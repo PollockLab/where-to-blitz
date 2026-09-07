@@ -198,7 +198,16 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
 #maplegend .lt{font-weight:700;font-size:14px}/* retained: reused by the Getting Even categorical legend title (the priority-legend title div was removed for #47) */
 #maplegend .ramp{height:9px;border-radius:5px;background:linear-gradient(90deg,#440154,#414487,#2a788e,#22a884,#7ad151,#fde725);margin:3px 0 2px}/* viridis, matching the raster LUT in build_grid_pmtiles.py */
 #maplegend .ramp.magma{background:linear-gradient(90deg,#000004,#51127c,#b73779,#fc8961,#fcfdbf)}/* matches the iNaturalist density overlay colormap */
-#maplegend .lab{display:flex;justify-content:space-between;font-size:12.5px;color:#46566a}
+/* space-between alone reserves no gap: once the two ends fill the row, "no species at risk" ran
+   straight into "many at risk" and read as one string. Each end now keeps a 14px gap, wraps within
+   its own half, and drops to its own line when even that will not fit. The ticks tie each label to
+   the end of the ramp it describes, so the pairing does not rely on reading order. */
+#maplegend .lab{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:2px 14px;font-size:12.5px;color:#46566a}
+#maplegend .lab span{flex:0 1 auto;min-width:0;position:relative}
+#maplegend .lab span:last-child{margin-left:auto;text-align:right}
+#maplegend .lab span::before{content:"";position:absolute;top:-5px;width:2px;height:5px;border-radius:1px;background:#8a97a6}
+#maplegend .lab span:first-child::before{left:0}
+#maplegend .lab span:last-child::before{right:0}
 #maplegend .hint{margin-top:3px;color:#46566a;font-size:10.5px}/* #82: two sizes under the .lab labels (12.5px) */
 .maplibregl-ctrl-bottom-left{left:14px;bottom:14px;z-index:1060}
 .maplibregl-ctrl-attrib a{text-decoration:underline}   /* link-in-text-block: colour alone does not separate them from the surrounding text */
