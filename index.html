@@ -168,6 +168,7 @@ details.adv>summary:hover{color:var(--ink)}
 #insights .idis b{color:var(--ink)}
 .sechd{display:flex;align-items:center;gap:6px;margin:14px 0 8px}
 .sechd .sec{margin:0}
+h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader navigation; .sec carries the look */
 .infobtn{cursor:pointer;width:16px;height:16px;border-radius:50%;border:1px solid var(--mut);color:var(--mut);font:italic 700 11px/14px Georgia,serif;text-align:center;flex:0 0 auto;user-select:none}
 .infobtn:hover{border-color:var(--acc);color:var(--acc)}
 .infobox{display:none;background:#0e1722;border:1px solid #2a3a4d;border-radius:8px;padding:9px 11px;margin:0 0 8px;font-size:12.5px;line-height:1.5;color:var(--mut)}
@@ -190,6 +191,7 @@ details.adv>summary:hover{color:var(--ink)}
 #maplegend .lab{display:flex;justify-content:space-between;font-size:12.5px;color:#46566a}
 #maplegend .hint{margin-top:3px;color:#46566a;font-size:10.5px}/* #82: two sizes under the .lab labels (12.5px) */
 .maplibregl-ctrl-bottom-left{left:14px;bottom:14px;z-index:1060}
+.maplibregl-ctrl-attrib a{text-decoration:underline}   /* link-in-text-block: colour alone does not separate them from the surrounding text */
 @media(max-width:640px){#maplegend{left:auto;right:8px;bottom:8px;top:auto;min-width:0;max-width:158px;padding:6px 8px}}/* the corner is free now that attribution moved bottom-left: same position at every breakpoint */
 @media(max-width:640px){.maplibregl-ctrl-bottom-left{left:8px;bottom:8px}
   /* expanded, the attribution runs nearly the full width; keep it clear of the legend's 158px column instead of under it */
@@ -215,14 +217,14 @@ details.adv>summary:hover{color:var(--ink)}
     <h1 data-i18n-html="title_full">Where to<br><a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc);text-decoration:underline">Blitz the Gap</a></h1>
     <img class="logo" src="blitz-logo.png" alt="" width="56" height="56">
   </div>
-  <div class="sechd"><span class="sec" data-i18n="sec_taxon">Species group</span></div>
+  <div class="sechd"><h2 class="sec" data-i18n="sec_taxon">Species group</h2></div>
   <select id="taxon" class="full" data-i18n-aria="aria_lifegroup" aria-label="Species group" style="margin-bottom:8px"></select>
-  <div class="sechd"><span class="sec" data-i18n="sec_goal">Goal</span><span class="infobtn" data-i18n-title="info_btn" title="Where do these scores come from?" role="button" tabindex="0" data-i18n-aria="aria_about_data" aria-label="About the data" aria-expanded="false" onclick="const b=document.getElementById('taxinfo').classList.toggle('open');this.setAttribute('aria-expanded',b)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">i</span></div>
+  <div class="sechd"><h2 class="sec" data-i18n="sec_goal">Goal</h2><span class="infobtn" data-i18n-title="info_btn" title="Where do these scores come from?" role="button" tabindex="0" data-i18n-aria="aria_about_data" aria-label="About the data" aria-expanded="false" onclick="const b=document.getElementById('taxinfo').classList.toggle('open');this.setAttribute('aria-expanded',b)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">i</span></div>
   <div class="infobox" id="taxinfo" data-i18n-html="taxinfo"></div>
-  <select id="criteria" class="full" data-i18n-aria="aria_criteria" aria-label="Criteria" style="margin-bottom:8px"></select>
+  <select id="criteria" class="full" data-i18n-aria="aria_criteria" aria-label="Goal" style="margin-bottom:8px"></select>
 
   <div id="tripui">
-  <div class="sec" data-i18n="your_trip">Your trip</div>
+  <h2 class="sec" data-i18n="your_trip">Your trip</h2>
   <div style="position:relative">
     <input id="placeSearch" type="text" placeholder="Search a town or address" data-i18n-ph="search_ph" autocomplete="off" data-i18n-aria="aria_search" aria-label="Search for a start place" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="searchResults" aria-autocomplete="list"
       style="width:100%;padding:8px 9px;background:#f4f7fa;color:var(--ink);border:1px solid #d4dde6;border-radius:7px;font-size:14px">
@@ -272,7 +274,7 @@ details.adv>summary:hover{color:var(--ink)}
   <div id="prospects" data-idle="1"></div>
   </div>
 
-  <div class="sechd"><span class="sec" data-i18n="map_style">Map style</span></div>
+  <div class="sechd"><h2 class="sec" data-i18n="map_style">Map style</h2></div>
   <select id="basemap" class="full" data-i18n-aria="aria_map_style" aria-label="Map style" style="margin-bottom:8px"></select>
   <div id="layertoggles" style="display:none;margin-top:8px">
     <label class="toggle" style="margin:4px 0"><input type="checkbox" id="tgRoads" checked> <span data-i18n="roads">Roads</span></label>
@@ -288,7 +290,7 @@ details.adv>summary:hover{color:var(--ink)}
   <input type="range" id="baseop" min="0.1" max="1" step="0.05" value="1" data-i18n-aria="aria_data_opacity" aria-label="Density opacity">
   </div>
 
-  <div id="celltable" class="sronly" role="region" data-i18n-aria="aria_top_cells" aria-label="Top cells (accessible list)"></div>
+  <div id="celltable" class="sronly" role="region" tabindex="0" data-i18n-aria="aria_top_cells" aria-label="Top cells (accessible list)"></div>
 </div></div>
 <button id="panelToggle" type="button" data-i18n-aria="hide_panel" data-i18n-title="hide_panel" aria-label="Hide the panel" title="Hide the panel">‹</button>
 <div id="map" role="application" data-i18n-aria="aria_map" aria-label="Interactive priority map (screen-reader users: use the Top cells list)"></div>
@@ -329,7 +331,7 @@ const I18N={
     search_ph:"Search a town or address",
     my_location:"Locate me",
     start_alt:"Trip start — drag to move", start_tip:"Start — drag me, or tap the map",
-    aria_language:"Language", lang_switch:"Switch language", aria_about_data:"About the data", aria_lifegroup:"Species group", aria_criteria:"Criteria",
+    aria_language:"Language", lang_switch:"Switch language", aria_about_data:"About the data", aria_lifegroup:"Species group", aria_criteria:"Goal",
     aria_search:"Search for a start place", aria_search_results:"Search results", aria_time_unit:"Time unit",
     aria_time_budget:"Time budget", aria_max_travel:"Max travel each way", aria_worth_drive:"Worth the drive",
     aria_map_style:"Map style", aria_map_brightness:"Map brightness", aria_data_opacity:"Density opacity", aria_top_cells:"Top cells (accessible list)",
@@ -471,7 +473,7 @@ const I18N={
     search_ph:"Rechercher une ville ou une adresse",
     my_location:"Me localiser",
     start_alt:"Départ de la sortie — glissez pour déplacer", start_tip:"Départ — glissez-moi, ou touchez la carte",
-    aria_language:"Langue", lang_switch:"Changer de langue", aria_about_data:"À propos des données", aria_lifegroup:"Groupe d'espèces", aria_criteria:"Critère",
+    aria_language:"Langue", lang_switch:"Changer de langue", aria_about_data:"À propos des données", aria_lifegroup:"Groupe d'espèces", aria_criteria:"Objectif",
     aria_search:"Rechercher un lieu de départ", aria_search_results:"Résultats de recherche", aria_time_unit:"Unité de temps",
     aria_time_budget:"Temps disponible", aria_max_travel:"Trajet max (aller)", aria_worth_drive:"Vaut le déplacement",
     aria_map_style:"Style de carte", aria_map_brightness:"Luminosité de la carte", aria_data_opacity:"Opacité des données", aria_top_cells:"Meilleures cellules (liste accessible)",
@@ -1017,7 +1019,7 @@ function iconEl(html){const d=document.createElement('div');d.style.lineHeight='
 const startElHtml='<div style="width:18px;height:18px;border-radius:50%;background:rgb(139,168,132);border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.45)"></div>';
 const destElHtml='<svg width="26" height="38" viewBox="0 0 26 38"><path d="M13 0C6 0 0 6 0 13c0 9 13 25 13 25s13-16 13-25C26 6 20 0 13 0z" fill="#f0a000" stroke="#fff" stroke-width="2"/><circle cx="13" cy="13" r="5" fill="#fff"/></svg>';
 function destMarkerAt(lat,lon){const el=iconEl(destElHtml);el.style.cursor='pointer';return new maplibregl.Marker({element:el,anchor:'bottom'}).setLngLat([lon,lat]);}
-const startEl=iconEl(startElHtml);startEl.title=t('start_tip');startEl.setAttribute('aria-label',t('start_alt'));
+const startEl=iconEl(startElHtml);startEl.title=t('start_tip');startEl.setAttribute('role','img');startEl.setAttribute('aria-label',t('start_alt'));
 const startMarker=new maplibregl.Marker({element:startEl,draggable:true,anchor:'center'}).setLngLat([state.start[1],state.start[0]]).addTo(map);
 startMarker.on('drag',()=>{const ll=startMarker.getLngLat();state.start=[ll.lat,ll.lng];});
 startMarker.on('dragend',()=>{const ll=startMarker.getLngLat();setStart(ll.lat,ll.lng);});
@@ -1432,6 +1434,7 @@ function updateOpacityControl(){
   lab.setAttribute('data-i18n',ov?'data_opacity':'map_brightness');   // keep applyI18N repaint in sync with the active target
   sl.setAttribute('data-i18n-aria',ov?'aria_data_opacity':'aria_map_brightness');
   val.textContent=Math.round(v*100)+'%';
+  sl.setAttribute('aria-valuetext',val.textContent);
 }
 // every overlay checkbox is wired the same way, so wire them from the same table setOverlay reads.
 // setOverlay writes .checked directly, and a scripted .checked fires no 'change', so this cannot loop.
