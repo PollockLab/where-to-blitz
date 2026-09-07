@@ -226,6 +226,7 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
   <div class="sechd"><h2 class="sec" data-i18n="sec_goal">Goal</h2><span class="infobtn" data-i18n-title="info_btn" title="Where do these scores come from?" role="button" tabindex="0" data-i18n-aria="aria_about_data" aria-label="About the data" aria-expanded="false" onclick="const b=document.getElementById('taxinfo').classList.toggle('open');this.setAttribute('aria-expanded',b)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">i</span></div>
   <div class="infobox" id="taxinfo" data-i18n-html="taxinfo"></div>
   <select id="criteria" class="full" data-i18n-aria="aria_criteria" aria-label="Goal" style="margin-bottom:8px"></select>
+  <div id="goalnote" role="status" data-i18n="goal_inactive" style="display:none;font-size:11.5px;line-height:1.4;color:var(--mut);margin:-4px 0 8px">The map is showing iNaturalist records. Pick a goal to go back to the goal map.</div>
 
   <div id="tripui">
   <h2 class="sec" data-i18n="your_trip">Your trip</h2>
@@ -327,7 +328,7 @@ const I18N={
   en:{
     title_full:`Where to<br><a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc);text-decoration:underline">Blitz the Gap</a>`,
     sub:"Choose what counts as <b>impact</b>, then <b>explore</b> the priority map — or <b>plan a trip</b> to the best spot you can reach and get back from.",
-    sec_group:"Life group & goal", sec_taxon:"Species group", sec_goal:"Goal",
+    sec_group:"Life group & goal", sec_taxon:"Species group", sec_goal:"Goal", goal_inactive:"The map is showing iNaturalist records. Pick a goal to go back to the goal map.",
     info_btn:"Where do these scores come from?",
     taxinfo:`<b style="color:var(--ink)">Higher priority = a place where one new sighting adds more to what we know.</b> Canada-wide, on an equal-area grid: 25&nbsp;km cells, 5&nbsp;km when you zoom in. <b>How impact is scored</b>, top right, lists the data behind each goal. <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">How Blitz the Gap works →</a>`,
     finetune:"Fine-tune the five goals",
@@ -469,7 +470,7 @@ const I18N={
   fr:{
     title_full:`Où aller pour<br><a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc);text-decoration:underline">Blitz the Gap</a>`,
     sub:"Choisissez ce qui compte comme <b>impact</b>, puis <b>explorez</b> la carte des priorités — ou <b>planifiez une sortie</b> vers le meilleur endroit que vous pouvez atteindre et d'où vous pouvez revenir.",
-    sec_group:"Groupe d'espèces et objectif", sec_taxon:"Groupe d'espèces", sec_goal:"Objectif",
+    sec_group:"Groupe d'espèces et objectif", sec_taxon:"Groupe d'espèces", sec_goal:"Objectif", goal_inactive:"La carte affiche les observations iNaturalist. Choisissez un objectif pour revenir à la carte des objectifs.",
     info_btn:"D'où viennent ces scores?",
     taxinfo:`<b style="color:var(--ink)">Priorité élevée = un endroit où une nouvelle observation ajoute le plus à nos connaissances.</b> À l'échelle du Canada, sur une grille à surface égale&nbsp;: cellules de 25&nbsp;km, 5&nbsp;km en zoomant. <b>Calcul de l'impact</b>, en haut à droite, donne les données derrière chaque objectif. <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">Fonctionnement de Blitz the Gap →</a>`,
     finetune:"Ajuster les cinq objectifs",
@@ -730,6 +731,7 @@ function setOverlay(kind){
   if(sel){const want=covOn()?'__inat__':(sel.value==='__inat__'?'Standard':sel.value);
     if(sel.value!==want){sel.value=want;setBase(want==='__inat__'?'Light':want);}}
   setGridLines();
+  {const n=document.getElementById('goalnote');if(n)n.style.display=covOn()?'':'none';}
   const paint=()=>{setCoverage();setClimate();updateLegend();recolour();};
   geActive()?loadGE().then(paint):paint();
 }
@@ -1203,7 +1205,7 @@ if(critSel)critSel.onchange=()=>{const v=critSel.value;
   }else if(v==='climate'){
     setOverlay('climate');
   }else{
-    if(geActive()||climateOn())setOverlay('priority');
+    if(overlay!=='priority')setOverlay('priority');   // covOn() included: picking a goal means show the goal grid
     applyChallenge(PRESETS[+v]);
   }};
 applyChallenge(PRESETS[0]);
