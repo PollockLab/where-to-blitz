@@ -183,6 +183,10 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
   #viewtoggle{left:50%;top:auto;bottom:12px}
   #insights{left:0;top:0;height:100%;padding:54px 12px 24px}
   .infobtn{width:24px;height:24px;line-height:22px;font-size:13px}
+  /* the panel is stacked, not floating, so left:300px drops the chevron on top of its own
+     content. Park it in the map's free top-right corner, which slides up when the panel goes. */
+  #panelToggle{left:auto;right:8px;top:calc(var(--bh) + 50vh + 8px)}
+  body.panel-collapsed #panelToggle{left:auto;right:8px;top:calc(var(--bh) + 8px)}
 }
 #maplegend{position:fixed;bottom:24px;right:14px;z-index:1050;background:rgba(255,255,255,.93);border-radius:9px;padding:6px 10px;box-shadow:0 2px 10px rgba(0,0,0,.22);font-size:14px;color:#16233a;min-width:188px;max-width:244px;line-height:1.25}
 #maplegend .lt{font-weight:700;font-size:14px}/* retained: reused by the Getting Even categorical legend title (the priority-legend title div was removed for #47) */
