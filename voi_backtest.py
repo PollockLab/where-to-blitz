@@ -20,6 +20,7 @@ new-to-science; inherits iNat observer bias (controlled, not eliminated).
 import glob
 import json
 import sys
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -29,6 +30,11 @@ RES = 0.25                              # grid degrees
 SEED = 0
 N_PERM = 2000
 TOPK_FRAC = 0.20                        # "top 20% priority cells"
+DOUBLE_M = (10, 20, 40)                 # seen-set sizes for double rarefaction
+DOUBLE_REPS = 200                       # draws per cell per M
+MIN_DOUBLE_CELLS = 20                   # below this the doubly-rarefied rho is not reported
+TRAVEL_INDEX = "cluster_results/ca/index.json"
+TRAVEL_GROUP = "All biodiversity"       # travel time is not taxon-specific
 
 
 def norm(s):
@@ -77,15 +83,16 @@ def build_cells(df):
     test_sp = {k: set(v) for k, v in test.groupby(["gi", "gj"]).taxon_id}
     n_test = test.groupby(["gi", "gj"]).size()
 
-    # per-cell ordered list of test-observation species (kept for rarefaction)
+    # per-cell ordered lists of observation species (kept for rarefaction, both sides)
     test_list = {k: list(v) for k, v in test.groupby(["gi", "gj"]).taxon_id}
+    train_list = {k: list(v) for k, v in train.groupby(["gi", "gj"]).taxon_id}
     aux = {}
     for key in train_sp:                      # only cells with >=1 train obs (priority defined)
         gi, gj = key
         seen = train_sp[key]
         new_sp = test_sp.get(key, set()) - seen
         nt = int(n_test.get(key, 0))
-        aux[key] = (seen, test_list.get(key, []))
+        aux[key] = (seen, test_list.get(key, []), train_list.get(key, []))
         rows.append({
             "gi": gi, "gj": gj, "clat": (gi + 0.5) * RES, "clon": (gj + 0.5) * RES,
             "n_train": int(n_train[key]),
@@ -118,7 +125,7 @@ def rarefy_new_at_k(cells, aux, rng, K=5, reps=200):
     out = []
     for _, row in cells.iterrows():
         key = (row.gi, row.gj)
-        seen, tlist = aux.get(key, (set(), []))
+        seen, tlist, _trlist = aux.get(key, (set(), [], []))
         if len(tlist) < K:
             out.append(np.nan); continue
         arr = np.array(tlist)
@@ -128,6 +135,87 @@ def rarefy_new_at_k(cells, aux, rng, K=5, reps=200):
             acc += len(set(samp.tolist()) - seen)
         out.append(acc / reps)
     return np.array(out, dtype=float)
+
+
+def double_rarefy_new_at_k(cells, aux, rng, M=20, K=5, reps=DOUBLE_REPS):
+    """Effort-equalized on BOTH sides: subsample M train ("already seen") and K test
+    observations per cell, then count test species absent from the M-sample.
+
+    `rarefy_new_at_k` equalizes test effort only. scarcity = norm(1/n_train) is a
+    strictly monotone transform of n_train, so a cell with few train records
+    necessarily carries a smaller seen set and therefore finds more species "new to
+    the cell" at any fixed K -- part of the single-rarefied signal is that
+    mechanical identity rather than discovery. Holding the seen set at M removes it.
+    Cells with fewer than M train or K test observations return NaN.
+    """
+    out = []
+    for _, row in cells.iterrows():
+        key = (row.gi, row.gj)
+        _seen, tlist, trlist = aux.get(key, (set(), [], []))
+        if len(trlist) < M or len(tlist) < K:
+            out.append(np.nan); continue
+        tra, tea = np.array(trlist), np.array(tlist)
+        acc = 0.0
+        for _ in range(reps):
+            samp = set(rng.choice(tea, size=K, replace=False).tolist())
+            sub = set(rng.choice(tra, size=M, replace=False).tolist())
+            acc += len(samp - sub)
+        out.append(acc / reps)
+    return np.array(out, dtype=float)
+
+
+def double_rarefied_records(cells, aux, K=5, Ms=DOUBLE_M, reps=DOUBLE_REPS, seed=SEED):
+    """Doubly-rarefied rho + permutation p for scarcity and priority, at several M."""
+    recs = []
+    for M in Ms:
+        y = double_rarefy_new_at_k(cells, aux, np.random.default_rng(seed + 2), M=M, K=K, reps=reps)
+        sub = cells.assign(double_newK=y).dropna(subset=["double_newK"])
+        rec = {"M": int(M), "K": int(K), "reps": int(reps), "n_cells": int(len(sub))}
+        if len(sub) >= MIN_DOUBLE_CELLS:
+            for col in ("scarcity", "priority"):
+                rho, pv, mu, sd = perm_test(sub[col].values, sub.double_newK.values,
+                                            np.random.default_rng(seed + 3))
+                rec[col] = {"spearman": rho, "perm_p": pv, "null_mean": mu, "null_sd": sd}
+        else:
+            rec["note"] = (f"fewer than {MIN_DOUBLE_CELLS} cells have >={M} train and "
+                           f">={K} test observations; not reported")
+        recs.append(rec)
+    return recs
+
+
+def load_travel_minutes(index_path=TRAVEL_INDEX, group=TRAVEL_GROUP):
+    """Per-cell Weiss 2018 travel time from the committed national build.
+
+    Returns a lat/lon/travel_min frame on the 25 km equal-area lattice, or None when
+    the national build is absent. Travel time is a baseline that can lose: it is not
+    a rank transform of scarcity, unlike density.
+    """
+    idx_path = Path(index_path)
+    if not idx_path.exists():
+        return None
+    idx = json.loads(idx_path.read_text())
+    fname = idx.get("files", {}).get(group)
+    cols = idx.get("row_format")
+    if not fname or not cols or "travel_min" not in cols:
+        return None
+    data_path = idx_path.parent / fname
+    if not data_path.exists():
+        return None
+    rows = json.loads(data_path.read_text()).get(group)
+    if not rows:
+        return None
+    t = pd.DataFrame(rows, columns=cols)[["lat", "lon", "travel_min"]]
+    return t.dropna()
+
+
+def cell_travel_minutes(cells, travel):
+    """Median travel time of the national cells falling inside each backtest cell."""
+    t = travel.copy()
+    t["gi"] = np.floor(t.lat / RES).astype(int)
+    t["gj"] = np.floor(t.lon / RES).astype(int)
+    med = t.groupby(["gi", "gj"]).travel_min.median()
+    keys = pd.MultiIndex.from_arrays([cells.gi.values, cells.gj.values])
+    return np.asarray(keys.map(med), dtype=float)
 
 
 def spearman(x, y):
@@ -168,11 +256,14 @@ def lift(cells, score_col, topk_frac=TOPK_FRAC):
                 "area_baseline": float(area_base), "lift_vs_area": float(captured / area_base)}
 
 
-def analyse(name, df, K=5):
+def analyse(name, df, K=5, travel=None, Ms=DOUBLE_M, double_reps=DOUBLE_REPS):
     cells = build_cells(df)
     if cells is None or len(cells) < 10:
         return None
     aux = cells.attrs["aux"]
+    # travel time per cell: the baseline that can lose (see load_travel_minutes)
+    cells["travel_min"] = (cell_travel_minutes(cells, travel) if travel is not None
+                           else np.nan)
     rng = np.random.default_rng(SEED)
     rev = cells[cells.revisited].copy()        # effort-controlled subset
     out = {"taxon": name, "n_cells": len(cells), "n_revisited": len(rev),
@@ -196,6 +287,14 @@ def analyse(name, df, K=5):
                                        np.random.default_rng(SEED + 1))
     out["rarefied_priority"] = {"spearman": rho_r, "perm_p": p_r, "null_mean": mu_r, "null_sd": sd_r}
     out["rarefied_staleness"] = {"spearman": spearman(rk.staleness.values, rk.rare_newK.values)}
+
+    # (1d) DOUBLE rarefaction: equalize the SEEN set to M as well as test effort to K.
+    # (1b) leaves scarcity's mechanical edge intact -- fewer prior records means a
+    # smaller seen set, so more of anything counts as new. This is the statistic the
+    # verdict should rest on; it is reported alongside, under its own key, so readers
+    # of the existing fields are untouched.
+    out["double_rarefied"] = double_rarefied_records(
+        cells, aux, K=K, Ms=Ms, reps=double_reps, seed=SEED)
     # rarefied top/bottom-tercile efficiency ratio (stable: equal effort K per cell)
     if len(rk) >= 6:
         q = rk.priority.quantile([1/3, 2/3])
@@ -217,6 +316,21 @@ def analyse(name, df, K=5):
         rho, p, mu, sd = perm_test(rev[col].values, rev.new_rate.values, rng)
         out[f"rate_{col}"] = {"spearman": rho, "perm_p": p, "null_mean": mu, "null_sd": sd}
 
+    # (2b) TRAVEL TIME baseline: unlike density (the exact rank-inverse of scarcity,
+    # so not a test at all), travel time is an independent ranking that can lose.
+    out["rate_travel_min"] = None
+    out["rarefied_travel_min"] = None
+    rev_t = rev.dropna(subset=["travel_min"])
+    if len(rev_t) >= 10:
+        rho, pv, mu, sd = perm_test(rev_t.travel_min.values, rev_t.new_rate.values, rng)
+        out["rate_travel_min"] = {"spearman": rho, "perm_p": pv, "null_mean": mu,
+                                  "null_sd": sd, "n_cells": int(len(rev_t))}
+    rk_t = rk.dropna(subset=["travel_min"])
+    if len(rk_t) >= 10:
+        rho, pv, mu, sd = perm_test(rk_t.travel_min.values, rk_t.rare_newK.values, rng)
+        out["rarefied_travel_min"] = {"spearman": rho, "perm_p": pv, "null_mean": mu,
+                                      "null_sd": sd, "n_cells": int(len(rk_t))}
+
     # (3) lift over baselines (all cells, raw discoveries)
     out["lift_priority"] = lift(cells, "priority")
     out["lift_random"] = 1.0   # by construction the area baseline
@@ -237,14 +351,14 @@ def sensitivity(df, grids=(0.1, 0.25, 0.5, 1.0), splits=("2025-06-15", "2025-07-
         SPLIT = split0
         for g in grids:
             RES = g
-            r = analyse("_", df, K=K)
+            r = analyse("_", df, K=K, Ms=())
             out = r[0] if r else None
             grid_rows.append((g, out["rarefied_priority"]["spearman"] if out else np.nan,
                               out["rarefied_priority"]["perm_p"] if out else np.nan))
         RES = res0
         for s in splits:
             SPLIT = pd.Timestamp(s)
-            r = analyse("_", df, K=K)
+            r = analyse("_", df, K=K, Ms=())
             out = r[0] if r else None
             split_rows.append((s, out["rarefied_priority"]["spearman"] if out else np.nan,
                                out["rarefied_priority"]["perm_p"] if out else np.nan))
@@ -265,11 +379,14 @@ def df_test_count(df):
 
 if __name__ == "__main__":
     files = sys.argv[1:] or sorted(glob.glob("cluster_results/inat_*.csv"))
+    travel = load_travel_minutes()
+    if travel is None:
+        print(f"note: {TRAVEL_INDEX} absent -- the travel-time baseline is skipped")
     results = []
     for f in files:
         name = f.split("inat_")[-1].replace(".csv", "")
         df = pd.read_csv(f)
-        r = analyse(name, df)
+        r = analyse(name, df, travel=travel)
         if r is None:
             print(f"{name}: insufficient data"); continue
         res, cells = r
@@ -283,6 +400,19 @@ if __name__ == "__main__":
         print(f"  [DECISIVE, effort-equalized] rarefied rho(priority,new@K)={rr['spearman']:.3f} "
               f"perm_p={fmtp(rr['perm_p'])} | rarefied efficiency ratio top/bottom="
               f"{res.get('rarefied_ratio_top_vs_bottom') or float('nan'):.1f}x")
+        for rec in res["double_rarefied"]:
+            if "scarcity" in rec:
+                print(f"  [DOUBLY rarefied, seen=M={rec['M']} & test=K={rec['K']}] "
+                      f"rho(scarcity,new)={rec['scarcity']['spearman']:+.3f} "
+                      f"perm_p={fmtp(rec['scarcity']['perm_p'])} | "
+                      f"rho(priority,new)={rec['priority']['spearman']:+.3f} "
+                      f"perm_p={fmtp(rec['priority']['perm_p'])}  (n={rec['n_cells']})")
+            else:
+                print(f"  [DOUBLY rarefied, M={rec['M']}] {rec['note']} (n={rec['n_cells']})")
+        tb = res.get("rarefied_travel_min")
+        if tb:
+            print(f"  travel-time baseline (rarefied outcome): rho={tb['spearman']:+.3f} "
+                  f"perm_p={fmtp(tb['perm_p'])}  (n={tb['n_cells']})")
         print(f"  rate~priority (revisited): rho={rp['spearman']:.3f} perm_p={fmtp(rp['perm_p'])} | "
               f"scarcity={res['rate_scarcity']['spearman']:.3f} staleness={res['rate_staleness']['spearman']:.3f} "
               f"density(anti)={res['rate_density']['spearman']:.3f}")

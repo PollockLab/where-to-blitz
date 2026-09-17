@@ -40,7 +40,8 @@ iNaturalist effort is famously concentrated and observer-biased ([Di Cecco et al
 1. **Rate, not count, on revisited cells** — breaks the *volume* bias (Di Cecco 2021).
 2. **Permutation null** — shuffle priority across cells (outcome fixed) 2000×; the observed rank-correlation must beat that null. (With 2000 shuffles the smallest reportable p is 1/2000, so "p<0.0005" is the floor — never "p=0".)
 3. **Anti-priority baseline** — the same statistic for *density* (where people already sampled heavily) must come out oppositely signed.
-4. **Rarefaction to a fixed K test observations per cell** *(the decisive control)* — subsample every cell to exactly K=5 post-T observations and count new-to-cell species. This **equalizes effort**, removing the accumulation-curve confound that control #1 leaves in. If priority still predicts discovery here, the effect is real, not a sampling artifact.
+4. **Rarefaction to a fixed K test observations per cell** — subsample every cell to exactly K=5 post-T observations and count new-to-cell species. This equalizes *test* effort, removing the accumulation-curve confound that control #1 leaves in. It is **not** sufficient: it leaves the cell's *seen* set at its natural size.
+5. **Double rarefaction — equalize the seen set too** *(the decisive control)*. `scarcity = norm(1/n_train)` is a strictly monotone transform of `n_train`, and the outcome counts species new to the cell's **train set**. So a cell with few prior records mechanically finds more of *anything* new at any fixed K, whatever the ecology. Control #4 leaves that identity untouched. Here every cell is cut to **M seen observations and K test observations** before the outcome is counted, at several M, so the scarcity ranking can no longer buy discovery through the size of the seen set. Only what survives this is evidence.
 
 Under-sampling is benchmarked against a per-cell **Chao1** estimate of still-unseen species ([Chao 1984](https://www.jstor.org/stable/4615964); [Colwell & Coddington 1994](https://doi.org/10.1098/rstb.1994.0091)). The premise — adaptive/gap-filling sampling beats biased haphazard sampling — is motivated by [Mondain-Monval et al. 2024, *MEE*](https://doi.org/10.1111/2041-210X.14355) (a virtual-ecologist *simulation*, so this backtest is a **novel composite** on real temporal data, not a replication).
 
@@ -72,7 +73,16 @@ md(r"""## 1 · Run the backtest
 
 `voi_backtest.analyse` does the whole pipeline per taxon: split at T, grid to 0.25°, compute train-only priority and test-only new-to-cell discovery, then the effort-controlled rank-correlation (with permutation null) and the lift over baselines. Running it across several taxonomic groups is the robustness check — a verdict that flips between birds and insects is not a verdict.""")
 
-co(r"""results = []
+co(r"""M_DECISIVE = 20        # seen-set size for the decisive doubly-rarefied statistic
+
+# Doubly-rarefied record at seen-set size M, or None for results predating it.
+def dbl(r, M=M_DECISIVE, score="priority"):
+    for rec in r.get("double_rarefied") or []:
+        if rec.get("M") == M and score in rec:
+            return rec[score]
+    return None
+
+results = []
 for f in files:
     name = f.split("inat_")[-1].replace(".csv", "")
     r = vb.analyse(name, pd.read_csv(f))
@@ -88,33 +98,51 @@ def pp(p, floor):                       # honest p: never print 0.0000
 summary = pd.DataFrame([{
     "taxon": r["taxon"], "cells": r["n_cells"], "revisited": r["n_revisited"],
     f"rarefied(K={r['K']})": r["n_cells_rarefied"], "new_species": r["total_new_species"],
-    "ρ rarefied (decisive)": round(r["rarefied_priority"]["spearman"], 3),
-    "perm_p": pp(r["rarefied_priority"]["perm_p"], r["perm_p_floor"]),
+    "ρ test-only rarefied": round(r["rarefied_priority"]["spearman"], 3),
+    f"ρ DOUBLY rarefied (M={M_DECISIVE})": (
+        round(dbl(r)["spearman"], 3) if dbl(r) else None),
+    "perm_p (doubly)": (pp(dbl(r)["perm_p"], r["perm_p_floor"]) if dbl(r) else "not run"),
     "efficiency ×": round(r["rarefied_ratio_top_vs_bottom"], 1) if r.get("rarefied_ratio_top_vs_bottom") else None,
     "ρ rate (revisited)": round(r["rate_priority"]["spearman"], 3),
     "raw-volume ρ": round(r["spearman_priority_newcount"], 3),
 } for r in results]).set_index("taxon")
-print("Decisive column = rarefied ρ (effort-equalized to K test obs/cell).")
+if any(dbl(r) for r in results):
+    print(f"Decisive column = DOUBLY rarefied ρ (seen set cut to M={M_DECISIVE}, test effort to K).")
+    print("The test-only rarefied column beside it still carries scarcity's mechanical edge.")
+else:
+    print("Double rarefaction has not been run on these results; no decisive column here.")
 print("Raw-volume ρ is negative by design: priority cells are under-visited (efficiency, not volume).")
 summary""")
 
-md(r"""## 2 · The decisive test — does priority predict discovery at *equal effort*?
+md(r"""## 2 · The decisive test — does priority predict discovery at *equal effort on both sides*?
 
-The headline is **ρ(priority, new-species at fixed K)** — every cell rarefied to exactly K=5 post-T observations, so no cell can look productive merely because it was barely sampled. Positive-and-significant here means: hand two cells the *same* number of visits, and the one priority ranked higher returns more *new* species. The anti-priority (density) bar is the mirror — it must sit on the opposite side. A verdict that flips between birds and insects is no verdict, so we run it across taxonomic groups.""")
+The headline is **ρ(priority, new-species at fixed K with the seen set cut to M)** — every cell rarefied to exactly K=5 post-T observations *and* to M prior observations, so no cell can look productive merely because it was barely sampled before. The test-only rarefied number is plotted beside it for contrast: the gap between the two is the part of the old headline that was the scarcity identity rather than discovery. Positive-and-significant here means: hand two cells the *same* number of visits, and the one priority ranked higher returns more *new* species. The anti-priority (density) bar is the mirror — it must sit on the opposite side. A verdict that flips between birds and insects is no verdict, so we run it across taxonomic groups.""")
 
 co(r"""fig, (axL, axR) = plt.subplots(1, 2, figsize=(13, 4.6))
 names = [r["taxon"] for r in results]
 y = np.arange(len(names))
-rho = [r["rarefied_priority"]["spearman"] for r in results]
-sd = [r["rarefied_priority"]["null_sd"] for r in results]
+have_dbl = all(dbl(r) for r in results)
+src = [dbl(r) if have_dbl else r["rarefied_priority"] for r in results]
+rho = [d["spearman"] for d in src]
+sd = [d["null_sd"] for d in src]
 axL.axvline(0, color="#888", lw=1)
-axL.errorbar(rho, y, xerr=np.array(sd)*1.96, fmt="o", color="#1b6", capsize=3, ms=8)
-for i, r in enumerate(results):
-    axL.annotate("p" + pp(r["rarefied_priority"]["perm_p"], r["perm_p_floor"]),
+axL.errorbar(rho, y, xerr=np.array(sd)*1.96, fmt="o",
+             color="#1b6" if have_dbl else "#999", capsize=3, ms=8)
+# the test-only statistic, plotted behind, so the shrinkage is visible not asserted
+if have_dbl:
+    axL.scatter([r["rarefied_priority"]["spearman"] for r in results], y,
+                marker="x", color="#999", s=45, label="test-only rarefied")
+    axL.legend(fontsize=8, loc="lower right")
+for i, d in enumerate(src):
+    axL.annotate("p" + pp(d["perm_p"], results[i]["perm_p_floor"]),
                  (rho[i], y[i]), textcoords="offset points", xytext=(8, 6), fontsize=8)
 axL.set_yticks(y); axL.set_yticklabels(names)
-axL.set_xlabel("Spearman ρ  (priority vs new species at fixed K=5, rarefied)")
-axL.set_title("Decisive test: discovery at EQUAL effort\n(±1.96·null SD)")
+if have_dbl:
+    axL.set_xlabel(f"Spearman ρ  (priority vs new species, seen set M={M_DECISIVE} and test K=5)")
+    axL.set_title("Decisive test: equal effort on BOTH sides\n(±1.96·null SD)")
+else:
+    axL.set_xlabel("Spearman ρ  (priority vs new species at fixed K=5, test effort only)")
+    axL.set_title("NOT the decisive test — double rarefaction not yet run\n(seen set still at its natural size; ±1.96·null SD)")
 
 # component breakdown vs the rarefied outcome, median across taxa
 comp = ["rarefied_priority", "rate_scarcity", "rate_staleness", "rate_density"]
@@ -243,37 +271,51 @@ print("Direction is choice-invariant; only magnitude moves. The headline never r
 
 md(r"""## 6 · Verdict""")
 
-co(r"""# Programmatic verdict — generated from the DECISIVE (rarefied) numbers, honest to any outcome.
+co(r"""# Programmatic verdict — generated from the DECISIVE (doubly-rarefied) numbers,
+# honest to any outcome, including "the decisive number has not been computed yet".
 import numpy as np
-rho = np.array([r["rarefied_priority"]["spearman"] for r in results])
-p   = np.array([r["rarefied_priority"]["perm_p"] for r in results])
+single = np.array([r["rarefied_priority"]["spearman"] for r in results])
+dec = [dbl(r) for r in results]
+have = [d for d in dec if d]
 floor = results[0]["perm_p_floor"]
-dens = np.array([r["rate_density"]["spearman"] for r in results])
 ratio = np.array([r.get("rarefied_ratio_top_vs_bottom") or np.nan for r in results])
 stale = np.array([r["rate_staleness"]["spearman"] for r in results])
-n_pos_sig = int(((rho > 0) & (p < 0.05)).sum())
-n_neg_sig = int(((rho < 0) & (p < 0.05)).sum())
 
 print(f"Taxa tested: {len(results)}  ({', '.join(r['taxon'] for r in results)})")
-print(f"DECISIVE rarefied ρ(priority, new@K=5):  range {rho.min():+.3f}..{rho.max():+.3f}  median {np.median(rho):+.3f}")
-print(f"  positive & significant (perm p<{floor:.4f}): {n_pos_sig}/{len(results)}   negative & sig: {n_neg_sig}/{len(results)}")
-print(f"per-visit efficiency ratio (rarefied, equal effort): {np.nanmin(ratio):.1f}×..{np.nanmax(ratio):.1f}×  median {np.nanmedian(ratio):.1f}×")
-print(f"anti-priority (density) ρ: median {np.median(dens):+.3f}  (opposite sign, as it must be)")
-print(f"staleness (non-mechanical) ρ: median {np.median(stale):+.3f}  (weaker, but independent of species counts)")
+print(f"test-only rarefied rho(priority, new@K=5):  range {single.min():+.3f}..{single.max():+.3f}  median {np.median(single):+.3f}")
+print(f"per-visit efficiency ratio (test-only rarefied): {np.nanmin(ratio):.1f}x..{np.nanmax(ratio):.1f}x  median {np.nanmedian(ratio):.1f}x")
+print(f"staleness (non-mechanical) rho: median {np.median(stale):+.3f}  (independent of the seen-set size)")
 print()
-strong = n_pos_sig == len(results) and np.median(rho) > 0 and np.median(dens) < 0
-if strong:
-    print("VERDICT — bar #4 SUPPORTED (with disclosed scope).")
-    print("At EQUAL effort, higher-priority cells return more new-to-cell species across ALL")
-    print(f"{len(results)} taxonomic groups (rarefied ρ {rho.min():.2f}–{rho.max():.2f}, p<{floor:.4f}); the anti-priority")
-    print("signal is oppositely signed; per-visit efficiency is ~%.1f–%.1f×. The 'where to go'" % (np.nanmin(ratio), np.nanmax(ratio)))
-    print("priority mechanism adds real, out-of-sample, effort-equalized information — a number.")
-    print("It improves discovery EFFICIENCY per trip, not raw volume (priority cells are under-")
-    print("visited). Scope: 2-dim proxy, not the full 5-dim score; scarcity-dominated; June train.")
-elif n_pos_sig >= 1 and n_neg_sig == 0:
-    print("VERDICT — bar #4 PARTIALLY supported: positive on %d/%d taxa, not uniform." % (n_pos_sig, len(results)))
+
+if not have:
+    print("VERDICT — WITHHELD. Double rarefaction has not yet been run on the cluster;")
+    print("the test-only number above is not the decisive one. It equalizes post-T effort but")
+    print("leaves each cell's seen set at its natural size, and scarcity = norm(1/n_train) is a")
+    print("monotone transform of that size, so part of it is an identity rather than discovery.")
+    print("No claim about bar #4 is made from these results.")
 else:
-    print("VERDICT — bar #4 NOT supported once effort is equalized. An honest null.")""")
+    rho = np.array([d["spearman"] for d in have])
+    p = np.array([d["perm_p"] for d in have])
+    n_pos_sig = int(((rho > 0) & (p < 0.05)).sum())
+    n_neg_sig = int(((rho < 0) & (p < 0.05)).sum())
+    print(f"DECISIVE doubly-rarefied rho (seen set M={M_DECISIVE}, test K=5), on {len(have)}/{len(results)} taxa:")
+    print(f"  range {rho.min():+.3f}..{rho.max():+.3f}  median {np.median(rho):+.3f}")
+    print(f"  positive & significant (perm p<0.05): {n_pos_sig}/{len(have)}   negative & sig: {n_neg_sig}/{len(have)}")
+    print(f"  shrinkage from the test-only statistic: median {np.median(single):+.3f} -> {np.median(rho):+.3f}")
+    print()
+    if n_pos_sig == len(have) and len(have) == len(results) and np.median(rho) > 0:
+        print("VERDICT — bar #4 SUPPORTED (with disclosed scope).")
+        print("At equal effort on BOTH sides, higher-priority cells still return more new-to-cell")
+        print(f"species across all {len(results)} taxonomic groups (rho {rho.min():.2f}-{rho.max():.2f}).")
+        print("Scope: 2-dim proxy, not the full 5-dim score; June train; retrospective.")
+    elif n_pos_sig >= 1 and n_neg_sig == 0:
+        print("VERDICT — bar #4 PARTIALLY supported: positive and significant on %d/%d taxa with a" % (n_pos_sig, len(have)))
+        print("decisive number, null on the rest. Not a uniform result.")
+    else:
+        print("VERDICT — bar #4 NOT supported once the seen set is equalized as well as the test")
+        print("effort. The test-only signal was carried by the size of the seen set, which scarcity")
+        print("ranks on by construction. An honest null.")
+""")
 
 md(r"""### What this does and does not establish
 
