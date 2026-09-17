@@ -77,6 +77,8 @@ input[type=range]{width:100%;accent-color:var(--acc);margin:0}
 #panel .infobtn{border-color:#9aa7b5}
 /* the rest of the light surfaces: the floating chrome over the map, and the map popups */
 #topctrls,#viewtoggle,#loading,.maplibregl-popup-content{--acc:var(--acc-ink);--gd:var(--gd-ink);--gold:var(--gold-ink)}
+.maplibregl-popup-content{--ink:#16202c;--mut:#5d6b7a;color:var(--ink)}
+.maplibregl-popup-content .gtrow{--ink:#e8eef5;--mut:#9fb2c6}   /* the coverage rows keep their dark surface, so they keep the dark-theme ink */   /* MapLibre paints the popup white but leaves color inherited from the dark body: the impact line was near-white on white */
 /* Issue #69: single language toggle, lifted out of the panel to sit left of the How-scored button. */
 #topctrls{position:fixed;right:14px;top:calc(12px + var(--bh));z-index:1200;display:flex;align-items:stretch;gap:8px}
 #langbtn{background:#fff;color:#1b2a3a;border:0;border-radius:9px;box-shadow:0 2px 9px rgba(0,0,0,.28);padding:7px 13px;font-size:12.5px;font-weight:700;letter-spacing:.04em;cursor:pointer}
