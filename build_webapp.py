@@ -27,7 +27,7 @@ OBJ = [
     },
     {
         "key": "env",
-        "name": "Cover every habitat",
+        "name": "Climate under-sampling",
         "q": "go where the climate is under-sampled",
     },
     {
