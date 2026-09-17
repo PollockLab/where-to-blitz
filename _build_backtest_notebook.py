@@ -39,7 +39,7 @@ iNaturalist effort is famously concentrated and observer-biased ([Di Cecco et al
 
 1. **Rate, not count, on revisited cells** — breaks the *volume* bias (Di Cecco 2021).
 2. **Permutation null** — shuffle priority across cells (outcome fixed) 2000×; the observed rank-correlation must beat that null. (With 2000 shuffles the smallest reportable p is 1/2000, so "p<0.0005" is the floor — never "p=0".)
-3. **Anti-priority baseline** — the same statistic for *density* (where people already sampled heavily) must come out oppositely signed.
+3. **A baseline that can lose.** *Density* is not one. `density = norm(n_train)` and `scarcity = norm(1/n_train)` are the same ranking reversed, so Spearman(density, y) = −Spearman(scarcity, y) for every outcome y, exactly, at every seed — it holds to twelve decimals in the committed results. "The density bar comes out oppositely signed" is arithmetic, not evidence, and it is retired here. The baseline that replaces it is **travel time** (Weiss et al. 2018, the same per-cell surface the app ranks trips with): an independent ordering of the same cells that is free to beat priority, tie with it, or point the wrong way.
 4. **Rarefaction to a fixed K test observations per cell** — subsample every cell to exactly K=5 post-T observations and count new-to-cell species. This equalizes *test* effort, removing the accumulation-curve confound that control #1 leaves in. It is **not** sufficient: it leaves the cell's *seen* set at its natural size.
 5. **Double rarefaction — equalize the seen set too** *(the decisive control)*. `scarcity = norm(1/n_train)` is a strictly monotone transform of `n_train`, and the outcome counts species new to the cell's **train set**. So a cell with few prior records mechanically finds more of *anything* new at any fixed K, whatever the ecology. Control #4 leaves that identity untouched. Here every cell is cut to **M seen observations and K test observations** before the outcome is counted, at several M, so the scarcity ranking can no longer buy discovery through the size of the seen set. Only what survives this is evidence.
 
@@ -145,13 +145,22 @@ else:
     axL.set_title("NOT the decisive test — double rarefaction not yet run\n(seen set still at its natural size; ±1.96·null SD)")
 
 # component breakdown vs the rarefied outcome, median across taxa
-comp = ["rarefied_priority", "rate_scarcity", "rate_staleness", "rate_density"]
-labels = ["priority\n(rarefied)", "scarcity", "staleness\n(non-mech.)", "density\n(anti)"]
+# density is dropped: it is the exact rank-inverse of scarcity, so its bar is the
+# scarcity bar mirrored and can never disagree. Travel time is the baseline that can.
+comp = ["rarefied_priority", "rate_scarcity", "rate_staleness"]
+labels = ["priority\n(rarefied)", "scarcity", "staleness\n(non-mech.)"]
+colors = ["#1b6", "#39c", "#9b3"]
 med = [np.nanmedian([r[c]["spearman"] for r in results]) for c in comp]
+trav = [r["rarefied_travel_min"]["spearman"] for r in results if r.get("rarefied_travel_min")]
+if trav:
+    labels.append("travel time\n(baseline)"); colors.append("#c33"); med.append(np.nanmedian(trav))
+    note = f"travel time is an independent baseline, free to win (n={len(trav)}/{len(results)} taxa)"
+else:
+    note = "travel-time baseline absent from these results — rerun the backtest to report it"
 axR.axhline(0, color="#888", lw=1)
-axR.bar(labels, med, color=["#1b6", "#39c", "#9b3", "#c33"])
+axR.bar(labels, med, color=colors)
 axR.set_ylabel("median ρ across taxa")
-axR.set_title("Which signal drives it?\n(scarcity-dominated; staleness weaker but independent)")
+axR.set_title("Which signal drives it?\n" + note, fontsize=9)
 fig.tight_layout(); plt.show()""")
 
 md(r"""## 2b · The same result, on the map

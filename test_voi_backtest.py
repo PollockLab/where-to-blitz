@@ -72,3 +72,42 @@ def test_double_rarefaction_is_reported_at_every_requested_m():
     assert [r["M"] for r in recs] == list(vb.DOUBLE_M)
     for rec in recs:
         assert "scarcity" in rec or "note" in rec
+
+
+def test_density_is_the_exact_rank_inverse_of_scarcity():
+    """`density` cannot serve as a baseline: it is `scarcity` reversed, by construction.
+
+    density = norm(n_train) and scarcity = norm(1/n_train) are the same ordering of the
+    same cells, one reversed, so their Spearman correlations against any outcome sum to
+    zero exactly. A bar that must come out oppositely signed tests nothing.
+    """
+    cells = vb.build_cells(_null_effect_frame())
+    cells["rare_newK"] = vb.rarefy_new_at_k(cells, cells.attrs["aux"],
+                                            np.random.default_rng(0), K=5)
+    rk = cells.dropna(subset=["rare_newK"])
+    a = vb.spearman(rk.scarcity.values, rk.rare_newK.values)
+    b = vb.spearman(rk.density.values, rk.rare_newK.values)
+    assert round(a + b, 12) == 0.0, f"{a} + {b}"
+
+
+def test_travel_time_baseline_is_reported_when_the_surface_is_supplied():
+    """Travel time is an independent ranking, so it is free to disagree with priority."""
+    df = _null_effect_frame()
+    travel = pd.DataFrame({"lat": df.lat.unique()})
+    travel["lon"] = -123.0
+    travel["travel_min"] = np.arange(len(travel), dtype=float) * 7.0
+    res, cells = vb.analyse("synthetic", df, K=5, travel=travel, Ms=())
+    assert cells.travel_min.notna().all()
+    assert res["rate_travel_min"] is not None
+    assert res["rarefied_travel_min"] is not None
+    assert -1.0 <= res["rarefied_travel_min"]["spearman"] <= 1.0
+
+
+def test_travel_baseline_is_absent_rather_than_invented():
+    res, _ = vb.analyse("synthetic", _null_effect_frame(), K=5, travel=None, Ms=())
+    assert res["rate_travel_min"] is None
+    assert res["rarefied_travel_min"] is None
+
+
+def test_load_travel_minutes_returns_none_when_the_build_is_missing(tmp_path):
+    assert vb.load_travel_minutes(tmp_path / "nope.json") is None
