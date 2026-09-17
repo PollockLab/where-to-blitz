@@ -17,12 +17,13 @@ of the ramp rather than fix anything.
 
 AXES = ["discover", "conservation", "env", "staleness", "urgency"]
 
-# "proj" is the iNaturalist sub-project each preset's "join" link points at. Season
-# challenges (Revisiting the past, Canada's Most Wanted) are date-boxed to their launch
-# year and stop accepting new observations once it ends, so they go stale every summer.
-# All three presets point at the general project instead, which the Pollock Lab rolls
-# forward each year and which stays open across the whole observation season: re-check
-# this each spring and bump the year if the umbrella project's slug changes.
+# "proj" is the iNaturalist sub-project each preset's "join" link points at, and the fallback
+# used if the live lookup in webapp/index.html (resolveLiveJoinProject) can't reach the API.
+# Season challenges (Revisiting the past, Canada's Most Wanted) are date-boxed to their launch
+# year and stop accepting new observations once it ends, so they go stale every summer; the
+# general project has no stable slug either (2025 was "blitz-the-gap-2025", 2026 is
+# "blitz-the-gap-2026-general"). All three presets point at the current general project; bump
+# this if it drifts noticeably out of date, but the live lookup should keep it current on its own.
 PRESETS = [
     {
         "name": "Spatial Gap",

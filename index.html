@@ -1252,6 +1252,31 @@ if(critSel)critSel.onchange=()=>{const v=critSel.value;
   }};
 applyChallenge(PRESETS[0]);
 
+// Presets' "join" link points at goal_presets.py's shipped "proj" slug, a Canada-wide, taxon-
+// unrestricted iNaturalist project. That project has no stable name across years (2025's was
+// "blitz-the-gap-2025", 2026's is "blitz-the-gap-2026-general") and the campaign's own site
+// hardcodes the current year's slug too, so there is no fixed URL to link to permanently. Instead
+// of a slug that goes stale every year, look up whichever Canada-wide, taxon-free project is newest
+// and swap it in live. Fails open: offline, rate-limited, or no match just keeps the shipped slug.
+(function resolveLiveJoinProject(){
+  const FALLBACK=PRESETS[0].proj;
+  fetch('https://api.inaturalist.org/v1/projects?q=blitz%20the%20gap&per_page=50')
+    .then(r=>r.ok?r.json():null)
+    .then(d=>{
+      if(!d||!Array.isArray(d.results))return;
+      const field=(sp,name)=>{const f=sp.find(s=>s.field===name);return f?f.value:null;};
+      const isGeneral=p=>{const sp=p.search_parameters||[];
+        return !field(sp,'taxon_id')&&(field(sp,'place_id')||[]).includes(6712);};
+      const cands=d.results.filter(isGeneral).sort((a,b)=>b.created_at.localeCompare(a.created_at));
+      const pick=cands.find(p=>p.project_type==='collection')||cands[0];
+      if(!pick||!pick.slug||pick.slug===FALLBACK)return;
+      PRESETS.forEach(p=>{p.proj=pick.slug;});
+      const cs=document.getElementById('criteria');   // same non-preset-entry guard as the language-switch re-render above
+      if(typeof window.__activePreset==='number'&&!(cs&&isNaN(+cs.value)))applyChallenge(PRESETS[window.__activePreset]);
+    })
+    .catch(()=>{});
+})();
+
 const bmSel=document.getElementById('basemap');
 // Issue #20: map style is one of four choices; the iNaturalist sampling-density overlay folds in as the 4th.
 const MAP_STYLES=[['Standard','style_standard'],['Satellite','style_satellite'],['Terrain','style_terrain'],['__inat__','style_inat_density']];
