@@ -355,7 +355,7 @@ naive = 1.0 / (dens + 1e-3)
 naive = (naive - naive.min()) / (naive.max() - naive.min())   # min–max norm(1/density)
 shipped = ALL["discover"].to_numpy(float)                      # the de-saturated rank
 
-fig, axs = plt.subplots(1, len(PRESETS), figsize=(14, 3.8))
+fig, axs = plt.subplots(1, 3, figsize=(14, 3.8))
 axs[0].hist(naive, bins=60, color="#c0392b"); axs[0].set_title("Naive  norm(1/density)\nbimodal: a binary mask")
 axs[0].set_xlabel("axis value"); axs[0].set_ylabel("cells")
 axs[1].hist(shipped, bins=60, color="#2980b9"); axs[1].set_title("Shipped  under-sampling rank\nsmooth: a plannable gradient")
@@ -661,19 +661,30 @@ ax.legend(loc="lower right", fontsize=9); ax.set_xlabel("")
 plt.xticks(rotation=0); plt.tight_layout(); plt.show()
 
 m_app  = bt["app (gap-filling)"].mean()
+m_ship = bt["what the map shows"].mean()
 m_busy = bt["go-where-busy"].mean()
+n_ship_sig = sum(r["scores"]["app_shipped"]["perm_p"] < 0.05 for r in app)
 print(f"Average agreement — app's gap-filling map : {m_app:+.2f}  (correct on {bt['app (gap-filling)'].gt(0).sum()}/{len(bt)} animal groups)")
+print(f"Average agreement — what the map shows     : {m_ship:+.2f}  (better than chance on {n_ship_sig}/{len(bt)} groups)")
 print(f"Average agreement — 'go where it's busy'  : {m_busy:+.2f}  (the near-exact opposite)")
 """)
 md(r"""
 **Two findings worth naming:**
 
-1. **The signal lives entirely in the under-sampling axis.** *Spatial Gap*, the default preset,
-   is `discover` 1.0 and nothing else, so the green and the blue lines in the table are one line.
-   `env` and `urgency` are near-uncorrelated with *this* objective, because they optimise *other*
-   goals by design. The open gap is the red line: **what the map actually shows** ranks by
-   all-time density, which is weaker than the leak-free score above it.
-2. **It replicates out of region.** Re-running on a disjoint Eastern-Canada window (ON/QC/
+**The blue bar is the score the live map actually ranks squares by.** The green bar is the
+leak-free score this test validates; the blue one is what you see in the app, and it is the
+weaker of the two on every animal group.
+
+1. **The shipped score is weaker than the one that validates.** The app's `discover` axis is
+   `1/(all-time density)`, so a square that was just surveyed instantly looks "covered" and sheds
+   priority. That is defensible when you are planning the next trip, but it costs agreement here:
+   the blue bar beats chance on four of the five BC groups and is indistinguishable from random on
+   amphibians. Pinning the shipped axis to a fixed snapshot or window is the open fix.
+2. **The signal lives entirely in the under-sampling axis.** *Spatial Gap*, the default preset, is
+   `discover` 1.0 and nothing else, so the leak-free score and the discover-only score are the same
+   number and only one green bar is drawn. `env` and `urgency` are near-uncorrelated with *this*
+   objective, because they optimise *other* goals by design.
+3. **It replicates out of region.** Re-running on a disjoint Eastern-Canada window (ON/QC/
    Maritimes) reproduces the directed > opportunistic result — it is not a BC artifact.
 """)
 code(r"""
