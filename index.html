@@ -395,7 +395,7 @@ const I18N={
     coverage_hint:"Where records already are: bright = well sampled, dark = gaps (Biodiversité Québec).",
     getting_even:"Getting Even (under-represented groups)",
     ge_info_btn:"How is the recommended group worked out?",
-    ge_method:`<b>Which group to record here.</b> Tap a cell and the app asks iNaturalist, live, how many research-grade species each group has <b style="color:var(--ink)">in the cell</b> versus <b style="color:var(--ink)">within ~50&nbsp;km</b> (birds excluded — eBird already covers them).
+    ge_method:`<b>Which group to record here.</b> Tap a cell and the app asks iNaturalist, live, how many research-grade species each group has <b style="color:var(--ink)">in the cell</b> versus <b style="color:var(--ink)">within ~40&nbsp;km</b> (birds excluded — eBird already covers them).
       <ul>
       <li>That share, divided by the cell's overall recording rate, puts an average group at <b style="color:var(--ink)">1</b>.</li>
       <li>Groups well below 1 are under-recorded next to their neighbours. Normalising is what surfaces the real gaps even where everything is under-recorded — one cell can't hold a whole region's diversity.</li>
@@ -429,7 +429,7 @@ const I18N={
     load_error:"⚠ Couldn't load the map — check your connection.",
     retry:"↻ Retry",
     legend_title:"Where to blitz", legend_low:"well-sampled", legend_high:"biggest gaps",
-    density_low:"few records", density_high:"many records", density_legend_hint:"iNaturalist records (sharpens to ~300 m)", density_obscured_hint:"Solid blocks are records whose locations iNaturalist obscures, spread evenly over the box they are reported in.",
+    density_low:"few records", density_high:"many records", density_legend_hint:"iNaturalist records (sharpens to ~300 m; scale tops out at 10 records)", density_obscured_hint:"Solid blocks are records whose locations iNaturalist obscures, spread evenly over the box they are reported in.",
     axis_legend:[["well-sampled","biggest gaps"],["no species at risk","many at risk"],["climate well-covered","climate under-sampled"],["recently recorded","long overdue"],["stable","recently changed"]],
     legend_hint:`Brighter = higher priority. <span id="legendtap">Tap a cell to see what to record.</span>`,
     // dynamic
@@ -538,7 +538,7 @@ const I18N={
     coverage_hint:"Où les observations existent déjà&nbsp;: clair = bien échantillonné, foncé = lacunes (Biodiversité Québec).",
     getting_even:"Combler l'écart (groupes sous-représentés)",
     ge_info_btn:"Comment le groupe recommandé est-il déterminé ?",
-    ge_method:`<b>Quel groupe noter ici.</b> Touchez une cellule et l'application interroge iNaturalist, en direct&nbsp;: combien d'espèces de qualité recherche chaque groupe compte <b style="color:var(--ink)">dans la cellule</b> par rapport aux <b style="color:var(--ink)">~50&nbsp;km autour</b> (oiseaux exclus — eBird les couvre déjà).
+    ge_method:`<b>Quel groupe noter ici.</b> Touchez une cellule et l'application interroge iNaturalist, en direct&nbsp;: combien d'espèces de qualité recherche chaque groupe compte <b style="color:var(--ink)">dans la cellule</b> par rapport aux <b style="color:var(--ink)">~40&nbsp;km autour</b> (oiseaux exclus — eBird les couvre déjà).
       <ul>
       <li>Cette part, divisée par le taux d'enregistrement global de la cellule, place un groupe moyen à <b style="color:var(--ink)">1</b>.</li>
       <li>Les groupes bien en dessous de 1 sont sous-documentés par rapport à leurs voisins. C'est cette normalisation qui fait ressortir les vraies lacunes même là où tout est sous-documenté — une cellule ne peut contenir toute la diversité d'une région.</li>
@@ -572,7 +572,7 @@ const I18N={
     load_error:"⚠ Impossible de charger la carte — vérifiez votre connexion.",
     retry:"↻ Réessayer",
     legend_title:"Où aller", legend_low:"bien échantillonné", legend_high:"plus grandes lacunes",
-    density_low:"peu d'observations", density_high:"beaucoup d'observations", density_legend_hint:"observations iNaturalist (jusqu'à ~300 m)", density_obscured_hint:"Les blocs uniformes sont des observations dont iNaturalist masque la localisation, réparties également sur la case déclarée.",
+    density_low:"peu d'observations", density_high:"beaucoup d'observations", density_legend_hint:"observations iNaturalist (jusqu'à ~300 m ; l'échelle plafonne à 10 observations)", density_obscured_hint:"Les blocs uniformes sont des observations dont iNaturalist masque la localisation, réparties également sur la case déclarée.",
     axis_legend:[["bien échantillonné","plus grandes lacunes"],["aucune espèce en péril","beaucoup en péril"],["climat bien couvert","climat sous-échantillonné"],["observé récemment","en retard depuis longtemps"],["stable","changé récemment"]],
     legend_hint:`Plus clair = priorité plus élevée. <span id="legendtap">Touchez une cellule pour voir quoi observer.</span>`,
     // dynamic
