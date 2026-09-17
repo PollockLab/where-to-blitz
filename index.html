@@ -303,7 +303,7 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
     <div style="color:var(--mut);font-size:11px;line-height:1.4" data-i18n="vector_hint"></div>
   </div>
   <label class="toggle" style="display:none"><input type="checkbox" id="tgCoverage"> <span data-i18n="inat_coverage">iNaturalist coverage</span></label><!-- driven by the "iNaturalist sampling density" map style (#20) -->
-  <label class="toggle" style="display:none"><input type="checkbox" id="tgGettingEven"> <span data-i18n="getting_even">Getting Even — which group to record</span></label><!-- driven by the "Getting Even" criterion (#20) -->
+  <label class="toggle" style="display:none"><input type="checkbox" id="tgGettingEven"> <span data-i18n="getting_even">Getting Even — which group to record</span></label><span class="infobtn" id="geinfobtn" style="display:none" data-i18n-title="ge_info_btn" title="How is the recommended group worked out?" role="button" tabindex="0" data-i18n-aria="ge_info_btn" aria-label="How is the recommended group worked out?" aria-expanded="false" onclick="const b=document.getElementById('geinfo').classList.toggle('open');this.setAttribute('aria-expanded',b)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">i</span><!-- driven by the "Getting Even" criterion (#20) -->
   <div class="infobox" id="geinfo" data-i18n-html="ge_method"></div>
   <label class="toggle" style="display:none"><input type="checkbox" id="tgClimateGap"> <span data-i18n="climate_gap">Climate Gap — under-sampled climates</span></label><!-- driven by the "Climate Gap" criterion -->
   <div id="opacityRow" style="display:none"><!-- #46: only shown while a data overlay (density style) is active; basemap brightness is otherwise locked at 100% -->
@@ -761,6 +761,7 @@ function setOverlay(kind){
     if(sel.value!==want){sel.value=want;setBase(want==='__inat__'?'Light':want);}}
   setGridLines();
   {const n=document.getElementById('goalnote');if(n)n.style.display=covOn()?'':'none';}
+  {const gib=document.getElementById('geinfobtn');if(gib){gib.style.display=geActive()?'':'none';if(!geActive()){const gi=document.getElementById('geinfo');if(gi)gi.classList.remove('open');}}}
   const paint=()=>{setCoverage();setClimate();updateLegend();recolour();};
   // loadGE() had no rejection path: when its fetch failed (offline, a 404, a blocked scheme) paint()
   // never ran, so `overlay` said gettingeven while the map and the legend still showed the previous
