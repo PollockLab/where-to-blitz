@@ -335,7 +335,7 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
 </div>
 
 <script>
-const FILES={"All biodiversity":"webapp_data_All_biodiversity.json","Plantae":"webapp_data_Plantae.json","Insecta":"webapp_data_Insecta.json","Aves":"webapp_data_Aves.json","Fungi":"webapp_data_Fungi.json","Mammalia":"webapp_data_Mammalia.json","Actinopterygii":"webapp_data_Actinopterygii.json","Reptilia":"webapp_data_Reptilia.json","Amphibia":"webapp_data_Amphibia.json","Arachnida":"webapp_data_Arachnida.json","Mollusca":"webapp_data_Mollusca.json"}, OBJ=[{"key": "discover", "name": "Discover the most species", "q": "go where few people have looked"}, {"key": "conservation", "name": "Find species at risk", "q": "go where COSEWIC/SARA species at risk concentrate"}, {"key": "env", "name": "Climate under-sampling", "q": "go where the climate is under-sampled"}, {"key": "staleness", "name": "Freshest gaps", "q": "go where lots was recorded long ago but little lately (iNaturalist recent vs all-time density)"}, {"key": "urgency", "name": "Sample before it's lost", "q": "go where forest cover was recently lost (logging, fire, dieback)"}], PRESETS=[{"name": "Spatial Gap", "w": [1.0, 0, 0, 0, 0], "scale": 1.0, "proj": "blitz-the-gap-2026-general", "blurb": "Under-recorded places: where few have logged on iNaturalist (inverse observation density)."}, {"name": "Species discovery", "w": [1.0, 0, 0, 0.6, 0], "scale": 1.6, "proj": "blitz-the-gap-revisiting-the-past", "blurb": "Where new-to-the-record species are likeliest: under-sampling plus cells recorded long ago but quiet lately."}, {"name": "Conservation", "w": [0, 1.0, 0, 0, 0.4], "scale": 1.0, "proj": "blitz-the-gap-canada-s-most-wanted", "blurb": "Where species at risk concentrate, weighted toward recently changed habitat (COSEWIC/SARA via CAN-SAR + GBIF)."}], DEFAULT=[1.0, 0, 0, 0, 0];
+const FILES={"All biodiversity":"webapp_data_All_biodiversity.json","Plantae":"webapp_data_Plantae.json","Insecta":"webapp_data_Insecta.json","Aves":"webapp_data_Aves.json","Fungi":"webapp_data_Fungi.json","Mammalia":"webapp_data_Mammalia.json","Actinopterygii":"webapp_data_Actinopterygii.json","Reptilia":"webapp_data_Reptilia.json","Amphibia":"webapp_data_Amphibia.json","Arachnida":"webapp_data_Arachnida.json","Mollusca":"webapp_data_Mollusca.json"}, OBJ=[{"key": "discover", "name": "Discover the most species", "q": "go where few people have looked"}, {"key": "conservation", "name": "Find species at risk", "q": "go where COSEWIC/SARA species at risk concentrate"}, {"key": "env", "name": "Climate under-sampling", "q": "go where the climate is under-sampled"}, {"key": "staleness", "name": "Freshest gaps", "q": "go where lots was recorded long ago but little lately (iNaturalist recent vs all-time density)"}, {"key": "urgency", "name": "Sample before it's lost", "q": "go where forest cover was recently lost (logging, fire, dieback)"}], PRESETS=[{"name": "Spatial Gap", "w": [1.0, 0, 0, 0, 0], "scale": 1.0, "proj": "blitz-the-gap-2026-general", "blurb": "Under-recorded places: where few have logged on iNaturalist (inverse observation density)."}, {"name": "Species discovery", "w": [1.0, 0, 0, 0.6, 0], "scale": 1.6, "proj": "blitz-the-gap-2026-general", "blurb": "Where new-to-the-record species are likeliest: under-sampling plus cells recorded long ago but quiet lately."}, {"name": "Conservation", "w": [0, 1.0, 0, 0, 0.4], "scale": 1.0, "proj": "blitz-the-gap-2026-general", "blurb": "Where species at risk concentrate, weighted toward recently changed habitat (COSEWIC/SARA via CAN-SAR + GBIF)."}], DEFAULT=[1.0, 0, 0, 0, 0];
 const PLAN_ENABLED=false||/[?&]plan=1/.test(location.search);   // issue #17: hidden by default; ?plan=1 is a no-clutter escape hatch for the team (no rebuild)
 const COMPARE_ENABLED=false||/[?&]compare=1/.test(location.search);   // issue #71: stashed; ?compare=1 re-enables
 
@@ -1251,6 +1251,31 @@ if(critSel)critSel.onchange=()=>{const v=critSel.value;
     applyChallenge(PRESETS[+v]);
   }};
 applyChallenge(PRESETS[0]);
+
+// Presets' "join" link points at goal_presets.py's shipped "proj" slug, a Canada-wide, taxon-
+// unrestricted iNaturalist project. That project has no stable name across years (2025's was
+// "blitz-the-gap-2025", 2026's is "blitz-the-gap-2026-general") and the campaign's own site
+// hardcodes the current year's slug too, so there is no fixed URL to link to permanently. Instead
+// of a slug that goes stale every year, look up whichever Canada-wide, taxon-free project is newest
+// and swap it in live. Fails open: offline, rate-limited, or no match just keeps the shipped slug.
+(function resolveLiveJoinProject(){
+  const FALLBACK=PRESETS[0].proj;
+  fetch('https://api.inaturalist.org/v1/projects?q=blitz%20the%20gap&per_page=50')
+    .then(r=>r.ok?r.json():null)
+    .then(d=>{
+      if(!d||!Array.isArray(d.results))return;
+      const field=(sp,name)=>{const f=sp.find(s=>s.field===name);return f?f.value:null;};
+      const isGeneral=p=>{const sp=p.search_parameters||[];
+        return !field(sp,'taxon_id')&&(field(sp,'place_id')||[]).includes(6712);};
+      const cands=d.results.filter(isGeneral).sort((a,b)=>b.created_at.localeCompare(a.created_at));
+      const pick=cands.find(p=>p.project_type==='collection')||cands[0];
+      if(!pick||!pick.slug||pick.slug===FALLBACK)return;
+      PRESETS.forEach(p=>{p.proj=pick.slug;});
+      const cs=document.getElementById('criteria');   // same non-preset-entry guard as the language-switch re-render above
+      if(typeof window.__activePreset==='number'&&!(cs&&isNaN(+cs.value)))applyChallenge(PRESETS[window.__activePreset]);
+    })
+    .catch(()=>{});
+})();
 
 const bmSel=document.getElementById('basemap');
 // Issue #20: map style is one of four choices; the iNaturalist sampling-density overlay folds in as the 4th.
