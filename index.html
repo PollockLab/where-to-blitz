@@ -379,10 +379,10 @@ const I18N={
     startprosp:"Also show species around my start",
     plan_trip:"Plan my trip →",
     prospects_idle:"Tap a cell to see what to record there.",
-    gaptree_lookup:"Reading taxonomic coverage…",
+    gaptree_lookup:"Reading what's recorded…",
     gaptree_sparse:"Too few nearby records to rank groups here yet — every sighting helps fill the map.",
-    gaptree_err:"Couldn’t read coverage just now — tap the cell again.",
-    pop_groups_hd:"Under-sampled groups", pop_rare_hd:"Top species to record here",
+    gaptree_err:"Couldn’t read what's recorded just now — tap the cell again.",
+    pop_groups_hd:"Under-sampled groups", pop_groups_cap:"Each bar is the share of the group's nearby species already recorded in this cell. A short bar means a gap.", pop_rare_hd:"Top species to record here",
     gt_caveat:"iNaturalist records: an effort proxy, not a census.",
     gt_gap:"gap", gt_partial:"partial", gt_ok:"well recorded",
     gt_count:(c,n)=>`${c} here · ~${n} nearby`,   // two observed iNat record tallies, not a ratio-of-total: "X of ~Y" wrongly read as complete coverage at equality (5 of ~5). ~Y is a floor, never true richness.
@@ -392,7 +392,7 @@ const I18N={
     crit_ge:"Getting Even (under-represented groups)",
     roads:"Roads", labels_places:"Labels & places",
     vector_hint:"Vector basemap — toggle layers. The other styles bake roads in.",
-    inat_coverage:"iNaturalist coverage",
+    inat_coverage:"iNaturalist record density",
     coverage_hint:"Where records already are: bright = well sampled, dark = gaps (Biodiversité Québec).",
     getting_even:"Getting Even (under-represented groups)",
     ge_info_btn:"How is the recommended group worked out?",
@@ -523,10 +523,10 @@ const I18N={
     startprosp:"Montrer aussi les espèces près de mon départ",
     plan_trip:"Planifier ma sortie →",
     prospects_idle:"Touchez une cellule pour voir quoi observer.",
-    gaptree_lookup:"Lecture de la couverture taxonomique…",
+    gaptree_lookup:"Lecture de ce qui est déjà enregistré…",
     gaptree_sparse:"Trop peu d’observations à proximité pour classer les groupes ici — chaque observation aide à combler la carte.",
-    gaptree_err:"Lecture de la couverture impossible pour l’instant — touchez la cellule à nouveau.",
-    pop_groups_hd:"Groupes sous-échantillonnés", pop_rare_hd:"Espèces à noter en priorité ici",
+    gaptree_err:"Impossible de lire ce qui est déjà enregistré pour l’instant — touchez la cellule à nouveau.",
+    pop_groups_hd:"Groupes sous-échantillonnés", pop_groups_cap:"Chaque barre est la part des espèces proches du groupe déjà observées dans cette cellule. Une barre courte veut dire une lacune.", pop_rare_hd:"Espèces à noter en priorité ici",
     gt_caveat:"Observations iNaturalist&nbsp;: un indice d'effort, pas un inventaire.",
     gt_gap:"lacune", gt_partial:"partielle", gt_ok:"bien documenté",
     gt_count:(c,n)=>`${c} ici · ~${n} à proximité`,
@@ -536,7 +536,7 @@ const I18N={
     crit_ge:"Combler l'écart (groupes sous-représentés)",
     roads:"Routes", labels_places:"Étiquettes et lieux",
     vector_hint:"Fond vectoriel — activez les couches. Les autres styles intègrent les routes.",
-    inat_coverage:"Couverture iNaturalist",
+    inat_coverage:"Densité d'observation iNaturalist",
     coverage_hint:"Où les observations existent déjà&nbsp;: clair = bien échantillonné, foncé = lacunes (Biodiversité Québec).",
     getting_even:"Combler l'écart (groupes sous-représentés)",
     ge_info_btn:"Comment le groupe recommandé est-il déterminé ?",
@@ -932,6 +932,7 @@ function paintGapTree(el,rows){
   const cls=v=>v<0.2?'gt-gap':(v<0.6?'gt-part':'gt-ok');
   // Issue #44: rows are sorted biggest-gap first; cap the popup at the four least-sampled groups, scroll for the rest.
   el.innerHTML='<div class="popsec">'+t('pop_groups_hd')+'</div>'+
+    '<div class="popcap">'+t('pop_groups_cap')+'</div>'+
     '<div class="popscroll"><div class="gaptree">'+rows.map(r=>{const pct=Math.round(Math.min(1,r.cov)*100);
       return `<button class="gtrow ${cls(r.cov)}" data-g="${esc(r.g)}" aria-label="${esc(groupName(r.g))}: ${t('gt_count',r.c,r.n)}, ${lab(r.cov)}. ${t('gt_switch',groupName(r.g))}"><span class="gtn">${esc(groupName(r.g))}</span><span class="gtbar"><span style="width:${pct}%"></span></span><span class="gtc">${t('gt_count',r.c,r.n)}</span></button>`;}).join('')+'</div></div>'+
     '<div class="popcap">'+t('gt_caveat')+'</div>';   // honest: these are iNaturalist record counts (a proxy), not true richness
