@@ -17,10 +17,34 @@ of the ramp rather than fix anything.
 
 AXES = ["discover", "conservation", "env", "staleness", "urgency"]
 
+# "proj" is the iNaturalist sub-project each preset's "join" link points at. Season
+# challenges (Revisiting the past, Canada's Most Wanted) are date-boxed to their launch
+# year and stop accepting new observations once it ends, so they go stale every summer.
+# All three presets point at the general project instead, which the Pollock Lab rolls
+# forward each year and which stays open across the whole observation season: re-check
+# this each spring and bump the year if the umbrella project's slug changes.
 PRESETS = [
-    {"name": "Spatial Gap",       "w": [1.0, 0, 0, 0, 0],   "scale": 1.0, "proj": "blitz-the-gap-2026-general",         "blurb": "Under-recorded places: where few have logged on iNaturalist (inverse observation density)."},
-    {"name": "Species discovery", "w": [1.0, 0, 0, 0.6, 0], "scale": 1.6, "proj": "blitz-the-gap-revisiting-the-past",  "blurb": "Where new-to-the-record species are likeliest: under-sampling plus cells recorded long ago but quiet lately."},
-    {"name": "Conservation",      "w": [0, 1.0, 0, 0, 0.4], "scale": 1.0, "proj": "blitz-the-gap-canada-s-most-wanted", "blurb": "Where species at risk concentrate, weighted toward recently changed habitat (COSEWIC/SARA via CAN-SAR + GBIF)."},
+    {
+        "name": "Spatial Gap",
+        "w": [1.0, 0, 0, 0, 0],
+        "scale": 1.0,
+        "proj": "blitz-the-gap-2026-general",
+        "blurb": "Under-recorded places: where few have logged on iNaturalist (inverse observation density).",
+    },
+    {
+        "name": "Species discovery",
+        "w": [1.0, 0, 0, 0.6, 0],
+        "scale": 1.6,
+        "proj": "blitz-the-gap-2026-general",
+        "blurb": "Where new-to-the-record species are likeliest: under-sampling plus cells recorded long ago but quiet lately.",
+    },
+    {
+        "name": "Conservation",
+        "w": [0, 1.0, 0, 0, 0.4],
+        "scale": 1.0,
+        "proj": "blitz-the-gap-2026-general",
+        "blurb": "Where species at risk concentrate, weighted toward recently changed habitat (COSEWIC/SARA via CAN-SAR + GBIF).",
+    },
 ]
 DEFAULT = PRESETS[0]["w"]
 
