@@ -1782,9 +1782,10 @@ function exploreCell(lat,lon){
   // Issue #44/#56: the popup holds the per-cell coverage tree and the rarest species, filled async. setDOMContent
   // keeps the same persistent element (the two child containers stay attached) so an in-flight fetch can fill it.
   const popDiv=document.createElement('div');
+  const popScore=document.createElement('div'); popScore.style.margin='0 0 6px'; popScore.innerHTML=`${t('pop_impact')} <b>${(best.t*100|0)}/100</b> · ${contribStr(best.r)}`;
   const popGaps=document.createElement('div'); popGaps.id='popgaps'; popGaps.innerHTML='<div class="popsec">'+t('gaptree_lookup')+'</div>';
   const popSp=document.createElement('div'); popSp.id='popsp'; popSp.innerHTML='<div class="popsec">'+t('prospects_lookup')+'</div>';
-  popDiv.appendChild(popGaps); popDiv.appendChild(popSp);
+  popDiv.appendChild(popScore); popDiv.appendChild(popGaps); popDiv.appendChild(popSp);
   const pop=wirePopup(new maplibregl.Popup({offset:30,maxWidth:'320px'}).setDOMContent(popDiv));
   destMarker=destMarkerAt(dest[0],dest[1]).addTo(map);destMarker.setPopup(pop);
   // #70: place the tapped cell low (≈1/3 of the map height below centre) so the upward-opening popup
