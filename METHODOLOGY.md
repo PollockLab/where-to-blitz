@@ -4,7 +4,8 @@ A terse reference for how every number on the map is computed. For the narrated
 version with figures and the validation backtest, see the
 [full walkthrough](https://pollocklab.github.io/where-to-blitz/where-to-blitz-walkthrough.html).
 Each priority axis is scored **0–1 per cell**, then your chosen weights are combined
-into the **0–100 "impact"** shown on the map and in popups.
+into the **0–100 "impact"** reported at the foot of a cell's popup. The map itself carries colour, not
+the number.
 
 - **Grid:** an equal-area lattice (WGS84 Lambert Azimuthal Equal Area, centred 45°N 100°W).
   Every cell is a square of the same size. Two tiers: **25 km, 23,214 cells** (the default view)
@@ -25,7 +26,7 @@ into the **0–100 "impact"** shown on the map and in popups.
 | **cell** | One square of the grid. The unit everything is scored on: 25 km by default, 5 km from zoom 9. |
 | **lattice** | The projected equal-area grid the cells sit on (`grid_lattice.py`). WGS84 Lambert Azimuthal Equal Area, 45°N 100°W, snapped to a 25 km multiple so the 25 km tier is an exact 5×5 aggregate of the 5 km tier. |
 | **goal** (= **axis**) | One reason to go somewhere, scored 0–1 per cell. The five keys are `discover`, `conservation`, `env`, `staleness`, `urgency` (`goal_presets.py`). |
-| **impact** | The 0–100 number shown on the map and in popups: the preset's blend of the five goals, expressed as a percentile rank across every cell in the country. It is national and stable: panning and zooming never change a cell's number. |
+| **impact** | The 0–100 number at the foot of a cell's popup: the preset's blend of the five goals, expressed as a percentile rank across every cell in the country. It is national and stable: panning and zooming never change a cell's number. Because the fill *is* restretched to the view, a cell that reads bright locally can still report a low national number. |
 | **preset** | A named weight mix over the five goals, each linked to a real Blitz the Gap iNaturalist sub-project (`goal_presets.py`). |
 | **gap** | A cell that is under-recorded for the goal in play. "Blitz the gap" = go to one and record there. |
 | **Getting Even** | A separate layer, not a goal: it colours each cell by the taxonomic group most under-represented *there*, birds excluded (`build_gettingeven.py`). It answers *what* to record in a cell, not *where* to go. |
@@ -96,11 +97,18 @@ into the **0–100 "impact"** shown on the map and in popups.
 1. You pick a preset. Each one fixes a weight 0–1 for each of the five axes. The weights are not
    user-editable.
 2. Per cell: `raw_impact = Σ weight_i × axis_i`.
-3. The **N/100** in popups is the **percentile rank** of `raw_impact` across all cells nationally, not a
+3. The **N/100** is the **percentile rank** of `raw_impact` across all cells nationally, not a
    min–max, so a few extreme Arctic super-gaps don't crush every reachable cell to ~0. It is computed
-   once over the whole country, so a cell keeps its number as you pan and zoom.
-4. The map colour is `raw_impact` itself, clipped to 0–1 and painted through viridis. It is
-   baked per (group, goal) into a PNG at build time, so panning and zooming never change it.
+   once over the whole country, so a cell keeps its number as you pan and zoom. It sits in a muted
+   footer line of the cell popup, below the under-sampled groups and the species worth recording,
+   because in a well-recorded cell it legitimately reads 0 and that is a fact about the national
+   ranking rather than a verdict on the outing.
+4. The map colour starts from `raw_impact`, clipped to 0–1 and painted through viridis, baked per
+   (group, goal) into a PNG at build time. At runtime the fill is then **restretched to the cells in
+   view** (a quantile stretch, so a quiet region stops reading as flat purple). The legend says which
+   scale is live, and the stretch falls back to the baked national ramp when the view holds fewer than
+   24 cells or too little spread to rank. Score and colour are deliberately decoupled: the stretch
+   never touches the number.
 
 The three presets, straight from `goal_presets.PRESETS`: *Spatial Gap* = `discover` 1.0;
 *Species discovery* ("Revisiting the Past") = `discover` 1.0 + `staleness` 0.6;
