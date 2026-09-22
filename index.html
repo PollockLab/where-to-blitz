@@ -140,19 +140,28 @@ details.adv>summary:hover{color:var(--ink)}
 .maplibregl-popup-content{font-size:15px;padding:12px 16px 14px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.25)}.maplibregl-popup-content b{color:#0a2a44}.maplibregl-popup-close-button{font-size:18px;padding:0 5px;color:#667}
 /* Issue #44: per-cell coverage + rare species live in the popup. Headings, a scroll-capped group list, and a 4-up species grid (no horizontal scroll). */
 .popsec{font-size:12.5px;font-weight:700;color:#0a2a44;margin:9px 0 5px}
-.popsec:first-child{margin-top:1px}
+.popsec:first-child{margin-top:1px;padding-right:22px}
 .popscroll{max-height:150px;overflow:hidden auto}
 .popscroll .gaptree{margin-top:0}
 /* #44 popup is ~258px wide: tighten the row so the coverage bar stays visible and the name never clips/side-scrolls (status word dropped from the count — see paintGapTree). */
 .popscroll .gtrow{grid-template-columns:84px 1fr auto;gap:7px;padding:5px 8px}
 .popscroll .gtn{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .popscroll .gtbar{min-width:22px}
+.popscroll .gtrow .gtbar>span{background:#2a788e}
 .popgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-.popgrid a{text-decoration:none;color:#0a2a44;display:block}
+.popgrid a{text-decoration:none;color:#0a2a44;display:block;position:relative}
+/* #48: the badge sits on the thumbnail, not glued to the end of the name (it used to concatenate
+   straight onto the common name -- "Domestic Catnew here" -- because .rare/.first are scoped to
+   .prospects and had no styling inside .popgrid at all). */
+.popgrid .bdg{position:absolute;top:4px;left:4px;max-width:calc(100% - 8px);font-size:10px;font-weight:700;line-height:1.5;padding:0 4px;border-radius:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.popgrid .bdg.new{background:#16a34a;color:#fff}
+.popgrid .bdg.rare{background:#f2c200;color:#3a2a00}
 .popgrid img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:7px;border:1px solid #cdd;display:block;background:#eee}
 .popgrid .nm{font-size:11px;line-height:1.15;margin-top:3px;max-height:28px;overflow:hidden}
 .popgrid .ct{font-size:11px;color:#667;margin-top:1px}
 .popcap{font-size:11px;line-height:1.3;color:#667;margin-top:6px}
+.popscore{font-size:11px;line-height:1.3;color:#667;margin-top:9px;padding-top:6px;border-top:1px solid #dde}
+.popscore b{font-weight:700}
 #viewtoggle{position:fixed;top:calc(10px + var(--bh));left:50%;transform:translateX(-50%);z-index:1200;display:flex;background:#fff;border-radius:9px;box-shadow:0 2px 9px rgba(0,0,0,.28);overflow:hidden}
 #viewtoggle button{border:0;background:#fff;color:#1b2a3a;padding:8px 15px;font-size:15px;font-weight:650;cursor:pointer}
 #viewtoggle button.on{background:var(--acc);color:#fff}
@@ -384,7 +393,8 @@ const I18N={
     gaptree_lookup:"Reading what's recorded…",
     gaptree_sparse:"Too few nearby records to rank groups here yet — every sighting helps fill the map.",
     gaptree_err:"Couldn’t read what's recorded just now — tap the cell again.",
-    pop_groups_hd:"Under-sampled groups", pop_groups_cap:"Each bar is the share of the group's nearby species already recorded in this cell. A short bar means a gap.", pop_rare_hd:"Top species to record here",
+    pop_groups_hd:"Under-sampled groups", pop_groups_cap:"Each bar compares the group's coverage here against this cell's average across groups. A short bar means the group lags the rest.", pop_rare_hd:"Top species to record here",
+    gt_dense:"Dense area: the nearby sample is capped, so these shares are approximate.",
     gt_caveat:"iNaturalist records: an effort proxy, not a census.",
     gt_gap:"gap", gt_partial:"partial", gt_ok:"well recorded",
     gt_count:(c,n)=>`${c} here · ~${n} nearby`,   // two observed iNat record tallies, not a ratio-of-total: "X of ~Y" wrongly read as complete coverage at equality (5 of ~5). ~Y is a floor, never true richness.
@@ -528,7 +538,8 @@ const I18N={
     gaptree_lookup:"Lecture de ce qui est déjà enregistré…",
     gaptree_sparse:"Trop peu d’observations à proximité pour classer les groupes ici — chaque observation aide à combler la carte.",
     gaptree_err:"Impossible de lire ce qui est déjà enregistré pour l’instant — touchez la cellule à nouveau.",
-    pop_groups_hd:"Groupes sous-échantillonnés", pop_groups_cap:"Chaque barre est la part des espèces proches du groupe déjà observées dans cette cellule. Une barre courte veut dire une lacune.", pop_rare_hd:"Espèces à noter en priorité ici",
+    pop_groups_hd:"Groupes sous-échantillonnés", pop_groups_cap:"Chaque barre compare la couverture du groupe ici à la moyenne de la cellule, tous groupes confondus. Une barre courte signale un retard.", pop_rare_hd:"Espèces à noter en priorité ici",
+    gt_dense:"Zone dense&nbsp;: l'échantillon voisin est plafonné, ces parts sont approximatives.",
     gt_caveat:"Observations iNaturalist&nbsp;: un indice d'effort, pas un inventaire.",
     gt_gap:"lacune", gt_partial:"partielle", gt_ok:"bien documenté",
     gt_count:(c,n)=>`${c} ici · ~${n} à proximité`,
@@ -687,7 +698,7 @@ function relabelDynamic(){
   // rows are cached, so this is zero-network. A cell tap lives in the popup (#popsp); the plan-mode
   // "around my start" list lives in the sidebar (#prospects).
   if(typeof fetchProspects!=='function'){}
-  else if(_lastProspect&&_lastProspect.toPopup&&_lastProspect.spEl&&_lastProspect.spEl.isConnected){fetchProspects(_lastProspect.lat,_lastProspect.lon,_lastProspect.whereKey,{toPopup:true,spEl:_lastProspect.spEl,gapsEl:_lastProspect.gapsEl,resM:_lastProspect.resM});}
+  else if(_lastProspect&&_lastProspect.toPopup&&_lastProspect.spEl&&_lastProspect.spEl.isConnected){paintPopScore();fetchProspects(_lastProspect.lat,_lastProspect.lon,_lastProspect.whereKey,{toPopup:true,spEl:_lastProspect.spEl,gapsEl:_lastProspect.gapsEl,resM:_lastProspect.resM});}
   else if(pr&&pr.dataset.idle==='1')pr.innerHTML='<div class="hd" style="margin-top:10px" data-i18n="prospects_idle">'+t('prospects_idle')+'</div>';
   else if(pr&&_lastProspect)fetchProspects(_lastProspect.lat,_lastProspect.lon,_lastProspect.whereKey,{toPopup:false,resM:_lastProspect.resM});
 }
@@ -816,6 +827,14 @@ function co2lbl(kg){return (kg<=0&&MODES[state.mode].emit===0)?t('car_free'):'~'
 const ICONIC={Amphibia:'Amphibia',Aves:'Aves',Insecta:'Insecta',Mammalia:'Mammalia',Reptilia:'Reptilia',Plantae:'Plantae',Fungi:'Fungi',Actinopterygii:'Actinopterygii',Arachnida:'Arachnida',Mollusca:'Mollusca'};
 let prospectSeq=0;
 let _lastProspect=null;   // {lat,lon,whereKey} of the open cell panel, so a language switch can re-render it
+let _popScoreEl=null;    // the open cell popup's footer score line, repainted in place on a goal/taxon/language change
+// Re-resolve the marker by lat/lon rather than holding the object: buildMarkers swaps m.r in place on a
+// taxon switch, and the 5 km tier snaps to a different cell than the 25 km one.
+function paintPopScore(){
+  if(!_popScoreEl||!_popScoreEl.isConnected||!_lastProspect)return;
+  const nn=nearestMarker(_lastProspect.lat,_lastProspect.lon); if(!nn||!nn.best)return;
+  _popScoreEl.innerHTML=`${t('pop_impact')} <b>${(nn.best.t*100|0)}/100</b> · ${contribStr(nn.best.r)}`;
+}
 const LATTICE_X0=-2150000, LATTICE_Y1=4300000, LATTICE_W=5500000, LATTICE_H=4525000;   // injected from grid_lattice.py — the clickable lattice and the coloured grid are the same lattice
 function activeCellResM(){return map&&map.getZoom&&map.getZoom()>=TIER_SWITCH_Z?5000:25000;}
 function snapToLattice(lat,lon,resM){
@@ -848,6 +867,7 @@ const safeImg=u=>{u=String(u==null?'':u);return /^https:\/\//.test(u)?esc(u):'';
 // whereKey 'right_here'/'destination' from a CELL TAP render into the popup (opts.toPopup); 'around_start'
 // (plan-mode "species around my start") still renders into the sidebar #prospects. Issue #44/#45: the
 // gap tree and rare-species lists live in the popup now; fill-the-gap was dropped.
+const DOMESTIC=new Set(['Felis catus','Canis familiaris','Canis lupus familiaris','Bos taurus','Ovis aries','Capra hircus','Equus caballus','Equus asinus','Sus scrofa domesticus','Gallus gallus domesticus','Anas platyrhynchos domesticus','Columba livia domestica','Meleagris gallopavo domesticus','Oryctolagus cuniculus domesticus','Mustela furo','Cavia porcellus']);
 async function fetchProspects(lat,lon,whereKey,opts){
   const myseq=++prospectSeq;
   const toPopup=!!(opts&&opts.toPopup);
@@ -862,7 +882,7 @@ async function fetchProspects(lat,lon,whereKey,opts){
   const pr=toPopup?spEl:document.getElementById('prospects'); if(!pr) return;   // popup closed -> nothing to fill
   const msg=s=>toPopup?'<div class="popsec">'+s+'</div>':'<div class="hd">'+s+'</div>';   // .hd is dark-on-dark (sidebar); .popsec reads on the light popup
   if(!toPopup) pr.dataset.idle='0';
-  pr.innerHTML=msg(t('prospects_lookup'));
+  pr.innerHTML=toPopup?'<div class="popsec">'+t('pop_rare_hd')+'</div><div class="popcap">'+t('prospects_lookup')+'</div>':msg(t('prospects_lookup'));
   if(toPopup) fetchGapTree(lat,lon,gapsEl,resM);   // the coverage-by-group tree only lives in the popup now
   const T_here=n=>t('here_count',n),T_near=n=>t('near_count',n);
   const L_rare=t('rare'),L_new=t('new_here'),L_notHere=t('not_here_tag');
@@ -878,13 +898,13 @@ async function fetchProspects(lat,lon,whereKey,opts){
     // uncommon *around here* (each record is more informative) — instead of sorting by global
     // observations_count, which is photo popularity, not value. Best-effort: if the neighbourhood call
     // fails, reg falls back to the local count and the ranking degrades to a within-cell order.
-    const cell=(j.results||[]).filter(r=>r.count>=2 && r.taxon && r.taxon.default_photo);
+    const cell=(j.results||[]).filter(r=>r.count>=2 && r.taxon && r.taxon.default_photo && !DOMESTIC.has(r.taxon.name));
     const k=await jget(q({swlat:lat-0.5,nelat:lat+0.5,swlng:lon-0.5,nelng:lon+0.5})).catch(()=>null);
     if(myseq!==prospectSeq)return;
     const reg={}; ((k&&k.results)||[]).forEach(r=>{if(r.taxon)reg[r.taxon.id]=r.count;});
     const have=new Set(cell.map(r=>r.taxon.id));
     // new-to-cell: present in the ~40 km neighbourhood but not recorded in the cell itself
-    const nearbyOnly=((k&&k.results)||[]).filter(r=>r.taxon&&r.taxon.default_photo&&r.count>=3&&!have.has(r.taxon.id))
+    const nearbyOnly=((k&&k.results)||[]).filter(r=>r.taxon&&r.taxon.default_photo&&r.count>=3&&!have.has(r.taxon.id)&&!DOMESTIC.has(r.taxon.name))
       .map(r=>({count:0,taxon:r.taxon,_here:false,reg:r.count}));
     let res=cell.map(r=>({count:r.count,taxon:r.taxon,_here:true,reg:Math.max(r.count,reg[r.taxon.id]||0)})).concat(nearbyOnly);
     const nearby=nearbyOnly.length>0;
@@ -898,8 +918,9 @@ async function fetchProspects(lat,lon,whereKey,opts){
     const ctline=r=>`${r._here?T_here(r.count):L_notHere} · ${T_near(r.reg)}`;
     if(toPopup){
       // Issue #48: the four highest-priority species to record here, side by side, no horizontal scroll.
+      const pbadge=r=>r._here?(r.reg<=3?`<span class="bdg rare">${L_rare}</span>`:''):`<span class="bdg new">${L_new}</span>`;
       pr.innerHTML='<div class="popsec">'+t('pop_rare_hd')+'</div><div class="popgrid">'+res.slice(0,4).map(r=>{const tx=r.taxon;
-        return `<a href="https://www.inaturalist.org/taxa/${tx.id}" target="_blank" rel="noopener" title="${esc(tx.name)}"><img src="${safeImg(tx.default_photo.square_url)}" loading="lazy" alt=""><div class="nm">${esc(tx.preferred_common_name||tx.name)}${badge(r)}</div><div class="ct">${ctline(r)}</div></a>`;}).join('')+'</div>';
+        return `<a href="https://www.inaturalist.org/taxa/${tx.id}" target="_blank" rel="noopener" title="${esc(tx.name)}"><img src="${safeImg(tx.default_photo.square_url)}" loading="lazy" alt="">${pbadge(r)}<div class="nm">${esc(tx.preferred_common_name||tx.name)}</div><div class="ct">${ctline(r)}</div></a>`;}).join('')+'</div>';
       return;
     }
     res=res.slice(0,6);
@@ -925,19 +946,21 @@ const showProspects=debounce((lat,lon)=>fetchProspects(lat,lon,'around_start'),5
 // recording gap. iconic_taxon_name == the app's group keys, so rows switch the map on click.
 let gapSeq=0;
 const GT_CACHE={};   // computed rows keyed by cell -- taxon-independent, so re-taps and taxon switches are instant and re-fire nothing
+const GT_DENSE={};
 const gtkey=(lat,lon)=>lat.toFixed(3)+','+lon.toFixed(3);
 // rows: [] -> too few nearby records to rank (honest, not a failure); null -> the lookup itself failed.
-function paintGapTree(el,rows){
-  if(rows===null){el.innerHTML='<div class="popsec">'+t('gaptree_err')+'</div>';return;}
-  if(!rows.length){el.innerHTML='<div class="popsec">'+t('gaptree_sparse')+'</div>';return;}
+const gtHead=()=>'<div class="popsec">'+t('pop_groups_hd')+'</div>';
+function paintGapTree(el,rows,dense){
+  if(rows===null){el.innerHTML=gtHead()+'<div class="popcap">'+t('gaptree_err')+'</div>';return;}
+  if(!rows.length){el.innerHTML=gtHead()+'<div class="popcap">'+t('gaptree_sparse')+'</div>';return;}
   const lab=v=>v<0.2?t('gt_gap'):(v<0.6?t('gt_partial'):t('gt_ok'));
   const cls=v=>v<0.2?'gt-gap':(v<0.6?'gt-part':'gt-ok');
   // Issue #44: rows are sorted biggest-gap first; cap the popup at the four least-sampled groups, scroll for the rest.
-  el.innerHTML='<div class="popsec">'+t('pop_groups_hd')+'</div>'+
+  el.innerHTML=gtHead()+
     '<div class="popcap">'+t('pop_groups_cap')+'</div>'+
     '<div class="popscroll"><div class="gaptree">'+rows.map(r=>{const pct=Math.round(Math.min(1,r.cov)*100);
       return `<button class="gtrow ${cls(r.cov)}" data-g="${esc(r.g)}" aria-label="${esc(groupName(r.g))}: ${t('gt_count',r.c,r.n)}, ${lab(r.cov)}. ${t('gt_switch',groupName(r.g))}"><span class="gtn">${esc(groupName(r.g))}</span><span class="gtbar"><span style="width:${pct}%"></span></span><span class="gtc">${t('gt_count',r.c,r.n)}</span></button>`;}).join('')+'</div></div>'+
-    '<div class="popcap">'+t('gt_caveat')+'</div>';   // honest: these are iNaturalist record counts (a proxy), not true richness
+    '<div class="popcap">'+(dense?t('gt_dense')+' ':'')+t('gt_caveat')+'</div>';   // honest: these are iNaturalist record counts (a proxy), not true richness
   el.querySelectorAll('.gtrow').forEach(b=>b.onclick=()=>{const g=b.dataset.g;if(!FILES[g]||state.taxon===g)return;taxonSel.value=g;taxonSel.onchange();});
 }
 async function fetchGapTree(lat,lon,el,resM){
@@ -947,8 +970,8 @@ async function fetchGapTree(lat,lon,el,resM){
   // stale mid-fetch and the on-screen popup keeps its loading text (issue #56).
   if(!el) return;   // popup container; closed -> nothing to fill
   const ck=gtkey(lat,lon)+'|'+String(resM||25000);
-  if(GT_CACHE[ck]!==undefined){paintGapTree(el,GT_CACHE[ck]);return;}
-  el.innerHTML='<div class="popsec">'+t('gaptree_lookup')+'</div>';
+  if(GT_CACHE[ck]!==undefined){paintGapTree(el,GT_CACHE[ck],GT_DENSE[ck]);return;}
+  el.innerHTML=gtHead()+'<div class="popcap">'+t('gaptree_lookup')+'</div>';
   const R=0.5,GR=t('group'),groups=Object.keys(ICONIC);
   const inner=cellBoundsForRes(lat,lon,resM||25000);
   const box=(b)=>`swlat=${b.swlat}&nelat=${b.nelat}&swlng=${b.swlng}&nelng=${b.nelng}`;
@@ -975,8 +998,9 @@ async function fetchGapTree(lat,lon,el,resM){
     const rate=sumC>0?sumC/sumN:0;   // this cell's overall coverage rate; normalise so an avg group sits at 1
     const rows=elig.map(g=>{const c=Math.min(cell[g]||0,nbhd[g]);return{g,c,n:nbhd[g],cov:rate>0?(c/nbhd[g])/rate:0};}).sort((a,b)=>a.cov-b.cov);
     if(myseq!==gapSeq)return;
-    GT_CACHE[ck]=rows;
-    paintGapTree(el,rows);
+    const dense=(cj.results||[]).length>=500||(nj.results||[]).length>=500;
+    GT_CACHE[ck]=rows; GT_DENSE[ck]=dense;
+    paintGapTree(el,rows,dense);
   }catch(e){if(myseq===gapSeq)paintGapTree(el,null);}   // do not cache failures -- next tap retries
 }
 
@@ -1156,7 +1180,7 @@ function recolour(){
     // colour underneath would show through wherever a 5 km cell is unscored (#122).
     const op=(map&&map.getZoom&&map.getZoom()>=TIER_SWITCH_Z)?0:0.62;
     markers.forEach(m=>{const c=geColour(m);setCellState(m.i,c,op);});
-    applyCanadaMask();renderCellTable();setGridFill();return;   // setGridFill drops the priority grid so it can't show through the 0.62 fill
+    applyCanadaMask();renderCellTable();setGridFill();paintPopScore();return;   // setGridFill drops the priority grid so it can't show through the 0.62 fill
   }
   // Getting Even just turned off: clear the categorical feature-state it painted, otherwise
   // cells-fill keeps showing the old GE colours on top of the priority grid.
@@ -1177,7 +1201,7 @@ function recolour(){
   // paints them onto the cell polygons). With "Rescale colours to the current view" on, moveend
   // restretches that FILL against the visible cells -- m.t is untouched either way. The interaction
   // fill (cells-fill) only paints when the Getting Even categorical layer is active (handled above).
-  applyCanadaMask();renderCellTable();setGridFill();
+  applyCanadaMask();renderCellTable();setGridFill();paintPopScore();
 }
 // The viewport-relative repaint lives on the moveend handler below, next to the 5 km rebuild.
 // Swap #maplegend between the priority ramp (default) and a categorical Getting Even legend. Pale swatches get a 1px #ccc border.
@@ -1715,7 +1739,7 @@ function clearRoute(){clearRouteLines();removeDestCell();const dm=destMarker;des
 let _reselect=false;   // true only while exploreCell swaps one selection for another (suppress the close-driven clear)
 function clearSelection(){clearRoute();
   const pr=document.getElementById('prospects');if(pr){pr.dataset.idle='1';pr.innerHTML='<div class="hd" style="margin-top:10px" data-i18n="prospects_idle">'+t('prospects_idle')+'</div>';}
-  _lastProspect=null;   // the cell popup (which held the coverage tree + species) is gone; nothing for setLang to re-render
+  _lastProspect=null; _popScoreEl=null;   // the cell popup (which held the coverage tree + species) is gone; nothing for setLang to re-render
   try{history.replaceState(null,'',location.pathname);}catch(e){}}
 function openDestPopup(lat,lon,html){const p=wirePopup(new maplibregl.Popup({offset:30,maxWidth:'340px'}).setHTML(html));
   destMarker=destMarkerAt(lat,lon).addTo(map);destMarker.setPopup(p);destMarker.togglePopup();}
@@ -1814,10 +1838,12 @@ function exploreCell(lat,lon){
   // Issue #44/#56: the popup holds the per-cell coverage tree and the rarest species, filled async. setDOMContent
   // keeps the same persistent element (the two child containers stay attached) so an in-flight fetch can fill it.
   const popDiv=document.createElement('div');
-  const popScore=document.createElement('div'); popScore.style.margin='0 0 6px'; popScore.innerHTML=`${t('pop_impact')} <b>${(best.t*100|0)}/100</b> · ${contribStr(best.r)}`;
-  const popGaps=document.createElement('div'); popGaps.id='popgaps'; popGaps.innerHTML='<div class="popsec">'+t('gaptree_lookup')+'</div>';
-  const popSp=document.createElement('div'); popSp.id='popsp'; popSp.innerHTML='<div class="popsec">'+t('prospects_lookup')+'</div>';
-  popDiv.appendChild(popScore); popDiv.appendChild(popGaps); popDiv.appendChild(popSp);
+  // #?: the national percentile bottoms out at 0 in well-recorded cells, which reads as a verdict on the
+  // outing rather than a fact about the map. Demoted to a muted footer line so the actionable gaps lead.
+  const popScore=document.createElement('div'); popScore.className='popscore'; _popScoreEl=popScore; popScore.innerHTML=`${t('pop_impact')} <b>${(best.t*100|0)}/100</b> · ${contribStr(best.r)}`;
+  const popGaps=document.createElement('div'); popGaps.id='popgaps'; popGaps.innerHTML='<div class="popsec">'+t('pop_groups_hd')+'</div><div class="popcap">'+t('gaptree_lookup')+'</div>';
+  const popSp=document.createElement('div'); popSp.id='popsp'; popSp.innerHTML='<div class="popsec">'+t('pop_rare_hd')+'</div><div class="popcap">'+t('prospects_lookup')+'</div>';
+  popDiv.appendChild(popGaps); popDiv.appendChild(popSp); popDiv.appendChild(popScore);
   const pop=wirePopup(new maplibregl.Popup({offset:30,maxWidth:'320px'}).setDOMContent(popDiv));
   destMarker=destMarkerAt(dest[0],dest[1]).addTo(map);destMarker.setPopup(pop);
   // #70: place the tapped cell low (≈1/3 of the map height below centre) so the upward-opening popup
