@@ -7,11 +7,17 @@ Canada, so no cell holding Canadian ground is ever made unclickable.
 
 The output keeps its us_cells.json name (the app fetches it by that path); its contents are all
 cells hidden from the Canada-only view. Keys match the app's gekey: lat.toFixed(3)+','+lon.toFixed(3).
+
+It also writes land_sea_5000m.png, the 5 km surface mask (border_mask.sea_land_fine) in lattice index
+space, one pixel per cell: red 255 = the cell holds sea, green 255 = it holds land. The app offers
+obligately marine species only in cells holding sea, and only marine species from the neighbourhood
+in cells holding no land, so neither side borrows the other's species.
 """
 import glob
 import json
 import os
 
+import matplotlib.image
 import numpy as np
 import rasterio
 from rasterio.warp import transform as warp_transform
@@ -24,6 +30,7 @@ STACK = f"{HERE}/grid_5000m/All_biodiversity.tif"
 with rasterio.open(STACK) as src:
     crs, tr = src.crs, src.transform
     fine = border_mask.hidden_fine(crs, tr.c, tr.f, src.height, src.width)
+    sea, land = border_mask.sea_land_fine(crs, tr.c, tr.f, src.height, src.width)
 coarse = border_mask.hidden_coarse(fine)
 
 src_json = next(f for f in sorted(glob.glob(f"{HERE}/webapp_data_*.json")) if "gettingeven" not in f)
@@ -41,3 +48,12 @@ hidden = [f"{r[0]:.3f},{r[1]:.3f}"
 with open(os.path.join(HERE, "us_cells.json"), "w") as fh:
     json.dump({"us_cells": hidden}, fh, separators=(",", ":"))
 print(f"{len(hidden)} / {len(rows)} cells fully outside Canada -> us_cells.json")
+
+# Alpha stays 255 everywhere: the app reads this back through a canvas, and alpha 0 would zero the
+# premultiplied colour channels along with it.
+red, green = (np.where(m, 255, 0).astype(np.uint8) for m in (sea, land))
+matplotlib.image.imsave(
+    os.path.join(HERE, "land_sea_5000m.png"),
+    np.dstack([red, green, np.zeros(sea.shape, np.uint8), np.full(sea.shape, 255, np.uint8)]),
+)
+print(f"{int(sea.sum())} / {sea.size} 5 km cells hold sea, {int((sea & ~land).sum())} of them no land -> land_sea_5000m.png")

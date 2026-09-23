@@ -477,7 +477,7 @@ const I18N={
     pop_here_sub:"you're in this ~25 km cell — no extra travel needed",
     pop_here_foot:"spend your time recording, not driving here",
     pop_go_title:"Go to this area", pop_go_sub:"— anywhere in the highlighted ~25 km cell",
-    pop_centre:"centre", pop_impact:"impact",
+    pop_centre:"centre", pop_impact:"impact", pop_noscore:"No national score for this cell.",
     pop_round:"round trip", pop_estimated:"(estimated)",
     pop_over_budget:bud=>`round trip — over your ${bud}`,
     car_free:"car-free",
@@ -622,7 +622,7 @@ const I18N={
     pop_here_sub:"vous êtes dans cette cellule de ~25 km — aucun déplacement requis",
     pop_here_foot:"consacrez votre temps à observer, pas à conduire jusqu'ici",
     pop_go_title:"Allez dans cette zone", pop_go_sub:"— n'importe où dans la cellule de ~25 km en surbrillance",
-    pop_centre:"centre", pop_impact:"impact",
+    pop_centre:"centre", pop_impact:"impact", pop_noscore:"Pas de score national pour cette cellule.",
     pop_round:"aller-retour", pop_estimated:"(estimé)",
     pop_over_budget:bud=>`aller-retour — au-delà de votre ${bud}`,
     car_free:"sans voiture",
@@ -832,9 +832,10 @@ let _popScoreEl=null;    // the open cell popup's footer score line, repainted i
 // taxon switch, and the 5 km tier snaps to a different cell than the 25 km one.
 function paintPopScore(){
   if(!_popScoreEl||!_popScoreEl.isConnected||!_lastProspect)return;
-  const nn=nearestMarker(_lastProspect.lat,_lastProspect.lon); if(!nn||!nn.best)return;
-  _popScoreEl.innerHTML=`${t('pop_impact')} <b>${(nn.best.t*100|0)}/100</b> · ${contribStr(nn.best.r)}`;
+  _popScoreEl.innerHTML=popScoreHtml(parentMarker(_lastProspect.lat,_lastProspect.lon));
 }
+// A drawn 5 km cell can sit in a 25 km cell with no data row: it still opens, just without a national score.
+function popScoreHtml(m){return m?`${t('pop_impact')} <b>${(m.t*100|0)}/100</b> · ${contribStr(m.r)}`:t('pop_noscore');}
 const LATTICE_X0=__LATTICE_X0__, LATTICE_Y1=__LATTICE_Y1__, LATTICE_W=__LATTICE_W__, LATTICE_H=__LATTICE_H__;   // injected from grid_lattice.py — the clickable lattice and the coloured grid are the same lattice
 function activeCellResM(){return map&&map.getZoom&&map.getZoom()>=TIER_SWITCH_Z?5000:25000;}
 function snapToLattice(lat,lon,resM){
@@ -844,11 +845,12 @@ function snapToLattice(lat,lon,resM){
   const q=LAEA.inv(LATTICE_X0+(col+0.5)*resM,LATTICE_Y1-(row+0.5)*resM);
   return {lat:q[0],lon:q[1],row,col,resM};
 }
-function nearestMarker(lat,lon){
-  if(!markers.length)return null;
-  let best=markers[0],bd=1e9;for(const m of markers){const d=Math.abs(m.r[0]-lat)+Math.abs(m.r[1]-lon);if(d<bd){bd=d;best=m;}}
-  return {best,bd};
-}
+// The 25 km data row whose lattice cell contains (lat,lon), or null. An exact lattice lookup, not a
+// nearest-centre search: a degree-distance cutoff rejected most 5 km cells (a degree of longitude shrinks
+// northward, so an off-centre 5 km cell sat "too far" from its own parent's centre) and left them dead.
+let M25=new Map();
+const latKey=s=>s.col+','+s.row;
+function parentMarker(lat,lon){const s=snapToLattice(lat,lon,25000);return s?M25.get(latKey(s))||null:null;}
 function cellBoundsForRes(lat,lon,resM){
   const poly=cellPoly(lat,lon,resM);let minLon=180,maxLon=-180,minLat=90,maxLat=-90;
   for(const p of poly){if(p[0]<minLon)minLon=p[0];if(p[0]>maxLon)maxLon=p[0];if(p[1]<minLat)minLat=p[1];if(p[1]>maxLat)maxLat=p[1];}
@@ -868,6 +870,24 @@ const safeImg=u=>{u=String(u==null?'':u);return /^https:\/\//.test(u)?esc(u):'';
 // (plan-mode "species around my start") still renders into the sidebar #prospects. Issue #44/#45: the
 // gap tree and rare-species lists live in the popup now; fill-the-gap was dropped.
 const DOMESTIC=new Set(['Felis catus','Canis familiaris','Canis lupus familiaris','Bos taurus','Ovis aries','Capra hircus','Equus caballus','Equus asinus','Sus scrofa domesticus','Gallus gallus domesticus','Anas platyrhynchos domesticus','Columba livia domestica','Meleagris gallopavo domesticus','Oryctolagus cuniculus domesticus','Mustela furo','Cavia porcellus']);
+// Obligately marine clades (iNat taxon ids): Cetacea, Phocidae, Otariidae, Odobenidae, Sirenia, Asteroidea,
+// Echinoidea, Cephalopoda, Anthozoa, Cheloniidae, Dermochelyidae, Alcidae. The ~0.5° neighbourhood of a
+// cell can cross the shoreline, so "new here" offered whales on land and moose at sea. The neighbourhood
+// is cut to the cell's own surface by geography (land_sea_5000m.png, build_canada_mask.py), not by
+// records, so a sparsely sampled shore keeps both: a land-only cell drops marine clades, a sea-only cell
+// keeps only them, and a shore cell keeps everything. Records inside the cell itself are never filtered.
+const MARINE='152871,41687,41736,41764,46306,47668,47548,47459,47533,39657,39675,71295';
+let _surfP=null;
+// The query suffix for the cell's neighbourhood. A 25 km cell holds sea or land when any 5 km child does.
+async function surfaceFilter(lat,lon,resM){
+  let w;try{w=await (_surfP=_surfP||readPng(DATA_DIR+'land_sea_5000m.png'));}
+  catch(e){_surfP=null;return '';}   // mask failed to load: keep the old unfiltered neighbourhood rather than blank the popup
+  const s=snapToLattice(lat,lon,5000);if(!s)return '';
+  const k=Math.max(1,Math.round((resM||25000)/5000)),c0=Math.floor(s.col/k)*k,r0=Math.floor(s.row/k)*k;
+  let sea=false,land=false;
+  for(let r=r0;r<r0+k;r++)for(let c=c0;c<c0+k;c++){if(c>=w.w||r>=w.h)continue;const i=(r*w.w+c)*4;sea=sea||w.d[i]>=128;land=land||w.d[i+1]>=128;}
+  return sea===land?'':(sea?'&taxon_id=':'&without_taxon_id=')+MARINE;   // both, or neither (off the mask): no cut
+}
 async function fetchProspects(lat,lon,whereKey,opts){
   const myseq=++prospectSeq;
   const toPopup=!!(opts&&opts.toPopup);
@@ -888,6 +908,7 @@ async function fetchProspects(lat,lon,whereKey,opts){
   const L_rare=t('rare'),L_new=t('new_here'),L_notHere=t('not_here_tag');
   const ic=ICONIC[state.taxon]||'';
   const q=(b)=>`https://api.inaturalist.org/v1/observations/species_counts?swlat=${b.swlat}&nelat=${b.nelat}&swlng=${b.swlng}&nelng=${b.nelng}&quality_grade=research&taxon_geoprivacy=open&threatened=false&per_page=500&order_by=count`+(ic?`&iconic_taxa=${ic}`:'')+inatLocale();
+  const mxP=surfaceFilter(lat,lon,resM);   // in flight alongside the cell query; only the neighbourhood call waits on it
   try{
     const j=await jget(q(box));
     if(myseq!==prospectSeq)return;
@@ -899,7 +920,7 @@ async function fetchProspects(lat,lon,whereKey,opts){
     // observations_count, which is photo popularity, not value. Best-effort: if the neighbourhood call
     // fails, reg falls back to the local count and the ranking degrades to a within-cell order.
     const cell=(j.results||[]).filter(r=>r.count>=2 && r.taxon && r.taxon.default_photo && !DOMESTIC.has(r.taxon.name));
-    const k=await jget(q({swlat:lat-0.5,nelat:lat+0.5,swlng:lon-0.5,nelng:lon+0.5})).catch(()=>null);
+    const k=await jget(q({swlat:lat-0.5,nelat:lat+0.5,swlng:lon-0.5,nelng:lon+0.5})+(await mxP)).catch(()=>null);
     if(myseq!==prospectSeq)return;
     const reg={}; ((k&&k.results)||[]).forEach(r=>{if(r.taxon)reg[r.taxon.id]=r.count;});
     const have=new Set(cell.map(r=>r.taxon.id));
@@ -986,7 +1007,7 @@ async function fetchGapTree(lat,lon,el,resM){
     // when the goal calculations are finalised (#49). Each leg swallows its own error.
     let cellFail=false,nbFail=false;
     const cellP=jget(`${base}&${box(inner)}&per_page=500`).catch(()=>{cellFail=true;return{results:[]};});
-    const nbP=jget(`${base}&swlat=${lat-R}&nelat=${lat+R}&swlng=${lon-R}&nelng=${lon+R}&per_page=500`).catch(()=>{nbFail=true;return{results:[]};});
+    const nbP=surfaceFilter(lat,lon,resM||25000).then(mx=>jget(`${base}&swlat=${lat-R}&nelat=${lat+R}&swlng=${lon-R}&nelng=${lon+R}&per_page=500${mx}`)).catch(()=>{nbFail=true;return{results:[]};});
     const [cj,nj]=await Promise.all([cellP,nbP]);
     if(myseq!==gapSeq)return;
     // total outage (both calls failed) -> "tap again", not a misleading "too few records here".
@@ -1163,6 +1184,7 @@ function buildMarkers(){
   const feats=rs.map((r,i)=>({type:'Feature',id:i,properties:{},geometry:{type:'Polygon',coordinates:[cellPoly(r[0],r[1])]}}));
   map.getSource('cells').setData({type:'FeatureCollection',features:feats});
   markers=rs.map((r,i)=>({r:r,i:i,t:0}));   // r[0],r[1] invariant across taxa; i = stable feature id for setFeatureState
+  M25=new Map();markers.forEach(m=>{const s=snapToLattice(m.r[0],m.r[1],25000);if(s)M25.set(latKey(s),m);});
   recolour();
 }
 function renderCellTable(){
@@ -1394,6 +1416,7 @@ function setGridFill(){
   const seq=++_gridSeq;
   ['grid25','grid5'].forEach(id=>{if(map.getLayer(id))map.removeLayer(id);});
   if(map.getSource('cells5'))map.removeSource('cells5');
+  DRAWN5=null;
   if(covOn()||climateOn())return;   // the density and Climate Gap rasters replace the grid fill
   if(!markers.length)return;
   // Getting Even keeps its 25 km fill on the cells-fill feature-state that recolour() paints, so
@@ -1439,6 +1462,8 @@ function restretch25(){
   loadVals(25000).then(v=>{STRETCH=makeStretch(sample25(v));paintGrid25(v);updateLegendLabels();}).catch(()=>{});
 }
 let _c5seq=0;
+// Lattice keys of the 5 km cells on screen: a tap opens a cell exactly when it is drawn.
+var DRAWN5=null;   // var, not let: setGridFill can reset it before this line has run (same TDZ trap as STRETCH).
 async function refreshCells5(){
   if(!_mapLoaded||!map.getSource('cells5')||map.getZoom()<TIER_SWITCH_Z)return;
   const seq=++_c5seq;
@@ -1469,6 +1494,7 @@ async function refreshCells5(){
     return{type:'Feature',properties:{c:fill},geometry:{type:'Polygon',coordinates:[ring]}};
   });
   map.getSource('cells5').setData({type:'FeatureCollection',features:feats});
+  DRAWN5=new Set(cells.map(c=>c[0]+','+c[1]));
   updateLegendLabels();
 }
 const COVPM=['All','Amphibia','Aves','Insecta','Mammalia','Plantae','Reptilia','Actinopterygii','Arachnida','Mollusca'];   // taxa with a local PMTiles (others -> All)
@@ -1824,13 +1850,13 @@ function exploreCell(lat,lon){
   if(!markers.length)return;   // map tapped before cell data loaded
   const resM=activeCellResM();
   const snap=snapToLattice(lat,lon,resM);if(!snap)return;
-  const nn=nearestMarker(snap.lat,snap.lon);if(!nn)return;
-  const best=nn.best,bd=nn.bd;
-  // #72: a tap snaps to the nearest cell. Reject taps far from any cell (no grabbing a distant border cell
-  // from mid-ocean / outside the grid; ~0.45° Manhattan ≈ within one 0.25° cell), and never select a hidden
-  // US cell — the marker handler already guards direct cell taps, this covers taps on the bare map.
-  const maxTap=resM===5000?0.14:0.45;
-  if(bd>maxTap||(caOnlyActive()&&US_CELLS&&US_CELLS.has(gekey(best.r[0],best.r[1]))))return;
+  const best=parentMarker(snap.lat,snap.lon);
+  // #72: a tap opens the lattice cell under it, never a distant border cell from mid-ocean / outside the
+  // grid. At 5 km a cell opens exactly when it is drawn (DRAWN5; under a raster overlay, when its 25 km
+  // parent has data); at 25 km, when it has a data row. Never select a hidden US cell -- the marker
+  // handler already guards direct cell taps, this covers taps on the bare map.
+  const open=resM===5000&&DRAWN5?DRAWN5.has(latKey(snap)):!!best;
+  if(!open||(best&&caOnlyActive()&&US_CELLS&&US_CELLS.has(gekey(best.r[0],best.r[1]))))return;
   _reselect=true;   // swapping selections: suppress the close-driven deselect until the new popup is open (issue #16)
   const dest=[snap.lat,snap.lon];clearRoute();
   try{history.replaceState(null,'','?at='+dest[0].toFixed(3)+','+dest[1].toFixed(3)+'&g='+encodeURIComponent(state.taxon));}catch(e){}
@@ -1840,7 +1866,7 @@ function exploreCell(lat,lon){
   const popDiv=document.createElement('div');
   // #?: the national percentile bottoms out at 0 in well-recorded cells, which reads as a verdict on the
   // outing rather than a fact about the map. Demoted to a muted footer line so the actionable gaps lead.
-  const popScore=document.createElement('div'); popScore.className='popscore'; _popScoreEl=popScore; popScore.innerHTML=`${t('pop_impact')} <b>${(best.t*100|0)}/100</b> · ${contribStr(best.r)}`;
+  const popScore=document.createElement('div'); popScore.className='popscore'; _popScoreEl=popScore; popScore.innerHTML=popScoreHtml(best);
   const popGaps=document.createElement('div'); popGaps.id='popgaps'; popGaps.innerHTML='<div class="popsec">'+t('pop_groups_hd')+'</div><div class="popcap">'+t('gaptree_lookup')+'</div>';
   const popSp=document.createElement('div'); popSp.id='popsp'; popSp.innerHTML='<div class="popsec">'+t('pop_rare_hd')+'</div><div class="popcap">'+t('prospects_lookup')+'</div>';
   popDiv.appendChild(popGaps); popDiv.appendChild(popSp); popDiv.appendChild(popScore);

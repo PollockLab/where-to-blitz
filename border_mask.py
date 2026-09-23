@@ -95,6 +95,27 @@ def hidden_fine(crs, origin_x, origin_y, height, width):
     return np.where(ca, False, np.where(foreign, True, water_hidden))
 
 
+def sea_land_fine(crs, origin_x, origin_y, height, width):
+    """Two boolean (height, width) masks of 5 km cells: (holds sea, holds land). A shore cell holds both.
+
+    Land is the union of the boundary polygons, so a land border between countries is not a
+    shoreline. The polygons carry no lake holes, so lakes count as land. A cell holds sea when its
+    centre is off land or the coastline crosses it. It holds land when land touches it or any of its
+    eight neighbours: the 1:50m coastline sits a few km off in places (Churchill reads as offshore),
+    so only a cell a full cell clear of the coast counts as open sea.
+    """
+    fine_tr = Affine(FINE_RES, 0, origin_x, 0, -FINE_RES, origin_y)
+    land = shapely.union_all([shape(g) for g in _geoms(crs).values()])
+    off_land = ~_cover(mapping(land), height, width, fine_tr)
+    shore = _cover(mapping(land.boundary), height, width, fine_tr, all_touched=True)
+    touches = np.pad(_cover(mapping(land), height, width, fine_tr, all_touched=True), 1)
+    near_land = np.zeros((height, width), dtype=bool)
+    for dr in range(3):
+        for dc in range(3):
+            near_land |= touches[dr:dr + height, dc:dc + width]
+    return off_land | shore, near_land
+
+
 def hidden_coarse(fine_hidden):
     """A 25 km cell is hidden only when all 25 of its 5 km children are (the border buffer)."""
     h, w = fine_hidden.shape
