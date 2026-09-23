@@ -144,3 +144,38 @@ def check_i18n_attrs_wired(src):
 def test_every_i18n_attribute_key_exists_in_both_languages():
     missing = check_i18n_attrs_wired(TEMPLATE.read_text())
     assert not missing, f"markup asks for i18n keys absent from en or fr: {sorted(missing)}"
+
+
+def _fn_body(src, name):
+    """Source of `function name(...){...}` up to the next top-level function declaration."""
+    m = re.search(r"\n(?:async )?function " + name + r"\(.*?(?=\n(?:async )?function |\Z)", src, flags=re.S)
+    assert m, f"{name} not found in the template"
+    return m.group(0)
+
+
+def test_explore_cell_opens_every_drawn_5km_cell():
+    """A tap opens the lattice cell under it: 5 km cells are gated on DRAWN5 (the cells
+    refreshCells5 drew), not a degree distance to the nearest 25 km centre, which rejected
+    most off-centre 5 km cells because a degree of longitude shrinks northward."""
+    src = TEMPLATE.read_text()
+    body = _fn_body(src, "exploreCell")
+    assert "maxTap" not in body and "nearestMarker" not in body
+    assert "DRAWN5.has(latKey(snap))" in body and "parentMarker(" in body
+    assert "DRAWN5=new Set(" in _fn_body(src, "refreshCells5")
+
+
+def test_no_score_popup_line_exists_in_both_languages():
+    en_seg, fr_seg = _i18n_segments(TEMPLATE.read_text())
+    assert "pop_noscore" in _i18n_keys(en_seg) and "pop_noscore" in _i18n_keys(fr_seg)
+
+
+def test_neighbourhood_queries_are_cut_to_the_cells_surface():
+    """Both ~0.5° neighbourhood queries (species list and coverage tree) wait on
+    surfaceFilter, which reads the build's land/sea mask, so a land cell is not offered
+    whales from the coast and a sea cell is not offered moose from the shore."""
+    src = TEMPLATE.read_text()
+    body = _fn_body(src, "surfaceFilter")
+    assert "land_sea_5000m.png" in body
+    assert "'&taxon_id=':'&without_taxon_id='" in body
+    assert "(await mxP)" in _fn_body(src, "fetchProspects")
+    assert "surfaceFilter(lat,lon,resM||25000).then(" in _fn_body(src, "fetchGapTree")

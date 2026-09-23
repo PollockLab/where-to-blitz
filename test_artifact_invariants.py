@@ -119,3 +119,26 @@ def test_provenance_grid_matches_the_shipped_index():
     assert grid["n_cells"] == idx["n_cells"] == len(_rows(idx["groups"][0]))
     assert grid["lattice"] == idx["lattice"]
     assert grid["crs"] == idx["crs"]
+
+
+def test_land_sea_mask_is_on_the_5km_lattice_and_tells_shore_from_inland_and_offshore():
+    """The app cuts each cell's neighbourhood species to its surface from land_sea_5000m.png,
+    indexed by 5 km lattice column/row, so a shifted or inverted mask sends whales inland."""
+    from rasterio.warp import transform
+
+    lat = _index()["lattice"]
+    rgba = matplotlib.image.imread(CA / "land_sea_5000m.png")
+    assert rgba.shape[:2] == (lat["nrow"] * 5, lat["ncol"] * 5)
+    sea, land = rgba[..., 0] > 0.5, rgba[..., 1] > 0.5
+    points = {  # (lat, lon, holds sea, holds land)
+        "Victoria shore": (48.41, -123.37, True, True),
+        "Churchill, where 1:50m draws the coast offshore": (58.77, -94.17, True, True),
+        "Coronation Gulf": (68.874, -114.523, True, False),
+        "Winnipeg": (49.9, -97.1, False, True),
+        "Yellowknife": (62.977, -114.874, False, True),
+        "Emerson, on the land border": (49.0, -97.2, False, True),
+    }
+    for name, (la, lo, want_sea, want_land) in points.items():
+        (x,), (y,) = transform("EPSG:4326", "+proj=laea +lat_0=45 +lon_0=-100 +datum=WGS84", [lo], [la])
+        col, row = int((x - lat["x0"]) // 5000), int((lat["y1"] - y) // 5000)
+        assert (sea[row, col], land[row, col]) == (want_sea, want_land), name

@@ -457,7 +457,7 @@ jobs:
           gh release download grid-outputs-v1 --pattern "climate_gap.pmtiles" --dir _site/tiles --repo "$GITHUB_REPOSITORY" --clobber
           test -s _site/tiles/climate_gap.pmtiles
           cp artifacts/cluster_results/ca/*.json _site/cluster_results/ca/
-          # The Getting Even fill at both tiers (#122). Unguarded on purpose: it is a tracked
+          # The Getting Even fill at both tiers (#122) and the 5 km land/sea mask. Unguarded on purpose: it is a tracked
           # file, so a missing one means the build lost it, and the app would silently lose the
           # 5 km layer rather than the deploy failing.
           cp artifacts/cluster_results/ca/*.png _site/cluster_results/ca/
@@ -539,7 +539,7 @@ jobs:
           gh release download grid-outputs-v1 --pattern "climate_gap.pmtiles" --dir _site/tiles --repo "$GITHUB_REPOSITORY" --clobber
           test -s _site/tiles/climate_gap.pmtiles
           cp cluster_results/ca/*.json _site/cluster_results/ca/
-          cp cluster_results/ca/*.png _site/cluster_results/ca/   # the Getting Even fill (#122)
+          cp cluster_results/ca/*.png _site/cluster_results/ca/   # the Getting Even fill (#122) and the land/sea mask
           cp -R cluster_results/ca/values _site/cluster_results/ca/
           du -sh _site
       - name: Upload Pages artifact
