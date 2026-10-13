@@ -1333,8 +1333,7 @@ bmSel.onchange=()=>{const v=bmSel.value;
   else{setBase(v);if(covOn())setOverlay('priority');}};
 // dec25 100 m density is served as local raster PMTiles (issue #10): the magma colormap
 // (rescale 0,10) is baked into transparent WEBP tiles so the overlay sharpens as you zoom
-// to ~300 m, where the 1 km COG via TiTiler stayed coarse. Fungi has no dec25 layer ->
-// keep its older 1 km COG on the remote tiler until one lands.
+// to ~300 m, where the 1 km COG via TiTiler stayed coarse.
 const TIER_SWITCH_Z=__TIER_SWITCH_Z__;   // 25 km tier at z <= this, 5 km above (#87 D5; Ryan tunes)
 const PM_BASE='__PMTILES_BASE__';   // release-asset base URL for all PMTiles (#87 P4)
 // Grid colour tiers (#87 P3, #116): one small values PNG per (taxon, goal, tier), one pixel per
@@ -1497,7 +1496,7 @@ async function refreshCells5(){
   DRAWN5=new Set(cells.map(c=>c[0]+','+c[1]));
   updateLegendLabels();
 }
-const COVPM=['All','Amphibia','Aves','Insecta','Mammalia','Plantae','Reptilia','Actinopterygii','Arachnida','Mollusca'];   // taxa with a local PMTiles (others -> All)
+const COVPM=['All','Amphibia','Aves','Insecta','Mammalia','Plantae','Reptilia','Actinopterygii','Arachnida','Mollusca','Fungi'];   // taxa with a local PMTiles (others -> All)
 // Raster PMTiles now ride the native MapLibre pmtiles:// protocol (registered once) instead of a custom
 // GridLayer that hand-decoded WEBP to canvas. The protocol reads each archive's TileJSON (native z9) and
 // MapLibre overzooms past it; the magma alpha is baked in, so it composites straight over the basemap.
@@ -1510,12 +1509,8 @@ function setCoverage(){
   if(!covOn()){updateOpacityControl();return;}
   const ct=COVPM.includes(state.taxon)?state.taxon:'All';
   const attr='iNaturalist density &copy; Biodiversit\u00e9 Qu\u00e9bec';
-  if(state.taxon==='Fungi'){   // no dec25 layer -> remote 1 km COG
-    map.addSource('cov',{type:'raster',tiles:['https://tiler.biodiversite-quebec.ca/cog/tiles/{z}/{x}/{y}?url='+encodeURIComponent('https://object-arbutus.cloud.computecanada.ca/bq-io/io/inat_canada_heatmaps/Fungi_density_inat_1km.tif')+'&rescale=0,10&colormap_name=magma&resampling=cubic'],tileSize:256,maxzoom:14,attribution:attr});
-  }else{
-    ensurePM();
-    map.addSource('cov',{type:'raster',url:'pmtiles://'+PM_BASE+'/density_'+ct+'.pmtiles',tileSize:256,attribution:attr});
-  }
+  ensurePM();
+  map.addSource('cov',{type:'raster',url:'pmtiles://'+PM_BASE+'/density_'+ct+'.pmtiles',tileSize:256,attribution:attr});
   map.addLayer({id:'cov',type:'raster',source:'cov',paint:{'raster-opacity':covOpacity}},map.getLayer(CELL_LAYER)?CELL_LAYER:undefined);
   updateOpacityControl();
 }

@@ -452,6 +452,9 @@ jobs:
           done
           # density tiles carry a density_ prefix (matches the app's tiles/density_<Taxon>.pmtiles)
           for f in density/*.pmtiles; do cp "$f" "_site/tiles/density_$(basename "$f")"; done
+          # Density tiles added after #87 (Fungi) live only on the release; committed ones win.
+          gh release download grid-outputs-v1 --pattern "density_*.pmtiles" --dir _site/tiles --repo "$GITHUB_REPOSITORY" --skip-existing
+          test -s _site/tiles/density_Fungi.pmtiles
           # Climate Gap is a single raster on the release, not a per-taxon density tile, so the
           # loop above never picks it up. Without this the criterion serves a 404 and blanks the map.
           gh release download grid-outputs-v1 --pattern "climate_gap.pmtiles" --dir _site/tiles --repo "$GITHUB_REPOSITORY" --clobber
@@ -534,6 +537,9 @@ jobs:
           for f in density/*.pmtiles; do
             [ -f "$f" ] && cp "$f" "_site/tiles/density_$(basename "$f")" || true
           done
+          # Density tiles added after #87 (Fungi) live only on the release; committed ones win.
+          gh release download grid-outputs-v1 --pattern "density_*.pmtiles" --dir _site/tiles --repo "$GITHUB_REPOSITORY" --skip-existing
+          test -s _site/tiles/density_Fungi.pmtiles
           # Climate Gap is a single raster on the release, not a per-taxon density tile, so the
           # loop above never picks it up. Without this the criterion serves a 404 and blanks the map.
           gh release download grid-outputs-v1 --pattern "climate_gap.pmtiles" --dir _site/tiles --repo "$GITHUB_REPOSITORY" --clobber

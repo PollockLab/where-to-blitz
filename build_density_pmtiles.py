@@ -14,7 +14,7 @@ Pipeline per taxon: download 100 m COG -> render Float32 -> magma RGBA
 
 Run with the project venv (rasterio, rio-cogeo, rio-pmtiles, matplotlib):
     python build_density_pmtiles.py [TAXON ...]
-Defaults to all dec25 taxa. Outputs <taxon>.pmtiles into ./pmtiles/.
+Defaults to all dec25 taxa. Outputs <taxon>.pmtiles into ./density/.
 """
 import subprocess
 import sys
@@ -25,9 +25,9 @@ import numpy as np
 import rasterio
 from rasterio.enums import ColorInterp
 
-# dec25 taxa served at 100 m on object-arbutus (Fungi has no dec25 layer).
+# dec25 taxa served at 100 m on object-arbutus.
 TAXA = ["All", "Amphibia", "Aves", "Insecta", "Mammalia", "Plantae",
-        "Reptilia", "Actinopterygii", "Arachnida", "Mollusca"]
+        "Reptilia", "Actinopterygii", "Arachnida", "Mollusca", "Fungi"]
 SRC_URL = ("https://object-arbutus.alliancecan.ca/86e1f3d5df8442d39450533329f621ae"
            ":stac/inat_canada_heatmaps/{taxon}_density_inat_dec25_100m.tif")
 
