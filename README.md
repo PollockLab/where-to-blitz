@@ -59,7 +59,6 @@ not the same kind of thing, which is the one non-obvious part:
 | Cell geometry | GeoJSON polygons in the LAEA lattice | `grid_lattice.py` |
 | Cell colours | `values/*.png`, one pixel per cell, painted onto those polygons | `build_grid_values.py` |
 | Density overlay | Raster PMTiles built into `density/` (gitignored), published to the `grid-outputs-v1` release, served same-origin | `build_density_pmtiles.py` |
-| Density, Fungi only | Live TiTiler over a 1 km COG on Arbutus | — |
 | Climate Gap overlay | A single raster PMTiles, `climate_gap.pmtiles`, served same-origin | not built here: baked from CHELSA outside the repo and uploaded to the release |
 
 Why colours are a PNG and not tiles: `build_grid_values.py` docstring (#116).

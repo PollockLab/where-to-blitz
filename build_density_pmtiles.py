@@ -4,7 +4,7 @@
 Guillaume's 100 m density COGs (object-arbutus) are striped (block 54810x1, no
 overviews), so a remote tiler times out at low zoom. We can't write to that
 bucket, so instead we bake the magma colormap (rescale 0..10, matching the
-app's TiTiler call) into transparent RGBA web tiles and ship them as raster
+old TiTiler overlay's stretch) into transparent RGBA web tiles and ship them as raster
 PMTiles served statically from GitHub Pages. The density overlay then gets
 finer as you zoom (native to ~z9 / ~300 m), with the ~25 km priority cells
 unchanged.
