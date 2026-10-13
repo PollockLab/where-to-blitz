@@ -37,5 +37,5 @@ def test_empty_input():
 
 def test_sql_derived_from_res_and_keys():
     sql = build_sql({7, 3})
-    assert f"FLOOR(decimallatitude / {RES})" in sql and "specieskey IN (3, 7)" in sql
+    assert f"FLOOR(decimallatitude / {RES})" in sql and "gbif_classification.specieskey IN ('3', '7')" in sql
     assert '"year" >= 1990' in sql

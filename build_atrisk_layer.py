@@ -29,6 +29,7 @@ Output: cluster_results/ca/ca_atrisk_richness.csv (gi,gj,lat,lon,n_species,score
 Usage :
   .venv/bin/python build_atrisk_layer.py --validate     # match names, POST the query to GBIF's validator
   GBIF_USER=.. GBIF_PWD=.. GBIF_EMAIL=.. .venv/bin/python build_atrisk_layer.py --submit
+      # macOS: GBIF_PWD="$(security find-generic-password -a "$GBIF_USER" -s api.gbif.org -w)"
   .venv/bin/python build_atrisk_layer.py --fetch KEY    # after the GBIF email: poll, read, write layer
 """
 
@@ -128,13 +129,17 @@ def match_species(sev):
 
 
 def build_sql(keys):
+    # Plain taxon columns hold Catalogue of Life keys since GBIF made COL XR the SQL default
+    # (gbif/occurrence#538); backbone speciesKeys from species/match live under gbif_classification.
+    sk = "occurrence.gbif_classification.specieskey"
+    in_list = ", ".join(f"'{k}'" for k in sorted(keys))
     return (
-        f"SELECT specieskey, FLOOR(decimallatitude / {RES}) AS gi, FLOOR(decimallongitude / {RES}) AS gj, "
-        f"COUNT(*) AS n FROM occurrence WHERE countrycode = 'CA' "
-        f"AND specieskey IN ({', '.join(str(k) for k in sorted(keys))}) "
+        f"SELECT {sk} AS specieskey, FLOOR(decimallatitude / {RES}) AS gi, "
+        f"FLOOR(decimallongitude / {RES}) AS gj, COUNT(*) AS n FROM occurrence WHERE countrycode = 'CA' "
+        f"AND {sk} IN ({in_list}) "
         f"AND hasgeospatialissues = FALSE AND occurrencestatus = 'PRESENT' AND \"year\" >= {MIN_YEAR} "
         f"AND basisofrecord NOT IN ('FOSSIL_SPECIMEN', 'LIVING_SPECIMEN') AND decimallatitude IS NOT NULL "
-        f"GROUP BY specieskey, FLOOR(decimallatitude / {RES}), FLOOR(decimallongitude / {RES})"
+        f"GROUP BY {sk}, FLOOR(decimallatitude / {RES}), FLOOR(decimallongitude / {RES})"
     )
 
 
