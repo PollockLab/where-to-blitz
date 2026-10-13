@@ -745,8 +745,7 @@ async function loadGE(){if(GE_LOADED)return;const r=await fetchT(DATA_DIR+'webap
 const GE_VALS={}, GE_UNSCORED=255;   // GE_UNSCORED matches PNG_UNSCORED in build_gettingeven.py
 async function loadGEVals(res){
   const key='gettingeven_grid_'+res+'m';
-  if(GE_VALS[key])return GE_VALS[key];
-  return GE_VALS[key]=await readPng(DATA_DIR+key+'.png');
+  return cachedPng(GE_VALS,key,DATA_DIR+key+'.png');
 }
 // -1 means "draw nothing here": no cell, or a cell holding too few records to name a group. At
 // 25 km the second case is the grey "all under-sampled" swatch, but at 5 km most of the country
@@ -1356,10 +1355,16 @@ async function readPng(url){
   const cx=cv.getContext('2d',{willReadFrequently:true});cx.drawImage(img,0,0);
   return {w:img.width,h:img.height,d:cx.getImageData(0,0,img.width,img.height).data};
 }
+// Concurrent callers share one in-flight read: two first paints racing for the same PNG otherwise
+// fetch it twice, the second queued behind the first by the browser's cache lock (one extra round trip).
+const _pngP={};
+async function cachedPng(cache,key,url){
+  if(cache[key])return cache[key];
+  return _pngP[url]=_pngP[url]||readPng(url).then(v=>cache[key]=v).finally(()=>{delete _pngP[url];});
+}
 async function loadVals(res){
   const key=gridSlug()+'_'+goalSlug()+'_grid_'+res+'m';
-  if(VALS[key])return VALS[key];
-  return VALS[key]=await readPng(DATA_DIR+'values/'+key+'.png');
+  return cachedPng(VALS,key,DATA_DIR+'values/'+key+'.png');
 }
 function valColor(v,col,row){
   if(col<0||row<0||col>=v.w||row>=v.h)return null;
