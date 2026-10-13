@@ -4,7 +4,7 @@
 Guillaume's 100 m density COGs (object-arbutus) are striped (block 54810x1, no
 overviews), so a remote tiler times out at low zoom. We can't write to that
 bucket, so instead we bake the magma colormap (rescale 0..10, matching the
-app's TiTiler call) into transparent RGBA web tiles and ship them as raster
+old TiTiler overlay's stretch) into transparent RGBA web tiles and ship them as raster
 PMTiles served statically from GitHub Pages. The density overlay then gets
 finer as you zoom (native to ~z9 / ~300 m), with the ~25 km priority cells
 unchanged.
@@ -14,7 +14,7 @@ Pipeline per taxon: download 100 m COG -> render Float32 -> magma RGBA
 
 Run with the project venv (rasterio, rio-cogeo, rio-pmtiles, matplotlib):
     python build_density_pmtiles.py [TAXON ...]
-Defaults to all dec25 taxa. Outputs <taxon>.pmtiles into ./pmtiles/.
+Defaults to all dec25 taxa. Outputs <taxon>.pmtiles into ./density/.
 """
 import subprocess
 import sys
@@ -25,9 +25,9 @@ import numpy as np
 import rasterio
 from rasterio.enums import ColorInterp
 
-# dec25 taxa served at 100 m on object-arbutus (Fungi has no dec25 layer).
+# dec25 taxa served at 100 m on object-arbutus.
 TAXA = ["All", "Amphibia", "Aves", "Insecta", "Mammalia", "Plantae",
-        "Reptilia", "Actinopterygii", "Arachnida", "Mollusca"]
+        "Reptilia", "Actinopterygii", "Arachnida", "Mollusca", "Fungi"]
 SRC_URL = ("https://object-arbutus.alliancecan.ca/86e1f3d5df8442d39450533329f621ae"
            ":stac/inat_canada_heatmaps/{taxon}_density_inat_dec25_100m.tif")
 

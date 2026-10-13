@@ -738,11 +738,9 @@ kind of thing, which is the one non-obvious part:
 | Cell geometry | GeoJSON polygons, in the LAEA lattice of Section 2 | `grid_lattice.py` |
 | Cell colours | One PNG per (group, goal, tier), **one pixel per cell**, painted onto those polygons | `build_grid_values.py` |
 | Density overlay | Raster PMTiles, magma baked in at build time | `build_density_pmtiles.py` |
-| Density, *Fungi only* | Live TiTiler over a 1 km COG on Arbutus | — |
 
 Colours are a PNG rather than tiles because warping rotated LAEA cells into Mercator pixels
-left a staircase that never matched the lattice (#116). Fungi alone reads a live COG because
-it has no 100 m layer yet. Both docstrings carry the full reasoning.
+left a staircase that never matched the lattice (#116). Both docstrings carry the full reasoning.
 """)
 
 # ---------------------------------------------------------------- reproduce

@@ -450,8 +450,9 @@ jobs:
           for f in blitz-logo.png og-image.png where-to-blitz-walkthrough.html; do
             [ -f "$f" ] && cp "$f" _site/
           done
-          # density tiles carry a density_ prefix (matches the app's tiles/density_<Taxon>.pmtiles)
-          for f in density/*.pmtiles; do cp "$f" "_site/tiles/density_$(basename "$f")"; done
+          # Density tiles live on the release (density_<Taxon>.pmtiles, the app's tiles/ name), like climate_gap.
+          gh release download grid-outputs-v1 --pattern "density_*.pmtiles" --dir _site/tiles --repo "$GITHUB_REPOSITORY" --clobber
+          test -s _site/tiles/density_All.pmtiles && test -s _site/tiles/density_Fungi.pmtiles
           # Climate Gap is a single raster on the release, not a per-taxon density tile, so the
           # loop above never picks it up. Without this the criterion serves a 404 and blanks the map.
           gh release download grid-outputs-v1 --pattern "climate_gap.pmtiles" --dir _site/tiles --repo "$GITHUB_REPOSITORY" --clobber
@@ -506,7 +507,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p cluster_results/ca/values
-          # Grid colours ship as a values tarball on grid-outputs-v1 (density tiles are committed in density/)
+          # Grid colours ship as a values tarball on grid-outputs-v1 (density tiles are on the release too)
           if gh release download grid-outputs-v1 --pattern "grid_values.tar.gz" --dir . --repo "$GITHUB_REPOSITORY"; then
             tar -xzf grid_values.tar.gz -C cluster_results/ca/values
           else
@@ -531,9 +532,9 @@ jobs:
           for f in blitz-logo.png og-image.png where-to-blitz-walkthrough.html; do
             [ -f "$f" ] && cp "$f" _site/
           done
-          for f in density/*.pmtiles; do
-            [ -f "$f" ] && cp "$f" "_site/tiles/density_$(basename "$f")" || true
-          done
+          # Density tiles live on the release (density_<Taxon>.pmtiles, the app's tiles/ name), like climate_gap.
+          gh release download grid-outputs-v1 --pattern "density_*.pmtiles" --dir _site/tiles --repo "$GITHUB_REPOSITORY" --clobber
+          test -s _site/tiles/density_All.pmtiles && test -s _site/tiles/density_Fungi.pmtiles
           # Climate Gap is a single raster on the release, not a per-taxon density tile, so the
           # loop above never picks it up. Without this the criterion serves a 404 and blanks the map.
           gh release download grid-outputs-v1 --pattern "climate_gap.pmtiles" --dir _site/tiles --repo "$GITHUB_REPOSITORY" --clobber
