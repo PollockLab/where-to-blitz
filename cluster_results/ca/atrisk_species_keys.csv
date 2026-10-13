@@ -1,0 +1,506 @@
+name,speciesKey,matchType,status_weight
+Desmognathus ochrophaeus,2431199,EXACT,3
+Armeria maritima ssp. interior,8930531,EXACT,1
+Omus audouini,1037158,EXACT,2
+Physella johnsoni,5189828,EXACT,3
+Cetorhinus maximus,2420726,EXACT,3
+Moxostoma duquesnei,2358983,FUZZY,2
+Cypseloides niger,2477282,EXACT,3
+Anzia colpodes,6347854,EXACT,2
+Salix silicicola,5372965,EXACT,1
+Allogona profunda,2295644,EXACT,3
+Epilobium torreyi,3189107,EXACT,3
+Salvelinus confluentus,2351244,EXACT,2
+Rangifer tarandus,5220114,EXACT,3
+Notropis percobromus,2362249,EXACT,3
+Ptychoramphus aleuticus,2481302,EXACT,1
+Calcarius ornatus,2491677,EXACT,3
+Chaetura pelagica,4409023,EXACT,2
+Pooecetes gramineus affinis,2491728,EXACT,3
+Cottus aleuticus,2334078,EXACT,3
+Cottus hubbsi,2334144,EXACT,1
+Chordeiles minor,2497035,EXACT,2
+Nephroma occultum,2601190,EXACT,2
+Exoglossum maxillingua,2361987,EXACT,1
+Coccothraustes vespertinus,2494324,EXACT,1
+Vernonia fasciculata,5397564,EXACT,3
+Truncilla donaciformis,2288275,EXACT,3
+Balaenoptera physalus,2440718,EXACT,2
+Tanacetum huronense var. floccosum,3118382,EXACT,1
+Gasterosteus aculeatus,4286327,EXACT,3
+Hydrastis canadensis,3033110,EXACT,1
+Pantherophis spiloides,7576179,EXACT,3
+Spea intermontana,2429791,EXACT,2
+Phrynosoma hernandesi,5222456,EXACT,3
+Eschrichtius robustus,2440704,EXACT,3
+Arnica griscomii ssp. griscomii,5406023,EXACT,2
+Ursus arctos,2433433,EXACT,1
+Bombus bohemicus,1340362,EXACT,3
+Phoca vitulina mellonae,2434793,EXACT,3
+Obovaria olivaria,2288371,EXACT,3
+Prays atomocella,10558613,EXACT,3
+Acipenser fulvescens,2402120,EXACT,1
+Achillea millefolium var. megacephala,3120060,EXACT,1
+Calamospiza melanocorys,2491893,EXACT,2
+Toxolasma parvum,7621602,EXACT,3
+Deschampsia mackenzieana,8059811,EXACT,1
+Epeoloides pilosulus,1341851,EXACT,3
+Acroscyphus sphaerophoroides,5478804,EXACT,1
+Rhinichthys cataractae,2359811,EXACT,3
+Aegolius acadicus brooksi,5232207,EXACT,2
+Lepomis peltastes,7193242,EXACT,1
+Contopus cooperi,5229743,EXACT,2
+Copablepharon grandis,1775026,EXACT,1
+Falco peregrinus pealei,2481047,EXACT,1
+Hybognathus placitus,2364391,EXACT,2
+Ursus maritimus,2433451,EXACT,1
+Haplodontium macrocarpum,8031645,EXACT,2
+Crotalus viridis,8945077,EXACT,1
+Plestiodon septentrionalis,4287445,EXACT,1
+Patera pennsylvanica,5190851,EXACT,3
+Kootenaia burkei,8276650,EXACT,1
+Ophiogomphus howei,1426027,EXACT,1
+Osmerus mordax,4283983,EXACT,3
+Oncorhynchus mykiss,5204019,EXACT,3
+Gomphus quadricolor,10735804,EXACT,3
+Melanerpes erythrocephalus,2478130,EXACT,3
+Phalaropus lobatus,5739290,EXACT,1
+Clinostomus elongatus,2361178,EXACT,3
+Brotherella roellii,2680422,EXACT,3
+Lasioglossum sablense,12228638,EXACT,2
+Salix brachycarpa var. psammophila,5372878,EXACT,1
+Zacoleus idahoensis,2294077,EXACT,1
+Ichthyomyzon unicuspis,2421247,EXACT,1
+Notropis photogenis,2362321,EXACT,2
+Mesoplodon bidens,2440412,EXACT,1
+Micranthes spicata,5567579,EXACT,1
+Bryoandersonia illecebra,2680278,EXACT,2
+Eremophila alpestris strigata,9415596,EXACT,3
+Rhynchospora macrostachya,2720908,EXACT,3
+Actaea elata,6376174,EXACT,3
+Psilocarphus elatior,3130051,EXACT,3
+Obliquaria reflexa,11036466,EXACT,2
+Crossidium seriatum,2670738,EXACT,1
+Salix turnorii,5372813,EXACT,1
+Marmota vancouverensis,2437365,EXACT,3
+Entosphenus macrostomus,2421357,EXACT,2
+Schinia verna,9520058,EXACT,2
+Argia vivida,5051522,EXACT,1
+Hybognathus argyritis,2364397,EXACT,2
+Sphyrapicus thyroideus,2478602,EXACT,3
+Gulo gulo,5219073,EXACT,1
+Glyptemys insculpta,2443115,EXACT,2
+Pannaria lurida,2601215,EXACT,2
+Bombus terricola,1340493,EXACT,1
+Podistera yukonensis,3034192,EXACT,1
+Sanfilippodytes bertae,1038707,EXACT,3
+Bison bison athabascae,2441176,EXACT,1
+Orcinus orca,2440483,EXACT,3
+Ascaphus montanus,2429805,EXACT,2
+Platanthera praeclara,2798503,EXACT,3
+Athene cunicularia,2497240,EXACT,3
+Balaenoptera musculus,2440735,EXACT,3
+Phoebastria nigripes,2481383,EXACT,1
+Lanius ludovicianus excubitorides,2492870,EXACT,2
+Antrostomus vociferus,6101178,EXACT,2
+Plethodon idahoensis,2431485,EXACT,1
+Sanicula arctopoides,3034853,EXACT,2
+Notropis bifrenatus,2362305,EXACT,1
+Opsopoeodus emiliae,4286982,EXACT,2
+Degelia plumbea,8073311,EXACT,1
+Rhodostethia rosea,2481218,EXACT,2
+Castilleja rupicola,3170725,EXACT,2
+Tyto alba,2497921,EXACT,3
+Noturus stigmosus,2341037,EXACT,3
+Riparia riparia,2489160,EXACT,2
+Hirundo rustica,9515886,EXACT,2
+Erioderma pedicellatum,8224590,EXACT,3
+Ochotona collaris,2437020,EXACT,1
+Emydoidea blandingii,5220530,EXACT,3
+Rangifer tarandus pearyi,5220114,EXACT,2
+Euphyes vestris vestris,1942947,EXACT,2
+Aneides vagrans,2431710,EXACT,1
+Oarisma poweshiek,4301736,EXACT,3
+Schinia avemensis,9274757,EXACT,3
+Schinia bimatris,9328750,EXACT,3
+Ascaphus truei,2429804,EXACT,1
+Ambystoma tigrinum,2431993,EXACT,3
+Hesperia dacotae,5142293,EXACT,3
+Copablepharon fuscum,1775016,EXACT,3
+Danaus plexippus,5133088,EXACT,3
+Rana aurora,2426808,EXACT,1
+Dicamptodon tenebrosus,2432022,EXACT,2
+Taxidea taxus jacksoni,2434102,EXACT,3
+Entosthodon rubiginosus,2674034,EXACT,1
+Magnipelta mycophaga,2294052,EXACT,1
+Fundulus notatus,5203690,EXACT,1
+Peltigera gowardii,9818231,EXACT,1
+Asplenium scolopendrium var. americanum,2650669,EXACT,1
+Urocyon cinereoargenteus,2434566,EXACT,2
+Carex sabulosa,2723044,EXACT,1
+Taxidea taxus taxus,2434102,EXACT,1
+Coluber constrictor flaviventris,6161776,EXACT,2
+Charina bottae,5225695,EXACT,1
+Apalone spinifera,2442680,EXACT,3
+Ambystoma mavortium,2431978,EXACT,3
+Lampsillis cariosa,2288160,FUZZY,1
+Lepisosteus oculatus,2346692,EXACT,3
+Myoxocephalus thompsonii,2333811,EXACT,1
+Quadrula quadrula,5189374,EXACT,2
+Ligumia nasuta,9763982,EXACT,1
+Leptogium rivulare,2600969,EXACT,1
+Eubalaena glacialis,2440339,EXACT,3
+Phoebastria albatrus,2481385,EXACT,2
+Fraxinus quadrangulata,3172370,EXACT,2
+Cephalanthera austiniae,2795907,EXACT,3
+Ptelea trifoliata,3190411,EXACT,1
+Symphyotrichum anticostense,3151445,EXACT,1
+Allogona townsendiana,2295642,EXACT,3
+Pituophis catenifer deserticola,2453826,EXACT,2
+Oxytropis lagopus,5361100,EXACT,2
+Pleurobema sintoxia,2288065,EXACT,3
+Villosa iris,9749798,EXACT,1
+Lepomis gulosus,2394507,EXACT,3
+Acipenser brevirostrum,2402192,EXACT,1
+Euphagus carolinus,2484184,EXACT,1
+Parkesia motacilla,6093862,EXACT,2
+Staala gwaii,10378094,EXACT,1
+Hemphillia dromedarius,5190474,EXACT,2
+Obovaria subrotunda,2288370,EXACT,3
+Ptychobranchus fasciolaris,5189344,EXACT,3
+Peltigera hydrothyria,2601167,EXACT,2
+Haliotis kamtschatkana,2293082,EXACT,3
+Dolichonyx oryzivorus,2484417,EXACT,2
+Buteo regalis,2480566,EXACT,2
+Colinus virginianus,9791464,EXACT,3
+Patagioenas fasciata,2495266,EXACT,1
+Ammodramus savannarum pratensis,2491123,EXACT,1
+Cirsium pitcheri,3113668,EXACT,1
+Nerodia sipedon insularum,5223334,EXACT,1
+Mustela erminea haidarum,5219019,EXACT,2
+Loxia curvirostra percna,9629160,EXACT,2
+Brachyramphus marmoratus,5229281,EXACT,2
+Crotalus oreganus,2444446,EXACT,2
+Coluber constrictor mormon,6161776,EXACT,2
+Rhynchophanes mccownii,6093927,EXACT,2
+Chimaphila maculata,2888304,EXACT,2
+Accipiter gentilis laingi,2480589,EXACT,2
+Fabronia pusilla,2681444,EXACT,3
+Salvelinus malma malma,4284020,EXACT,1
+Myotis lucifugus,2432406,EXACT,3
+Physella wrighti,5189789,EXACT,3
+Braya longii,5373780,EXACT,3
+Plebejus saepiolus insulanus,5138387,EXACT,3
+Efferia okanagana,11211556,EXACT,3
+Symphyotrichum nahanniense,3151458,EXACT,1
+Salix chlorolepis,5372983,EXACT,2
+Collema coniophilum,5953288,EXACT,2
+Cicuta maculata var. victorinii,5371867,EXACT,1
+Limnanthes macounii,5334529,EXACT,2
+Gentianopsis virgata ssp. Victorinii,3169901,EXACT,2
+Coluber constrictor foxii,6161776,EXACT,3
+Numenius borealis,2481783,EXACT,3
+Podiceps auritus,2482059,EXACT,3
+Cardellina canadensis,6091946,EXACT,2
+Asio flammeus,2497295,EXACT,1
+Eubalaena japonica,9747921,EXACT,3
+Dermochelys coriacea,9789983,EXACT,3
+Enhydra lutris,2433670,EXACT,1
+Delphinapterus leucas,5220003,EXACT,3
+Carcharodon carcharias,2420694,EXACT,3
+Caretta caretta,8894817,EXACT,3
+Hexanchus griseus,2420569,EXACT,1
+Galeorhinus galeus,2418259,EXACT,1
+Eumetopias jubatus,2433462,EXACT,1
+Anarhichas lupus,8006460,EXACT,1
+Megaptera novaengliae,5220086,FUZZY,1
+Anarhichas minor,2392194,EXACT,2
+Empidonax virescens,2482802,EXACT,3
+Adiantum capillus-veneris,2651816,EXACT,3
+Hydrocotyle umbellata,3034614,EXACT,1
+Germaria angustata,1473158,EXACT,1
+Contopus virens,5229734,EXACT,1
+Pterygoneurum kozlovii,2671560,EXACT,2
+Vermivora chrysoptera,5230811,EXACT,2
+Pagophila eburnea,2481202,EXACT,3
+Icteria virens virens,2489989,EXACT,3
+Synthliboramphus antiquus,2481350,EXACT,1
+Entosthodon fascicularis,8369200,EXACT,1
+Hibiscus moscheutos,3152596,EXACT,1
+Ixobrychus exilis,2480852,EXACT,2
+Icteria virens auricollis,2489989,EXACT,3
+Lipocarpha micrantha,9458613,EXACT,3
+Hypochlora alba,1712710,EXACT,1
+Cicindela formosa gibsoni,1034951,EXACT,2
+Oreoscoptes montanus,2494973,EXACT,3
+Cryptantha minima,2926258,EXACT,2
+Vulpes velox,5219290,EXACT,2
+Copablepharon longipenne,9022000,EXACT,3
+Pinus albicaulis,5285183,EXACT,3
+Aechmophorus occidentalis,2482033,EXACT,1
+Psilocarphus brevissimus,3130050,EXACT,3
+Catostomus platyrhynchus,2359047,EXACT,2
+Anaxyrus cognatus,2422882,EXACT,1
+Limenitis weidemeyerii,5714333,EXACT,1
+Numenius americanus,2481794,EXACT,1
+Chenopodium subglabrum,3083891,EXACT,2
+Tripterocalyx micranthus,3086093,EXACT,3
+Anthus spragueii,2490268,EXACT,2
+Centrocerus urophasianus urophasianus,5959240,FUZZY,3
+Iris missouriensis,5298923,EXACT,1
+Tradescantia occidentalis,2765322,EXACT,2
+Sebastolobus altivelis,2335322,EXACT,1
+Sebastes ruberrimus,2335415,EXACT,1
+Hyperodon ampullatus,5220013,EXACT,3
+Megascops kennicottii kennicottii,2497341,EXACT,2
+Megascops kennicottii macfarlanei,2497341,EXACT,2
+Pedicularis furbishiae,3171686,EXACT,3
+Rana pretiosa,2426776,EXACT,3
+Erynnis persius persius,5977179,EXACT,3
+Hesperia ottoe,5142239,EXACT,3
+Euphydryas editha taylori,1908011,EXACT,3
+Setophaga kirtlandii,6093362,EXACT,3
+Villosa fabalis,9810031,EXACT,3
+Fissidens pauperculus,5283077,EXACT,3
+Contia tenuis,2455975,EXACT,3
+Triphysaria versicolor,3171830,EXACT,3
+Magnolia acuminata,3153837,EXACT,3
+Balsamorhiza deltoidea,3137216,EXACT,3
+Trillium flexipes,2742422,EXACT,3
+Geum peckii,5369762,EXACT,3
+Opuntia humifusa,5384047,EXACT,3
+Plantago cordata,3189759,EXACT,3
+Pycnanthemum incanum,2927354,EXACT,3
+Coreopsis rosea,3133869,EXACT,3
+Polygala incarnata,3191432,EXACT,3
+Lupinus lepidus,2963975,EXACT,3
+Lotus formosissimus,2939904,EXACT,3
+Solidago speciosa,5389063,EXACT,3
+Agalinis skinneriana,3171219,EXACT,3
+Lespedeza virginica,2955685,EXACT,3
+Ranunculus alismifolius,3033433,EXACT,3
+Gentiana alba,12232463,EXACT,3
+Stylophorum diphyllum,2888466,EXACT,3
+Cypripedium candidum,2820374,EXACT,2
+Woodsia obtusa,5643573,EXACT,2
+Liparis liliifolia,5323293,EXACT,2
+Perimyotis subflavus,7665644,EXACT,3
+Drosera filiformis,3191183,EXACT,3
+Papaipema aweme,1778046,EXACT,3
+Cicindela marginipennis,1034736,EXACT,3
+Cicindela patruela,1034922,EXACT,3
+Bombus affinis,1340481,EXACT,3
+Cicindela parowana wallisi,1034958,EXACT,3
+Eleocharis geniculata,2716850,EXACT,3
+Lotus pinnatus,2939873,EXACT,3
+Phacelia ramosissima,2928258,EXACT,3
+Ranunculus californicus,3033485,EXACT,3
+Microseris bigelovii,5399436,EXACT,3
+Silene scouleri ssp. Grandis,5384798,EXACT,3
+Camissonia contorta,3188973,EXACT,3
+Epilobium densiflorum,3189090,EXACT,3
+Lupinus densiflorus,2964246,EXACT,3
+Cornus florida,3082240,EXACT,3
+Carex tumulicola,2723015,EXACT,3
+Aristida basiramea,2706256,EXACT,3
+Plagiobothrys figuratus,8164333,EXACT,3
+Orthocarpus barbatus,3171642,EXACT,3
+Triteleia howellii,5304137,EXACT,3
+Juncus kelloggii,2702080,EXACT,3
+Uropappus lindleyi,5398366,EXACT,3
+Centaurium muehlenbergii,9541322,EXACT,3
+Potamogeton odgenii,5301161,FUZZY,3
+Lasthenia glaberrima,3144242,EXACT,3
+Orthocarpus bracteosus,3171637,EXACT,3
+Agalinis aspera,8532866,EXACT,3
+Symphyotrichum frondosum,3151462,EXACT,3
+Collomia tenella,2927565,EXACT,3
+Tonella tenella,7926867,EXACT,3
+Silene spaldingii,5384775,EXACT,3
+Antennaria flagellaris,5385532,EXACT,3
+Lupinus rivularis,2964652,EXACT,3
+Lewisiopsis tweedyi,4023059,EXACT,3
+Castilleja victoriae,3734493,EXACT,3
+Sida hermaphrodita,9296871,EXACT,3
+Meconella oregana,8027614,EXACT,3
+Isoetes prototypus,2688321,EXACT,1
+Esox americanus vermiculatus,4284046,EXACT,1
+Plestiodon skiltonianus,5960558,EXACT,1
+Lilaeopsis chinensis,3034176,EXACT,1
+Bartonia paniculata ssp. paniculata,5414427,EXACT,2
+Baccharis halimifolia,3129663,EXACT,2
+Lomatium grayi,3034340,EXACT,2
+Cirsium hillii,3112698,EXACT,2
+Tetraneuris herbacea,3112429,EXACT,2
+Polystichum lemmonii,2651104,EXACT,2
+Polystichum scopulinum,2651100,EXACT,2
+Phlox speciosa ssp. Occidentalis,2927760,EXACT,2
+Plagiobothrys tenellus,8606926,EXACT,2
+Pseudacris triseriata,2428141,EXACT,2
+Aplodontia rufa,2439690,EXACT,1
+Martes americana atrata,5218864,EXACT,2
+Bryoerythrophyllum columbianum,2670522,EXACT,1
+Ambystoma texanum,2431973,EXACT,3
+Gyrinophilus porphyriticus,2431423,EXACT,2
+Erimyzon sucetta,2358939,EXACT,3
+Plestiodon fasciatus,5789613,EXACT,3
+Thamnophis butleri,2457520,EXACT,3
+Notropis anogenus,2362240,EXACT,2
+Frasera caroliniensis,3169980,EXACT,3
+Trichophorum planifolium,2710551,EXACT,3
+Platanthera leucophaea,2798308,EXACT,3
+Potamogeton hillii,5301154,EXACT,1
+Juncus caesariensis,2702071,EXACT,1
+Moxostoma carinatum,2358998,EXACT,1
+Minytrema melanops,2358945,EXACT,1
+Thamnophis sauritus,2457577,FUZZY,2
+Graptemys geographica,2443074,EXACT,1
+Sylvilagus nuttalli nuttallii,2436854,FUZZY,1
+Arnoglossum platagineum,5390080,FUZZY,1
+Hemphillia glandulosa,5190473,EXACT,1
+Otus flammeolus,7807178,EXACT,1
+Ardea herodias fannini,9630752,EXACT,1
+Microtus pinetorum,2438638,EXACT,1
+Melanerpes lewis,2478142,EXACT,2
+Heterodon platirhinos,5223730,EXACT,2
+Liatris spicata,3104314,EXACT,2
+Celtis tenuifolia,2984482,EXACT,2
+Enemion biternatum,3033647,EXACT,2
+Clethra alnifolia,2888323,EXACT,2
+Camassia scilloides,2769112,EXACT,2
+Symphyotrichum praealtum,3151573,EXACT,2
+Antrozous pallidus,2432339,EXACT,2
+Anaxyrus fowleri,2422905,EXACT,3
+Satyrium behrii,5714755,EXACT,3
+Picoides albolarvatus,9128444,EXACT,3
+Sorex bendirii,2436038,EXACT,3
+Castilleja levisecta,3170657,EXACT,3
+Triphora trianthophoros,7320380,EXACT,3
+Morus rubra,5361886,EXACT,3
+Dalea villosa,5353078,EXACT,1
+Rosa setigera,3004638,EXACT,1
+Symphyotrichum prenanthoides,3151594,EXACT,1
+Iris lacustris,5298482,EXACT,1
+Aletris farinosa,2756106,EXACT,3
+Smilax rotundifolia,5295375,EXACT,2
+Ammodramus henslowii,10850807,EXACT,3
+Coregonus reighardi,2350985,EXACT,3
+Sistrurus catenatus,9223124,EXACT,3
+Scapanus townsendii,2436191,EXACT,3
+Castanea dentata,5333230,EXACT,3
+Panax quinquefolius,5372246,EXACT,3
+Viola pedata,5331278,EXACT,3
+Buchnera americana,5415032,EXACT,3
+Tephrosia virginiana,5342304,EXACT,3
+Viola praemorsa ssp. praemora,7884309,FUZZY,3
+Eleocharis tuberculosa,2717360,EXACT,1
+Polemonium vanbruntiae,2927841,EXACT,2
+Eurybia divaricata,5396125,EXACT,2
+Sericocarpus regidus,3088831,FUZZY,1
+Myotis septentrionalis,2432436,EXACT,3
+Lampropeltis triangulum,5224503,EXACT,1
+Lithobates pipiens,2427185,EXACT,3
+Isoetes bolanderi,2688296,EXACT,2
+Ammodramus bairdii,10783710,EXACT,1
+Simpsonaias ambigua,2288258,EXACT,3
+Somatochlora hineana,1429986,EXACT,3
+Brychius hungerfordi,1044486,EXACT,3
+Gomphus ventricosus,1425580,EXACT,3
+Ichthyomyzon fossor,2421249,EXACT,1
+Azolla mexicana,11073901,EXACT,2
+Ostrea lurida,2286067,EXACT,1
+Rhinichthys cataractae ssp.,2359811,EXACT,3
+Epioblasma torulosa rangiana,8007262,EXACT,3
+Epioblasma triquetra,2288218,EXACT,3
+Lampsilis fasciola,2288147,EXACT,1
+Stylurus amnicola,5051890,EXACT,3
+Hypsiglena chlorophaea,8015329,EXACT,3
+Alasmidonta varicosa,2287890,EXACT,1
+Chelydra serpentina,2441905,EXACT,1
+Rallus elegans,9480015,EXACT,3
+Bucephala islandica,2498325,EXACT,1
+Acipenser medirostris,2402118,EXACT,1
+Ambystoma jeffersonianum,2431962,EXACT,3
+Sabatia kennedyana,5414521,EXACT,3
+Lophiola aurea,2756008,EXACT,1
+Lachnanthes caroliniana,2765922,EXACT,1
+Ammocrypta pellucida,2381982,EXACT,2
+Lampetra richardsoni,5216507,EXACT,3
+Regina septemvittata,5222701,EXACT,3
+Pantherophis gloydi,2455654,EXACT,3
+Cottus confusus,2334156,EXACT,1
+Fundulus diaphanus,5712054,EXACT,1
+Anarhichas denticulatus,2392210,EXACT,2
+Coregonus huntsmani,2351209,EXACT,3
+Isotria verticillata,2808813,EXACT,3
+Syntrichia laevipila,2671290,EXACT,1
+Stylurus olivaceus,5051876,EXACT,3
+Desmognathus fuscus,2431224,EXACT,3
+Bartramia halleriana,5282460,EXACT,2
+Balaenoptera borealis,2440709,EXACT,3
+Erioderma mollissimum,2601264,EXACT,3
+Coturnicops noveboracensis,5228183,EXACT,1
+Isotria medeoloides,2808818,EXACT,3
+Histrionicus histrionicus,2498224,EXACT,1
+Catharus bicknelli,2490800,EXACT,2
+Physconia subpallida,3427658,EXACT,3
+Salmo salar,7595433,EXACT,3
+Gonidea angulata,2287883,EXACT,3
+Symphyotrichum laurentianum,3151699,EXACT,2
+Braya fernaldii,5373779,EXACT,3
+Tryngites subruficollis,8292425,EXACT,1
+Sturnella magna,2484254,EXACT,2
+Prodoxus quinquepunctellus,1861357,FUZZY,3
+Tegeticula corruptrix,8989015,EXACT,3
+Tegeticula yuccasella,5123608,EXACT,3
+Charadrius montanus,2480292,EXACT,3
+Satyrium semiluna,5139026,EXACT,3
+Charadrius melodus circumcinctus,2480283,EXACT,3
+Acris blanchardi,2427610,EXACT,3
+Betula lenta,5331709,EXACT,3
+Abronia umbellata,5384870,EXACT,3
+Solidago houghtonii,5388965,EXACT,1
+Euderma maculatum,2432579,EXACT,1
+Calochortus lyallii,2750807,EXACT,1
+Bouteloua dactyloides,5677204,EXACT,1
+Moxostoma hubbsi,2358995,EXACT,3
+Hylocichla mustelina,2490872,EXACT,2
+Braya pilosa,5373810,EXACT,3
+Calidris canutus rufa,2481765,EXACT,3
+Barnea truncata,2288761,EXACT,2
+Microbryum vlassovii,2671421,EXACT,3
+Calidris canutus islandica,2481765,EXACT,1
+Protonotaria citrea,2489871,EXACT,3
+Setophaga cerulea,6093350,EXACT,3
+Sterna dougallii,5229249,EXACT,3
+Grus americana,2474941,EXACT,3
+Yucca glauca,2775497,EXACT,2
+Heterodermia sitchensis,2609346,EXACT,3
+Scouleria marginata,2674250,EXACT,3
+Anarta edwardsii,9265928,EXACT,3
+Lechea maritima,5331132,EXACT,1
+Passerculus sandwichensis princeps,5231142,EXACT,1
+Scalopus aquaticus,2436230,EXACT,1
+Hypogymnia heterophylla,2606510,EXACT,2
+Charadrius melodus melodus,2480283,EXACT,3
+Carex lupuliformis,2727256,EXACT,3
+Coenonympha nipisiquit,1911378,EXACT,3
+Gnaphosa snohomish,2133914,EXACT,1
+Leptogium platynum,10878212,EXACT,3
+Sclerophora peronella,2610322,EXACT,1
+Ictiobus cyprinellus,2359081,EXACT,1
+Sternotherus odoratus,5220393,EXACT,1
+Leptogium polycarpum,10685457,EXACT,1
+Pseudocyphellaria rainierensis,2601470,EXACT,1
+Rhinichthys osculus,2359791,EXACT,3
+Clemmys guttata,5961001,EXACT,3
+Oncorhynchus clarkii lewisi,5711980,EXACT,2
+Chrysemys picta bellii,2443133,EXACT,2
+Prophysaon coeruleum,2294060,EXACT,2
+Ardenna creatopus,5229358,EXACT,3
+Balaena mysticetus,2440330,EXACT,1
+Dipodomys ordii,2439541,EXACT,3
+Strix occidentalis caurina,2497487,EXACT,3
+Juglans cinerea,3054352,EXACT,3
+Phocoena phocoena vomerina,2440669,EXACT,1
+Cynomys ludovicianus,2437232,EXACT,2
