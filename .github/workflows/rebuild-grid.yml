@@ -295,7 +295,11 @@ jobs:
         # Keyed on cell centres, like us_cells.json above, and it went stale the same way:
         # the #87 lattice migration moved every cell and this file was a committed artifact
         # no build step touched, so all 31804 of its keys missed and the layer went grey.
+        # The richness rasters are on the lab SharePoint, not here, so keep the shipped gated
+        # layer rather than revert it; build_gettingeven.py still fails if it no longer fits the grid.
         if: ${{ steps.check_artifact.outputs.found != 'true' }}
+        env:
+          GE_KEEP_SHIPPED: "1"
         run: python build_gettingeven.py
       - name: Re-freeze the provenance manifest over the rebuilt artifacts
         # Hashes what this run read and wrote. Must follow the grid build and precede the

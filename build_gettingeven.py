@@ -311,7 +311,38 @@ def _refuse_silent_ungating(path, shipped, gated):
     raise SystemExit(
         f"{path} was built with the richness gate on ({'; '.join(shipped)}) and this build "
         f"has no richness rasters, so writing it would silently revert the layer. Set "
-        f"{', '.join(RICHNESS_ENV.values())}, or pass GE_ALLOW_UNGATED=1 to overwrite on purpose.")
+        f"{', '.join(RICHNESS_ENV.values())}, pass GE_KEEP_SHIPPED=1 to keep the shipped layer, "
+        f"or GE_ALLOW_UNGATED=1 to overwrite it on purpose.")
+
+
+def _keep_shipped(lat, coords, shipped, gated):
+    """With GE_KEEP_SHIPPED=1, leave a gated shipped tier in place instead of failing the build.
+
+    CI cannot see the richness rasters, so every full rebuild there would otherwise stop at
+    `_refuse_silent_ungating`, and a rebuild for an unrelated layer could never deploy. The shipped
+    tier is kept only while it still fits this build: the lattice it records, the PNG hash beside
+    it and, at 25 km, a JSON row for every cell the app draws. A moved lattice is how the layer
+    went grey before, so that still fails. Returns True when the tier was kept.
+    """
+    if gated or not shipped.get("richness_gate") or os.environ.get("GE_KEEP_SHIPPED") != "1":
+        return False
+    built = dict(shipped.get("lattice") or {})
+    if not built or rasterio.crs.CRS.from_wkt(built.pop("crs")) != lat.crs or built != {
+            "x0": lat.x0, "y1": lat.y1, "res_m": lat.res, "ncol": lat.ncol, "nrow": lat.nrow}:
+        raise SystemExit(f"GE_KEEP_SHIPPED: the shipped {RES} m tier is on another lattice; "
+                         f"rebuild it with the richness rasters")
+    png = os.path.join(OUT_DIR, shipped["png"])
+    if not os.path.exists(png) or sha256_file(png) != shipped["sha256"]:
+        raise SystemExit(f"GE_KEEP_SHIPPED: {png} does not match the hash in {SIDECAR}")
+    if coords is not None:
+        with open(os.path.join(OUT_DIR, "webapp_data_gettingeven.json")) as fh:
+            rows = json.load(fh)["gettingeven"]
+        if {f"{r[0]:.3f},{r[1]:.3f}" for r in rows} != {f"{a:.3f},{b:.3f}" for a, b in coords}:
+            raise SystemExit("GE_KEEP_SHIPPED: webapp_data_gettingeven.json is not keyed on the "
+                             "cells the app draws; rebuild it with the richness rasters")
+    print(f"::notice::kept the shipped gated {RES} m Getting Even tier "
+          f"({'; '.join(shipped['richness_gate'])}): no richness rasters in this build")
+    return True
 
 
 def _shipped_json_gate(path):
@@ -354,6 +385,8 @@ def main():
     if any(n == 0 for _, n in named):
         raise SystemExit("a category never wins: the legend would promise a colour nobody sees")
     shipped_tier = _sidecar().get("tiers", {}).get(str(RES), {})
+    if _keep_shipped(lat, coords, shipped_tier, gated):
+        return
     _refuse_silent_ungating(SIDECAR, shipped_tier.get("richness_gate") or [], gated)
     print(f"wrote {write_raster(lat, rowcol, idx, best)}")
     png = write_png(lat, rowcol, idx)
