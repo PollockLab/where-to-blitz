@@ -3,7 +3,7 @@
 import csv
 import io
 
-from build_atrisk_layer import RES, aggregate, build_sql
+from build_atrisk_layer import RES, aggregate, build_sql, count_mismatches, species_totals
 
 HDR = "specieskey\tgi\tgj\tn\n"
 
@@ -39,3 +39,16 @@ def test_sql_derived_from_res_and_keys():
     sql = build_sql({7, 3})
     assert f"FLOOR(decimallatitude / {RES})" in sql and "gbif_classification.specieskey IN ('3', '7')" in sql
     assert '"year" >= 1990' in sql
+    assert "NOT IN ('FOSSIL_SPECIMEN', 'LIVING_SPECIMEN')" in sql
+
+
+def test_species_totals_sum_cells():
+    assert species_totals(rows(HDR + "1\t10\t-5\t4\n1\t11\t-5\t2\n2\t10\t-5\t1\n")) == {1: 6, 2: 1}
+    assert species_totals(rows(HDR)) == {}
+
+
+def test_count_mismatches_flags_missing_and_drift():
+    # key 3 is in the API but absent from the download: the empty-filter failure the check exists for
+    bad = count_mismatches({1: 100, 2: 50}, {1: 103, 2: 70, 3: 40})
+    assert bad == {2: (50, 70), 3: (0, 40)}
+    assert count_mismatches({1: 1}, {1: 3, 4: 0}) == {}  # within the 2-record floor

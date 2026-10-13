@@ -39,6 +39,7 @@ import csv
 import io
 import json
 import os
+import random
 import time
 import urllib.error
 import urllib.parse
@@ -57,6 +58,8 @@ CROSSWALK = f"{OUT_DIR}/atrisk_species_keys.csv"
 PROVENANCE = f"{OUT_DIR}/ca_atrisk_provenance.json"
 OUT_CSV = f"{OUT_DIR}/ca_atrisk_richness.csv"
 GBIF = "https://api.gbif.org/v1"
+EXCLUDED_BASIS = ("FOSSIL_SPECIMEN", "LIVING_SPECIMEN")
+N_CHECK = 6  # species whose download totals are re-counted through the occurrence search API
 
 
 def gget(url, params):
@@ -133,12 +136,13 @@ def build_sql(keys):
     # (gbif/occurrence#538); backbone speciesKeys from species/match live under gbif_classification.
     sk = "occurrence.gbif_classification.specieskey"
     in_list = ", ".join(f"'{k}'" for k in sorted(keys))
+    basis = ", ".join(f"'{b}'" for b in EXCLUDED_BASIS)
     return (
         f"SELECT {sk} AS specieskey, FLOOR(decimallatitude / {RES}) AS gi, "
         f"FLOOR(decimallongitude / {RES}) AS gj, COUNT(*) AS n FROM occurrence WHERE countrycode = 'CA' "
         f"AND {sk} IN ({in_list}) "
         f"AND hasgeospatialissues = FALSE AND occurrencestatus = 'PRESENT' AND \"year\" >= {MIN_YEAR} "
-        f"AND basisofrecord NOT IN ('FOSSIL_SPECIMEN', 'LIVING_SPECIMEN') AND decimallatitude IS NOT NULL "
+        f"AND basisofrecord NOT IN ({basis}) AND decimallatitude IS NOT NULL "
         f"GROUP BY {sk}, FLOOR(decimallatitude / {RES}), FLOOR(decimallongitude / {RES})"
     )
 
@@ -173,6 +177,51 @@ def aggregate(rows, weights):
         score[c] += w
         nsp[c] += 1
     return score, nsp
+
+
+def species_totals(rows):
+    """TSV rows -> {speciesKey: records in the download}."""
+    tot = defaultdict(int)
+    for r in rows:
+        tot[int(r["specieskey"])] += int(r["n"])
+    return tot
+
+
+def count_mismatches(totals, api_counts, tol=0.05):
+    """Keys whose download total is off the search-API count by more than tol (relative) and 2 records."""
+    return {
+        k: (totals.get(k, 0), c) for k, c in api_counts.items() if abs(totals.get(k, 0) - c) > max(2, tol * c)
+    }
+
+
+def search_count(key, basis):
+    """Records of one backbone speciesKey under the SQL filters, counted by the occurrence search API."""
+    params = [
+        ("speciesKey", key),
+        ("country", "CA"),
+        ("hasGeospatialIssue", "false"),
+        ("hasCoordinate", "true"),
+        ("occurrenceStatus", "PRESENT"),
+        ("year", f"{MIN_YEAR},3000"),
+        ("limit", 0),
+    ] + [("basisOfRecord", b) for b in basis]
+    return gget(f"{GBIF}/occurrence/search?", params).get("count")
+
+
+def check_counts(rows, keys, n=N_CHECK, seed=0):
+    """Guard against silent drift between the SQL table and the search index (e.g. a taxonomy switch
+    that empties a key filter): re-count a seeded sample of crosswalk keys and refuse on mismatch."""
+    basis = [b for b in gget(f"{GBIF}/enumeration/basic/BasisOfRecord", {}) or [] if b not in EXCLUDED_BASIS]
+    if not basis:
+        raise SystemExit("could not read the BasisOfRecord enumeration from GBIF")
+    sample = random.Random(seed).sample(sorted(keys), min(n, len(keys)))
+    api = {k: search_count(k, basis) for k in sample}
+    if any(c is None for c in api.values()):
+        raise SystemExit(f"occurrence search failed for some of {sample}")
+    bad = count_mismatches(species_totals(rows), api)
+    print(f"count check: {len(api) - len(bad)}/{len(api)} species match the search API")
+    if bad:
+        raise SystemExit(f"download vs search API mismatch (download, api): {bad}; not writing the layer")
 
 
 def do_validate(sql):
@@ -246,6 +295,7 @@ def do_fetch(key):
     print(f"{len(rows)} species-cell rows; {len(score)} cells host >=1 at-risk species")
     if not score:
         raise SystemExit("no at-risk cells in the download: refusing to overwrite ca_atrisk_richness.csv")
+    check_counts(rows, weights)
     write_layer(score, nsp)
     prov = {
         "doi": info.get("doi"),

@@ -52,6 +52,7 @@ the number.
 - **What it measures:** how many of Canada's at-risk species occur in a cell — "Canada's Most Wanted."
 - **Source:** **CAN-SAR** (COSEWIC/SARA assessments, OSF DOI 10.17605/OSF.IO/E4A58, CC-BY) → the species listed **Endangered / Threatened / Special Concern**, matched to GBIF Backbone species keys (filtered through the SQL table's `gbif_classification` columns, because its plain taxon columns now hold Catalogue of Life keys), × their Canadian occurrences from **one GBIF SQL download with a DOI** (see `cluster_results/ca/ca_atrisk_provenance.json`; the name-to-key crosswalk is `cluster_results/ca/atrisk_species_keys.csv`).
 - **Occurrence filters:** Canadian records only, occurrence status present, year 1990 or later, no fossil or living (zoo, garden) specimens, no GBIF geospatial issues, coordinates present. There is deliberately no coordinate-uncertainty filter: iNaturalist publishes obscured at-risk records with large uncertainty, and a cutoff such as 10 km would drop many of them, while cells are 0.25° (~25 km) anyway.
+- **Check:** before the layer is written, the per-species totals of a seeded sample of 6 species are re-counted through the GBIF occurrence search API under the same filters; any mismatch (or an empty download) stops the build.
 - **Formula:** per cell, sum the status weights of the at-risk species recorded there —
   **Endangered = 3, Threatened = 2, Special Concern = 1** — then min–max scale to 0–1.
 - **Status:** REAL (authoritative status × real occurrences). **Caveat:** reflects *assessed*
