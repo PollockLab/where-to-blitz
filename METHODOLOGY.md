@@ -50,13 +50,14 @@ the number.
 
 ### 2. Find species at risk — `conservation`
 - **What it measures:** how many of Canada's at-risk species occur in a cell — "Canada's Most Wanted."
-- **Source:** **CAN-SAR** (COSEWIC/SARA assessments, OSF DOI 10.17605/OSF.IO/E4A58, CC-BY) →
-  521 species listed **Endangered / Threatened / Special Concern** × their **public GBIF**
-  Canadian occurrences.
+- **Source:** **CAN-SAR** (COSEWIC/SARA assessments, OSF DOI 10.17605/OSF.IO/E4A58, CC-BY) → the species listed **Endangered / Threatened / Special Concern**, matched to GBIF Backbone species keys (filtered through the SQL table's `gbif_classification` columns, because its plain taxon columns now hold Catalogue of Life keys), × their Canadian occurrences from **one GBIF SQL download with a DOI** (see `cluster_results/ca/ca_atrisk_provenance.json`; the name-to-key crosswalk is `cluster_results/ca/atrisk_species_keys.csv`).
+- **Occurrence filters:** Canadian records only, occurrence status present, year 1990 or later, no fossil or living (zoo, garden) specimens, no GBIF geospatial issues, coordinates present. There is deliberately no coordinate-uncertainty filter: iNaturalist publishes obscured at-risk records with large uncertainty, and a cutoff such as 10 km would drop many of them, while cells are 0.25° (~25 km) anyway.
+- **Check:** before the layer is written, the per-species totals of a seeded sample of 6 species are re-counted through the GBIF occurrence search API under the same filters; any mismatch (or an empty download) stops the build.
 - **Formula:** per cell, sum the status weights of the at-risk species recorded there —
   **Endangered = 3, Threatened = 2, Special Concern = 1** — then min–max scale to 0–1.
 - **Status:** REAL (authoritative status × real occurrences). **Caveat:** reflects *assessed*
   species only (CAN-SAR ~2021 snapshot; IUCN/COSEWIC under-assess invertebrates, plants, fungi).
+  Matching is at species level, so the most severe status of any listed population is applied to all records of that species (a known bias, e.g. caribou). A cell with no at-risk score means "not recorded", not "absent".
   The same all-taxa layer is applied to every group (a cell rich in at-risk species is a
   priority regardless of what you record). Validated: top cells are Canada's real hotspots
   (Point Pelee / Carolinian SW Ontario, southern Vancouver Island / Garry Oak, Okanagan).
@@ -368,7 +369,7 @@ from this offline layer; the ranking in the panel does not.
   fine-grained prediction of where threatened species occur can inadvertently aid poaching or
   collection. The `conservation` axis is therefore exposed only as a **per-cell sum of status weights
   over a 0.25° (~25 km) bin**: it shows that a cell is rich in at-risk species, never which species
-  or where within the cell. The underlying CAN-SAR x GBIF point occurrences are aggregated away in
+  or where within the cell. The underlying CAN-SAR x GBIF occurrences are aggregated to 0.25° cells inside the GBIF SQL query run by
   `build_atrisk_layer.py`; only the per-cell score reaches the public app. Coarse 25 km binning plus
   all-taxa pooling are the mitigation, and remain in force for any future finer-resolution layer.
 - All five axes are now **real** (no placeholders) and were **cross-validated against the raw
@@ -382,7 +383,7 @@ from this offline layer; the ranking in the panel does not.
 | Axis | Builder / source file | External source |
 |------|----------------------|-----------------|
 | discover, env, urgency, travel | `build_fullgrid_ca.py` | iNat density COG (Biodiversité Québec STAC), CHELSA, Hansen, Weiss 2018 |
-| conservation | `build_atrisk_layer.py`, joined in `fullgrid_fields.py` | CAN-SAR (OSF) + GBIF occurrences |
+| conservation | `build_atrisk_layer.py`, joined in `fullgrid_fields.py` | CAN-SAR (OSF) + GBIF SQL download (DOI in `ca_atrisk_provenance.json`) |
 | staleness | iNat open-data (cluster DuckDB) → `cluster_results/ca/ca_inat_metrics.csv` | iNaturalist open-data (AWS) |
 | Getting Even | `build_gettingeven.py` | per-group iNat density COGs, via the grid build; Eckert 2025 metric |
 | composite + display | `build_webapp.py` (`impact`, `recolour`) | — |
