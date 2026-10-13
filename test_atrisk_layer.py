@@ -3,6 +3,7 @@
 import csv
 import io
 
+import build_atrisk_layer as bal
 from build_atrisk_layer import RES, aggregate, build_sql, count_mismatches, species_totals
 
 HDR = "specieskey\tgi\tgj\tn\n"
@@ -52,3 +53,15 @@ def test_count_mismatches_flags_missing_and_drift():
     bad = count_mismatches({1: 100, 2: 50}, {1: 103, 2: 70, 3: 40})
     assert bad == {2: (50, 70), 3: (0, 40)}
     assert count_mismatches({1: 1}, {1: 3, 4: 0}) == {}  # within the 2-record floor
+
+
+def test_write_layer_keeps_every_cell(tmp_path, monkeypatch):
+    out = tmp_path / "atrisk.csv"
+    monkeypatch.setattr(bal, "OUT_CSV", str(out))
+    bal.write_layer({(10, -5): 4.0, (-1, 2): 2.0}, {(10, -5): 2, (-1, 2): 1})
+    got = {(int(r["gi"]), int(r["gj"])): r for r in csv.DictReader(open(out))}
+    assert set(got) == {(10, -5), (-1, 2)}
+    assert (
+        float(got[(10, -5)]["conservation_norm"]) == 1.0 and float(got[(-1, 2)]["conservation_norm"]) == 0.5
+    )
+    assert float(got[(-1, 2)]["lat"]) == -0.5 * RES and float(got[(10, -5)]["lon"]) == -4.5 * RES

@@ -311,20 +311,18 @@ def do_fetch(key):
 
 
 def write_layer(score, nsp):
-    d = json.load(open(f"{OUT_DIR}/webapp_data_All_biodiversity.json"))
-    rows = next(v for v in d.values() if isinstance(v, list))
-    raw = [score.get((int(r[0] // RES), int(r[1] // RES)), 0.0) for r in rows]
-    hi = max(raw) or 1.0
+    """One row per 0.25-deg cell holding >=1 at-risk species; fullgrid_fields.py joins on (gi, gj) and
+    treats absent cells as 0, so every lattice cell with records keeps its score."""
+    hi = max(score.values())
     with open(OUT_CSV, "w", newline="") as f:
         w = csv.writer(f)
         w.writerow(["gi", "gj", "lat", "lon", "n_species", "score_raw", "conservation_norm"])
-        for r, v in zip(rows, raw):
-            key = (int(r[0] // RES), int(r[1] // RES))
-            w.writerow([key[0], key[1], r[0], r[1], nsp.get(key, 0), f"{v:.2f}", f"{v / hi:.5f}"])
-    nz = sum(1 for v in raw if v)
-    print(
-        f"webapp cells with at-risk score: {nz}/{len(rows)} ({100 * nz / len(rows):.0f}%); max score={hi:.1f}"
-    )
+        for gi, gj in sorted(score):
+            v = score[(gi, gj)]
+            w.writerow(
+                [gi, gj, (gi + 0.5) * RES, (gj + 0.5) * RES, nsp[(gi, gj)], f"{v:.2f}", f"{v / hi:.5f}"]
+            )
+    print(f"cells with at-risk score: {len(score)}; max score={hi:.1f}")
     print(f"wrote {OUT_CSV}")
 
 
