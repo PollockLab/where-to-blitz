@@ -397,9 +397,10 @@ const I18N={
     gaptree_lookup:"Reading what's recorded…",
     gaptree_sparse:"Too few nearby records to rank groups here yet — every sighting helps fill the map.",
     gaptree_err:"Couldn’t read what's recorded just now — tap the cell again.",
+    gaptree_partial:"Partial species lists cannot reliably compare groups here.",
     pop_groups_hd:"Under-sampled groups", pop_groups_cap:"Each bar compares the group's coverage here against this cell's average across groups. A short bar means the group lags the rest.", pop_rare_hd:"Top species to record here",
     gt_dense:"Dense area: the nearby sample is capped, so these shares are approximate.",
-    gt_caveat:"iNaturalist records: an effort proxy, not a census.",
+    gt_caveat:"Public research-grade iNaturalist records, excluding threatened species and species with protected locations. Counts reflect recording effort.",
     gt_gap:"gap", gt_partial:"partial", gt_ok:"well recorded",
     gt_count:(c,n)=>`${c} here · ~${n} nearby`,   // two observed iNat record tallies, not a ratio-of-total: "X of ~Y" wrongly read as complete coverage at equality (5 of ~5). ~Y is a floor, never true richness.
     gt_switch:(g)=>`Switch the map to ${g}`,
@@ -459,12 +460,14 @@ const I18N={
     cells_loading:t=>`Loading ${t}…`,
     prospects_where_start:"Around your start", pop_go_title2:"Your destination",
     prospects_lookup:"Looking up what lives here…",
-    prospects_none:"No research-grade records here yet — you could be the first to document what lives here.",
+    prospects_none:"No matching public research-grade iNaturalist records found here.",
+    prospects_filtered:"No species suggestions are available from these records.",
+    prospects_capped:"Only part of the local species list is available. Suggestions include only species already recorded here.",
     prospects_err:"Couldn’t load species just now — tap the cell again.",
     prospects_hd:(where,n,nearby)=>`<b style="color:var(--ink)">${where}</b> · ${n} species recorded on iNaturalist. Worth looking for${nearby?' (nearby)':''}:`,
     rare:"rare nearby", gap:"gap",
-    here_count:n=>`${n} here`, near_count:n=>`${n} within ~40 km`, new_here:"new here", not_here_tag:"not here yet",
-    inat_caveat:"iNaturalist counts — what people logged, not a full census.",
+    here_count:n=>`${n} here`, near_count:n=>`${n} within ~40 km`, new_here:"no matching record", not_here_tag:"no matching record here",
+    inat_caveat:"Public research-grade iNaturalist records. Threatened species and species with protected locations are excluded. Other records or unrecorded species may exist.",
     explore_all:"Explore all on iNaturalist →", log_sighting:"Log a sighting", for_challenge:"for this challenge",
     join:"join →",
     more_challenges:"+ see all official challenges →",
@@ -546,9 +549,10 @@ const I18N={
     gaptree_lookup:"Lecture de ce qui est déjà enregistré…",
     gaptree_sparse:"Trop peu d’observations à proximité pour classer les groupes ici — chaque observation aide à combler la carte.",
     gaptree_err:"Impossible de lire ce qui est déjà enregistré pour l’instant — touchez la cellule à nouveau.",
+    gaptree_partial:"Des listes d'espèces partielles ne permettent pas de comparer les groupes ici de façon fiable.",
     pop_groups_hd:"Groupes sous-échantillonnés", pop_groups_cap:"Chaque barre compare la couverture du groupe ici à la moyenne de la cellule, tous groupes confondus. Une barre courte signale un retard.", pop_rare_hd:"Espèces à noter en priorité ici",
     gt_dense:"Zone dense&nbsp;: l'échantillon voisin est plafonné, ces parts sont approximatives.",
-    gt_caveat:"Observations iNaturalist&nbsp;: un indice d'effort, pas un inventaire.",
+    gt_caveat:"Observations publiques de qualité recherche sur iNaturalist, sans les espèces menacées ni celles dont les localisations sont protégées. Les nombres reflètent l'effort d'observation.",
     gt_gap:"lacune", gt_partial:"partielle", gt_ok:"bien documenté",
     gt_count:(c,n)=>`${c} ici · ~${n} à proximité`,
     gt_switch:(g)=>`Afficher ${g} sur la carte`,
@@ -608,12 +612,14 @@ const I18N={
     cells_loading:t=>`Chargement de ${t}…`,
     prospects_where_start:"Près de votre départ", pop_go_title2:"Votre destination",
     prospects_lookup:"Recherche de ce qui vit ici…",
-    prospects_none:"Aucune observation de qualité recherche ici pour l'instant — vous pourriez être la première personne à documenter ce qui vit ici.",
+    prospects_none:"Aucune observation publique de qualité recherche sur iNaturalist ne correspond aux critères ici.",
+    prospects_filtered:"Aucune suggestion d'espèce n'est disponible à partir de ces observations.",
+    prospects_capped:"Seule une partie de la liste locale des espèces est disponible. Les suggestions incluent uniquement les espèces déjà enregistrées ici.",
     prospects_err:"Impossible de charger les espèces pour l’instant — touchez la cellule à nouveau.",
     prospects_hd:(where,n,nearby)=>`<b style="color:var(--ink)">${where}</b> · ${n} espèces observées sur iNaturalist. À surveiller${nearby?' (à proximité)':''} :`,
     rare:"rare à proximité", gap:"lacune",
-    here_count:n=>`${n} ici`, near_count:n=>`${n} dans ~40 km`, new_here:"nouveau ici", not_here_tag:"pas encore ici",
-    inat_caveat:"Nombres iNaturalist — ce qui a été noté, pas un inventaire complet.",
+    here_count:n=>`${n} ici`, near_count:n=>`${n} dans ~40 km`, new_here:"aucune obs. retenue", not_here_tag:"aucune observation retenue ici",
+    inat_caveat:"Observations publiques de qualité recherche sur iNaturalist. Les espèces menacées et celles dont les localisations sont protégées sont exclues. D'autres observations ou des espèces non documentées peuvent exister.",
     explore_all:"Tout explorer sur iNaturalist →", log_sighting:"Noter une observation", for_challenge:"pour ce défi",
     join:"se joindre →",
     more_challenges:"+ voir tous les défis officiels →",
@@ -927,55 +933,60 @@ async function fetchProspects(lat,lon,whereKey,opts){
   const where=t(WHERE_LBL[whereKey]||'here');
   const pr=toPopup?spEl:document.getElementById('prospects'); if(!pr) return;   // popup closed -> nothing to fill
   const msg=s=>toPopup?'<div class="popsec">'+s+'</div>':'<div class="hd">'+s+'</div>';   // .hd is dark-on-dark (sidebar); .popsec reads on the light popup
+  const note=s=>(toPopup?'<div class="popcap">':'<div style="margin-top:8px;font-size:10.5px;color:var(--mut);line-height:1.35">')+s+'</div>';
   if(!toPopup) pr.dataset.idle='0';
   pr.innerHTML=toPopup?'<div class="popsec">'+t('pop_rare_hd')+'</div><div class="popcap">'+t('prospects_lookup')+'</div>':msg(t('prospects_lookup'));
   if(toPopup) fetchGapTree(lat,lon,gapsEl,resM);   // the coverage-by-group tree only lives in the popup now
   const T_here=n=>t('here_count',n),T_near=n=>t('near_count',n);
   const L_rare=t('rare'),L_new=t('new_here'),L_notHere=t('not_here_tag');
   const ic=ICONIC[state.taxon]||'';
-  const q=(b)=>`https://api.inaturalist.org/v1/observations/species_counts?swlat=${b.swlat}&nelat=${b.nelat}&swlng=${b.swlng}&nelng=${b.nelng}&quality_grade=research&taxon_geoprivacy=open&threatened=false&per_page=500&order_by=count`+(ic?`&iconic_taxa=${ic}`:'')+inatLocale();
+  const q=(b)=>`https://api.inaturalist.org/v1/observations/species_counts?swlat=${b.swlat}&nelat=${b.nelat}&swlng=${b.swlng}&nelng=${b.nelng}&quality_grade=research&geoprivacy=open&taxon_geoprivacy=open&threatened=false&per_page=500&order_by=count`+(ic?`&iconic_taxa=${ic}`:'')+inatLocale();
   const mxP=surfaceFilter(lat,lon,resM);   // in flight alongside the cell query; only the neighbourhood call waits on it
   try{
     const j=await jget(q(box));
     if(myseq!==prospectSeq)return;
-    const total=j.total_results||0;
+    const totalKnown=Number.isInteger(j.total_results)&&j.total_results>=(j.results||[]).length;
+    const total=totalKnown?j.total_results:(j.results||[]).length;
+    const complete=totalKnown&&total===(j.results||[]).length;
+    const cap=complete?'':note(t('prospects_capped')),caveat=note(t('inat_caveat'));
     // Issue #48: rank by RECORDING VALUE, not global iNaturalist popularity. We always pull the ~40 km
     // neighbourhood so every candidate carries a regional count, which lets us prefer (a) species present
     // nearby but not yet in this cell (a new-to-cell record adds the most) and (b) species genuinely
     // uncommon *around here* (each record is more informative) — instead of sorting by global
     // observations_count, which is photo popularity, not value. Best-effort: if the neighbourhood call
     // fails, reg falls back to the local count and the ranking degrades to a within-cell order.
-    const cell=(j.results||[]).filter(r=>r.count>=2 && r.taxon && r.taxon.default_photo && !DOMESTIC.has(r.taxon.name));
+    const recorded=(j.results||[]).filter(r=>r.count>0&&r.taxon&&r.taxon.id!=null);
+    const have=new Set(recorded.map(r=>r.taxon.id));   // presence is evidence, independent of the display filters
+    const cell=recorded.filter(r=>r.count>=2 && r.taxon.default_photo && !DOMESTIC.has(r.taxon.name));
     const k=await jget(q({swlat:lat-0.5,nelat:lat+0.5,swlng:lon-0.5,nelng:lon+0.5})+(await mxP)).catch(()=>null);
     if(myseq!==prospectSeq)return;
     const reg={}; ((k&&k.results)||[]).forEach(r=>{if(r.taxon)reg[r.taxon.id]=r.count;});
-    const have=new Set(cell.map(r=>r.taxon.id));
-    // new-to-cell: present in the ~40 km neighbourhood but not recorded in the cell itself
-    const nearbyOnly=((k&&k.results)||[]).filter(r=>r.taxon&&r.taxon.default_photo&&r.count>=3&&!have.has(r.taxon.id)&&!DOMESTIC.has(r.taxon.name))
-      .map(r=>({count:0,taxon:r.taxon,_here:false,reg:r.count}));
-    let res=cell.map(r=>({count:r.count,taxon:r.taxon,_here:true,reg:Math.max(r.count,reg[r.taxon.id]||0)})).concat(nearbyOnly);
+    // Only a complete local list can establish no record here. A capped page may omit a present taxon.
+    const nearbyOnly=(complete?((k&&k.results)||[]):[]).filter(r=>r.taxon&&r.taxon.default_photo&&r.count>=3&&!have.has(r.taxon.id)&&!DOMESTIC.has(r.taxon.name))
+      .map(r=>({count:0,taxon:r.taxon,_here:false,reg:r.count,_near:r.count}));
+    let res=cell.map(r=>({count:r.count,taxon:r.taxon,_here:true,reg:Math.max(r.count,reg[r.taxon.id]||0),_near:reg[r.taxon.id]||null})).concat(nearbyOnly);
     const nearby=nearbyOnly.length>0;
-    if(!res.length){pr.innerHTML=msg(t('prospects_none'));return;}
     res=res.filter(r=>(r.taxon.observations_count||0)>40);                         // drop unverifiable global one-offs (data quality, not the ranking signal)
+    if(!res.length){pr.innerHTML=msg(t(complete&&total===0?'prospects_none':'prospects_filtered'))+cap+caveat;return;}
     // lexicographic priority: (1) new-to-cell before already-here; (2) bigger local gap first
     // (lower local/regional share); (3) tie-break by regional scarcity (fewer nearby records).
     const share=r=>r._here?(r.count/Math.max(1,r.reg)):0;
     res.sort((a,b)=>((a._here?1:0)-(b._here?1:0))||(share(a)-share(b))||(a.reg-b.reg));
-    const badge=r=>r._here?(r.reg<=3?`<span class="rare">${L_rare}</span>`:''):`<span class="first">${L_new}</span>`;
-    const ctline=r=>`${r._here?T_here(r.count):L_notHere} · ${T_near(r.reg)}`;
+    const badge=r=>r._here?(r._near!==null&&r._near<=3?`<span class="rare">${L_rare}</span>`:''):`<span class="first">${L_new}</span>`;
+    const ctline=r=>`${r._here?T_here(r.count):L_notHere}${r._near===null?'':' · '+T_near(r._near)}`;
     if(toPopup){
       // Issue #48: the four highest-priority species to record here, side by side, no horizontal scroll.
-      const pbadge=r=>r._here?(r.reg<=3?`<span class="bdg rare">${L_rare}</span>`:''):`<span class="bdg new">${L_new}</span>`;
+      const pbadge=r=>r._here?(r._near!==null&&r._near<=3?`<span class="bdg rare">${L_rare}</span>`:''):`<span class="bdg new">${L_new}</span>`;
       pr.innerHTML='<div class="popsec">'+t('pop_rare_hd')+'</div><div class="popgrid">'+res.slice(0,4).map(r=>{const tx=r.taxon;
-        return `<a href="https://www.inaturalist.org/taxa/${tx.id}" target="_blank" rel="noopener" title="${esc(tx.name)}"><img src="${safeImg(tx.default_photo.square_url)}" loading="lazy" alt="">${pbadge(r)}<div class="nm">${esc(tx.preferred_common_name||tx.name)}</div><div class="ct">${ctline(r)}</div></a>`;}).join('')+'</div>';
+        return `<a href="https://www.inaturalist.org/taxa/${tx.id}" target="_blank" rel="noopener" title="${esc(tx.name)}"><img src="${safeImg(tx.default_photo.square_url)}" loading="lazy" alt="">${pbadge(r)}<div class="nm">${esc(tx.preferred_common_name||tx.name)}</div><div class="ct">${ctline(r)}</div></a>`;}).join('')+'</div>'+cap+caveat;
       return;
     }
     res=res.slice(0,6);
     const ex=`https://www.inaturalist.org/observations?subview=map&swlat=${lat-HH}&nelat=${lat+HH}&swlng=${lon-HH}&nelng=${lon+HH}&quality_grade=research`;
-    pr.innerHTML=`<div class="hd">${t('prospects_hd','<b style="color:var(--ink)">'+(where||t('here'))+'</b>',total.toLocaleString(LANG==='fr'?'fr-CA':'en-CA'),nearby)}</div>`+
+    pr.innerHTML=`<div class="hd">${t('prospects_hd','<b style="color:var(--ink)">'+(where||t('here'))+'</b>',(totalKnown?'':'≥')+total.toLocaleString(LANG==='fr'?'fr-CA':'en-CA'),nearby)}</div>`+
       '<div class="prospects">'+res.map(r=>{const tx=r.taxon;
         return `<a class="sp" href="https://www.inaturalist.org/taxa/${tx.id}" target="_blank" rel="noopener" title="${esc(tx.name)}"><img src="${safeImg(tx.default_photo.square_url)}" loading="lazy" alt=""><div class="nm">${esc(tx.preferred_common_name||tx.name)}${badge(r)}</div><div class="ct">${ctline(r)}</div></a>`;}).join('')+'</div>'+
-      `<div style="margin-top:8px;font-size:10.5px;color:var(--mut);line-height:1.35">${t('inat_caveat')}</div>`+
+      cap+caveat+
       `<div style="margin-top:7px;font-size:11px"><a href="${ex}" target="_blank" rel="noopener" style="color:var(--acc)">${t('explore_all')}</a> &nbsp;·&nbsp; <a href="https://www.inaturalist.org/observations/new" target="_blank" rel="noopener" style="color:var(--gd)">${t('log_sighting')}</a> &nbsp;·&nbsp; <a href="https://www.inaturalist.org/projects/${state.project}" target="_blank" rel="noopener" style="color:var(--mut)">${t('for_challenge')}</a></div>`;
   }catch(e){
     // Only the primary cell query (and any other un-isolated step) can land here -- the widening
@@ -1022,22 +1033,16 @@ async function fetchGapTree(lat,lon,el,resM){
   const R=0.5,GR=t('group'),groups=Object.keys(ICONIC);
   const inner=cellBoundsForRes(lat,lon,resM||25000);
   const box=(b)=>`swlat=${b.swlat}&nelat=${b.nelat}&swlng=${b.swlng}&nelng=${b.nelng}`;
-  const base='https://api.inaturalist.org/v1/observations/species_counts?quality_grade=research&taxon_geoprivacy=open&threatened=false&order_by=count';
+  const base='https://api.inaturalist.org/v1/observations/species_counts?quality_grade=research&geoprivacy=open&taxon_geoprivacy=open&threatened=false&order_by=count';
   try{
-    // Two calls total (issue #56): the cell numerator and the neighbourhood denominator are each ONE
-    // species_counts page aggregated by group client-side. The old version made one total_results call
-    // per iconic group (~10 extra requests on EVERY tap), which flooded iNaturalist's per-IP rate limit
-    // during normal browsing and left the popup stuck on "Reading taxonomic coverage…". The neighbourhood
-    // count is now a top-500 sample per box rather than exact per-group totals -- approximate for very
-    // rich areas (a dense group can cap at its share of 500), fine as a coverage heuristic and revisitable
-    // when the goal calculations are finalised (#49). Each leg swallows its own error.
-    let cellFail=false,nbFail=false;
-    const cellP=jget(`${base}&${box(inner)}&per_page=500`).catch(()=>{cellFail=true;return{results:[]};});
-    const nbP=surfaceFilter(lat,lon,resM||25000).then(mx=>jget(`${base}&swlat=${lat-R}&nelat=${lat+R}&swlng=${lon-R}&nelng=${lon+R}&per_page=500${mx}`)).catch(()=>{nbFail=true;return{results:[]};});
+    // Keep two calls total (issue #56): per-group requests flooded iNaturalist's per-IP rate limit.
+    // Both boxes need complete species lists. An omitted group in a capped page is unknown, not zero.
+    const cellP=jget(`${base}&${box(inner)}&per_page=500`);
+    const nbP=surfaceFilter(lat,lon,resM||25000).then(mx=>jget(`${base}&swlat=${lat-R}&nelat=${lat+R}&swlng=${lon-R}&nelng=${lon+R}&per_page=500${mx}`));
     const [cj,nj]=await Promise.all([cellP,nbP]);
     if(myseq!==gapSeq)return;
-    // total outage (both calls failed) -> "tap again", not a misleading "too few records here".
-    if(cellFail&&nbFail){paintGapTree(el,null);return;}
+    const complete=j=>j&&Array.isArray(j.results)&&Number.isInteger(j.total_results)&&j.total_results===j.results.length;
+    if(!complete(cj)||!complete(nj)){el.innerHTML=gtHead()+'<div class="popcap">'+t('gaptree_partial')+'</div>';return;}
     const cell={};(cj.results||[]).forEach(r=>{const g=r.taxon&&r.taxon.iconic_taxon_name;if(g)cell[g]=(cell[g]||0)+1;});
     const nbhd={};(nj.results||[]).forEach(r=>{const g=r.taxon&&r.taxon.iconic_taxon_name;if(g)nbhd[g]=(nbhd[g]||0)+1;});
     const elig=groups.filter(g=>nbhd[g]>=3&&GR[g]);
@@ -1045,9 +1050,8 @@ async function fetchGapTree(lat,lon,el,resM){
     const rate=sumC>0?sumC/sumN:0;   // this cell's overall coverage rate; normalise so an avg group sits at 1
     const rows=elig.map(g=>{const c=Math.min(cell[g]||0,nbhd[g]);return{g,c,n:nbhd[g],cov:rate>0?(c/nbhd[g])/rate:0};}).sort((a,b)=>a.cov-b.cov);
     if(myseq!==gapSeq)return;
-    const dense=(cj.results||[]).length>=500||(nj.results||[]).length>=500;
-    GT_CACHE[ck]=rows; GT_DENSE[ck]=dense;
-    paintGapTree(el,rows,dense);
+    GT_CACHE[ck]=rows; GT_DENSE[ck]=false;
+    paintGapTree(el,rows,false);
   }catch(e){if(myseq===gapSeq)paintGapTree(el,null);}   // do not cache failures -- next tap retries
 }
 
