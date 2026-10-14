@@ -79,8 +79,12 @@ jobs:
         with:
           # ~227 MB of travel time, bioclim and forest loss, all deterministic given these
           # three scripts and the release they pull from. Regenerating them costs ~22 min.
-          path: cluster_results
-          key: inputs-ca-grid-inputs-v1-${{ hashFiles('prepare_inputs.sh', 'clip_chelsa_ca.py', 'build_hansen_ca.py') }}
+          # Tracked at-risk data must come from checkout, never an older input cache.
+          path: |
+            cluster_results/ca_travel_time.tif
+            cluster_results/ca_bioclim.tif
+            cluster_results/ca_forestloss.tif
+          key: inputs-ca-grid-inputs-v2-${{ hashFiles('prepare_inputs.sh', 'clip_chelsa_ca.py', 'build_hansen_ca.py') }}
       - name: Install deps
         if: steps.inputs-cache.outputs.cache-hit != 'true'
         run: pip install -r requirements.txt
@@ -239,7 +243,8 @@ jobs:
           sha4=$(git log -n1 --pretty=format:%H -- rebuild_grid.sh 2>/dev/null || echo)
           sha5=$(git log -n1 --pretty=format:%H -- build_gettingeven.py 2>/dev/null || echo)
           sha6=$(git log -n1 --pretty=format:%H -- build_provenance.py 2>/dev/null || echo)
-          INPUTS_HASH=$(printf "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n" "$REL" "$breaks_content" "$sha1" "$sha2" "$sha3" "$sha4" "$sha5" "$sha6" | sha256sum | awk '{print $1}')
+          sha7=$(sha256sum cluster_results/ca/ca_atrisk_richness.csv cluster_results/ca/ca_atrisk_provenance.json | sha256sum | awk '{print $1}')
+          INPUTS_HASH=$(printf "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n" "$REL" "$breaks_content" "$sha1" "$sha2" "$sha3" "$sha4" "$sha5" "$sha6" "$sha7" | sha256sum | awk '{print $1}')
           echo "inputs_hash=$INPUTS_HASH" >> $GITHUB_OUTPUT
           echo "INPUTS_HASH=$INPUTS_HASH" >> $GITHUB_ENV
       - name: Check for existing rebuilt artifact
