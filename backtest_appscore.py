@@ -374,6 +374,8 @@ def analyse(name, df, K=5, data_dir=CA, input_path=None, outcome_method="exact")
             "backtest_appscore.py": sha256(__file__),
             "voi_backtest.py": sha256(vb.__file__),
             "goal_presets.py": sha256(Path(__file__).with_name("goal_presets.py")),
+            "grid_lattice.py": sha256(Path(__file__).with_name("grid_lattice.py")),
+            "grid_schema.py": sha256(Path(__file__).with_name("grid_schema.py")),
         },
         "versions": {"python": sys.version.split()[0], "numpy": np.__version__, "pandas": pd.__version__,
                      "pyproj": pyproj.__version__, "PROJ": pyproj.proj_version_str},

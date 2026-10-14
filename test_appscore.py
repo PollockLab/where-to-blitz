@@ -301,6 +301,8 @@ def test_outcome_and_retrospective_limits_are_recorded(app_dir, monkeypatch):
     monkeypatch.setattr(vb, "N_PERM", 3)
     out, _ = bas.analyse("Amphibia", observation_frame(), data_dir=app_dir)
     run = out["run"]
+    assert run["source_sha256"]["grid_lattice.py"] == bas.sha256(ROOT / "grid_lattice.py")
+    assert run["source_sha256"]["grid_schema.py"] == bas.sha256(ROOT / "grid_schema.py")
     assert run["outcome"]["unit"] == "iNaturalist taxon_id"
     assert run["outcome"]["baseline"] == "sampled project observations with observed_on before split"
     assert run["outcome"]["ranks"] == ["species", "subspecies", "variety", "form", "hybrid"]
