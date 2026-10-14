@@ -46,7 +46,7 @@ OBJ = [
 # inputs (Make a Splash, Missing Species in Canada, Too Hot to Handle, KBA-assessment lists) are
 # not all wired yet; until the lab finalises the calculation, each goal is a TEMPORARY combination
 # of the five real axes already computed [discover, conservation, env, staleness, urgency]:
-#   Spatial Gap       = iNaturalist under-sampling only (inverse density; #89: no other factors)
+#   Spatial Gap       = the recording-gap axis (density rank, climate ordering within zero-density cells)
 #   Species discovery = under-sampling + recent-vs-all-time density ("Revisit the Past")
 #   Conservation      = COSEWIC/SARA at risk + recently changed habitat ("Too Hot to Handle")
 # Getting Even is the separate categorical layer, added as the 'ge' option in the dropdown.
