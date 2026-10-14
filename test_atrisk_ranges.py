@@ -3,11 +3,15 @@
 import io
 import json
 
-from shapely.geometry import Polygon, box, mapping
+import numpy as np
+import pytest
+import shapely
+from shapely.geometry import GeometryCollection, LineString, MultiPoint, Point, Polygon, box, mapping
 from shapely.ops import transform
 
 from atrisk_ranges import (
     assign_ranges,
+    buffered_union,
     dfo_join_key,
     is_population,
     listing_entries,
@@ -45,6 +49,56 @@ def run(tsv, listings, crosswalk, buffer_m=0):
 
 
 CW = {"Sp": (("K",), ""), "Sp sub": (("K",), "SUB")}
+
+
+@pytest.mark.parametrize("count", [2, 1024, 1025])
+def test_buffered_union_matches_original_geometry_and_point_masks(count):
+    parts = [box(4 * (i % 40), 4 * (i // 40), 4 * (i % 40) + 1, 4 * (i // 40) + 1) for i in range(count)]
+    expected = shapely.union_all(parts).buffer(1)
+    got = buffered_union(parts, 1)
+    assert got.is_valid and not got.is_empty
+    assert got.bounds == expected.bounds
+    assert expected.symmetric_difference(got).area < expected.area * 1e-12
+    rng = np.random.default_rng(30114)
+    xmin, ymin, xmax, ymax = expected.bounds
+    points = shapely.points(rng.uniform([xmin, ymin], [xmax, ymax], size=(10_000, 2)))
+    shapely.prepare(expected)
+    shapely.prepare(got)
+    np.testing.assert_array_equal(shapely.contains(expected, points), shapely.contains(got, points))
+
+
+def test_fragmented_buffer_preserves_nested_collection_lines_and_points():
+    polygon = Polygon([(0, 0), (8, 0), (8, 8), (0, 8)], [[(2, 2), (6, 2), (6, 6), (2, 6)]])
+    fillers = MultiPoint([(100 + i * 4, 0) for i in range(1025)])
+    nested = GeometryCollection(
+        [
+            fillers,
+            GeometryCollection([polygon, LineString([(20, 0), (20, 8)])]),
+            GeometryCollection(),
+        ]
+    )
+    parts = [nested, Point(30, 4)]
+    expected = shapely.union_all(parts).buffer(0.5)
+    got = buffered_union(parts, 0.5)
+    assert expected.symmetric_difference(got).area < expected.area * 1e-12
+    assert got.contains(Point(20.25, 4)) and got.contains(Point(30.25, 4))
+    assert not got.contains(Point(4, 4))
+    x = np.array([0.25, 4, 20.25, 30.25, 32, 100.25, 4196.25])
+    y = np.array([4, 4, 4, 4, 4, 0, 0])
+    np.testing.assert_array_equal(shapely.contains_xy(expected, x, y), shapely.contains_xy(got, x, y))
+
+
+@pytest.mark.parametrize("distance", [0, -0.25])
+def test_nonpositive_fragmented_buffer_unions_before_buffering(distance):
+    # Eroding each touching square separately would introduce gaps in the continuous strip.
+    parts = [box(i, 0, i + 1, 1) for i in range(1025)]
+    got = buffered_union(parts, distance)
+    assert got.equals(shapely.union_all(parts).buffer(distance))
+    assert got.contains(Point(512, 0.5))
+
+
+def test_empty_range_buffer_remains_empty():
+    assert buffered_union([GeometryCollection()], 1).is_empty
 
 
 def test_loaded_ranges_are_valid_after_projection(tmp_path):

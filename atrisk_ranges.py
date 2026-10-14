@@ -202,6 +202,43 @@ def load_range_geoms(path=RANGES):
     }  # fmt: skip
 
 
+def buffered_union(geometries, buffer_m):
+    """Buffer a range union, bounding overlay work for positive buffers of >1024 atomic components."""
+    import shapely
+
+    if buffer_m <= 0:
+        return shapely.union_all(geometries).buffer(buffer_m)
+    parts = np.asarray(geometries, dtype=object)
+    while np.any(shapely.get_type_id(parts) >= 4):
+        parts = shapely.get_parts(parts)
+    parts = parts[~shapely.is_empty(parts)]
+    if len(parts) <= 1024:
+        return shapely.union_all(geometries).buffer(buffer_m)
+
+    # Morton order keeps nearby components together so chunk unions remove local overlaps early.
+    bounds = shapely.bounds(parts)
+    centers = (bounds[:, :2] + bounds[:, 2:]) / 2
+    minimum = centers.min(axis=0)
+    extent = centers.max(axis=0) - minimum
+    coords = ((centers - minimum) / np.maximum(extent, 1) * 65535).astype(np.uint64)
+
+    def spread(v):
+        v = (v | (v << 8)) & np.uint64(0x00FF00FF)
+        v = (v | (v << 4)) & np.uint64(0x0F0F0F0F)
+        v = (v | (v << 2)) & np.uint64(0x33333333)
+        return (v | (v << 1)) & np.uint64(0x55555555)
+
+    key = spread(coords[:, 0]) | (spread(coords[:, 1]) << 1)
+    parts = parts[np.argsort(key, kind="stable")]
+    chunk_size = 512
+    chunks = [
+        # BaseGeometry.buffer uses quad_segs=16; the vectorized default is 8.
+        shapely.union_all(shapely.buffer(parts[lo : lo + chunk_size], buffer_m, quad_segs=16))
+        for lo in range(0, len(parts), chunk_size)
+    ]
+    return shapely.union_all(chunks)
+
+
 def listing_entries(listings, crosswalk, geoms, buffer_m=BUFFER_M):
     """Listing rows + crosswalk {name: (keys, infra key)} + {range id: geometry} -> entries for score_cells:
     dicts with id, weight, keys (species and alias keys), infra (keys of the listed infraspecific taxon, empty
@@ -223,7 +260,7 @@ def listing_entries(listings, crosswalk, geoms, buffer_m=BUFFER_M):
             missing = [i for i in r["range_ids"] if i not in geoms]
             if missing:
                 raise SystemExit(f"listing {r['listing_id']}: range ids {missing} not in {RANGES}")
-            geom = shapely.union_all([geoms[i] for i in r["range_ids"]]).buffer(buffer_m)
+            geom = buffered_union([geoms[i] for i in r["range_ids"]], buffer_m)
             shapely.prepare(geom)
         if is_population(r["common_name"]):
             infra = set()
