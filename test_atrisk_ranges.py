@@ -1,17 +1,21 @@
 """Offline tests of the listing range clip: point in range, buffer, max weight, infraspecific records, no range."""
 
 import io
+import json
 
-from shapely.geometry import box
+from shapely.geometry import Polygon, box, mapping
+from shapely.ops import transform
 
 from atrisk_ranges import (
     assign_ranges,
     dfo_join_key,
     is_population,
     listing_entries,
+    load_range_geoms,
     match_dfo,
     read_columns,
     score_cells,
+    transformer,
 )
 
 HDR = "specieskey\tacceptedtaxonkey\tyi\txi\tn\n"
@@ -41,6 +45,24 @@ def run(tsv, listings, crosswalk, buffer_m=0):
 
 
 CW = {"Sp": (("K",), ""), "Sp sub": (("K",), "SUB")}
+
+
+def test_loaded_ranges_are_valid_after_projection(tmp_path):
+    # Reduced from DFO dfo:363: a thin hole crosses the shell after projection.
+    geographic = Polygon(
+        [(-76.444, 44.088), (-76.797, 43.631), (-79.657, 43.223)],
+        [[(-76.992, 43.835), (-76.641, 43.834), (-76.641, 43.835)]],
+    )
+    assert geographic.is_valid
+    projected = transform(transformer(), geographic)
+    assert not projected.is_valid
+    path = tmp_path / "ranges.geojson"
+    path.write_text(json.dumps({"features": [{"properties": {"range_id": "dfo:363"},
+                                           "geometry": mapping(geographic)}]}))  # fmt: skip
+
+    loaded = load_range_geoms(path)["dfo:363"]
+    assert loaded.is_valid and not loaded.is_empty
+    assert loaded.bounds == projected.bounds
 
 
 def test_record_counts_only_inside_range():

@@ -196,8 +196,8 @@ def load_range_geoms(path=RANGES):
         feats = json.load(f)["features"]
     project = transformer()
     return {
-        ft["properties"]["range_id"]: shapely.transform(shape(ft["geometry"]), lambda xy: np.column_stack(
-            project(xy[:, 0], xy[:, 1])))
+        ft["properties"]["range_id"]: shapely.make_valid(shapely.transform(
+            shape(ft["geometry"]), lambda xy: np.column_stack(project(xy[:, 0], xy[:, 1]))))
         for ft in feats
     }  # fmt: skip
 
