@@ -31,7 +31,7 @@ def _run_popup(responses, action, lang="en"):
         + src[src.index("function t(") : src.index("// indexed-name helpers")]
     )
     script += r"""
-const input=JSON.parse(process.argv[1]), calls=[];
+const input=JSON.parse(require('node:fs').readFileSync(0,'utf8')), calls=[];
 class Element{
   constructor(){this.innerHTML='';this.dataset={};}
   querySelector(selector){
@@ -69,7 +69,8 @@ const jget=async url=>{
     script += _function(src, "paintGapTree") + _function(src, "fetchGapTree")
     script += "\n(async()=>{" + action + "})().catch(e=>{console.error(e);process.exit(1);});"
     result = subprocess.run(
-        ["node", "-e", script, "--", json.dumps({"responses": responses})],
+        ["node", "-e", script],
+        input=json.dumps({"responses": responses}),
         capture_output=True,
         text=True,
         check=True,
