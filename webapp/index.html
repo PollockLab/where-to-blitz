@@ -125,12 +125,14 @@ input[type=range]{width:100%;accent-color:var(--acc);margin:0}
 .foot{color:var(--mut);font-size:12.5px;line-height:1.5;margin-top:8px}
 .sronly{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 #celltable{max-height:300px;overflow:auto;margin-top:6px}
+#celltable:focus-within{position:static;width:auto;height:auto;margin:6px 0 0;clip:auto;white-space:normal}
+#celltable:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 #celltable table{width:100%;border-collapse:collapse;font-size:12.5px}
 #celltable caption{text-align:left;color:var(--mut);font-size:11px;margin-bottom:5px;caption-side:top}
 #celltable th,#celltable td{text-align:left;padding:3px 6px;border-bottom:1px solid #243446}
 #celltable th{color:var(--mut);font-weight:700}
 #celltable tbody tr{cursor:pointer}
-#celltable tbody tr:hover,#celltable tbody tr:focus-visible{background:#16263a;outline:2px solid var(--acc);outline-offset:-2px}
+#celltable tbody tr:hover,#celltable tbody tr:focus-visible{background:#16263a;color:#e8eef5;outline:2px solid var(--acc);outline-offset:-2px}
 details.adv{border-top:1px solid #243446;margin-top:8px}
 details.adv>summary{cursor:pointer;list-style:none;padding:10px 0 5px;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);font-weight:700;display:flex;align-items:center;gap:7px}
 details.adv>summary::-webkit-details-marker{display:none}
@@ -138,13 +140,13 @@ details.adv>summary::before{content:"▸";font-size:11.5px;display:inline-block;
 details.adv[open]>summary::before{transform:rotate(90deg)}
 details.adv>summary:hover{color:var(--ink)}
 .maplibregl-popup{z-index:1150}
-.maplibregl-popup-content{font-size:15px;padding:12px 16px 14px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.25);max-height:calc(75dvh - 64px);overflow-y:auto;overscroll-behavior:contain}.maplibregl-popup-content b{color:#0a2a44}.maplibregl-popup-close-button{font-size:18px;padding:0 5px;color:#667}
+.maplibregl-popup-content{font-size:15px;padding:12px 16px 14px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.25);max-height:calc(75dvh - 64px);overflow-y:auto;overscroll-behavior:contain}.maplibregl-popup-content b{color:#0a2a44}.maplibregl-popup-close-button{min-width:26px;min-height:26px;font-size:18px;padding:0 5px;color:#667}
 .maplibregl-popup-content:has(>.popbody){display:grid}
 .maplibregl-popup-content>.popbody{grid-area:1/1;min-width:0}
 .maplibregl-popup-content:has(>.popbody)>.maplibregl-popup-close-button{grid-area:1/1;position:sticky;top:0;align-self:start;justify-self:end;z-index:1;background:#fff}
 /* Issue #44: per-cell coverage + rare species live in the popup. Headings, a scroll-capped group list, and a 4-up species grid (no horizontal scroll). */
 .popsec{font-size:12.5px;font-weight:700;color:#0a2a44;margin:9px 0 5px}
-.popsec:first-child{margin-top:1px;padding-right:22px}
+.popsec:first-child{margin-top:1px;padding-right:28px}
 .popscroll{max-height:150px;overflow:hidden auto}
 .popscroll .gaptree{margin-top:0}
 /* #44 popup is ~258px wide: tighten the row so the coverage bar stays visible and the name never clips/side-scrolls (status word dropped from the count — see paintGapTree). */
@@ -385,6 +387,7 @@ const I18N={
     rank_no_cells:"No cells are loaded for a national priority ranking.",
     aria_map:"Interactive priority map (screen-reader users: use the Top cells list)", aria_map_view:"Map view",
     aria_map_legend:"Map legend", aria_close:"Close",
+    aria_zoom_in:"Zoom in", aria_zoom_out:"Zoom out", aria_attribution:"Toggle attribution", aria_popup_close:"Close popup",
     rank_aria:(i,la,lo,sc)=>`Rank ${i}: latitude ${la}, longitude ${lo}, score ${sc} of 100`,
     prio_map_aria:(grp,goal)=>`${grp}, ${goal} priority map`,
     vancouver:"Vancouver",
@@ -546,6 +549,7 @@ const I18N={
     rank_no_cells:"Aucune cellule n'est chargée pour un classement national des priorités.",
     aria_map:"Carte de priorité interactive (lecteurs d'écran : utilisez la liste des meilleures cellules)", aria_map_view:"Vue de la carte",
     aria_map_legend:"Légende de la carte", aria_close:"Fermer",
+    aria_zoom_in:"Agrandir la carte", aria_zoom_out:"Réduire la carte", aria_attribution:"Afficher l'attribution", aria_popup_close:"Fermer la fenêtre de la cellule",
     rank_aria:(i,la,lo,sc)=>`Rang ${i} : latitude ${la}, longitude ${lo}, score ${sc} sur 100`,
     prio_map_aria:(grp,goal)=>`${grp}, ${goal} carte de priorité`,
     vancouver:"Vancouver",
@@ -723,6 +727,7 @@ function applyI18N(){
   document.querySelectorAll('[data-i18n-title]').forEach(el=>{const v=t(el.getAttribute('data-i18n-title'));if(v!=null)el.title=v;});
   document.querySelectorAll('[data-i18n-aria]').forEach(el=>{const v=t(el.getAttribute('data-i18n-aria'));if(v!=null)el.setAttribute('aria-label',v);});
   const lb=document.getElementById('langbtn');if(lb)lb.textContent=(LANG==='en'?'FR':'EN');   // #81: button shows the language you switch TO, not the active one
+  localizeMapControls();
 }
 function relabelDynamic(){
   // re-render the JS-built widgets whose static strings come from the dict
@@ -1154,11 +1159,45 @@ map.on('load',()=>{
 });
 // Esc / map-click popup close -> deselect (issue #16). MapLibre has no global popup events, so each popup we
 // open is wired to onPopupOpen/onPopupClose and tracked in curPopup; map clicks auto-close (closeOnClick).
-let _ppf=null,curPopup=null;
-function onPopupOpen(){_ppf=document.activeElement;}
-function onPopupClose(){try{if(_ppf&&_ppf.focus)_ppf.focus();}catch(e){}_ppf=null;curPopup=null;
-  if(!_reselect&&state.view==='explore'&&(destMarker||destCell))clearSelection();}
-function wirePopup(p){p.on('open',onPopupOpen);p.on('close',onPopupClose);curPopup=p;return p;}
+let curPopup=null;
+function localizeMapControls(){
+  for(const [selector,key] of [['.maplibregl-ctrl-zoom-in','aria_zoom_in'],['.maplibregl-ctrl-zoom-out','aria_zoom_out'],
+    ['.maplibregl-ctrl-attrib-button','aria_attribution'],['.maplibregl-popup-close-button','aria_popup_close']]){
+    document.querySelectorAll(selector).forEach(el=>{el.setAttribute('aria-label',t(key));el.title=t(key);});
+  }
+}
+function popupFocusOrigin(){
+  const element=document.activeElement,row=element&&element.closest&&element.closest('#celltable tr[data-la]');
+  return {element:element,row:row?{lat:row.dataset.la,lon:row.dataset.lo}:null};
+}
+function focusPopupTarget(el){
+  if(!el||!el.isConnected||typeof el.focus!=='function'||!el.getClientRects().length)return false;
+  const style=getComputedStyle(el);if(style.visibility==='hidden'||style.display==='none')return false;
+  el.focus();return document.activeElement===el;
+}
+function restorePopupFocus(origin){
+  if(focusPopupTarget(origin.element))return;
+  const table=document.getElementById('celltable');
+  if(origin.row&&table){
+    const row=Array.from(table.querySelectorAll('tr[data-la]')).find(el=>el.dataset.la===origin.row.lat&&el.dataset.lo===origin.row.lon);
+    if(focusPopupTarget(row))return;
+  }
+  focusPopupTarget(map.getCanvas());
+}
+function onPopupOpen(p){curPopup=p;localizeMapControls();}
+function onPopupClose(p,origin){
+  if(curPopup!==p)return;
+  curPopup=null;
+  if(_reselect)return;   // a replacement popup owns focus; do not jump back to the old row
+  const active=document.activeElement,root=p.getElement();
+  const restore=!active||active===document.body||(root&&root.contains(active));
+  if(state.view==='explore'&&(destMarker||destCell))clearSelection();
+  if(restore)restorePopupFocus(origin);
+}
+function wirePopup(p){
+  const origin=popupFocusOrigin();   // capture before MapLibre moves focus into the popup
+  p.on('open',()=>onPopupOpen(p));p.on('close',()=>onPopupClose(p,origin));curPopup=p;return p;
+}
 function closePopup(){if(curPopup)curPopup.remove();}   // remove() fires 'close' -> onPopupClose
 function setCellState(i,fc,op){if(_mapLoaded&&map.getSource('cells'))map.setFeatureState({source:'cells',id:i},{fc:fc,op:op});}
 function lngLatBounds(latlngs){const b=new maplibregl.LngLatBounds();latlngs.forEach(p=>b.extend([p[1],p[0]]));return b;}
