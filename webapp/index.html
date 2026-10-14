@@ -1519,6 +1519,9 @@ function warmPM(name){
     return pm.getZxy(z,Math.floor((c.lng+180)/360*n),Math.floor((1-Math.log(Math.tan(lat)+1/Math.cos(lat))/Math.PI)/2*n));
   }).catch(()=>{});
 }
+// The overlay archives hold 512 px tiles. Declared at 512 they map 1:1 and need a quarter of the requests; on dense
+// screens that drops a level of detail, so those keep 256 (2x oversampled).
+const PM_TILE=devicePixelRatio>=1.5?256:512;
 const warmCov=()=>warmPM('density_'+(COVPM.includes(state.taxon)?state.taxon:'All'));
 const warmClimate=()=>warmPM('climate_gap');
 // Warm both once the first painted grid settles, unless the visitor asked to save data or is on 2g.
@@ -1539,7 +1542,7 @@ function setCoverage(){
   const ct=COVPM.includes(state.taxon)?state.taxon:'All';
   const attr='iNaturalist density &copy; Biodiversit\u00e9 Qu\u00e9bec';
   ensurePM();
-  map.addSource('cov',{type:'raster',url:'pmtiles://'+PM_BASE+'/density_'+ct+'.pmtiles',tileSize:256,attribution:attr});
+  map.addSource('cov',{type:'raster',url:'pmtiles://'+PM_BASE+'/density_'+ct+'.pmtiles',tileSize:PM_TILE,attribution:attr});
   map.addLayer({id:'cov',type:'raster',source:'cov',paint:{'raster-opacity':covOpacity}},map.getLayer(CELL_LAYER)?CELL_LAYER:undefined);
   updateOpacityControl();
 }
@@ -1555,7 +1558,7 @@ function setClimate(){
   if(map.getSource('climate-gap'))map.removeSource('climate-gap');
   if(!climateOn()){updateOpacityControl();return;}
   ensurePM();
-  map.addSource('climate-gap',{type:'raster',url:'pmtiles://'+PM_BASE+'/climate_gap.pmtiles',tileSize:256,
+  map.addSource('climate-gap',{type:'raster',url:'pmtiles://'+PM_BASE+'/climate_gap.pmtiles',tileSize:PM_TILE,
     attribution:'Climate gap layer &copy; Pollock Lab · climate data <a href="https://chelsa-climate.org" target="_blank" rel="noopener">CHELSA</a>'});
   map.addLayer({id:'climate-gap',type:'raster',source:'climate-gap',paint:{'raster-opacity':climateOpacity}},map.getLayer(CELL_LAYER)?CELL_LAYER:undefined);
   updateOpacityControl();
