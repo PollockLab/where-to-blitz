@@ -13,10 +13,7 @@ Per-band rules (band order = build_fullgrid_ca.BANDS):
   discover / conservation / env / staleness / urgency / travel_min  -> NaN-aware mean
   n_train (implied record count, an extensive quantity)             -> NaN-aware sum
 
-The 25 km webapp JSON and the national ramps still come from the native 25 km build
-(fit-25km job): the vector tier keeps today's values, and the ramps are fitted at the
-reference resolution as designed. Differences between the vector tier and the
-aggregated raster tier are within the quantisation step the P3 gate checks.
+The 25 km webapp JSON and national ramps come from the native 25 km build (fit-25km job). Popup components and national ranks use that native JSON, while 25 km colours use axes aggregated from 5 km. These products can have different axis values before colour quantisation or viewport stretching.
 
 Usage: python aggregate_25km_from_5km.py [--group Aves]
 Reads  cluster_results/ca/grid_5000m/<Group>.tif

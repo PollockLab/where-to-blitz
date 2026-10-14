@@ -84,7 +84,8 @@ def test_popup_distinguishes_fine_evidence_from_parent_percentile(lang):
     text = _run("console.log(JSON.stringify(popScoreHtml({t:0.8,r:[]},5000)));", lang)
     assert "5 km" in text and "25 km" in text and "80/100" in text
     assert "enclosing" in text if lang == "en" else "englobante" in text
-    assert "iNaturalist" in text
+    assert "Species discovery" in text if lang == "en" else "Découverte d'espèces" in text
+    assert "source contribution" not in text
 
 
 @pytest.mark.parametrize("score", [None, "0.8"])
@@ -98,4 +99,18 @@ def test_popup_does_not_coerce_missing_or_invalid_percentiles(score):
 def test_popup_does_not_show_previous_goals_score_on_other_layers(kind):
     text = _run(f"overlay={json.dumps(kind)};console.log(JSON.stringify(popScoreHtml({{t:0.8,r:[]}},5000)));")
     assert "/100" not in text
-    assert "no national priority percentile" in text
+    assert "no national percentile" in text
+
+
+@pytest.mark.parametrize(
+    ("lang", "averaged_inputs", "native_score"),
+    [
+        ("en", "mean of the finer cells' scoring inputs", "native 25&nbsp;km score"),
+        ("fr", "moyenne des indicateurs des cellules fines", "score natif de 25&nbsp;km"),
+    ],
+)
+def test_colour_help_distinguishes_aggregated_fill_from_native_national_rank(
+    lang, averaged_inputs, native_score
+):
+    text = _run("console.log(JSON.stringify(t('colour_expl')));", lang)
+    assert averaged_inputs in text and native_score in text

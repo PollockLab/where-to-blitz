@@ -6,6 +6,7 @@ to the two JSONs. Rounding is the table's own: rho to two decimals, yield to one
 rerun that shifts a number fails here instead of making the document silently wrong.
 """
 
+import ast
 import hashlib
 import json
 import re
@@ -119,3 +120,59 @@ def test_published_results_record_current_scoring_sources_and_inference_scope():
         assert rec["perm_p_floor"] == 1 / (run["n_permutations"] + 1)
         for score in rec["scores"].values():
             assert rec["perm_p_floor"] <= score["perm_p"] <= 1
+
+
+def _walkthrough_source_checker():
+    tree = ast.parse((HERE / "_build_walkthrough.py").read_text())
+    for node in ast.walk(tree):
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == "code"
+            and isinstance(node.args[0], ast.Constant)
+        ):
+            cell = ast.parse(node.args[0].value)
+            for definition in cell.body:
+                if isinstance(definition, ast.FunctionDef) and definition.name == "checked_ca_sources":
+                    namespace = {"json": json, "hashlib": hashlib}
+                    exec(
+                        compile(
+                            ast.Module(body=[definition], type_ignores=[]), "walkthrough-source-check", "exec"
+                        ),
+                        namespace,
+                    )
+                    return namespace[definition.name]
+    raise AssertionError("walkthrough source checker is missing")
+
+
+@pytest.fixture
+def walkthrough_snapshot(tmp_path):
+    inputs = {"webapp_data_All_biodiversity.json": b"[]", "ca_atrisk_richness.csv": b"score_raw\n1\n"}
+    entries = []
+    for name, data in inputs.items():
+        (tmp_path / name).write_bytes(data)
+        entries.append({"path": f"cluster_results/ca/{name}", "sha256": hashlib.sha256(data).hexdigest()})
+    # A render must not require an unused raster simply because the manifest includes it.
+    entries.append({"path": "cluster_results/ca/unused.tif", "sha256": "unused"})
+    (tmp_path / "provenance.json").write_text(json.dumps({"files": entries}))
+    return tmp_path, inputs
+
+
+def test_walkthrough_accepts_consistent_consumed_inputs_without_unused_rasters(walkthrough_snapshot):
+    directory, inputs = walkthrough_snapshot
+    _, hashes = _walkthrough_source_checker()(directory, list(inputs))
+    assert hashes == {name: hashlib.sha256(data).hexdigest() for name, data in inputs.items()}
+
+
+def test_walkthrough_rejects_mixed_grid_and_conservation_snapshots(walkthrough_snapshot):
+    directory, inputs = walkthrough_snapshot
+    (directory / "ca_atrisk_richness.csv").write_text("score_raw\n2\n")
+    with pytest.raises(ValueError, match="hash mismatch.*ca_atrisk_richness.csv"):
+        _walkthrough_source_checker()(directory, list(inputs))
+
+
+def test_walkthrough_rejects_missing_consumed_inputs(walkthrough_snapshot):
+    directory, inputs = walkthrough_snapshot
+    (directory / "ca_atrisk_richness.csv").unlink()
+    with pytest.raises(ValueError, match="input is missing.*ca_atrisk_richness.csv"):
+        _walkthrough_source_checker()(directory, list(inputs))
