@@ -25,13 +25,13 @@ def _run_popup(responses, action, lang="en"):
     # t() is one line; include its declaration independently of the multiline renderer functions.
     script = (
         i18n
-        + "\nconst LANG="
+        + "\nlet LANG="
         + json.dumps(lang)
         + ";\n"
         + src[src.index("function t(") : src.index("// indexed-name helpers")]
     )
     script += r"""
-const input=JSON.parse(require('node:fs').readFileSync(0,'utf8')), calls=[];
+const input=JSON.parse(require('node:fs').readFileSync(0,'utf8')), calls=[],callOptions=[];
 class Element{
   constructor(){this.innerHTML='';this.dataset={};}
   querySelector(selector){
@@ -53,11 +53,11 @@ const gtkey=(lat,lon)=>lat.toFixed(3)+','+lon.toFixed(3);
 const gtHead=()=>'<div class="popsec">'+t('pop_groups_hd')+'</div>';
 const groupName=k=>t('group')[k]||k;
 const cellBoundsForRes=()=>({swlat:49,nelat:49.1,swlng:-123,nelng:-122.9});
-const surfaceFilter=async()=>'';
-const inatLocale=()=>'';
+let surfaceFilter=async()=>'';
+const inatLocale=()=>LANG==='fr'?'&locale=fr':'';
 const HH=0.1;
-const jget=async url=>{
-  calls.push(url);
+let jget=async (url,ms,tries)=>{
+  calls.push(url);callOptions.push({ms,tries});
   const response=input.responses.shift();
   if(!response)throw Error('unexpected request');
   if(response.error)throw Error(response.error);
@@ -65,6 +65,7 @@ const jget=async url=>{
 };
 """
     script += src[src.index("const esc=") : src.index("// whereKey 'right_here'")]
+    script += _function(src, "completeSpeciesCounts") + _function(src, "checkedCandidateAbsences")
     script += _function(src, "fetchProspects")
     script += _function(src, "paintGapTree") + _function(src, "fetchGapTree")
     script += "\n(async()=>{" + action + "})().catch(e=>{console.error(e);process.exit(1);});"
@@ -78,13 +79,16 @@ const jget=async url=>{
     return json.loads(result.stdout)
 
 
-def _species(taxon_id, count, *, photo=True, group="Aves"):
+def _species(taxon_id, count, *, photo=True, group="Aves", rank="species", ancestors=None):
     taxon = {
         "id": taxon_id,
+        "rank": rank,
         "name": f"Species {taxon_id}",
         "observations_count": 100,
         "iconic_taxon_name": group,
     }
+    if ancestors is not None:
+        taxon["ancestor_ids"] = ancestors
     if photo:
         taxon["default_photo"] = {"square_url": "https://example.org/photo.jpg"}
     return {"count": count, "taxon": taxon}
@@ -148,7 +152,7 @@ def test_complete_results_keep_new_species_and_the_local_rarity_order():
     html = result["html"]
     assert html.index('taxa/3"') < html.index('taxa/1"') < html.index('taxa/2"')
     assert "no matching record" in html
-    assert "2 here · 10 within ~40 km" in html
+    assert "2 here · 10 within 40 km" in html
 
 
 @pytest.mark.parametrize(
@@ -252,7 +256,7 @@ def test_failed_species_lookup_offers_a_working_retry_instead_of_claiming_absenc
     )
     assert "Couldn’t load species just now" in result["first"]
     assert "No matching public research-grade iNaturalist records found here" not in result["first"]
-    assert "2 here · 3 within ~40 km" in result["second"]
+    assert "2 here · 3 within 40 km" in result["second"]
     assert result["calls"] == 3
 
 
@@ -315,7 +319,7 @@ def test_missing_regional_evidence_does_not_invent_nearby_counts_or_rarity(neigh
     )
     species = re.search(r'href="https://www.inaturalist.org/taxa/1".*?</a>', result["html"]).group(0)
     assert "2 here" in species
-    assert "within ~40 km" not in species
+    assert "within 40 km" not in species
     assert "rare nearby" not in species
 
 
@@ -355,3 +359,206 @@ def test_a_complete_500_species_page_can_compare_groups_without_a_cap_warning():
     assert "0 here · ~3 nearby" in result["html"]
     assert "Dense area" not in result["html"]
     assert "Partial species lists" not in result["html"]
+
+
+@pytest.mark.parametrize("lang", ["en", "fr"])
+def test_capped_local_list_gets_one_bounded_candidate_check(lang):
+    result = _run_popup(
+        [
+            {"total_results": 501, "results": [_species(1, 2)]},
+            {"total_results": 3, "results": [_species(3, 7), _species(2, 3), _species(4, 5)]},
+            {
+                "total_results": 2,
+                "results": [_species(2, 1), _species(44, 1, rank="subspecies", ancestors=[4])],
+            },
+        ],
+        "surfaceFilter=async()=> '&without_taxon_id=marine';state.taxon='Aves';"
+        "await fetchProspects(49,-123,'around_start');console.log(JSON.stringify({html:spEl.innerHTML,calls,callOptions}));",
+        lang,
+    )
+    assert len(result["calls"]) == 3
+    params = parse_qs(urlparse(result["calls"][2]).query)
+    assert params["taxon_id"] == ["2,4,3"]
+    assert params["page"] == ["1"] and params["per_page"] == ["500"]
+    assert params["swlat"] == ["49"] and params["nelat"] == ["49.1"]
+    assert params["iconic_taxa"] == ["Aves"]
+    assert params["quality_grade"] == ["research"]
+    assert params["geoprivacy"] == ["open"] and params["taxon_geoprivacy"] == ["open"]
+    assert params["threatened"] == ["false"]
+    assert "without_taxon_id" not in params and "radius" not in params
+    assert result["callOptions"][2] == {"ms": 9000, "tries": 1}
+    if lang == "fr":
+        assert params["locale"] == ["fr"]
+        assert "vérifiées séparément" in result["html"]
+        assert "uniquement les espèces déjà enregistrées ici" not in result["html"]
+    else:
+        assert "checked separately" in result["html"]
+        assert "only species already recorded here" not in result["html"]
+    assert 'taxa/3"' in result["html"]
+    assert 'taxa/2"' not in result["html"] and 'taxa/4"' not in result["html"]
+
+
+@pytest.mark.parametrize(
+    "batch",
+    [
+        {"error": "429"},
+        {"results": []},
+        {"total_results": 0, "results": [], "page": 2},
+        {"total_results": 1, "results": []},
+        {"total_results": 0, "results": {}},
+        {"total_results": 1, "results": [None]},
+        {"total_results": 1, "results": [_species(-1, 2)]},
+        {"total_results": 1, "results": [_species(2, 0)]},
+        {"total_results": 1, "results": [_species(2, 1.5)]},
+        {"total_results": 2, "results": [_species(2, 1), _species(2, 1)]},
+        {"total_results": 1, "results": [_species(99, 1)]},
+        {"total_results": 1, "results": [_species(99, 1, ancestors=[98])]},
+        {"total_results": 1, "results": [_species(99, 1, ancestors=[2, 3])]},
+        {"total_results": 1, "results": [_species(99, 1, ancestors=[2, "bad"])]},
+    ],
+)
+def test_uncertain_candidate_check_retains_local_cards_without_absence(batch):
+    result = _run_popup(
+        [
+            {"total_results": 501, "results": [_species(1, 2)]},
+            {"total_results": 2, "results": [_species(2, 3), _species(3, 4)]},
+            batch,
+        ],
+        "await fetchProspects(49,-123,'around_start');console.log(JSON.stringify({html:spEl.innerHTML,calls}));",
+    )
+    assert len(result["calls"]) == 3
+    assert 'taxa/1"' in result["html"]
+    assert 'taxa/2"' not in result["html"] and 'taxa/3"' not in result["html"]
+    assert "no matching record here" not in result["html"]
+    assert "only species already recorded here" in result["html"]
+
+
+def test_candidate_batch_is_species_only_deduplicated_and_rarest_first_with_eight_ids():
+    region = [_species(i, i + 3) for i in range(2, 14)]
+    region += [_species(3, 8), _species(99, 3, rank="genus"), _species(100, 3, rank="subspecies")]
+    result = _run_popup(
+        [
+            {"total_results": 501, "results": [_species(1, 2)]},
+            {"total_results": len(region), "results": list(reversed(region))},
+            {"total_results": 0, "results": []},
+        ],
+        "await fetchProspects(49,-123,'around_start');console.log(JSON.stringify({html:spEl.innerHTML,calls}));",
+    )
+    params = parse_qs(urlparse(result["calls"][2]).query)
+    assert params["taxon_id"] == ["2,3,4,5,6,7,8,9"]
+    html = result["html"]
+    assert html.index('taxa/2"') < html.index('taxa/3"') < html.index('taxa/4"')
+    assert 'taxa/99"' not in html and 'taxa/100"' not in html
+
+
+@pytest.mark.parametrize("lat", [49, 77])
+@pytest.mark.parametrize("res", [5000, 25000])
+@pytest.mark.parametrize("renderer", ["prospects", "groups"])
+def test_neighbourhood_uses_a_true_40_km_radius_without_intersecting_bbox(lat, res, renderer):
+    action = (
+        f"await fetchProspects({lat},-123,'right_here',{{resM:{res}}});"
+        if renderer == "prospects"
+        else f"await fetchGapTree({lat},-123,gapEl,{res});"
+    )
+    result = _run_popup(
+        [{"total_results": 0, "results": []}, {"total_results": 0, "results": []}],
+        "surfaceFilter=async()=> '&without_taxon_id=marine';"
+        + action
+        + "console.log(JSON.stringify({calls}));",
+        "fr",
+    )
+    local, nearby = [parse_qs(urlparse(call).query) for call in result["calls"]]
+    assert "radius" not in local and local["swlat"] == ["49"]
+    assert nearby["lat"] == [str(lat)] and nearby["lng"] == ["-123"]
+    assert nearby["radius"] == ["40"]
+    assert not {"swlat", "nelat", "swlng", "nelng"}.intersection(nearby)
+    assert nearby["without_taxon_id"] == ["marine"]
+    assert local["locale"] == ["fr"] and nearby["locale"] == ["fr"]
+
+
+@pytest.mark.parametrize("changed", ["taxon", "language", "sequence"])
+@pytest.mark.parametrize("at_call", [2, 3])
+def test_stale_candidate_requests_cannot_continue_or_paint(changed, at_call):
+    change = {"taxon": "state.taxon='Fungi'", "language": "LANG='fr'", "sequence": "prospectSeq++"}[changed]
+    result = _run_popup(
+        [
+            {"total_results": 501, "results": [_species(1, 2)]},
+            {"total_results": 1, "results": [_species(2, 3)]},
+            {"total_results": 0, "results": []},
+        ],
+        "const originalGet=jget;jget=async(...args)=>{const response=await originalGet(...args);"
+        f"if(calls.length==={at_call}){{{change};spEl.innerHTML='new selection';}}return response;}};"
+        "await fetchProspects(49,-123,'around_start');console.log(JSON.stringify({html:spEl.innerHTML,calls}));",
+    )
+    assert len(result["calls"]) == at_call
+    assert result["html"] == "new selection"
+
+
+def test_local_subspecies_prevents_false_parent_species_absence():
+    result = _run_popup(
+        [
+            {"total_results": 1, "results": [_species(20, 2, rank="subspecies", ancestors=[2])]},
+            {"total_results": 1, "results": [_species(2, 3)]},
+        ],
+        "await fetchProspects(49,-123,'around_start');console.log(JSON.stringify({html:spEl.innerHTML,calls}));",
+    )
+    assert 'taxa/2"' not in result["html"]
+    assert "no matching record here" not in result["html"]
+    assert len(result["calls"]) == 2
+
+
+@pytest.mark.parametrize("rows", [{}, [None], [_species(1, 0)], [_species(1, 2), _species(1, 2)]])
+def test_malformed_local_results_need_verified_candidate_absence(rows):
+    result = _run_popup(
+        [
+            {"total_results": len(rows), "results": rows},
+            {"total_results": 1, "results": [_species(2, 3)]},
+            {"error": "timeout"},
+        ],
+        "await fetchProspects(49,-123,'around_start');console.log(JSON.stringify({html:spEl.innerHTML,calls}));",
+    )
+    assert len(result["calls"]) == 3
+    assert 'taxa/2"' not in result["html"]
+    assert "no matching record here" not in result["html"]
+
+
+def test_malformed_result_container_does_not_turn_total_into_an_exact_species_count():
+    result = _run_popup(
+        [
+            {"total_results": 0, "results": {}},
+            {"total_results": 1, "results": [_species(2, 3)]},
+            {"total_results": 0, "results": []},
+        ],
+        "await fetchProspects(49,-123,'around_start');console.log(JSON.stringify({html:spEl.innerHTML}));",
+    )
+    assert "≥0 species recorded" in result["html"]
+    assert "· 0 species recorded" not in result["html"]
+
+
+@pytest.mark.parametrize("changed", ["taxon", "language", "sequence"])
+def test_stale_surface_resolution_cannot_launch_a_neighbourhood_or_candidate_request(changed):
+    change = {"taxon": "state.taxon='Fungi'", "language": "LANG='fr'", "sequence": "prospectSeq++"}[changed]
+    result = _run_popup(
+        [{"total_results": 501, "results": [_species(1, 2)]}],
+        "let resolveSurface;surfaceFilter=()=>new Promise(resolve=>{resolveSurface=resolve;});"
+        "const pending=fetchProspects(49,-123,'around_start');await new Promise(resolve=>setImmediate(resolve));"
+        + change
+        + ";spEl.innerHTML='new selection';resolveSurface('');await pending;console.log(JSON.stringify({html:spEl.innerHTML,calls}));",
+    )
+    assert len(result["calls"]) == 1
+    assert result["html"] == "new selection"
+
+
+@pytest.mark.parametrize("changed", ["taxon", "language", "sequence"])
+def test_stale_group_counts_are_not_painted_or_cached(changed):
+    change = {"taxon": "state.taxon='Fungi'", "language": "LANG='fr'", "sequence": "gapSeq++"}[changed]
+    result = _run_popup(
+        [{"total_results": 0, "results": []}, {"total_results": 0, "results": []}],
+        "const originalGet=jget;jget=async(...args)=>{const response=await originalGet(...args);"
+        "if(calls.length===2){"
+        + change
+        + ";gapEl.innerHTML='new selection';}return response;};"
+        "await fetchGapTree(49,-123,gapEl,25000);console.log(JSON.stringify({html:gapEl.innerHTML,cache:GT_CACHE}));",
+    )
+    assert result["html"] == "new selection"
+    assert result["cache"] == {}
