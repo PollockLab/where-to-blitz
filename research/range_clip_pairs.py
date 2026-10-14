@@ -88,8 +88,10 @@ def main():
                    "ranges": root / ar.RANGES, "crosswalk": root / bal.CROSSWALK,
                    "geometry_code": root / "atrisk_ranges.py"}
     hashes = {label: sha256(path) for label, path in input_paths.items()}
-    frozen_blob = subprocess.check_output(["git", "show", "d765666:research/allowlist_compare.py"])
-    assert hashes["scorer"] == hashlib.sha256(frozen_blob).hexdigest(), "Frozen scorer changed"
+    # The original unpublished registration commit may be rewritten by rebase. Pin its bytes.
+    assert hashes["scorer"] == "0ed079d12aaa298c5bc389a5a674c41a9d340e421cd05aa643a0a67624eccacb", (
+        "Frozen scorer changed"
+    )
     validation = validate_disjoint(ar, frozen.METHODS)
     with (
         zipfile.ZipFile(download) as archive,
