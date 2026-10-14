@@ -2,12 +2,10 @@
 """Build `where-to-blitz-walkthrough.ipynb` — a walkthrough of
 where-to-blitz: what it is, the design choices behind it, and the data underneath.
 
-Deterministic generator (repo convention): edit THIS file, never the .ipynb.
-Every figure reads the real shipped national build in `cluster_results/ca/` and the
-cached experiment results in `cluster_results/` — no fabricated numbers, no network
-needed (one optional live-iNat cell is guarded). Reproduce:
+Source generator: edit THIS file, never the .ipynb. Map figures read the grid snapshot selected by WTB_CA_DIR (default cluster_results/ca); archived backtest results stay in cluster_results/ and retain their original source and input snapshots. Grid inputs with available provenance entries must match their recorded hashes. One optional live-iNat cell is guarded. Reproduce:
 
     .venv/bin/python _build_walkthrough.py
+    export WTB_CA_DIR=/path/to/validated/cluster_results/ca
     .venv/bin/python -m nbconvert --to notebook --execute --inplace where-to-blitz-walkthrough.ipynb
     .venv/bin/python render_walkthrough_html.py    # → where-to-blitz-walkthrough.html (with figure alt text)
 
@@ -28,6 +26,7 @@ Pages root). The Mermaid source is preserved in a <details> block for editabilit
 import sys
 import urllib.error
 import urllib.request
+from html import escape
 from pathlib import Path
 
 from notebook_core import NotebookBuilder
@@ -71,11 +70,7 @@ md(r"""
 
 *What is in the tool, and why is it built the way it is.*
 
-[Where to Blitz the Gap](https://pollocklab.github.io/where-to-blitz/) is a companion
-planning tool for the Canada-wide [Blitz the Gap](https://blitzthegap.org) iNaturalist
-bioblitz. It turns one question — *"where should I go to record biodiversity so my
-observation adds the most to what we know about the natural world?"* — into a map you can weight,
-explore, and plan a real low-carbon trip on.
+[Where to Blitz the Gap](https://pollocklab.github.io/where-to-blitz/) is a companion map for the Canada-wide [Blitz the Gap](https://blitzthegap.org) iNaturalist bioblitz. The default Explore view lets you choose a recording goal, inspect priorities and tap a cell for live recording evidence. Its scores describe gaps in recorded evidence, not a tested forecast of an outing's ecological benefit.
 
 The methodology and the data underneath it, laid out so you can check every choice and
 reproduce every number. For the terse formula reference and the glossary, see
@@ -84,8 +79,7 @@ reproduce every number. For the terse formula reference and the glossary, see
 > A **work-in-progress prototype and a planning aid, not ground truth.** The responsible-use
 > guardrails are in the last section.
 
-Each section pairs a design decision with the real data it acts on. Everything below runs from
-the committed build — re-execute top to bottom to reproduce every figure.
+Each section pairs a design decision with the real data it acts on. Map figures use the selected grid snapshot, identified by its manifest and input hashes below. Retrospective figures retain their archived build and record-input snapshots, identified separately in Section 8.
 """)
 
 # ---------------------------------------------------------------- zoom out
@@ -99,13 +93,13 @@ _ZOOM_OUT_MERMAID = r"""flowchart TB
     D4["Roads & travel time"]
     D5["At-risk species lists"]
   end
-  GOALS["② Split Canada into 25 km squares.<br/>Score each square on <b>5 goals</b> (0–1):<br/>find new species · find rare species ·<br/>cover every habitat · revisit quiet spots · beat habitat loss"]
-  IMPACT["③ <b>You</b> choose how much each goal matters.<br/>→ one <b>0–100 'impact' score</b> per square"]
-  APP(["④ <b>The map</b><br/>Explore · Plan a trip · Compare goals"])
+  GOALS["② Split Canada into 25 km squares.<br/>Score each square on <b>5 axes</b> (0–1):<br/>sparse records · recorded species at risk ·<br/>climate coverage · sampling history · forest loss"]
+  IMPACT["③ <b>You</b> choose a fixed preset.<br/>→ its blend's <b>Canada percentile</b><br/>among eligible 25 km cells"]
+  APP(["④ <b>The map</b><br/>Explore priorities · inspect live records"])
   CHECK{{"Retrospective record check:<br/>expected new taxon IDs in sampled bioblitz records<br/>Prospective field performance remains untested"}}
 
   Q --> DATA --> GOALS --> IMPACT --> APP
-  GOALS -. "compared" .-> CHECK
+  GOALS -. "discovery-related recording priorities" .-> CHECK
 
   style Q fill:#1b4965,color:#fff,stroke:#1b4965
   style APP fill:#2a9d4a,color:#fff,stroke:#2a9d4a
@@ -124,15 +118,13 @@ md(f"""
 
 How a question becomes a map you can act on:
 
-![Flowchart: question → free public data → 5 goals per 25 km square → impact score → the map; compared retrospectively with sampled bioblitz records]({_ZOOMOUT_PNG})
+![Flowchart: question → public data → five axes per 25 km square → fixed preset → Canada percentile among eligible 25 km cells → map; retrospective record check, prospective field performance untested]({_ZOOMOUT_PNG})
 
 The tool combines six public datasets into priority scores for 25 km cells. Its goals express different reasons to record biodiversity. The retrospective backtest compares those priorities with sampled bioblitz records; it does not establish prospective field performance. The rest of this notebook shows the inputs, formulas and evidence behind each part.
 
 <details><summary>Mermaid source (diagram above)</summary>
 
-```mermaid
-{_ZOOM_OUT_MERMAID}
-```
+<pre><code>{escape(_ZOOM_OUT_MERMAID)}</code></pre>
 
 </details>
 
@@ -140,10 +132,10 @@ The tool combines six public datasets into priority scores for 25 km cells. Its 
 
 | Module | Responsible for |
 |---|---|
-| `build_fullgrid_ca.py` | The four raster goals per square — **discover, habitat coverage, urgency, travel** — plus `n_train`. Defines the grid + land mask. |
-| `build_atrisk_layer.py`, joined in `fullgrid_fields.py` | The **rare-species** goal: CAN-SAR (COSEWIC/SARA) species × their GBIF occurrences → per-square status-weighted at-risk richness, aggregated to 25 km. |
-| cluster DuckDB → `ca_inat_metrics.csv` → `ca_staleness.csv` | The **freshness** goal: all-time vs last-5-years iNaturalist density per square. |
-| `build_webapp.py` | The single source of truth for the app. Combines the five goals into **impact**, holds every UI string (EN/FR), the trip planner, and emits `index.html`. |
+| `build_fullgrid_ca.py`, `fullgrid_fields.py` | Density, climate, forest loss and travel fields, plus `n_train`, on the equal-area lattice and its footprint/land mask. |
+| `build_atrisk_layer.py`, joined in `fullgrid_fields.py` | CAN-SAR listings × GBIF occurrences under the selected policy → status-weighted richness on a 0.25° source grid, joined by each drawn cell's centre. |
+| cluster DuckDB → `ca_inat_metrics.csv` → `ca_staleness.csv`; `fullgrid_fields.py` | All-time vs last-5-years iNaturalist history on a 0.25° source grid; missing source parents use a group-specific inverse-density fallback. |
+| `goal_presets.py`, `build_grid_values.py`, `webapp/index.html`, `build_webapp.py` | Fixed blends and baked colours; runtime ranks, viewport colours, live popup queries and trip planning; template assembly into `index.html`. |
 | `build_provenance.py` | Freezes the national build to a hashed manifest (`provenance.json`). |
 | `voi_backtest.py`, `backtest_appscore.py` | The validation layer: retrospective associations with new taxon IDs in sampled project records |
 
@@ -152,8 +144,8 @@ The tool combines six public datasets into priority scores for 25 km cells. Its 
 
 # ---------------------------------------------------------------- setup
 code(r"""
-# Setup — all paths relative to the repo root (run this notebook from there).
-import json, warnings
+# Setup: WTB_CA_DIR selects map data; archived backtests remain relative to the repo root.
+import hashlib, json, os, warnings
 from pathlib import Path
 import numpy as np, pandas as pd
 import matplotlib.pyplot as plt
@@ -161,10 +153,29 @@ from matplotlib import colors as mcolors
 warnings.filterwarnings("ignore")
 plt.rcParams.update({"figure.dpi": 110, "font.size": 10, "axes.grid": False})
 
-CA = Path("cluster_results/ca")
+CA = Path(os.environ.get("WTB_CA_DIR", "cluster_results/ca")).expanduser()
 RES = Path("cluster_results")
+
+def checked_ca_sources(directory, names):
+    provenance = json.loads((directory / "provenance.json").read_text())
+    expected = {r["path"].removeprefix("cluster_results/ca/"): r["sha256"] for r in provenance["files"]}
+    hashes = {}
+    for name in names:
+        path = directory / name
+        if not path.is_file():
+            raise ValueError(f"Walkthrough grid input is missing: {path}; select a complete snapshot with WTB_CA_DIR")
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        if name in expected and digest != expected[name]:
+            raise ValueError(f"Walkthrough grid input hash mismatch: {path}; select a coherent snapshot with WTB_CA_DIR")
+        hashes[name] = digest
+    return provenance, hashes
+
+PROV, SOURCE_HASHES = checked_ca_sources(CA, [
+    "index.json", "webapp_data_All_biodiversity.json", "us_cells.json",
+    "ca_atrisk_richness.csv", "ca_inat_metrics.csv", "ca_atrisk_provenance.json",
+    "atrisk_species_keys.csv", "atrisk_listings.csv",
+])
 INDEX = json.load(open(CA / "index.json"))
-PROV  = json.load(open(CA / "provenance.json"))
 
 # row_format from the shipped index — the contract every webapp_data_*.json obeys.
 COLS = INDEX["row_format"]            # [lat,lon,discover,conservation,env,staleness,urgency,travel_min,n_train]
@@ -208,17 +219,21 @@ print(f"Grid          : {INDEX['n_cells']:,} cells of {INDEX['res_m']//1000} km 
 print(f"Lattice       : {lat['ncol']} × {lat['nrow']} equal-area cells (all of Canada + a US land sliver)")
 print(f"Life groups   : {len(INDEX['groups'])} → {', '.join(INDEX['groups'])}")
 print(f"Per cell      : 5 axes (0–1) + travel_min + n_train")
-print(f"Provenance    : {PROV['manifest_hash'][:16]}…  ({len(PROV['files'])} files frozen)")
+print(f"Grid manifest : {PROV['manifest_hash']}  ({len(PROV['files'])} recorded files)")
+print("Walkthrough grid inputs, SHA256 (unlisted inputs are fingerprinted but not covered by the grid manifest):")
+recorded = {r["path"].removeprefix("cluster_results/ca/") for r in PROV["files"]}
+for name, digest in SOURCE_HASHES.items():
+    print(f"  {name}: {digest}" + ("" if name in recorded else " (not listed in grid manifest)"))
 
-# Verify the axes are REAL in the actual data (not from the doc, not from stale metadata):
-print("\nAxis reality check (from the shipped data itself):")
+# Inspect the shipped ranges. Nonzero values are not evidence of outcome validation.
+print("\nAxis ranges (from the shipped data itself):")
 for ax in AXES:
     col = ALL[ax].to_numpy(float)
     nz = (col != 0).mean()
     print(f"  {ax:13s} range [{col.min():.2f}, {col.max():.2f}]  nonzero in {nz*100:5.1f}% of cells")
 stale_corr = np.corrcoef(ALL['discover'], ALL['staleness'])[0,1]
-print(f"\n  staleness is NOT a copy of discover  →  corr(discover, staleness) = {stale_corr:+.3f}")
-print(f"  conservation is a real sparse layer →  {(ALL['conservation']>0).sum():,} cells carry at-risk richness")
+print(f"\n  corr(discover, shipped staleness) = {stale_corr:+.3f}")
+print(f"  {(ALL['conservation']>0).sum():,} inventory cells have a nonzero conservation score")
 """)
 # ---------------------------------------------------------------- the data
 md(r"""
@@ -231,9 +246,9 @@ anyone and must not depend on the private McGill iNat-Canada parquet.
 | Axis | Source | What it is | Resolution | Licence / access |
 |---|---|---|---|---|
 | discover | iNaturalist observation density (Biodiversité Québec STAC) | per-group "light up the map" record density — the same surface the official project uses | 1 km COG | public COG on Arbutus |
-| conservation | **CAN-SAR** (COSEWIC/SARA) × **GBIF** | 521 at-risk species × their Canadian occurrences | point → 25 km | CC-BY (OSF `10.17605/OSF.IO/E4A58`) + public GBIF |
+| conservation | **CAN-SAR** (COSEWIC/SARA) × **GBIF**, COL26.6 XR taxonomy | listed names × Canadian occurrences under a frozen allowlist | 0.01° policy checks → 0.25° source grid | CC-BY (OSF `10.17605/OSF.IO/E4A58`) + [GBIF download DOI](https://doi.org/10.15468/dl.6hqdyd) |
 | env | **CHELSA** bioclimate | temperature, seasonality, precipitation | ~1 km | public (`/vsicurl`) |
-| staleness | **iNaturalist open-data** dump | per-record dates → all-time vs recent | per-record | public AWS dump |
+| staleness | **iNaturalist open-data** dump; density fallback | all-time vs recent history where available, inverse density otherwise | 0.25° history source grid | public AWS dump and density COG |
 | urgency | **Hansen** Global Forest Change | forest-loss fraction (logging / fire / dieback) | 0.05° | public |
 | travel | **Weiss et al. 2018** accessibility | minutes to the nearest city | ~1 km | public (MalariaAtlas) |
 
@@ -266,13 +281,7 @@ they read as "gaps" largely because *the Canadian density layer stops at the bor
 because they are genuinely under-recorded. (Deep-US cells outside the COG are dropped by the
 mask.) The figure quantifies it.
 
-**The sharp horizontal seam along ~49°N is this, made visible — it's a data-footprint edge,
-not ecology.** North of the border the Canadian density COG has records, so cells score on
-real data (varied, mostly well-sampled). South of it the COG is empty, so every US cell
-defaults into the same max-under-sampling bucket (differentiated only by climate) — a flat
-band with a hard top edge. The transect below confirms it: density jumps from ~0 to thousands
-and zero-observation cells go 95% → 0% across 48–49°N. A clip to the Canada polygon removes
-both the US band and the seam in one move.
+**The sharp horizontal seam along ~49°N is a data-footprint edge, not ecology.** The transect below inspects the western border band: Canadian cells north of the line have varied recording density, while many inventory cells to its south fall in the zero-density block, ordered only by climate. The shipped country mask hides foreign-border cells and excludes them from national ranks and trip candidates. These figures inspect the unmasked inventory to explain why that guard is necessary; they do not recommend its foreign-border cells.
 """)
 code(r"""
 us_west = (ALL["lon"] < -95) & (ALL["lat"] < 49.0)         # clearly-US band (W of -95, S of the 49th-parallel border)
@@ -303,18 +312,17 @@ print("→ density 0→thousands and zero-obs 95%→0% across the line = a data-
 
 # ---------------------------------------------------------------- the five axes, visual
 md(r"""
-## 3 · The five goals — what each one looks like over Canada
+## 3 · The five axes, what each one looks like over Canada
 
-Every square is scored from **0 to 1** on five goals (we call them *axes* in the code). The
-code names are terse, so here is what each one means before you see it on a map:
+Every square has five underlying **0–1 axes**. They summarize different kinds of recorded evidence, with the sampling-history fallback described below. The app's five Goal-menu choices are a separate set: three numeric presets plus Getting Even and Climate Gap (§5).
 
 | Axis (code name) | The goal, in plain English | A high score means |
 |---|---|---|
 | `discover` | Go where few people have looked | Hardly any iNaturalist records nearby |
-| `conservation` | Go where at-risk species live | Many threatened species recorded around the square |
+| `conservation` | Recorded conservation concern | More status-weighted species records under the shipped policy |
 | `env` | Cover every habitat | The square's *climate type* is barely sampled anywhere |
-| `staleness` | Revisit places that have gone quiet | Lots of old records, very few recent ones |
-| `urgency` | Record it before it's lost | Recent forest-cover loss (logging, fire, dieback) |
+| `staleness` | Revisit recorded gaps | Old records with few recent ones, or inverse density where history is missing |
+| `urgency` | Document changed forest habitat | Greater cumulative mapped forest loss, 2001–2023 |
 
 Below they are side by side — read each map as *"where would this goal send me?"* They send you
 to different places, which is exactly why you get to choose between them (§6). Each goal below
@@ -375,24 +383,41 @@ plt.tight_layout(); plt.show()
 md(r"""
 ### 3.2 · Find rare species — and the **dual-use safety choice**
 
-> **In plain terms:** *go where Canada's species-at-risk live.* A square scores high if many
-> threatened species have been recorded in the surrounding area.
+> **In plain terms:** prioritize cells with more recorded status-weighted conservation concern under the shipped assessment snapshot and occurrence policy. This is a coarse recording signal, not a map of exact locations or current legal status.
 
-**Measures:** how many of Canada's at-risk species occur in a cell — "Canada's Most Wanted."
-**Formula:** per cell, sum status weights of at-risk species recorded there
-(**Endangered 3 · Threatened 2 · Special Concern 1**), then min–max to 0–1.
+**Measures:** recorded conservation concern. **Formula:** in each source cell, sum the maximum applicable status weight once per retained species (**Endangered 3 · Threatened 2 · Special Concern 1**), then min–max to 0–1.
 
-**The choice that defines this axis is what we *refuse* to expose.** Pollock et al. 2025
-(*Nat Rev Biodiversity*, Box 3) warns that fine-grained "where do threatened species occur"
-maps can aid poaching and collection. So the underlying CAN-SAR × GBIF point occurrences are
-**aggregated away** in `build_atrisk_layer.py`; only a per-cell *sum of status weights over a
-25 km cell* ever reaches the public app. It says "this region is rich in at-risk species,"
-never which species or where within the cell. Coarse binning + all-taxa pooling are the
-mitigation, and they stay in force for any future finer layer.
+**The design choice:** expose a coarse all-taxa score. Pollock et al. 2025 (*Nat Rev Biodiversity*, Box 3) warns that fine-grained threatened-species maps can aid poaching or collection. The download aggregates records to 0.01° for policy checks; `build_atrisk_layer.py` then counts retained species in 0.25° source cells. Their normalized score is joined by the drawn cell's centre. A 5 km square can therefore display a value inherited from the same coarse source cell as its neighbours, not a new 5 km inventory of species at risk.
+
+**What the snapshot can establish:** its CAN-SAR names and statuses, COL XR matches, GBIF record filters, and selected allowlist are traceable below. It retains species-level counting for most listings, so separate populations can still be combined. Matching a name also does not settle a changed biological concept: the crosswalk's historical *Bartramia stricta* match remains ambiguous against the revised Canadian *Bartramia aprica* concept in the [COSEWIC 2023 report](https://www.canada.ca/en/environment-climate-change/services/species-risk-public-registry/cosewic-assessments-status-reports/rigid-apple-moss-2023.html). A zero score means no retained record under this policy, not absence. The exact filters, safeguards and build checks are in the conservation reference in `METHODOLOGY.md`.
 """)
 code(r"""
+atrisk_prov = json.load(open(CA / "ca_atrisk_provenance.json"))
+crosswalk = pd.read_csv(CA / "atrisk_species_keys.csv", keep_default_na=False)
+listings = pd.read_csv(CA / "atrisk_listings.csv", keep_default_na=False)
+matched_names = set(crosswalk.loc[crosswalk.col_key != "", "name"])
+n_matched_listings = sum(any(name.strip() in matched_names for name in names.split(";")) for names in listings.names)
+policy = atrisk_prov["shipping_policy"]
+n_retained = len(policy["retained_listing_ids"])
+n_guarded = len(policy["required_polygon_listing_ids"])
+snapshot = pd.DataFrame([
+    ("GBIF occurrence download DOI", atrisk_prov["doi"]),
+    ("Catalogue of Life release", atrisk_prov["taxonomy"]["shortName"]),
+    ("Catalogue of Life DOI", atrisk_prov["taxonomy"]["doi"]),
+    ("Listed names in crosswalk", len(crosswalk)),
+    ("Names with a primary key", len(matched_names)),
+    ("Distinct primary species keys", crosswalk.loc[crosswalk.col_key != "", "col_key"].nunique()),
+    ("Matched CAN-SAR listings", n_matched_listings),
+    ("Selected occurrence policy", policy["method"]),
+    ("Retained listings", n_retained),
+    ("Retained species-level listings", n_retained - n_guarded),
+    ("Retained polygon-guarded listings", n_guarded),
+    ("Excluded matched listings", len(policy["dropped_matched_listing_ids"])),
+], columns=["Frozen conservation snapshot", "Value"])
+display(snapshot)
+
 cons = pd.read_csv(CA / "ca_atrisk_richness.csv")
-top = cons.nlargest(8, "n_species").reset_index(drop=True)
+top = cons.nlargest(8, "score_raw").reset_index(drop=True)
 
 def name_place(lat, lon):
     spots = [("Point Pelee / Carolinian SW Ontario", 42.0, -82.5),
@@ -400,20 +425,21 @@ def name_place(lat, lon):
              ("Okanagan", 49.9, -119.5), ("Lower Mainland BC", 49.2, -122.5),
              ("Niagara / Golden Horseshoe", 43.1, -79.4), ("Montréal / St. Lawrence", 45.5, -73.6)]
     return min(spots, key=lambda s: (s[1]-lat)**2 + (s[2]-lon)**2)[0]
-top["likely region"] = [name_place(r.lat, r.lon) for r in top.itertuples()]
+top["nearest reference label"] = [name_place(r.lat, r.lon) for r in top.itertuples()]
 # Region first, with explicit widths, so its long labels get the room and never clip the right edge.
-top = top[["likely region", "n_species", "lat", "lon"]]
+top = top[["nearest reference label", "score_raw", "lat", "lon"]]
 
 fig, axs = plt.subplots(1, 2, figsize=(12, 4.2))
 canada_map(axs[0], ALL["conservation"], "Conservation axis (25 km, all-taxa pooled)", cmap="magma")
 axs[1].axis("off")
-axs[1].set_title("Top at-risk-richness cells = Canada's real hotspots", fontsize=10)
+axs[1].set_title("Highest recorded status-weighted 0.25° source cells", fontsize=10)
 tbl = axs[1].table(cellText=top.round(2).values, colLabels=top.columns, loc="center",
                    cellLoc="left", colWidths=[0.52, 0.16, 0.16, 0.16])
 tbl.auto_set_font_size(False); tbl.set_fontsize(8); tbl.scale(1, 1.5)
-fig.suptitle("Find rare species — concentrated, validated against known hotspots, deliberately coarse", y=1.0)
+fig.suptitle("Recorded conservation concern, pooled across taxa on a coarse source grid", y=1.0)
 plt.tight_layout(); plt.show()
-print("Caveat: reflects ASSESSED species only (CAN-SAR ~2021); IUCN/COSEWIC under-assess inverts, plants, fungi.")
+print("Reference labels are the nearest of six named places, not independent hotspot validation.")
+print("Caveat: CAN-SAR is an assessment snapshot; under-assessed groups and taxon-concept ambiguity remain.")
 """)
 
 # ---- env
@@ -446,19 +472,11 @@ plt.tight_layout(); plt.show()
 md(r"""
 ### 3.4 · Freshest gaps — and the **iNat-only data-integrity choice**
 
-> **In plain terms:** *revisit places that were busy once but have gone quiet.* A square that
-> people recorded heavily years ago but barely touch now scores high — its picture is going stale.
+> **In plain terms:** the observed-history component highlights places recorded heavily in the past and rarely in the last five years. Where history is unavailable, the axis falls back to sparse recording density.
 
-**Measures:** squares well-recorded *in the past* but *quiet lately*. **Formula:** for squares
-with ≥20 historical records, `staleness = (1 − recent/all-time) · log(1 + all-time records)`,
-scaled 0–1. Lots of old records + few recent ones → high.
+**Observed-history component:** a 0.25° source cell with ≥20 historical records uses `staleness = (1 − recent/all-time) · log(1 + all-time records)`, scaled 0–1. Lots of old records and few in the last five years give a high value. The drawn 25 km or 5 km cell takes its source value by its centre.
 
-**The choice, caught by cross-validation.** An earlier version sourced this from GBIF density.
-But GBIF blends iNaturalist + eBird + museum specimens — eBird's recent bird volume and museums'
-old specimens distort "where *iNaturalist users* have gone quiet." A cluster cross-validation
-against the raw iNat dump found the GBIF signal was null (ρ ≈ −0.065) and the axis was
-**re-sourced to iNaturalist-only**. This is the discipline the project runs on: an
-un-validated layer is not trusted into the map.
+**The source choice:** use iNaturalist history for an iNaturalist recording objective, rather than treating GBIF's mix of iNaturalist, eBird and museum dates as equivalent. **The missing-data choice:** where that historical source parent has no value, the builder substitutes the selected group's normalized inverse observation density. A high fallback value therefore means sparse records, not proven recent silence. The figure inspects the combined shipped axis and example observed-history counts; it does not independently validate both components or predict a revisit's outcome.
 """)
 code(r"""
 met = pd.read_csv(CA / "ca_inat_metrics.csv")
@@ -496,22 +514,17 @@ print(f"Fort McMurray-area cell urgency = {fm.urgency:.2f}  (vs national median 
 md(r"""
 ## 4 · The score — "impact 0–100"
 
-> **In plain terms:** pick a preset to say which goals matter to you. Each square
-> then gets a single **0–100 score** in its popup, where **100 is the highest-priority square
-> on the map** for your current settings and life group.
+> **In plain terms:** pick a fixed numeric preset. Its popup percentile compares the enclosing **25 km cell** with Canada-eligible 25 km cells for your selected species group. At 5 km the finer colour and live records describe the selected cell, while this percentile still describes its 25 km parent. It is a relative recording priority, not a probability or forecast.
 
 **How it's built:**
-1. **Blend** — multiply each goal's 0–1 value by the preset's weight and add them up
-   (`raw = w₁·discover + w₂·rare + …`). A square strong on the goals you care about gets a big raw number.
-2. **Colour** — the map paints that blended value itself, cut off at 1 and run through the
-   viridis ramp. It is baked into a PNG per life group and goal at build time, so panning and
-   zooming never change a square's colour.
-3. **Rank** — the popup shows the square's *place in the line* as 0–100. Top square → 100,
-   bottom → 0 when untied, across eligible squares of the selected life group in Canada. Equal scores share their average rank.
 
-The raw blend and its percentile rank answer different questions. The raw blend expresses the chosen axis weights; the rank expresses relative position among eligible cells, with ties assigned their average position. The figure compares linear rescaling with national average ranks. Neither scale estimates ecological benefit.
+1. **Blend:** multiply each axis's 0–1 value by its fixed preset weight and add (`raw = w₁·discover + w₂·conservation + …`). The weights express the recording objective.
+2. **Colour:** bake `clip(colour_blend / preset.scale, 0, 1)` through viridis, combining the colour stack's axes with the preset weights, per group, preset and tier. Species discovery uses scale **1.6**, the other numeric presets **1.0**. The release's 25 km colour stacks average 5 km axes with NaN-aware means, while popup components and national ranks use native 25 km JSON. The fill can therefore differ from the native blend before display stretching. The viewer then stretches those quantized colours to cells on screen, so panning and zooming can change the fill. Too few cells or too little colour spread retain the national colour scale, as named by the legend.
+3. **Rank:** order raw blends among Canada-eligible **25 km** cells of the selected group. Equal values share their average rank; 0 and 100 are reached only at untied endpoints. A constant or singleton population gets zero, and an unavailable country mask withholds ranks. The colour stretch never changes this number.
 
-This illustration uses the eligibility and tie policy proposed in [the map interaction update](https://github.com/PollockLab/where-to-blitz/pull/153). It is separate from the raw preset-blend parity checked in Section 8.
+The raw blend and its percentile rank answer different questions. The raw blend expresses the chosen axis weights; the rank expresses relative position among eligible cells, with ties assigned their average position. The figure compares linear rescaling with national average ranks, both using native 25 km JSON rather than the aggregated colour stacks. Neither scale estimates ecological benefit.
+
+This illustration reproduces the shipped eligibility and average-tie ranking policy. It is separate from the raw preset-blend parity checked in Section 8.
 """)
 code(r"""
 from goal_presets import DEFAULT              # the shipped default preset, not a copy of it
@@ -535,12 +548,11 @@ plt.tight_layout(); plt.show()
 
 # ---------------------------------------------------------------- presets
 md(r"""
-## 5 · Presets — value choices, made explicit and linked to real challenges
+## 5 · The Goal menu, three numeric presets and two other views
 
-A where-to-go map is a *value choice*, not a measurement: discovery, conservation, and
-habitat coverage point to different places. Rather than hide that behind one "best" map, the
-app ships a small set of named presets, **each linked to a real, verified
-Blitz the Gap iNaturalist sub-project** so the planning tool and the campaign stay in sync.
+A where-to-go map expresses a recording objective. **Spatial Gap**, **Species discovery**, and **Conservation** use the fixed blends below and a national priority percentile. **Getting Even** instead recommends a taxonomic group, and **Climate Gap** is a separate climate-coverage raster. Those two views have their own legends, and show no numeric preset percentile. The five menu choices are distinct from the five underlying axes shown in §3.
+
+`env` has zero direct weight in all three presets, but climate coverage orders the zero-density cells inside `discover`. Species discovery's `staleness` term also includes the inverse-density fallback where observed history is missing. The join links resolve the current general Blitz the Gap iNaturalist project; the table shows their frozen fallback slug, not five independent campaign projects.
 """)
 code(r"""
 # straight from goal_presets.py, the same list build_webapp.py injects into index.html
@@ -565,19 +577,13 @@ plt.tight_layout(); plt.show()
 
 # ---------------------------------------------------------------- disagreement
 md(r"""
-## 6 · Do the goals actually point to different places?
+## 6 · Do the underlying axes point to different places?
 
-> **In plain terms:** if the five goals all sent you to the same squares, the presets would be
-> for show. They don't. The grid below measures *how much any two goals agree on where to go*:
-> **+1 = the same places, 0 = unrelated, −1 = opposite places.** Most pairs are near 0 or
-> negative — they're genuinely different goals, which is why it's worth choosing between them.
+> **In plain terms:** the matrix compares the five underlying axes, separately from the five Goal-menu choices. It measures how strongly pairs of axes rank recorded cells in the same order: **+1** means the same order, **0** no rank correlation, and **−1** the reverse order. This describes the selected snapshot's score relationships, not outcomes from visits.
 
 (Computed over squares that actually have records, `n_train > 0`.)
 
-> A verification catch worth flagging: over the *full* grid, discover and habitat-coverage look
-> ~0.9 "agree" — an artifact, because ~half the squares are empty gaps that pin discover at its
-> max, so it can't vary. Restricting to recorded squares gives the honest, near-zero/negative
-> picture. The number depends on which squares you include.
+> The population matters: `discover` orders zero-density cells by `env`, so their whole-grid association includes an intentional shared component. Restricting to recorded cells removes those zero-density cells and changes the comparison; it does not remove observer or habitat bias.
 """)
 code(r"""
 rec = ALL[ALL["n_train"] > 0]
@@ -590,19 +596,17 @@ for i in range(5):
     for j in range(5):
         ax.text(j, i, f"{M.iloc[i,j]:+.2f}", ha="center", va="center",
                 color="white" if abs(M.iloc[i,j])>0.5 else "black", fontsize=9)
-ax.set_title(f"How much each pair of goals agrees on where to go\n(+1 same places · 0 unrelated · −1 opposite; over {len(rec):,} recorded squares)")
+ax.set_title(f"Rank correlation between pairs of underlying axes\n(+1 same order · 0 uncorrelated · −1 reverse; over {len(rec):,} recorded squares)")
 fig.colorbar(im, fraction=0.046, pad=0.04); plt.tight_layout(); plt.show()
 """)
 
 # ---------------------------------------------------------------- trip planner
 md(r"""
-## 7 · From map to trip — how navigation works
+## 7 · Optional development view, trip planning
 
-> **In plain terms:** the map tells you *where* the good squares are; the planner tells you
-> *which one you can actually get to and back from* in the time you have — by the greenest way
-> that still works. You give it your start and a time budget (say "Vancouver, 5 hours"); it
-> finds the highest-impact square you can round-trip, picks walk/bike/drive for you, and draws
-> the real route.
+**Disabled by default:** `build_webapp.py` ships `PLAN_ENABLED = False`. The planner is an optional development view available only by opting in with `?plan=1`; the standard Explore view does not ask for a start or time budget or display trip routes.
+
+> **When enabled:** the planner accepts a start and time budget, ranks reachable recording priorities and estimates time available in the field. It selects a walking, cycling or driving option and requests a route. These mechanics are planning estimates, not validated trip outcomes.
 
 **The choices that keep it honest:**
 
@@ -627,13 +631,13 @@ is a defensible choice, and any estimated route is labelled.)
 md(r"""
 ## 8 · What the retrospective test measures
 
-The backtest measures new **taxon IDs in a sampled record set**, not species that a future trip will discover. It assigns records to the viewer's eligible 25 km equal-area cells and blends the same normalized axes and preset weights. A training-period scarcity proxy is compared separately with the published scores.
+The archived backtest measures new **taxon IDs in a sampled record set**, not species that a future trip will discover. It used the declared 25 km equal-area lattice, original normalized grid inputs and preset weights recorded in each result's `run` metadata. These outcomes have not been recomputed for the rebuilt grid shown in this walkthrough; shared geometry and scoring code do not make the data snapshots identical. The original group-JSON and record-input hashes are listed below.
 
 1. Split the cached project records on **observed_on = 2025-07-01**. Their historical upload, identification and research-grade availability are unknown.
 2. For each cell with earlier records and at least five later records, calculate the expected number of distinct later taxon IDs absent from its sampled earlier records, in a draw of **K = 5 observations without replacement**.
 3. Compare that expected record novelty with each score using Spearman correlation. Equal observation counts do not establish equal field hours, visits or detectability.
 
-The earlier 0.25-degree join could merge independent projected cells and rescaled the published axes within each sample. The corrected results below use exact projected cell assignments, preserve the shipped axis values, and record source and input hashes. The legacy key `app_leakfree` now explicitly names a retrospective training-period proxy, with historical availability unknown.
+The earlier 0.25-degree join could merge independent projected cells and rescaled the axes within each sample. The archived corrected results below use exact projected cell assignments and preserve their original normalized axis values. The legacy key `app_leakfree` names a retrospective training-period proxy, with historical availability unknown.
 
 The outcome includes species and infraspecific taxon IDs. The sample is page-capped and excludes previously unobserved cells. Published axes use later information, including all-time density and a later occurrence download. The permutation probabilities are nominal, assume exchangeable cells, and have no spatial blocking or multiple-comparison adjustment. These are exploratory associations, not prospective or causal estimates of trip yield. See [METHODOLOGY.md](https://github.com/PollockLab/where-to-blitz/blob/main/METHODOLOGY.md) for the full scope and reproduction commands.
 """)
@@ -641,8 +645,8 @@ code(r"""
 app = json.load(open(RES / "voi_appscore_results.json"))
 labels = {
     "training-period scarcity proxy": "app_leakfree",
-    "published Spatial Gap": "app_shipped",
-    "published Species discovery": "species_discovery_shipped",
+    "archived Spatial Gap snapshot": "app_shipped",
+    "archived Species discovery snapshot": "species_discovery_shipped",
 }
 bt = pd.DataFrame([
     {"taxon": r["taxon"], **{label: r["scores"][key]["spearman"] for label, key in labels.items()}}
@@ -659,7 +663,7 @@ display(bt.round(2))
 print("K = 5 observations, not visits or field hours. Historical record availability is unknown.")
 """)
 md(r"""
-**The training proxy and the published map answer different questions.** The proxy uses the sampled count of records dated before the split. The published Spatial Gap score uses a national density ramp built later. Their associations cannot be interpreted as equivalent validation of the live map.
+**The training proxy and the archived grid scores answer different questions.** The proxy uses the sampled count of records dated before the split. The archived Spatial Gap score uses a national density ramp built later. Neither comparison reevaluates or validates the refreshed grid snapshot shown above.
 
 **A smaller sampled history makes novelty easier to obtain.** That is useful for finding record gaps, but it does not by itself establish ecological discovery skill beyond the coverage already recorded. The inverse training-count score is the same ordering reversed and is not an independent negative control.
 
@@ -674,6 +678,15 @@ er = pd.DataFrame([
 print("Eastern Canada, a separate retrospective regional sample:")
 display(er.round(2))
 print("A positive association in another region does not establish prospective field performance.")
+
+snapshots = pd.DataFrame([
+    {"Archived sample": f"{region} / {r['taxon']}",
+     "Original group JSON SHA256": r["run"]["grid"]["source_sha256"]["group"],
+     "Original record input SHA256": r["run"]["input_sha256"]}
+    for region, results in [("BC", app), ("East", east)] for r in results
+])
+with pd.option_context("display.max_colwidth", None):
+    display(snapshots)
 """)
 
 md(r"""
@@ -715,9 +728,7 @@ These constraints shaped the contents above; they are the reason some things are
 - **Species-at-risk are gated out of suggestions.** Every live iNaturalist fetch carries
   `taxon_geoprivacy=open` and the "fill the gap" suggestions add `threatened=false`. The tool
   will not point a stranger at a rare orchid.
-- **The conservation axis is coarse by design** (Section 3.2) — a 25 km, all-taxa sum, never
-  a species map. Dual-use mitigation (Pollock et al. 2025, Box 3) stays in force for any
-  finer future layer.
+- **The conservation axis is coarse by design** (Section 3.2): an all-taxa score inherited from a 0.25° source bin, including when drawn in a 5 km square. It does not identify individual species or precise locations. Dual-use mitigation (Pollock et al. 2025, Box 3) remains a constraint on finer source layers.
 - **Indigenous data sovereignty.** Obscure sensitive locations and respect
   [Indigenous data sovereignty](https://native-land.ca) before any public use; a territory
   acknowledgment is linked in-app.
@@ -729,14 +740,9 @@ These constraints shaped the contents above; they are the reason some things are
 md(r"""
 ## 10 · How it's delivered — the stack
 
-> **In plain terms:** everything above is computed once and frozen into files. The website
-> *is* those files. There is **no server and no database**, so nothing can quietly change
-> under you.
+> **In plain terms:** the priority inputs are frozen files served by a static website. The popup's iNaturalist records are live external requests, as are routes in the optional planner when enabled, so those results can change independently of the frozen scores.
 
-Python builds the lattice and fills it; `build_webapp.py` inlines the result into one
-self-contained `index.html`, byte-identical for the same inputs. The page is plain JavaScript
-with MapLibre GL JS and pmtiles.js, on GitHub Pages. The five map layers are not the same
-kind of thing, which is the one non-obvious part:
+Python builds the lattice and fills it; `build_webapp.py` inlines the result into one self-contained `index.html`, byte-identical for the same inputs. The page is plain JavaScript with MapLibre GL JS and pmtiles.js, on GitHub Pages. The map layers have different spatial support and display rules:
 
 | Layer | Served as | Built by |
 |---|---|---|
@@ -744,6 +750,7 @@ kind of thing, which is the one non-obvious part:
 | Cell geometry | GeoJSON polygons, in the LAEA lattice of Section 2 | `grid_lattice.py` |
 | Cell colours | One PNG per (group, goal, tier), **one pixel per cell**, painted onto those polygons | `build_grid_values.py` |
 | Density overlay | Raster PMTiles, magma baked in at build time | `build_density_pmtiles.py` |
+| Climate Gap overlay | Separate climate-coverage raster PMTiles, with its own legend | Release asset, built outside this repository |
 
 Colours are a PNG rather than tiles because warping rotated LAEA cells into Mercator pixels
 left a staircase that never matched the lattice (#116). Both docstrings carry the full reasoning.
@@ -762,13 +769,14 @@ uv venv --python 3.11 .venv && uv pip install --python .venv/bin/python -r requi
 
 # 3. rebuild + execute THIS walkthrough, then render the HTML the in-app link points to
 .venv/bin/python _build_walkthrough.py
+export WTB_CA_DIR=/path/to/validated/cluster_results/ca
 .venv/bin/python -m nbconvert --to notebook --execute --inplace where-to-blitz-walkthrough.ipynb
 .venv/bin/python render_walkthrough_html.py    # → where-to-blitz-walkthrough.html (adds figure alt text)
 ```
 
-The build is frozen by a manifest hash (printed in Section 1); the validation results read from
-cached `cluster_results/*.json`. Download archived `inat_*.csv` from the `grid-inputs-v1` release to reproduce the historical inputs; a fresh API pull can change records and identifications. Optional live cell
-below shows the *"tap a cell → what to record"* loop on today's iNaturalist data.
+Select a coherent grid directory with `WTB_CA_DIR`; leaving it unset uses `cluster_results/ca`. The render verifies consumed JSON/CSV inputs against available provenance entries before drawing figures and prints the manifest plus all consumed input hashes in Section 1. A checkout mixing older grid provenance with newer conservation CSVs fails clearly. The published figures were refreshed from the validated rebuild snapshot; `WTB_CA_DIR` does not change the archived backtest files in `cluster_results/`.
+
+Section 8 displays the archived results without rerunning them and prints their original group-JSON and record-input hashes. Download archived `inat_*.csv` from `grid-inputs-v1` to recover record inputs, and restore the original grid hashes from each result's `run.grid.source_sha256` before reproducing those evaluations. A fresh API pull or a newer grid is a new evaluation. The optional cell below queries today's iNaturalist API.
 """)
 code(r"""
 # OPTIONAL — live iNaturalist "fill the gap" near a chosen cell. Guarded: skips cleanly offline.
@@ -795,8 +803,7 @@ except Exception as e:
 
 md(r"""
 ---
-*Built by `_build_walkthrough.py` from the committed where-to-blitz build. Every number
-traces to a file in `cluster_results/`.*
+*Built by `_build_walkthrough.py`: map figures trace to the selected `WTB_CA_DIR` snapshot and printed input hashes; retrospective figures trace to the archived result files in `cluster_results/`. The optional live demonstration uses today's iNaturalist API.*
 """)
 
 nb.write("where-to-blitz-walkthrough.ipynb")

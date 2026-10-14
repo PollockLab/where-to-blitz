@@ -3,9 +3,7 @@
 A terse reference for how every number on the map is computed. For the narrated
 version with figures and the validation backtest, see the
 [full walkthrough](https://pollocklab.github.io/where-to-blitz/where-to-blitz-walkthrough.html).
-Each priority axis is scored **0–1 per cell**, then your chosen weights are combined
-into the **0–100 "impact"** reported at the foot of a cell's popup. The map itself carries colour, not
-the number.
+Each priority axis is scored **0–1 per cell**. A numeric preset fixes the weights, and the popup reports the blend's **0–100 national priority percentile**. This relative rank describes the frozen recording priorities, not the probability of finding a species or the benefit of a visit. The map colour and the live popup records use separate scales and inputs.
 
 - **Grid:** an equal-area lattice (WGS84 Lambert Azimuthal Equal Area, centred 45°N 100°W).
   Every cell is a square of the same size. Two tiers: **25 km, 23,214 cells** (the default view)
@@ -13,9 +11,8 @@ the number.
   density footprint and either holds land (Weiss travel-time raster) or holds records.
 - **Per group:** the same geometry is reused for all 11 life-group layers (All biodiversity,
   Plants, Insects, Birds, Fungi, Mammals, Fishes, Reptiles, Amphibians, Arachnids, Molluscs).
-- **Same colour at both zooms:** each axis maps raw values to 0–1 through one fixed national
-  ramp, fitted once on the 25 km tier (`breaks.json`). A cell's score depends on its own data,
-  never on which tier it was built in.
+- **Shared normalization:** the raster-derived axes use national ramps fitted on the 25 km tier (`breaks.json`) and reused at 5 km; conservation and observed staleness join from their normalized 0.25° source grids. A finer cell can have different inputs and colour. The display then stretches colours to the visible cells, while the popup percentile remains a rank of the enclosing 25 km cell.
+- **Three spatial supports:** the drawn cells are 25 km or 5 km equal-area squares. Conservation and observed staleness are source values on a 0.25° latitude-longitude grid, joined using the drawn cell's centre (`fullgrid_fields.PARENT_RES_DEG`); a 5 km display does not add conservation or historical evidence. Live iNaturalist queries use the selected drawn cell's geographic bounding box, which can include space outside its projected square.
 
 ---
 
@@ -25,11 +22,12 @@ the number.
 |---|---|
 | **cell** | One square of the grid. The unit everything is scored on: 25 km by default, 5 km from zoom 9. |
 | **lattice** | The projected equal-area grid the cells sit on (`grid_lattice.py`). WGS84 Lambert Azimuthal Equal Area, 45°N 100°W, snapped to a 25 km multiple so the 25 km tier is an exact 5×5 aggregate of the 5 km tier. |
-| **goal** (= **axis**) | One reason to go somewhere, scored 0–1 per cell. The five keys are `discover`, `conservation`, `env`, `staleness`, `urgency` (`goal_presets.py`). |
-| **impact** | The 0–100 number at the foot of a cell's popup: the preset's blend of the five goals, expressed as a percentile rank across every cell in the country. It is national and stable: panning and zooming never change a cell's number. Because the fill *is* restretched to the view, a cell that reads bright locally can still report a low national number. |
-| **preset** | A named weight mix over the five goals, each linked to a real Blitz the Gap iNaturalist sub-project (`goal_presets.py`). |
+| **axis** | One underlying priority signal, scored 0–1 per cell. The five keys are `discover`, `conservation`, `env`, `staleness`, `urgency` (`goal_presets.py`). |
+| **Goal menu** | Five display choices: the three numeric presets, Getting Even's group recommendation, and the separate Climate Gap overlay. These choices are distinct from the five axes. |
+| **impact / priority percentile** | The preset's raw blend ranked from 0–100 among Canada-eligible 25 km cells for the selected species group, with equal values assigned their average rank. Panning and zooming preserve this number; at 5 km it belongs to the enclosing 25 km cell. A locally bright cell can have a low national percentile because the colour is stretched separately to the view. |
+| **preset** | A named, fixed weight mix over the five axes (`goal_presets.py`). The three numeric presets share the current general Blitz the Gap iNaturalist project, resolved live with a frozen fallback slug. |
 | **gap** | A cell that is under-recorded for the goal in play. "Blitz the gap" = go to one and record there. |
-| **Getting Even** | A separate layer, not a goal: it colours each cell by the taxonomic group most under-represented *there*, birds excluded (`build_gettingeven.py`). It answers *what* to record in a cell, not *where* to go. |
+| **Getting Even** | A separate Goal-menu layer, not a numeric axis: it colours each cell by the taxonomic group most under-represented there, birds excluded (`build_gettingeven.py`). It answers what group to record in a cell. |
 | **VOI** | Value of information — how much a new observation would improve what we know. The intended end state for species suggestions; today's ranking is an interpretable stand-in (see "Which species to record in a cell" below). |
 | **appscore** | The composite the app actually ships, read straight from `goal_presets.PRESETS`, as distinct from the generic proxy `voi_backtest.py` tests. `backtest_appscore.py` scores it so the backtest cannot drift from the dropdown. |
 
@@ -49,15 +47,17 @@ the number.
   for the single groups); these are true gaps and score highest.
 
 ### 2. Find species at risk — `conservation`
-- **What it measures:** how many of Canada's at-risk species occur in a cell — "Canada's Most Wanted."
+- **What it measures:** recorded status-weighted conservation concern under the shipped assessment snapshot and occurrence policy.
 - **Source:** **CAN-SAR** (COSEWIC/SARA assessments, OSF DOI 10.17605/OSF.IO/E4A58, CC-BY) → the species listed **Endangered / Threatened / Special Concern**, matched to **Catalogue of Life XR** species keys (release COL26.6 XR, the GBIF default for SQL downloads, which replaced the frozen GBIF Backbone; names go through the GBIF v2 species/match, synonyms and subspecies collapse to the accepted species key, orthographic duplicates of one species in COL are counted once, and unmatched or higher-rank-only names are listed in the crosswalk with no key and never used), × their Canadian occurrences from **one GBIF SQL download with a DOI** (see `cluster_results/ca/ca_atrisk_provenance.json`; the name-to-key crosswalk is `cluster_results/ca/atrisk_species_keys.csv`).
-- **Occurrence filters:** Canadian records only, occurrence status present, year 1990 or later, no fossil or living (zoo, garden) specimens, no GBIF geospatial issues, coordinates present. There is deliberately no coordinate-uncertainty filter: iNaturalist publishes obscured at-risk records with large uncertainty, and a cutoff such as 10 km would drop many of them, while cells are 0.25° (~25 km) anyway.
+- **Shipped snapshot:** GBIF download [10.15468/dl.6hqdyd](https://doi.org/10.15468/dl.6hqdyd), using Catalogue of Life **COL26.6 XR**, taxonomy DOI [10.48580/dgyy9](https://doi.org/10.48580/dgyy9). The crosswalk has **521 listed names**, of which **507 names match 496 distinct primary species keys**; these are name and key counts, not 521 independently resolved biological species. Of **549 matched CAN-SAR listings**, the selected allowlist retains **514**, comprising **511 species-level listings and 3 polygon-guarded listings**, and excludes **35**. Several listings can share a species key; an eligible species contributes its maximum applicable status weight once per source cell. The provenance, crosswalk and listing-policy files provide the exact identifiers.
+- **Occurrence filters:** Canadian records only, occurrence status present, year 1990 or later, no fossil or living (zoo, garden) specimens, no GBIF geospatial issues, coordinates present. There is deliberately no coordinate-uncertainty filter: iNaturalist publishes obscured at-risk records with large uncertainty, and a cutoff such as 10 km would drop many of them. The SQL download aggregates records at 0.01° for policy checks, then the builder aggregates retained species to 0.25° source cells; their physical width varies with latitude.
 - **Selected occurrence policy:** CAN-SAR lists subspecies and populations, while GBIF species keys include their parent species. The registered comparison in `research/GATE-range-clip.md` selected the simpler allowlist: its fixed test listings for SPILLS species and *Silene scouleri* are excluded, while COVERS species plus badger, shrike and bison retain species-level counting. The download-specific decision excludes 35 listings and is enforced by `cluster_results/ca/atrisk_shipping_policy.json`; `--candidate` explicitly builds a research range clip instead. Ambiguous *Lampetra richardsoni* and *Peltigera gowardii* matches, including the eastern *Peltigera hydrothyria* listing sharing the same key, retain polygon checks with a 10 km buffer and no infraspecific bypass. A missing polygon drops the ambiguous listing and is logged. Available ranges use DFO distribution polygons, the five fixed ecozone overrides within CAN-SAR provinces, then Natural Earth province polygons. The selected policy applies polygons only to these ambiguous matches. Per-listing counts and exclusions are in `cluster_results/ca/atrisk_listing_clip.csv`; raw candidate counts and hand reviews are retained separately in `research/range_clip_candidate.csv` and `research/range_clip_reviews.csv`.
 - **Crosswalk gate:** when a committed crosswalk exists, a re-match that merges names of different status weights under one species key, splits a key, or loses a previously matched name stops the build unless `--accept-crosswalk-changes` is passed; the diff is printed either way.
 - **Check:** before the layer is written, the per-species totals of a seeded sample of 6 species are re-counted through the GBIF occurrence search API (COL XR `checklistKey` and species key) under the same filters; any mismatch (or an empty download) stops the build.
 - **Formula:** per cell, sum the status weights of the at-risk species recorded there —
   **Endangered = 3, Threatened = 2, Special Concern = 1** — then min–max scale to 0–1.
 - **Status:** REAL (assessment statuses × occurrence records). **Caveat:** CAN-SAR is an assessment snapshot, not a current legal-status lookup, and under-assessed invertebrates, plants and fungi remain underrepresented. The allowlist deliberately discards genuine records for excluded listings; retained species-level listings can still combine populations. The comparison covers resolved infraspecific records in its fixed test set and does not establish accuracy for every species-level occurrence or population. Provincial polygons remain coarse for the ambiguous matches. A cell with no at-risk score means "not recorded under this policy", not "absent". The same all-taxa layer is applied to every group.
+- **Taxon-concept limit:** the shipped crosswalk matches the historical name *Bartramia stricta* to COL's literal species key. The [COSEWIC 2023 Rigid Apple Moss report](https://www.canada.ca/en/environment-climate-change/services/species-risk-public-registry/cosewic-assessments-status-reports/rigid-apple-moss-2023.html) uses *Bartramia aprica* for the revised Canadian concept. A name match and aggregate occurrence count do not establish that the shipped records represent that concept; this remains an unresolved biological identity ambiguity.
 
 ### 3. Cover every habitat — `env`
 - **What it measures:** how under-sampled a cell's *climate type* is — climate "surprisal."
@@ -73,13 +73,8 @@ the number.
 - **What it measures:** cells well-recorded **historically** on iNaturalist but **quiet recently** — worth revisiting.
 - **Source:** **iNaturalist open-data** research-grade observations (the public AWS dump),
   per cell: `n_all` (all-time) and `n_recent` (last 5 years), computed over the 0.25° grid.
-- **Formula:** for cells with ≥ 20 historical records, `staleness = (1 − n_recent/n_all) ·
-  log(1 + n_all)`, min–max scaled to 0–1. So lots of old records + few recent → high.
-- **Status:** REAL, **iNaturalist-specific**. *Why iNat-only and not GBIF:* an earlier version
-  used GBIF density, but GBIF blends iNaturalist + eBird + museum records — eBird's recent bird
-  volume and museums' old specimens distort "where iNaturalist users have gone quiet." A
-  cluster cross-validation against the raw iNat dump caught this; staleness was re-sourced to
-  iNaturalist only. Top cells now correctly flag iNat-quiet areas (e.g. James Bay: 1,319 historical, 2 recent).
+- **Formula and fallback:** where the 0.25° source CSV supplies a value, cells with ≥ 20 historical records use `staleness = (1 − n_recent/n_all) · log(1 + n_all)`, min–max scaled to 0–1. Lots of old records + few recent records give a high value. When the selected source parent has no CSV value, `fullgrid_fields.group_bands` substitutes `1 / (density + 0.001)`, scaled through the selected group's national `staleness_proxy` bounds. That fallback measures sparse recording, not a demonstrated decline in recent activity; the shipped staleness axis combines both kinds of evidence.
+- **Scope:** observed history is iNaturalist-specific, matching the recording objective; GBIF's mix of iNaturalist, eBird and museum dates is not interchangeable with it. The inverse-density fallback does not establish recent silence. Neither component is a prospective estimate of what a revisit will find.
 
 ### 5. Sample before it's lost — `urgency`
 - **What it measures:** cumulative mapped forest loss, a reason to document changed habitat.
@@ -92,32 +87,20 @@ the number.
 
 ## The composite score ("impact", 0–100)
 
-1. You pick a preset. Each one fixes a weight 0–1 for each of the five axes. The weights are not
-   user-editable.
+1. You pick one of the three numeric presets. Each fixes a weight 0–1 for each of the five axes. The weights are not user-editable.
 2. Per cell: `raw_impact = Σ weight_i × axis_i`.
-3. The **N/100** is the **percentile rank** of `raw_impact` across all cells nationally, not a
-   min–max, so a few extreme Arctic super-gaps don't crush every reachable cell to ~0. It is computed
-   once over the whole country, so a cell keeps its number as you pan and zoom. It sits in a muted
-   footer line of the cell popup, below the under-sampled groups and the species worth recording,
-   because in a well-recorded cell it legitimately reads 0 and that is a fact about the national
-   ranking rather than a verdict on the outing.
-4. The map colour starts from `raw_impact`, clipped to 0–1 and painted through viridis, baked per
-   (group, goal) into a PNG at build time. At runtime the fill is then **restretched to the cells in
-   view** (a quantile stretch, so a quiet region stops reading as flat purple). The legend says which
-   scale is live, and the stretch falls back to the baked national ramp when the view holds fewer than
-   24 cells or too little spread to rank. Score and colour are deliberately decoupled: the stretch
-   never touches the number.
+3. The **N/100** is the **percentile rank** of `raw_impact` among the selected group's **Canada-eligible 25 km cells**, using the same published country mask as map visibility and trip candidates. For a population of N cells, an equal-value block at zero-based sorted positions lo through hi receives `100 × (lo + hi) / (2 × (N − 1))`. The lowest and highest values reach 0 and 100 only when untied; an empty, singleton or constant population returns zero. If the Canada mask is unavailable, the app withholds national ranks. Panning and zooming preserve the rank, and a 5 km popup reports its enclosing 25 km cell's percentile.
+4. The baked map colour uses `clip(colour_blend / preset.scale, 0, 1)` through viridis, where `colour_blend` combines the axes in the colour stack with the preset's weights, per (group, preset, tier) PNG in `build_grid_values.render_goal_rgba`. The fixed scales are **1.0 for Spatial Gap, 1.6 for Species discovery, and 1.0 for Conservation**. At runtime the fill is **restretched to the cells in view** using the ordered green-channel levels of those quantized colours. The legend identifies the current scale. Views with fewer than **24** valid cells or a green-channel span below **4** retain the baked national colour scale. This display stretch never changes the popup percentile.
 
-The three presets, straight from `goal_presets.PRESETS`: *Spatial Gap* = `discover` 1.0;
-*Species discovery* ("Revisiting the Past") = `discover` 1.0 + `staleness` 0.6;
-*Conservation* ("Canada's Most Wanted") = `conservation` 1.0 + `urgency` 0.4. `env` carries weight 0 in
-all three, so no preset reads it. Each links to its iNaturalist project.
+The release's **25 km colour stacks are NaN-aware means of 5 km axes**, produced by `aggregate_25km_from_5km.py`. The popup components and national ranks instead use the **native 25 km webapp JSON** from the `fit-25km` build. Their different spatial aggregation can therefore make the 25 km fill differ from the native ranked blend even before colour quantisation and viewport stretching.
+
+The three presets, straight from `goal_presets.PRESETS`: *Spatial Gap* = `discover` 1.0; *Species discovery* = `discover` 1.0 + `staleness` 0.6; *Conservation* = `conservation` 1.0 + `urgency` 0.4. `env` carries weight 0 in all three, but `national_breaks.discover` uses it to order zero-density cells, so the discovery presets retain an indirect climate contribution. Their join links resolve the current general Blitz the Gap iNaturalist project. The other two Goal-menu choices, Getting Even and Climate Gap, have separate legends and do not display these presets' national priority percentile.
 
 ---
 
 ## Validation, retrospective record novelty
 
-The backtest compares priority scores with **new taxon IDs in sampled project records**, not prospective field discoveries. Across eight BC and Eastern Canada taxon-region samples, the training-period scarcity proxy has rho 0.48 to 0.71. Its expected record novelty at K = 5 observations is 1.2x to 3.2x at upper versus lower score-tercile cutoffs. The published map score is evaluated separately; this proxy result does not establish that following the map improves a future trip.
+The archived backtest compares priority scores with **new taxon IDs in sampled project records**, not prospective field discoveries. Across eight BC and Eastern Canada taxon-region samples, the training-period scarcity proxy has rho 0.48 to 0.71. Its expected record novelty at K = 5 observations is 1.2x to 3.2x at upper versus lower score-tercile cutoffs. The grid-score comparisons below retain their original build and record-input snapshots, identified by each result's `run.grid.source_sha256` and `run.input_sha256`. They have not been rerun for the latest rebuilt grid or the refreshed walkthrough figures and do not establish future trip yield.
 
 ### Grid and score parity
 
@@ -135,7 +118,7 @@ Spearman correlations are compared with 2,000 unrestricted cell permutations. Pr
 
 ### The numbers, per taxon
 
-| Taxon | Region | Cells (K = 5) | Training proxy rho | Published Spatial Gap rho | Proxy novelty, upper/lower |
+| Taxon | Region | Cells (K = 5) | Training proxy rho | Archived Spatial Gap rho | Proxy novelty, upper/lower |
 |---|---|---:|---:|---:|---:|
 | Amphibians | BC | 108 | 0.63 | 0.31 | 2.7x |
 | Birds | BC | 144 | 0.61 | 0.38 | 1.6x |
@@ -177,7 +160,7 @@ In these six qualifying cohorts, scarcity's full-history association weakens sub
 
 ### Reproduce
 
-The cached input CSVs are gitignored. Download the archived files rather than treating a fresh API pull as the same historical dataset:
+The cached input CSVs are gitignored. Download the archived files and restore the original grid inputs matching `run.grid.source_sha256` before reproducing the archived coefficients. Running these scripts against newer grid inputs produces a new evaluation:
 
 ```bash
 gh release download grid-inputs-v1 --repo PollockLab/where-to-blitz --dir cluster_results --pattern "inat_*.csv" --clobber
@@ -214,16 +197,8 @@ few records worldwide simply because it is hard to photograph or unpopular, whil
 common globally can still be genuinely under-recorded in one place. So the list now ranks by recording
 value computed from records actually around the cell:
 
-- For each candidate species we pull its research-grade count **in the cell** (~14 km box) and **in the
-  ~40 km neighbourhood** (one extra `species_counts` call, best-effort — if it fails the rank degrades
-  to a within-cell order).
-- Candidates are ordered **lexicographically**: (1) **new-to-cell** species — present in the
-  neighbourhood but not yet recorded in this cell — first, because recording one adds a species the
-  cell's record is missing; (2) then by **local coverage gap**, the local÷neighbourhood share ascending,
-  so species under-recorded *here* relative to nearby rank above ones already well covered here;
-  (3) tie-broken by **regional scarcity** (fewer neighbourhood records first), so each record is more
-  informative. Species at risk and obscured taxa are excluded upstream (`threatened=false`,
-  `taxon_geoprivacy=open`) per the dual-use guard below.
+- Each live query uses the **selected 25 km or 5 km cell's geographic bounding box** and a **40 km neighbourhood**. These are current iNaturalist research-grade records, separate from the frozen priority axes. The bounding box encloses the projected square rather than reproducing its exact outline. If the neighbourhood query fails, the list falls back to within-cell ordering.
+- Candidates are ordered **lexicographically**: (1) species recorded nearby with **no matching filtered record in the cell** first; (2) local÷neighbourhood record share ascending; (3) fewer neighbourhood records as the tie-break. A complete cell list establishes the first condition, or, when the unfiltered result is capped at 500 taxa, a complete candidate-specific request must confirm it. A capped, failed or taxonomically ambiguous check cannot support a no-record claim. This is evidence about the filtered query, not biological absence or a promise of discovery. Species at risk and obscured taxa are excluded upstream (`threatened=false`, `taxon_geoprivacy=open`) per the dual-use guard below.
 
 Caveats: counts are iNaturalist research-grade records, a sampling proxy, not a census; species tied on
 regional scarcity keep iNaturalist's own order; and the metric measures recording-gap value, not
@@ -343,17 +318,8 @@ from this offline layer; the ranking in the panel does not.
 - This is a **work-in-progress prototype, not an official Blitz the Gap tool** (so flagged in-app).
 - The map is a **planning aid, not ground truth.** Obscure sensitive-species locations and
   respect Indigenous data sovereignty before any public use.
-- **Dual-use guard (Pollock et al. 2025, *Nat Rev Biodiversity*, Box 3,
-  [10.1038/s44358-025-00022-3](https://doi.org/10.1038/s44358-025-00022-3)).** That review warns that
-  fine-grained prediction of where threatened species occur can inadvertently aid poaching or
-  collection. The `conservation` axis is therefore exposed only as a **per-cell sum of status weights
-  over a 0.25° (~25 km) bin**: it shows that a cell is rich in at-risk species, never which species
-  or where within the cell. The underlying CAN-SAR x GBIF occurrences are aggregated to 0.25° cells inside the GBIF SQL query run by
-  `build_atrisk_layer.py`; only the per-cell score reaches the public app. Coarse 25 km binning plus
-  all-taxa pooling are the mitigation, and remain in force for any future finer-resolution layer.
-- All five axes are now **real** (no placeholders) and were **cross-validated against the raw
-  iNaturalist record dump at cluster scale**, which caught and fixed the staleness sourcing
-  error noted above.
+- **Dual-use guard (Pollock et al. 2025, *Nat Rev Biodiversity*, Box 3, [10.1038/s44358-025-00022-3](https://doi.org/10.1038/s44358-025-00022-3)).** That review warns that fine-grained prediction of where threatened species occur can inadvertently aid poaching or collection. The `conservation` axis is exposed as an **all-taxa sum of status weights over a 0.25° source bin**, joined to the drawn cell by its centre. The GBIF SQL download aggregates to 0.01° bins for policy checks; `build_atrisk_layer.py` then aggregates retained species to 0.25° bins. Only the normalized score reaches the app. Drawing a 5 km square does not reveal a finer species-at-risk inventory, and coarse binning does not establish precise locations for obscured records.
+- **Evidence is axis-specific.** The retrospective novelty analysis tests discovery-related recording priorities in sampled projects. The conservation build checks taxonomy, occurrence counts and its selected policy; staleness includes observed history and a sparse-recording fallback. These checks do not constitute independent validation of all five axes or prospective ecological benefit.
 
 ---
 
@@ -365,4 +331,4 @@ from this offline layer; the ranking in the panel does not.
 | conservation | `build_atrisk_layer.py`, joined in `fullgrid_fields.py` | CAN-SAR (OSF) + GBIF SQL download on Catalogue of Life XR, release COL26.6 XR (DOI and taxonomy release in `ca_atrisk_provenance.json`) |
 | staleness | iNat open-data (cluster DuckDB) → `cluster_results/ca/ca_inat_metrics.csv` | iNaturalist open-data (AWS) |
 | Getting Even | `build_gettingeven.py` | per-group iNat density COGs, via the grid build; Eckert 2025 metric |
-| composite + display | `build_webapp.py` (`impact`, `recolour`) | — |
+| composite + display | `goal_presets.py`, `build_grid_values.py`, `webapp/index.html` (`impact`, `recolour`), assembled by `build_webapp.py` | — |

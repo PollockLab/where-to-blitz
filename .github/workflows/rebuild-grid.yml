@@ -395,7 +395,7 @@ jobs:
           if [ "$code" -ne "0" ]; then echo "Validation failed (exit $code)"; exit $code; else echo "Validation succeeded"; fi
 
   publish-release:
-    # Uploads the validated grid values + density PMTiles to the grid-outputs release. Only runs
+    # Uploads the validated app data bundle + density PMTiles to the grid-outputs release. Only runs
     # on a manual dispatch with publish: true, after validate passes.
     if: github.event_name == 'workflow_dispatch' && inputs.publish && !inputs.validate_only
     needs: [aggregate, validate]
@@ -417,10 +417,9 @@ jobs:
           set -euo pipefail
           chmod +x publish_grid_release.sh
           # publish_grid_release.sh runs rebuild_grid.sh by default; SKIP_BUILD=1 because
-          # the aggregate job already built everything - just point it at the artifacts.
-          mkdir -p cluster_results/ca
-          cp -R artifacts/cluster_results/ca/values cluster_results/ca/ 2>/dev/null || true
-          SKIP_BUILD=1 ./publish_grid_release.sh
+          # the aggregate job already built everything. Package its JSON, provenance and
+          # values together, rather than mixing rebuilt colours with checkout's older data.
+          GRID_DATA_DIR=artifacts/cluster_results/ca SKIP_BUILD=1 ./publish_grid_release.sh
 
   deploy-site:
     # Assembles the Pages site (index.html + tiles/ + webapp JSON) from the validated
@@ -456,7 +455,7 @@ jobs:
           set -euo pipefail
           mkdir -p _site/tiles _site/cluster_results/ca
           cp artifacts/index.html _site/
-          for f in blitz-logo.png og-image.png where-to-blitz-walkthrough.html; do
+          for f in blitz-logo.png og-image.png where-to-blitz-walkthrough.html where-to-blitz-zoomout.png; do
             [ -f "$f" ] && cp "$f" _site/
           done
           # Density tiles live on the release (density_<Taxon>.pmtiles, the app's tiles/ name), like climate_gap.
@@ -510,19 +509,14 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}-py-3.11
       - name: Install deps
         run: pip install -r requirements.txt
-      - name: Download latest grid values from release
+      - name: Restore latest complete grid data from release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          mkdir -p cluster_results/ca/values
-          # Grid colours ship as a values tarball on grid-outputs-v1 (density tiles are on the release too)
-          if gh release download grid-outputs-v1 --pattern "grid_values.tar.gz" --dir . --repo "$GITHUB_REPOSITORY"; then
-            tar -xzf grid_values.tar.gz -C cluster_results/ca/values
-          else
-            echo "No grid_values.tar.gz on the release yet"
-          fi
-          ls cluster_results/ca/values/ | head || echo "No values found"
+          # Fail if the release has no complete bundle. Falling back to tracked JSON can
+          # silently undo a manual rebuild while preserving its refreshed Conservation PNGs.
+          bash publish_grid_release.sh --restore
       # The values PNGs are gitignored, so this is the only job that can check them against
       # the lattice before they reach the site.
       - name: Gate artefact invariants
@@ -538,7 +532,7 @@ jobs:
           set -euo pipefail
           mkdir -p _site/tiles _site/cluster_results/ca
           cp index.html _site/
-          for f in blitz-logo.png og-image.png where-to-blitz-walkthrough.html; do
+          for f in blitz-logo.png og-image.png where-to-blitz-walkthrough.html where-to-blitz-zoomout.png; do
             [ -f "$f" ] && cp "$f" _site/
           done
           # Density tiles live on the release (density_<Taxon>.pmtiles, the app's tiles/ name), like climate_gap.

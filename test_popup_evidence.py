@@ -19,7 +19,7 @@ def _function(src, name):
     return match.group(0)
 
 
-def _run_popup(responses, action, lang="en"):
+def _run_popup(responses, action, lang="en", *, actual_cache=False):
     src = TEMPLATE.read_text()
     i18n = src[src.index("const I18N=") : src.index("let LANG=")]
     # t() is one line; include its declaration independently of the multiline renderer functions.
@@ -35,7 +35,7 @@ const input=JSON.parse(require('node:fs').readFileSync(0,'utf8')), calls=[],call
 class Element{
   constructor(){this.innerHTML='';this.dataset={};}
   querySelector(selector){
-    if(selector==='[data-prospect-retry]'&&this.innerHTML.includes('data-prospect-retry'))
+    if((selector==='[data-prospect-retry]'||selector==='[data-group-retry]')&&this.innerHTML.includes(selector.slice(1,-1)))
       return this.retry||(this.retry=new Element());
     return null;
   }
@@ -63,19 +63,37 @@ let jget=async (url,ms,tries)=>{
   if(response.error)throw Error(response.error);
   return response;
 };
+const _jc=new Map();
 """
+    if actual_cache:
+        script += """
+const JC_MAX=150,sleep=async()=>{};
+const fetchT=async(url)=>{
+  calls.push(url);const response=input.responses.shift();
+  if(!response)throw Error('unexpected request');
+  if(response.error)throw Error(response.error);
+  return {ok:true,status:200,json:async()=>response};
+};
+"""
+        script += src[src.index("function _jcSet(") : src.index("// Robust JSON GET:")]
+        script += _function(src, "jget").replace("async function jget", "jget=async function") + ";"
     script += src[src.index("const esc=") : src.index("// whereKey 'right_here'")]
     script += _function(src, "completeSpeciesCounts") + _function(src, "checkedCandidateAbsences")
+    if "function validSpeciesCounts(" in src:
+        script += _function(src, "validSpeciesCounts")
     script += _function(src, "fetchProspects")
     script += _function(src, "paintGapTree") + _function(src, "fetchGapTree")
+    if "function paintGapStatus(" in src:
+        script += _function(src, "paintGapStatus")
     script += "\n(async()=>{" + action + "})().catch(e=>{console.error(e);process.exit(1);});"
     result = subprocess.run(
         ["node", "-e", script],
         input=json.dumps({"responses": responses}),
         capture_output=True,
         text=True,
-        check=True,
+        check=False,
     )
+    assert result.returncode == 0, result.stderr
     return json.loads(result.stdout)
 
 
@@ -136,7 +154,7 @@ def test_incomplete_local_results_do_not_claim_an_omitted_species_is_absent(tota
     )
     assert 'taxa/501"' not in result["html"]
     assert "no matching record here" not in result["html"]
-    assert "Only part of the local species list is available" in result["html"]
+    assert "Local list incomplete" in result["html"]
     if total is None:
         assert "≥500 species recorded" in result["html"]
 
@@ -195,7 +213,7 @@ def test_popup_distinguishes_a_full_page_from_a_truncated_list(total):
         "console.log(JSON.stringify({html:spEl.innerHTML}));",
     )
     assert ('taxa/501"' in result["html"]) == (total == 500)
-    assert ("Only part of the local species list is available" in result["html"]) == (total > 500)
+    assert ("Local list incomplete" in result["html"]) == (total > 500)
 
 
 @pytest.mark.parametrize("failed", ["cell", "neighbourhood", "both"])
@@ -301,7 +319,10 @@ def test_incomplete_group_lists_do_not_classify_omitted_groups_and_are_not_cache
         if lang == "en"
         else "Des listes d'espèces partielles ne permettent pas de comparer les groupes ici de façon fiable"
     )
-    assert expected in result["first"]
+    if incomplete.startswith("unknown"):
+        assert "data-group-retry" in result["first"]
+    else:
+        assert expected in result["first"]
     assert "gtrow" not in result["first"]
     assert "0 here" not in result["first"]
     assert result["calls"] == 4
@@ -326,8 +347,8 @@ def test_missing_regional_evidence_does_not_invent_nearby_counts_or_rarity(neigh
 @pytest.mark.parametrize(
     ("lang", "badge", "scope"),
     [
-        ("en", "no matching record", "Public research-grade iNaturalist records"),
-        ("fr", "aucune obs. retenue", "Observations publiques de qualité recherche sur iNaturalist"),
+        ("en", "no matching record here", "Public research-grade iNaturalist records"),
+        ("fr", "aucune observation retenue ici", "Observations publiques de qualité recherche sur iNaturalist"),
     ],
 )
 def test_popup_absence_is_qualified_by_the_matching_record_scope(lang, badge, scope):
@@ -341,6 +362,35 @@ def test_popup_absence_is_qualified_by_the_matching_record_scope(lang, badge, sc
     assert scope in result["html"]
     assert "new here" not in result["html"]
     assert "nouveau ici" not in result["html"]
+
+
+@pytest.mark.parametrize(
+    ("lang", "status", "qualified", "local_count", "nearby_count"),
+    [
+        ("en", "no matching record", "no matching record here", "2 here", "10 within 40 km"),
+        ("fr", "retenue", "aucune observation retenue ici", "2 ici", "10 dans 40 km"),
+    ],
+)
+def test_popup_gap_status_appears_once_and_keeps_existing_species_counts(
+    lang, status, qualified, local_count, nearby_count
+):
+    result = _run_popup(
+        [
+            {"total_results": 1, "results": [_species(1, 2)]},
+            {
+                "total_results": 4,
+                "results": [_species(1, 10), _species(2, 3), _species(3, 4), _species(4, 5)],
+            },
+        ],
+        "fetchGapTree=async()=>{};await fetchProspects(49,-123,'right_here',{toPopup:true,spEl,gapsEl:gapEl});"
+        "console.log(JSON.stringify({html:spEl.innerHTML}));",
+        lang,
+    )
+    html = result["html"]
+    assert html.count(status) == 3
+    assert html.count(qualified) == 3
+    assert local_count in html and nearby_count in html
+    assert html.index('taxa/2"') < html.index('taxa/3"') < html.index('taxa/4"') < html.index('taxa/1"')
 
 
 def test_a_complete_500_species_page_can_compare_groups_without_a_cap_warning():
@@ -562,3 +612,39 @@ def test_stale_group_counts_are_not_painted_or_cached(changed):
     )
     assert result["html"] == "new selection"
     assert result["cache"] == {}
+
+
+@pytest.mark.parametrize("lang", ["en", "fr"])
+def test_group_retry_evicts_a_malformed_200_body_from_the_actual_request_cache(lang):
+    result = _run_popup(
+        [
+            {"results": []},
+            {"total_results": 3, "results": [_species(i, 3) for i in range(1, 4)]},
+            {"total_results": 0, "results": []},
+        ],
+        "await fetchGapTree(49,-123,gapEl,25000);const first=gapEl.innerHTML;"
+        "const retry=gapEl.querySelector('[data-group-retry]');"
+        "if(retry)await retry.onclick({preventDefault(){}});"
+        "console.log(JSON.stringify({first,second:gapEl.innerHTML,calls:calls.length}));",
+        lang,
+        actual_cache=True,
+    )
+    assert "data-group-retry" in result["first"]
+    assert result["calls"] == 3  # the valid nearby response stays cached
+    assert "gtrow" in result["second"]
+
+
+def test_a_valid_capped_group_list_has_no_retry_and_remains_cached():
+    result = _run_popup(
+        [
+            {"total_results": 501, "results": [_species(i, 3) for i in range(1, 501)]},
+            {"total_results": 3, "results": [_species(i, 3) for i in range(1, 4)]},
+        ],
+        "await fetchGapTree(49,-123,gapEl,25000);const first=gapEl.innerHTML;"
+        "await fetchGapTree(49,-123,gapEl,25000);"
+        "console.log(JSON.stringify({first,second:gapEl.innerHTML,calls:calls.length}));",
+        actual_cache=True,
+    )
+    assert "Partial species lists" in result["first"]
+    assert "data-group-retry" not in result["first"]
+    assert result["calls"] == 2

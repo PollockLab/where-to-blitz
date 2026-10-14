@@ -13,17 +13,17 @@ Blitz the Gap campaign at McGill — a planning aid, not ground truth.
 ## What it does
 
 - An equal-area grid of Canada: **23,214 cells of 25 km**, and **536,164 of 5 km** when you zoom in. Each cell is scored by a preset mix of goals.
-- **Explore** the priority map, **plan a trip** (real driving/cycling/walking routes via OSRM, travel time, field time, CO₂), or **compare goals** side by side.
-- Tap a cell to see what species to record there and which common ones are still missing ("fill the gap"), pulled live from the iNaturalist API.
-- English / Canadian-French toggle; geolocation; challenge presets linked to the real Blitz the Gap iNaturalist sub-projects.
+- **Explore** three recording-priority maps, Getting Even's group recommendations, and Climate Gap's coverage overlay. Trip planning and side-by-side goal comparison are optional development views.
+- Tap a cell for live iNaturalist recording suggestions and group comparisons. A recording gap means no matching record under the query's filters, not biological absence.
+- English / Canadian-French toggle; geolocation; recording presets with a join link to the current general Blitz the Gap iNaturalist project.
 
 ## How cells are scored
 
-Five goals per cell, each scored 0–1; a preset blends them into a 0–100 impact score
-(a percentile rank across every cell in the country, so it does not change as you pan or zoom).
-All five are computed from real data, though `env` carries weight 0 in every shipped preset.
+The Goal menu has five choices: **Spatial Gap**, **Species discovery**, **Conservation**, **Getting Even**, and **Climate Gap**. The first three blend five underlying 0–1 axes into a **national priority percentile** across Canada-eligible 25 km cells for the selected species group. Equal raw scores share their average rank. Panning and zooming preserve that percentile; at 5 km it still describes the enclosing 25 km cell. Getting Even recommends a taxonomic group, and Climate Gap shows climate sampling coverage, each with its own legend.
 
-**What has been checked?** In retrospective BC and Eastern Canada project samples, a training-period scarcity proxy is associated with expected new taxon IDs at K = 5 later observations (rho 0.48 to 0.71; 1.2x to 3.2x expected novelty at upper versus lower score-tercile cutoffs). The published Spatial Gap score is tested separately on the viewer's exact 25 km lattice. These comparisons use sampled records and observation dates, with historical availability unknown; they do not establish future trip yield.
+Map colours rescale to the cells in view, with a national colour scale when too few cells or too little colour spread are visible. Live popup records describe the selected 25 km or 5 km cell using its geographic bounding box, independently of the frozen priority score. The axes use observation density, climate, recorded conservation status, sampling history and cumulative forest loss. Where sampling-history data are missing, staleness uses an inverse-density fallback. `env` has no direct preset weight but orders Spatial Gap's zero-density cells.
+
+**What has been checked?** In retrospective BC and Eastern Canada project samples, a training-period scarcity proxy is associated with expected new taxon IDs at K = 5 later observations (rho 0.48 to 0.71; 1.2x to 3.2x expected novelty at upper versus lower score-tercile cutoffs). Archived grid scores were compared on the viewer's declared 25 km lattice using their original grid and record-input snapshots. Those coefficients have not been rerun for the latest rebuilt grid. These comparisons use sampled records and observation dates, with historical availability unknown; they do not establish future trip yield.
 
 [METHODOLOGY.md](METHODOLOGY.md) has the glossary, the per-axis formulas and sources, the
 per-taxon validation numbers, and the scope those numbers hold within.
@@ -46,8 +46,7 @@ deterministic (no timestamps/randomness) — same inputs produce a byte-identica
 
 ### How it fits together
 
-No server, no database: Python writes files, the browser reads them. The six map layers are
-not the same kind of thing, which is the one non-obvious part:
+No server, no database: Python writes files, the browser reads them. The map layers use different data and display formats:
 
 | Layer | Served as | Built by |
 |---|---|---|

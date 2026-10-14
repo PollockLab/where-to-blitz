@@ -34,16 +34,18 @@ const document={activeElement:null,body:null,getElementById:()=>({querySelectorA
 function actor(name,{connected=true,visible=true,focusable=true,lat=null,lon=null}={}){
   return {name,isConnected:connected,visible,focusable,dataset:{la:lat,lo:lon},labels:{},
     closest(){return lat===null?null:this;},getClientRects(){return this.visible&&this.isConnected?[{}]:[];},
-    focus(){if(this.focusable&&this.isConnected&&this.visible)document.activeElement=this;},
+    focus(options){this.focusOptions=options;if(this.focusable&&this.isConnected&&this.visible)document.activeElement=this;},
     setAttribute(key,value){this.labels[key]=value;}};
 }
 document.body=actor('body',{focusable:false});document.activeElement=document.body;
 const canvas=actor('canvas'),map={getCanvas:()=>canvas};
 function getComputedStyle(el){return {visibility:el.visible?'visible':'hidden',display:el.visible?'block':'none'};}
 function clearSelection(){cleared++;destMarker=null;destCell=null;}
-function popup(){const handlers={};return {handlers,on(name,fn){handlers[name]=fn;return this;},
-  getElement(){return {contains:el=>el===close};}};}
+function popup(options={}){const handlers={};return {handlers,options,on(name,fn){handlers[name]=fn;return this;},
+  getElement(){return {contains:el=>el===close,querySelector:()=>close};}};}
 const close=actor('close');
+const firstSpecies=actor('first-species'),language=actor('language'),popupOrder=[firstSpecies,close];
+close.parentElement={prepend(el){popupOrder.splice(popupOrder.indexOf(el),1);popupOrder.unshift(el);}};
 const row=actor('row',{lat:'45.5',lon:'-73.6'});rows.push(row);
 """
     script += "\n" + "\n".join(
@@ -73,6 +75,26 @@ def test_close_returns_to_invoker_captured_before_library_focus():
         "console.log(JSON.stringify({focus:document.activeElement.name,cleared}));"
     )
     assert result == {"focus": "row", "cleared": 1}
+
+
+def test_explicit_initial_close_focus_prevents_scroll_and_preserves_invoker():
+    result = _run(
+        "row.focus();const p=wirePopup(popup({focusAfterOpen:false}));p.handlers.open();"
+        "const opened={focus:document.activeElement.name,options:close.focusOptions};"
+        "closeFocusedPopup(p);console.log(JSON.stringify({opened,returned:document.activeElement.name}));"
+    )
+    assert result == {"opened": {"focus": "close", "options": {"preventScroll": True}}, "returned": "row"}
+
+
+def test_tab_after_initial_close_focus_reaches_the_first_species():
+    result = _run(
+        "row.focus();const p=wirePopup(popup({focusAfterOpen:false}));p.handlers.open();"
+        "const opened=document.activeElement.name;"
+        "(popupOrder[popupOrder.indexOf(document.activeElement)+1]||language).focus();"
+        "const afterTab=document.activeElement.name;closeFocusedPopup(p);"
+        "console.log(JSON.stringify({opened,afterTab,returned:document.activeElement.name}));"
+    )
+    assert result == {"opened": "close", "afterTab": "first-species", "returned": "row"}
 
 
 def test_replaced_rank_row_is_resolved_by_cell_coordinates():

@@ -90,7 +90,7 @@ let _reselect=false,_popScoreEl=null,destMarker=null;
 const activeCellResM=()=>zoom>=TIER_SWITCH_Z?5000:25000;
 let parentMarker=()=>markers[0];
 const caOnlyActive=()=>false,US_CELLS=null;
-const clearRoute=()=>{},popScoreHtml=()=>'';
+const clearRoute=()=>{},popScoreHtml=()=>'',contribStr=()=>'',openHowSection=()=>{};
 function fetchProspects(lat,lon,whereKey,opts){
   prospectSeq++;_lastProspect={lat,lon,whereKey,...opts};
   refreshes.push({group:state.taxon,lat,lon,whereKey,resM:opts.resM,toPopup:opts.toPopup});
@@ -99,7 +99,7 @@ const setDestCell=(lat,lon,resM)=>opened.push({lat,lon,resM,group:state.taxon,go
 const wirePopup=p=>p;
 const maplibregl={Popup:class{setDOMContent(){return this;}}};
 const destMarkerAt=()=>({addTo(){return this;},setPopup(){return this;},togglePopup(){}});
-document.createElement=()=>({appendChild(){}});
+document.createElement=()=>({dataset:{},appendChild(){},setAttribute(){}});
 """
         script += _function(src, "exploreCell")
         script += _function(src, "clearSelection")
