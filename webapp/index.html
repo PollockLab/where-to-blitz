@@ -1980,7 +1980,7 @@ function clearRouteLines(){if(_mapLoaded)routeIds.forEach(id=>{if(map.getLayer(i
 function clearRoute(){clearRouteLines();removeDestCell();const dm=destMarker;destMarker=null;destCell=null;routeLine=null;if(dm)dm.remove();}
 // Issue #16: deselect the cell while preserving its group, goal and layer context in the URL.
 let _reselect=false;   // true only while exploreCell swaps one selection for another (suppress the close-driven clear)
-function clearSelection(){clearRoute();
+function clearSelection(){_selectionSeq++;clearRoute();
   const pr=document.getElementById('prospects');if(pr){pr.dataset.idle='1';pr.innerHTML='<div class="hd" style="margin-top:10px" data-i18n="prospects_idle">'+t('prospects_idle')+'</div>';}
   _lastProspect=null; _popScoreEl=null;   // the cell popup (which held the coverage tree + species) is gone; nothing for setLang to re-render
   _sharedCell=null;syncSharedCellUrl(true);}
@@ -2063,7 +2063,7 @@ async function renderInsights(){
   document.getElementById('idis').innerHTML=t('ins_spearman',objName(gi),objName(gj),dis,verdict);
 }
 // Explore mode: tap a cell to see its score + what to record there (no trip planning).
-var _sharedCell=null,_shareContext=false,_shareAction=0;   // var: controls can refresh the URL during initial setup
+var _sharedCell=null,_shareContext=false,_shareAction=0,_selectionSeq=0;   // var: controls can refresh the URL during initial setup
 function parseSharedContext(search){
   const u=new URLSearchParams(search),g=u.get('g'),v=u.get('goal'),r=u.get('res');
   const taxon=Object.hasOwn(FILES,g)?g:(FILES['All biodiversity']?'All biodiversity':Object.keys(FILES)[0]);
@@ -2089,13 +2089,18 @@ function syncSharedCellUrl(force){
   const style=covOn()?'density':((sel&&sel.value)==='__inat__'?'density':(sel&&sel.value||'Standard').toLowerCase());
   try{history.replaceState(null,'',sharedCellUrl(_sharedCell,state.taxon,goal,style,location.href));}catch(e){}
 }
-async function restoreSharedCell(shared,action,loadedTaxon){
+async function restoreSharedCell(shared,action,loadedTaxon,selection){
+  const currentSelection=()=>selection===_selectionSeq;
+  if(!currentSelection())return;
   if(!_mapLoaded)await new Promise(resolve=>whenMap(resolve));
+  if(!currentSelection())return;
   let readyTaxon=loadedTaxon;
   const latestGroup=async()=>{let changed=false;while(readyTaxon!==state.taxon){
-    const g=state.taxon,p=_taxonPending;await(p&&p.taxon===g?p.promise:loadGroup(g));readyTaxon=g;changed=true;
+    const g=state.taxon,p=_taxonPending;await(p&&p.taxon===g?p.promise:loadGroup(g));
+    if(!currentSelection())return false;readyTaxon=g;changed=true;
   }return changed;};
   await latestGroup();
+  if(!currentSelection())return;
   buildMarkers();setView('explore');
   if(action===_shareAction){
     critSel.value=shared.goal;
@@ -2103,19 +2108,24 @@ async function restoreSharedCell(shared,action,loadedTaxon){
     bmSel.value=shared.style;setBase(shared.style==='__inat__'?'Light':shared.style);
     const kind=shared.style==='__inat__'?'coverage':shared.goal==='ge'?'gettingeven':shared.goal==='climate'?'climate':'priority';
     await setOverlay(kind);
+    if(!currentSelection())return;
   }
   await loadUS();
+  if(!currentSelection())return;
   const c=shared.cell;if(!c){if(shared.linked)syncSharedCellUrl(true);locateMe();return;}
   let current;
-  do{current=_shareAction;if(await latestGroup())buildMarkers();await _overlayReady;
+  do{current=_shareAction;const changed=await latestGroup();if(!currentSelection())return;
+    if(changed)buildMarkers();await _overlayReady;
+    if(!currentSelection())return;
     if(current!==_shareAction)continue;
     map.jumpTo({center:[c.lon,c.lat],zoom:c.resM===5000?TIER_SWITCH_Z+1:Math.min(7,TIER_SWITCH_Z-1)});
     if(c.resM===5000&&!covOn()&&!climateOn()){
-      await refreshCells5();if(current!==_shareAction)continue;
+      await refreshCells5();if(!currentSelection())return;if(current!==_shareAction)continue;
       const s=snapToLattice(c.lat,c.lon,5000);
       if(!s||!DRAWN5||!DRAWN5.has(latKey(s)))throw new Error('Shared 5 km cell is unavailable');
     }
   }while(current!==_shareAction);
+  if(!currentSelection())return;
   if(!exploreCell(c.lat,c.lon))throw new Error('Shared cell is unavailable');
 }
 function exploreCell(lat,lon){
@@ -2129,6 +2139,7 @@ function exploreCell(lat,lon){
   // handler already guards direct cell taps, this covers taps on the bare map.
   const open=resM===5000&&DRAWN5?DRAWN5.has(latKey(snap)):!!best;
   if(!open||(best&&caOnlyActive()&&US_CELLS&&US_CELLS.has(gekey(best.r[0],best.r[1]))))return;
+  _selectionSeq++;   // a valid explicit selection supersedes a pending shared-link restoration
   _reselect=true;   // swapping selections: suppress the close-driven deselect until the new popup is open (issue #16)
   const dest=[snap.lat,snap.lon];clearRoute();
   _sharedCell={lat:dest[0],lon:dest[1],resM};syncSharedCellUrl();
@@ -2179,12 +2190,12 @@ function showLoading(on){const el=document.getElementById('loading');if(el)el.st
 document.getElementById('langbtn').onclick=()=>setLang(LANG==='en'?'fr':'en');   // #69: one button toggles EN/FR
 applyI18N();   // paint static chrome + set <html lang> for the seeded language
 
-function bootSeq(){const shared=parseSharedContext(location.search),action=_shareAction,taxonSeq=_taxonSeq;
+function bootSeq(){const shared=parseSharedContext(location.search),action=_shareAction,taxonSeq=_taxonSeq,selection=_selectionSeq;
   _bootTaxon=shared.taxon;
   state.taxon=shared.taxon;taxonSel.value=shared.taxon;critSel.value=shared.goal;bmSel.value=shared.style;
   return loadGroup(shared.taxon).then(()=>shared.taxon,e=>{if(taxonSeq===_taxonSeq)throw e;return null;})
-    .then(loaded=>restoreSharedCell(shared,action,loaded)).then(()=>showLoading(false))
-    .catch(()=>{const el=document.getElementById('loading');if(el){el.style.display='block';el.innerHTML=t('load_error')+' <a href="#" onclick="bootRetry();return false;" style="color:var(--acc);text-decoration:underline">'+t('retry')+'</a>';}});}
+    .then(loaded=>restoreSharedCell(shared,action,loaded,selection)).then(()=>showLoading(false))
+    .catch(()=>{if(selection!==_selectionSeq){showLoading(false);return;}const el=document.getElementById('loading');if(el){el.style.display='block';el.innerHTML=t('load_error')+' <a href="#" onclick="bootRetry();return false;" style="color:var(--acc);text-decoration:underline">'+t('retry')+'</a>';}});}
 function bootRetry(){const el=document.getElementById('loading');if(el){el.style.display='block';el.textContent=t('loading');}bootSeq();}
 bootSeq();
 window._map=map;   // console handle for tuning TIER_SWITCH_Z by eye (#87 D5: Ryan screenshots z8/9/10)

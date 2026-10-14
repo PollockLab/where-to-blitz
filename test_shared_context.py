@@ -47,7 +47,7 @@ const document={getElementById:id=>nodes[id]||(nodes[id]={style:{},dataset:{},in
 const taxonSel=nodes.taxon,critSel=nodes.criteria,bmSel=nodes.basemap;
 const loads=[],opened=[],steps=[];
 let zoom=3,overlay='priority',DRAWN5=null,_mapLoaded=true;
-var _sharedCell=null,_shareContext=false,_shareAction=0,_taxonSeq=0,_taxonPending=null,_overlayReady=Promise.resolve();
+var _sharedCell=null,_shareContext=false,_shareAction=0,_selectionSeq=0,_taxonSeq=0,_taxonPending=null,_overlayReady=Promise.resolve();
 var _committedTaxon='All biodiversity',_bootTaxon='All biodiversity';
 let prospectSeq=0,_lastProspect=null;
 const refreshes=[];
@@ -70,7 +70,7 @@ const setCoverage=()=>{},setClimate=()=>{},setGridLines=()=>{},updateLegend=()=>
 const renderGoalContext=()=>{},renderCellTable=()=>{},paintPopScore=()=>{};
 const geActive=()=>overlay==='gettingeven',covOn=()=>overlay==='coverage',climateOn=()=>overlay==='climate';
 async function setOverlay(kind){overlay=kind;steps.push('overlay:'+kind);}
-const loadUS=async()=>{steps.push('mask');};
+let loadUS=async()=>{steps.push('mask');};
 async function refreshCells5(){await Promise.resolve();DRAWN5=new Set(['cell']);steps.push('draw5');}
 const snapToLattice=(lat,lon)=>({lat,lon}),latKey=()=> 'cell';
 function exploreCell(lat,lon){
@@ -469,3 +469,102 @@ def test_group_change_and_rollback_restart_the_open_cells_evidence():
     assert [r["group"] for r in result["refreshes"]] == ["All biodiversity", "Aves", "All biodiversity"]
     assert all(r["resM"] == 5000 and r["toPopup"] for r in result["refreshes"])
     assert result["group"] == "All biodiversity"
+
+
+@pytest.mark.parametrize("phase", ["initial_group", "map", "latest_group", "set_overlay", "overlay", "mask", "fine_grid"])
+@pytest.mark.parametrize("manual", ["select", "clear"])
+def test_manual_selection_or_deselection_cancels_each_deferred_restore_phase(phase, manual):
+    barriers = {
+        "initial_group": "loadGroup=g=>new Promise(resolve=>{loads.push(g);release=resolve;});",
+        "map": "_mapLoaded=false;whenMap=fn=>{release=()=>{_mapLoaded=true;fn();};};",
+        "latest_group": "loadGroup=async g=>{loads.push(g);if(g==='Fungi')await new Promise(resolve=>{release=resolve;});};",
+        "set_overlay": "setOverlay=kind=>{overlay=kind;return new Promise(resolve=>{release=resolve;});};",
+        "overlay": "_overlayReady=new Promise(resolve=>{release=resolve;});",
+        "mask": "loadUS=()=>new Promise(resolve=>{release=resolve;});",
+        "fine_grid": "refreshCells5=()=>new Promise(resolve=>{release=()=>{DRAWN5=new Set(['cell']);resolve();};});",
+    }
+    selected = "exploreCell(54.1,-120.2);" if manual == "select" else "clearSelection();"
+    change_group = "state.taxon='Fungi';" if phase == "latest_group" else ""
+    result = _run(
+        "?at=49.3,-123.2&g=Aves&res=5000&goal=2&style=satellite&plan=1#map",
+        "let release;"
+        + barriers[phase]
+        + "const pending=bootSeq();"
+        + change_group
+        + "await new Promise(resolve=>setImmediate(resolve));if(!release)throw Error('barrier not reached');"
+        + selected
+        + "const manualUrl=location.href,manualSteps=steps.slice();release();await pending;"
+        "console.log(JSON.stringify({opened,params:Object.fromEntries(location.searchParams),url:location.href,manualUrl,steps,manualSteps,error:document.getElementById('loading').innerHTML}));",
+        real_cells=True,
+    )
+    assert result["url"] == result["manualUrl"]
+    assert result["steps"] == result["manualSteps"]
+    assert "bootRetry" not in result["error"]
+    assert result["params"]["plan"] == "1"
+    if manual == "select":
+        assert len(result["opened"]) == 1
+        assert result["opened"][0]["lat"] == 54.1
+        assert result["opened"][0]["lon"] == -120.2
+        assert result["params"]["at"] == "54.100,-120.200"
+    else:
+        assert result["opened"] == []
+        assert "at" not in result["params"] and "res" not in result["params"]
+
+
+@pytest.mark.parametrize("phase", ["initial_group", "latest_group", "set_overlay", "mask", "fine_grid"])
+@pytest.mark.parametrize("manual", ["select", "clear"])
+def test_rejected_canceled_restore_does_not_show_an_error_or_retry(phase, manual):
+    barriers = {
+        "initial_group": "loadGroup=()=>new Promise((_resolve,reject)=>{fail=reject;});",
+        "latest_group": "loadGroup=async g=>{if(g==='Fungi')await new Promise((_resolve,reject)=>{fail=reject;});};",
+        "set_overlay": "setOverlay=kind=>{overlay=kind;return new Promise((_resolve,reject)=>{fail=reject;});};",
+        "mask": "loadUS=()=>new Promise((_resolve,reject)=>{fail=reject;});",
+        "fine_grid": "refreshCells5=()=>new Promise((_resolve,reject)=>{fail=reject;});",
+    }
+    selected = "exploreCell(54.1,-120.2);" if manual == "select" else "clearSelection();"
+    result = _run(
+        "?at=49.3,-123.2&g=Aves&res=5000",
+        "let fail;"
+        + barriers[phase]
+        + "const pending=bootSeq();"
+        + ("state.taxon='Fungi';" if phase == "latest_group" else "")
+        + "await new Promise(resolve=>setImmediate(resolve));if(!fail)throw Error('barrier not reached');"
+        + selected
+        + "const manualUrl=location.href;fail(Error('offline'));await pending;"
+        "console.log(JSON.stringify({opened,url:location.href,manualUrl,error:document.getElementById('loading').innerHTML}));",
+        real_cells=True,
+    )
+    assert result["url"] == result["manualUrl"]
+    assert len(result["opened"]) == (1 if manual == "select" else 0)
+    assert "bootRetry" not in result["error"]
+
+
+def test_an_invalid_manual_selection_does_not_cancel_a_valid_shared_restore():
+    result = _run(
+        "?at=49.3,-123.2&res=5000",
+        "let release;loadUS=()=>new Promise(resolve=>{release=resolve;});const pending=bootSeq();"
+        "await new Promise(resolve=>setImmediate(resolve));const original=parentMarker;parentMarker=()=>null;"
+        "exploreCell(54.1,-120.2);parentMarker=original;release();await pending;"
+        "console.log(JSON.stringify({opened,error:document.getElementById('loading').innerHTML}));",
+        real_cells=True,
+    )
+    assert len(result["opened"]) == 1
+    assert result["opened"][0]["lat"] == 49.3
+    assert "bootRetry" not in result["error"]
+
+
+@pytest.mark.parametrize("phase", ["initial_group", "mask", "fine_grid"])
+def test_uncanceled_restoration_failures_keep_the_existing_retry(phase):
+    barriers = {
+        "initial_group": "loadGroup=async()=>{throw Error('offline');};",
+        "mask": "loadUS=async()=>{throw Error('offline');};",
+        "fine_grid": "refreshCells5=async()=>{throw Error('offline');};",
+    }
+    result = _run(
+        "?at=49.3,-123.2&res=5000",
+        barriers[phase]
+        + "await bootSeq();console.log(JSON.stringify({opened,error:document.getElementById('loading').innerHTML}));",
+        real_cells=True,
+    )
+    assert result["opened"] == []
+    assert "bootRetry" in result["error"]
