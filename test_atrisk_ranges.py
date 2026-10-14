@@ -88,6 +88,18 @@ def test_fragmented_buffer_preserves_nested_collection_lines_and_points():
     np.testing.assert_array_equal(shapely.contains_xy(expected, x, y), shapely.contains_xy(got, x, y))
 
 
+def test_fragmented_buffer_unions_touching_polygons_before_building_arcs():
+    touching = [Polygon([(0, 0), (2, 0), (0, 1)]), Polygon([(0, 0), (0, 1), (-3, 2)])]
+    fillers = [box(100 + i * 4, 0, 101 + i * 4, 1) for i in range(1024)]
+    parts = touching + fillers
+    expected = shapely.union_all(parts).buffer(1)
+    got = buffered_union(parts, 1)
+    point = Point(0.3912811953008004, 1.9186261179042177)
+    assert not expected.contains(point)
+    assert not got.contains(point)
+    assert expected.symmetric_difference(got).area < expected.area * 1e-12
+
+
 @pytest.mark.parametrize("distance", [0, -0.25])
 def test_nonpositive_fragmented_buffer_unions_before_buffering(distance):
     # Eroding each touching square separately would introduce gaps in the continuous strip.

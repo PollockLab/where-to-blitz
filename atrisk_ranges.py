@@ -206,14 +206,15 @@ def buffered_union(geometries, buffer_m):
     """Buffer a range union, bounding overlay work for positive buffers of >1024 atomic components."""
     import shapely
 
+    geometry = shapely.union_all(geometries)
     if buffer_m <= 0:
-        return shapely.union_all(geometries).buffer(buffer_m)
-    parts = np.asarray(geometries, dtype=object)
+        return geometry.buffer(buffer_m)
+    parts = np.asarray([geometry], dtype=object)
     while np.any(shapely.get_type_id(parts) >= 4):
         parts = shapely.get_parts(parts)
     parts = parts[~shapely.is_empty(parts)]
     if len(parts) <= 1024:
-        return shapely.union_all(geometries).buffer(buffer_m)
+        return geometry.buffer(buffer_m)
 
     # Morton order keeps nearby components together so chunk unions remove local overlaps early.
     bounds = shapely.bounds(parts)
