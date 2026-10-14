@@ -91,6 +91,8 @@ const activeCellResM=()=>zoom>=TIER_SWITCH_Z?5000:25000;
 let parentMarker=()=>markers[0];
 const caOnlyActive=()=>false,US_CELLS=null;
 const clearRoute=()=>{},popScoreHtml=()=>'',contribStr=()=>'',openHowSection=()=>{};
+const cellBoundsForRes=()=>({swlat:49,nelat:49.1,swlng:-123,nelng:-122.9});
+const ICONIC={Aves:'Aves',Fungi:'Fungi'},LANG='en',esc=s=>s;
 function fetchProspects(lat,lon,whereKey,opts){
   prospectSeq++;_lastProspect={lat,lon,whereKey,...opts};
   refreshes.push({group:state.taxon,lat,lon,whereKey,resM:opts.resM,toPopup:opts.toPopup});
@@ -101,6 +103,7 @@ const maplibregl={Popup:class{setDOMContent(){return this;}}};
 const destMarkerAt=()=>({addTo(){return this;},setPopup(){return this;},togglePopup(){}});
 document.createElement=()=>({dataset:{},appendChild(){},setAttribute(){}});
 """
+        script += _function(src, "cellRecordsUrl") + _function(src, "popupActionsHtml")
         script += _function(src, "exploreCell")
         script += _function(src, "clearSelection")
     if real_overlay:
@@ -471,7 +474,9 @@ def test_group_change_and_rollback_restart_the_open_cells_evidence():
     assert result["group"] == "All biodiversity"
 
 
-@pytest.mark.parametrize("phase", ["initial_group", "map", "latest_group", "set_overlay", "overlay", "mask", "fine_grid"])
+@pytest.mark.parametrize(
+    "phase", ["initial_group", "map", "latest_group", "set_overlay", "overlay", "mask", "fine_grid"]
+)
 @pytest.mark.parametrize("manual", ["select", "clear"])
 def test_manual_selection_or_deselection_cancels_each_deferred_restore_phase(phase, manual):
     barriers = {

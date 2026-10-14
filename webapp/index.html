@@ -76,7 +76,7 @@ input[type=range]{width:100%;accent-color:var(--acc);margin:0}
 #panel #searchResults{background:#fff;border-color:#d4dde6;box-shadow:0 4px 14px rgba(20,40,70,.18)}
 #panel .infobtn{border-color:#9aa7b5}
 /* the rest of the light surfaces: the floating chrome over the map, and the map popups */
-#topctrls,#viewtoggle,#loading,.maplibregl-popup-content{--acc:var(--acc-ink);--gd:var(--gd-ink);--gold:var(--gold-ink)}
+#topctrls,#viewtoggle,#loading,#placepanel,.maplibregl-popup-content{--acc:var(--acc-ink);--gd:var(--gd-ink);--gold:var(--gold-ink)}
 .maplibregl-popup-content{--ink:#16202c;--mut:#5d6b7a;color:var(--ink)}
 .maplibregl-popup-content .gtrow{--ink:#e8eef5;--mut:#9fb2c6}   /* the coverage rows keep their dark surface, so they keep the dark-theme ink */   /* MapLibre paints the popup white but leaves color inherited from the dark body: the impact line was near-white on white */
 /* Issue #69: single language toggle, lifted out of the panel to sit left of the How-scored button. */
@@ -154,14 +154,14 @@ details.adv>summary:hover{color:var(--ink)}
 .popscroll .gtn{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .popscroll .gtbar{min-width:22px}
 .popscroll .gtrow .gtbar>span{background:#2a788e}
-.popgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 8px}
-.popgrid a{text-decoration:none;color:#0a2a44;display:grid;grid-template-columns:40px minmax(0,1fr);gap:6px;align-items:start}
+.popgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 10px}
+.popgrid a{text-decoration:none;color:#0a2a44;display:flex;flex-direction:column;gap:5px;min-width:0}
 .popsptext{min-width:0}
 /* Badges have their own line so names and qualified record labels stay readable. */
 .popgrid .bdg{display:inline-block;max-width:100%;box-sizing:border-box;font-size:10px;font-weight:700;line-height:1.35;padding:1px 4px;border-radius:4px;margin-top:3px;overflow-wrap:anywhere}
 .popgrid .bdg.new{background:#166534;color:#fff}
 .popgrid .bdg.rare{background:#f2c200;color:#3a2a00}
-.popgrid img{box-sizing:border-box;width:40px;height:40px;aspect-ratio:1/1;object-fit:contain;border-radius:7px;border:1px solid #cdd;display:block;background:#eee}
+.popgrid img{box-sizing:border-box;width:100%;height:112px;object-fit:contain;border-radius:7px;border:1px solid #cdd;display:block;background:#f0f3f0}
 .popgrid .nm{font-size:12px;line-height:1.25;overflow-wrap:anywhere}
 .popgrid .ct{font-size:11px;line-height:1.3;color:#667;margin-top:2px;overflow-wrap:anywhere}
 .popgrid .ct span{display:block}
@@ -174,6 +174,9 @@ details.adv>summary:hover{color:var(--ink)}
 .pophelp{display:inline-block;font-size:11px;color:var(--acc);margin-top:7px}
 .popretry{background:none;border:0;padding:4px 0;color:var(--acc);text-decoration:underline;font:inherit;cursor:pointer}
 .popgrid a:focus-visible,.popdetails>summary:focus-visible,.pophelp:focus-visible,.popretry:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.popactions{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;padding:7px 0;border-top:1px solid #dde;background:#fff}
+.popactions a{flex:1;min-width:110px;color:var(--acc);font-size:12px;line-height:1.4;text-decoration:underline;text-underline-offset:2px}
+.popactions a:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 #viewtoggle{position:fixed;top:calc(10px + var(--bh));left:50%;transform:translateX(-50%);z-index:1200;display:flex;background:#fff;border-radius:9px;box-shadow:0 2px 9px rgba(0,0,0,.28);overflow:hidden}
 #viewtoggle button{border:0;background:#fff;color:#1b2a3a;padding:8px 15px;font-size:15px;font-weight:650;cursor:pointer}
 #viewtoggle button.on{background:var(--acc);color:#fff}
@@ -219,6 +222,10 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
   body.panel-collapsed #panelToggle{left:auto;right:auto;top:auto}
   .maplibregl-popup-content{max-width:calc(100vw - 24px);max-height:calc(40dvh - 54px)}
   body.panel-collapsed .maplibregl-popup-content{max-height:calc(68dvh - 54px)}
+  /* A larger cell gallery stays inside the phone viewport rather than clipping behind the controls. */
+  .maplibregl-popup:has(.popbody){position:fixed;inset:auto 12px 12px!important;transform:none!important;max-width:none!important;z-index:1400}
+  .maplibregl-popup:has(.popbody)>.maplibregl-popup-content{width:100%;max-width:none;max-height:calc(100dvh - 88px - var(--bh))}
+  .maplibregl-popup:has(.popbody)>.maplibregl-popup-tip{display:none}
 }
 #maplegend{position:fixed;bottom:24px;right:14px;z-index:1050;background:rgba(255,255,255,.93);border-radius:9px;padding:6px 10px;box-shadow:0 2px 10px rgba(0,0,0,.22);font-size:14px;color:#16233a;min-width:188px;max-width:244px;line-height:1.25}
 #maplegend .lt{font-weight:700;font-size:14px}/* retained: reused by the Getting Even categorical legend title (the priority-legend title div was removed for #47) */
@@ -243,6 +250,23 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
   .maplibregl-ctrl-attrib.maplibregl-compact-show{box-sizing:border-box;max-width:calc(100vw - 190px)}}
 #loading{position:fixed;left:50%;top:46%;transform:translate(-50%,-50%);z-index:1200;background:rgba(255,255,255,.96);border-radius:10px;padding:11px 17px;box-shadow:0 3px 14px rgba(0,0,0,.25);font-size:14px;font-weight:600;color:#1b2a3a}
 @media(max-width:640px){#loading{left:50%;top:74vh}}
+#findplacebtn{display:flex;align-items:center;gap:6px;background:#fff;color:#1b2a3a;border:0;border-radius:9px;box-shadow:0 2px 9px rgba(0,0,0,.28);padding:7px 10px;font-size:12.5px;font-weight:650;cursor:pointer}
+#findplacebtn svg{width:16px;height:16px;flex:none}
+#findplacebtn:focus-visible,#placepanel button:focus-visible,#placeQuery:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+#placepanel{position:fixed;right:14px;top:calc(56px + var(--bh));z-index:1250;width:340px;max-width:calc(100vw - 28px);max-height:calc(100dvh - 76px - var(--bh));overflow-y:auto;background:#fff;color:#16202c;border:1px solid #d4dde6;border-radius:10px;box-shadow:0 6px 22px rgba(20,40,70,.25);padding:12px;font-size:13px;line-height:1.4}
+#placepanel[hidden]{display:none}
+#placepanel label{display:block;font-weight:650;padding-right:28px;margin-bottom:7px}
+#placeclose{position:absolute;top:8px;right:8px;background:#fff;color:#46566a;border:0;padding:0;width:28px;height:28px;font-size:20px;cursor:pointer}
+#placepanel .queryrow{display:flex;gap:6px}
+#placeQuery{min-width:0;flex:1;padding:8px;background:#f4f7fa;color:#16202c;border:1px solid #9aa8b8;border-radius:6px;font:inherit}
+#placeSubmit,.place-submit{padding:8px;color:#fff;background:var(--acc-ink);border:1px solid var(--acc-ink);border-radius:6px;font:inherit;cursor:pointer}
+#placeStatus{color:#46566a;font-size:12px;margin-top:7px}
+#placeResults{margin-top:6px}
+#placeResults button{display:block;width:100%;text-align:left;border:0;border-top:1px solid #e2e8ef;background:#fff;color:#16202c;padding:9px 6px;font:inherit;cursor:pointer}
+#placeResults button[aria-selected=true],#placeResults button:hover{background:#edf3ea}
+#placeResults .sub{display:block;color:#46566a;font-size:11.5px;margin-top:2px}
+#placepanel .source{display:block;color:#46566a;font-size:10.5px;margin-top:10px}
+#placepanel .source a{color:var(--acc);text-decoration:underline}
 #howbtn{display:flex;align-items:center;gap:6px;background:#fff;color:#1b2a3a;border:0;border-radius:9px;box-shadow:0 2px 9px rgba(0,0,0,.28);padding:7px 11px;font-size:12.5px;font-weight:650;cursor:pointer;max-width:260px}
 #howbtn:hover{color:var(--acc)}
 #howbtn:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
@@ -262,6 +286,10 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
 #howclose:hover{color:var(--ink)}
 @media(max-width:640px){
   #topctrls{position:relative;inset:auto;order:-1;flex:none;width:100%;padding:8px 12px;background:#fff}
+  #findplacebtn{flex:none;padding:7px 9px}
+  #findplacebtn .search-name{display:none}
+  #placepanel,#howpanel{z-index:1500}
+  #placepanel{left:8px;right:8px;width:auto;max-width:none;top:calc(76px + var(--bh));max-height:calc(100dvh - 92px - var(--bh))}
   #howbtn{flex:1;min-width:0;max-width:none;font-size:12px;justify-content:center}
   body.panel-collapsed #topctrls{position:fixed;top:calc(8px + var(--bh));left:8px;right:8px;width:auto;padding:0;background:transparent}
   #howpanel{left:8px;right:8px;width:auto;top:calc(72px + var(--bh));max-height:calc(100dvh - 88px - var(--bh))}
@@ -270,6 +298,7 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
 @media(min-width:641px){html[lang=fr] #howbtn{max-width:none}html[lang=fr] #maplegend{max-width:320px}}
 </style></head>
 <body><div id="app">
+<div id="topctrls"><button id="findplacebtn" type="button" aria-expanded="false" aria-controls="placepanel" data-i18n-aria="find_place" data-i18n-title="find_place" aria-label="Find a place" title="Find a place"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="6"></circle><path d="m15 15 6 6"></path></svg><span class="search-name" data-i18n="find_place">Find a place</span></button><button id="langbtn" type="button" data-i18n-aria="aria_language" data-i18n-title="lang_switch" aria-label="Language" title="Switch language">FR</button><button id="howbtn" type="button" aria-expanded="false" aria-controls="howpanel" data-i18n-title="how_scored" title="How impact is scored & data sources"><span data-i18n="how_scored">How impact is scored & data sources</span></button><button id="panelToggle" type="button" data-i18n-aria="hide_panel" data-i18n-title="hide_panel" aria-label="Hide the panel" title="Hide the panel">‹</button></div>
 <div id="panel" role="main"><div id="panelInner">
   <div class="titlerow">
     <h1 data-i18n-html="title_full">Where to<br><a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc);text-decoration:underline">Blitz the Gap</a></h1>
@@ -285,11 +314,14 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
 
   <div id="tripui">
   <h2 class="sec" data-i18n="your_trip">Your trip</h2>
+  <form id="planPlaceForm">
   <div style="position:relative">
-    <input id="placeSearch" type="text" placeholder="Search a town or address" data-i18n-ph="search_ph" autocomplete="off" data-i18n-aria="aria_search" aria-label="Search for a start place" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="searchResults" aria-autocomplete="list"
+    <input id="placeSearch" type="text" placeholder="Search a town or address" data-i18n-ph="search_ph" autocomplete="off" data-i18n-aria="aria_search" aria-label="Search for a start place" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="searchResults" aria-autocomplete="none"
       style="width:100%;padding:8px 9px;background:#f4f7fa;color:var(--ink);border:1px solid #d4dde6;border-radius:7px;font-size:14px">
     <div id="searchResults" role="listbox" data-i18n-aria="aria_search_results" aria-label="Search results"></div>
   </div>
+  <button class="place-submit" type="submit" data-i18n="search_submit" style="margin-top:5px">Search</button>
+  </form>
   <div class="startrow" style="margin-top:6px">
     <button id="setMe" data-i18n="my_location">Locate me</button>
   </div>
@@ -356,7 +388,17 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
 <div id="viewtoggle" role="navigation" data-i18n-aria="aria_map_view" aria-label="Map view"><button id="vexplore" class="on" aria-pressed="true" data-i18n="view_explore">Explore</button><button id="vplan" aria-pressed="false" data-i18n="view_plan">Plan a trip</button><button id="vcompare" aria-pressed="false" data-i18n="view_compare">Compare goals</button></div>
 <div id="loading" role="status" aria-live="polite" data-i18n="loading">Loading the map…</div>
 <div id="maplegend" role="region" data-i18n-aria="aria_map_legend" aria-label="Map legend"><div class="ramp"></div><div class="lab"><span data-i18n="legend_low">well-sampled</span><span data-i18n="legend_high">biggest gaps</span></div><div class="hint" data-i18n-html="legend_hint"></div><div class="hint" id="legendscope"></div></div>
-<div id="topctrls"><button id="langbtn" type="button" data-i18n-aria="aria_language" data-i18n-title="lang_switch" aria-label="Language" title="Switch language">FR</button><button id="howbtn" type="button" aria-expanded="false" aria-controls="howpanel" data-i18n-title="how_scored" title="How impact is scored & data sources"><span data-i18n="how_scored">How impact is scored & data sources</span></button><button id="panelToggle" type="button" data-i18n-aria="hide_panel" data-i18n-title="hide_panel" aria-label="Hide the panel" title="Hide the panel">‹</button></div>
+
+<section id="placepanel" hidden role="region" data-i18n-aria="find_place" aria-label="Find a place">
+  <button id="placeclose" type="button" data-i18n-aria="close_search" aria-label="Close place search">×</button>
+  <form id="placeForm">
+    <label for="placeQuery" data-i18n="place_label">Find a town, park or named place in Canada</label>
+    <div class="queryrow"><input id="placeQuery" type="text" maxlength="120" autocomplete="off" role="combobox" aria-autocomplete="none" aria-haspopup="listbox" aria-expanded="false" aria-controls="placeResults" aria-describedby="placeStatus" data-i18n-ph="place_ph" placeholder="e.g. Ottawa or Algonquin"><button id="placeSubmit" type="submit" data-i18n="search_submit">Search</button></div>
+  </form>
+  <div id="placeStatus" role="status" aria-live="polite" data-i18n="place_hint">Search, choose a place, then tap a coloured cell.</div>
+  <div id="placeResults" role="listbox" data-i18n-aria="aria_search_results" aria-label="Search results"></div>
+  <span class="source"><a href="https://natural-resources.canada.ca/maps-tools-publications/maps/geographical-names-canada/geoname-service-api" target="_blank" rel="noopener" data-i18n="place_source">Place names: Natural Resources Canada</a></span>
+</section>
 <div id="howpanel" role="region" data-i18n-aria="how_scored" aria-label="How impact is scored & data sources">
   <button id="howclose" type="button" data-i18n-aria="aria_close" data-i18n-title="aria_close" aria-label="Close" title="Close">×</button>
   <p class="howintro" data-i18n="how_intro">Choose a goal, compare places, then tap a cell for species worth recording. Scores guide recording effort; they do not predict what a visit will find.</p>
@@ -388,6 +430,14 @@ const I18N={
     taxinfo:`<b style="color:var(--ink)">Choose a recording goal, then tap a cell for local evidence.</b> The equal-area grid uses 25&nbsp;km cells, and 5&nbsp;km cells when you zoom in. The three numeric goals rank recording proxies, not expected species discoveries. Getting Even and Climate Gap have separate meanings. <b>How impact is scored</b>, top right, explains the inputs. <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">How Blitz the Gap works →</a>`,
     finetune:"Fine-tune the five goals",
     your_trip:"Your trip",
+    find_place:"Find a place", close_search:"Close place search", search_submit:"Search",
+    place_label:"Find a town, park or named place in Canada", place_ph:"e.g. Ottawa or Algonquin",
+    place_hint:"Search, choose a place, then tap a coloured cell.", place_short:"Enter at least 3 letters to search.",
+    place_loading:"Searching Canadian place names…", place_empty:"No matching places. Try a nearby town or another name.",
+    place_error:"Place search is unavailable. Search again to retry.", place_found:n=>`${n} places found. Use the arrow keys or choose a result.`,
+    place_source:"Place names: Natural Resources Canada", search_empty:"No places found", search_error:"Search unavailable. Submit again to retry.",
+    view_cell_records:"View matching records", record_sighting:"Record a sighting",
+    province_name:{10:"Newfoundland and Labrador",11:"Prince Edward Island",12:"Nova Scotia",13:"New Brunswick",24:"Quebec",35:"Ontario",46:"Manitoba",47:"Saskatchewan",48:"Alberta",59:"British Columbia",60:"Yukon",61:"Northwest Territories",62:"Nunavut"},
     search_ph:"Search a town or address",
     my_location:"Locate me",
     start_alt:"Trip start — drag to move", start_tip:"Start — drag me, or tap the map",
@@ -399,6 +449,7 @@ const I18N={
     rank_mask_unavailable:"Canada's boundary data could not be loaded. National rankings are unavailable. Reload the page to try again.",
     rank_layer_unavailable:"This layer has no national priority ranking. Choose Spatial Gap, Species discovery or Conservation to list ranked cells.",
     rank_no_cells:"No cells are loaded for a national priority ranking.",
+    rank_no_cells_in_view:"No ranked cells are available in this view. Search another place or zoom out.",
     aria_map:"Interactive priority map (screen-reader users: use the Top cells list)", aria_map_view:"Map view",
     aria_map_legend:"Map legend", aria_close:"Close",
     aria_zoom_in:"Zoom in", aria_zoom_out:"Zoom out", aria_attribution:"Toggle attribution", aria_popup_close:"Close popup",
@@ -541,6 +592,7 @@ const I18N={
     pop_over_budget:bud=>`round trip — over your ${bud}`,
     car_free:"car-free",
     table_caption:"Top 40 cells for your goal mix & group, highest first. Tap a row to open it.",
+    table_caption_view:"Up to 40 priority cells of 25 km in this map view. Scores are national percentiles. Select a row to open its cell.",
     table_rank:"#", table_latlon:"Lat, lon", table_score:"Score",
     ins_hd:`<b>The same place — different goals, different life groups.</b> Each map shades every Canadian cell by one goal (<b>brighter = go there</b>). The hot zones shift between goals (a value choice) and between groups (different species fill different gaps). Pick the rows & columns; tap any map to open it in the planner.`,
     ins_groups:"Groups (rows)", ins_goals:"Goals (columns)",
@@ -565,6 +617,14 @@ const I18N={
     taxinfo:`<b style="color:var(--ink)">Choisissez un objectif, puis touchez une cellule pour consulter les observations locales.</b> La grille à surface égale utilise des cellules de 25&nbsp;km, et de 5&nbsp;km en zoomant. Les trois objectifs numériques classent des indicateurs d'observation, pas le nombre attendu de découvertes. Combler l'écart et Lacune climatique ont des significations distinctes. <b>Calcul de l'impact</b>, en haut à droite, explique les données. <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">Fonctionnement de Blitz the Gap →</a>`,
     finetune:"Ajuster les cinq objectifs",
     your_trip:"Votre sortie",
+    find_place:"Trouver un lieu", close_search:"Fermer la recherche de lieu", search_submit:"Rechercher",
+    place_label:"Trouver une ville, un parc ou un lieu nommé au Canada", place_ph:"p. ex. Ottawa ou Algonquin",
+    place_hint:"Recherchez, choisissez un lieu, puis touchez une cellule colorée.", place_short:"Entrez au moins 3 lettres pour rechercher.",
+    place_loading:"Recherche de noms de lieux au Canada…", place_empty:"Aucun lieu trouvé. Essayez une ville voisine ou un autre nom.",
+    place_error:"La recherche de lieu est indisponible. Recherchez à nouveau pour réessayer.", place_found:n=>`${n} lieux trouvés. Utilisez les flèches ou choisissez un résultat.`,
+    place_source:"Noms de lieux : Ressources naturelles Canada", search_empty:"Aucun lieu trouvé", search_error:"Recherche indisponible. Réessayez en soumettant la recherche.",
+    view_cell_records:"Voir les observations retenues", record_sighting:"Noter une observation",
+    province_name:{10:"Terre-Neuve-et-Labrador",11:"Île-du-Prince-Édouard",12:"Nouvelle-Écosse",13:"Nouveau-Brunswick",24:"Québec",35:"Ontario",46:"Manitoba",47:"Saskatchewan",48:"Alberta",59:"Colombie-Britannique",60:"Yukon",61:"Territoires du Nord-Ouest",62:"Nunavut"},
     search_ph:"Rechercher une ville ou une adresse",
     my_location:"Me localiser",
     start_alt:"Départ de la sortie — glissez pour déplacer", start_tip:"Départ — glissez-moi, ou touchez la carte",
@@ -576,6 +636,7 @@ const I18N={
     rank_mask_unavailable:"Les limites du Canada n'ont pas pu être chargées. Le classement national est indisponible. Rechargez la page pour réessayer.",
     rank_layer_unavailable:"Cette couche n'a pas de classement national des priorités. Choisissez Lacune spatiale, Découverte d'espèces ou Conservation pour afficher les cellules classées.",
     rank_no_cells:"Aucune cellule n'est chargée pour un classement national des priorités.",
+    rank_no_cells_in_view:"Aucune cellule classée n'est disponible dans cette vue. Recherchez un autre lieu ou réduisez le zoom.",
     aria_map:"Carte de priorité interactive (lecteurs d'écran : utilisez la liste des meilleures cellules)", aria_map_view:"Vue de la carte",
     aria_map_legend:"Légende de la carte", aria_close:"Fermer",
     aria_zoom_in:"Agrandir la carte", aria_zoom_out:"Réduire la carte", aria_attribution:"Afficher l'attribution", aria_popup_close:"Fermer la fenêtre de la cellule",
@@ -718,6 +779,7 @@ const I18N={
     pop_over_budget:bud=>`aller-retour — au-delà de votre ${bud}`,
     car_free:"sans voiture",
     table_caption:"40 meilleures cellules pour votre combinaison d'objectifs et votre groupe, du plus élevé au plus bas. Touchez une ligne pour l'ouvrir.",
+    table_caption_view:"Jusqu'à 40 cellules prioritaires de 25 km dans cette vue. Les scores sont des centiles nationaux. Sélectionnez une ligne pour ouvrir sa cellule.",
     table_rank:"#", table_latlon:"Lat, lon", table_score:"Score",
     ins_hd:`<b>Le même lieu — objectifs différents, groupes différents.</b> Chaque carte teinte chaque cellule canadienne selon un objectif (<b>plus clair = y aller</b>). Les zones chaudes changent selon l'objectif (un choix de valeurs) et selon le groupe (des espèces différentes comblent des lacunes différentes). Choisissez les lignes et colonnes; touchez une carte pour l'ouvrir dans le planificateur.`,
     ins_groups:"Groupes (lignes)", ins_goals:"Objectifs (colonnes)",
@@ -808,6 +870,7 @@ function relabelDynamic(){
   // "is it defined yet".
   if(typeof updateLegend==='function')updateLegend();
   renderGoalContext();
+  relabelPlaceFinder();
   // start marker's tooltip/title/alt (created once at init) follow the language
   if(typeof startMarker!=='undefined'&&startMarker){const se=startMarker.getElement();if(se){se.setAttribute('title',t('start_tip'));se.setAttribute('aria-label',t('start_alt'));}}
   // start-place prospects idle text (only if untouched)
@@ -816,7 +879,7 @@ function relabelDynamic(){
   // rows are cached, so this is zero-network. A cell tap lives in the popup (#popsp); the plan-mode
   // "around my start" list lives in the sidebar (#prospects).
   if(typeof fetchProspects!=='function'){}
-  else if(_lastProspect&&_lastProspect.toPopup&&_lastProspect.spEl&&_lastProspect.spEl.isConnected){paintPopScore();fetchProspects(_lastProspect.lat,_lastProspect.lon,_lastProspect.whereKey,{toPopup:true,spEl:_lastProspect.spEl,gapsEl:_lastProspect.gapsEl,resM:_lastProspect.resM});}
+  else if(_lastProspect&&_lastProspect.toPopup&&_lastProspect.spEl&&_lastProspect.spEl.isConnected){paintPopScore();fetchProspects(_lastProspect.lat,_lastProspect.lon,_lastProspect.whereKey,{toPopup:true,spEl:_lastProspect.spEl,gapsEl:_lastProspect.gapsEl,actionsEl:_lastProspect.actionsEl,resM:_lastProspect.resM});}
   else if(pr&&pr.dataset.idle==='1')pr.innerHTML='<div class="hd" style="margin-top:10px" data-i18n="prospects_idle">'+t('prospects_idle')+'</div>';
   else if(pr&&_lastProspect)fetchProspects(_lastProspect.lat,_lastProspect.lon,_lastProspect.whereKey,{toPopup:false,resM:_lastProspect.resM});
 }
@@ -1094,8 +1157,9 @@ async function fetchProspects(lat,lon,whereKey,opts){
   // For a cell tap, paint into the persistent popup element refs passed by exploreCell, NOT a
   // getElementById lookup: Leaflet rebuilds the popup content node during the autoPan/setView churn
   // of a tap, so a queried node goes stale mid-fetch and the on-screen popup keeps loading (#56).
-  const spEl=(opts&&opts.spEl)||null, gapsEl=(opts&&opts.gapsEl)||null;
-  _lastProspect={lat,lon,whereKey,toPopup,spEl,gapsEl,resM};   // remember the open panel so setLang can re-render it in the new language
+  const spEl=(opts&&opts.spEl)||null, gapsEl=(opts&&opts.gapsEl)||null, actionsEl=(opts&&opts.actionsEl)||null;
+  if(actionsEl)refreshPopupActions(actionsEl,lat,lon,resM,taxon);
+  _lastProspect={lat,lon,whereKey,toPopup,spEl,gapsEl,actionsEl,resM};   // remember the open panel so setLang can re-render it in the new language
   const where=t(WHERE_LBL[whereKey]||'here');
   const pr=toPopup?spEl:document.getElementById('prospects'); if(!pr) return;   // popup closed -> nothing to fill
   const msg=s=>toPopup?'<div class="popsec">'+s+'</div>':'<div class="hd">'+s+'</div>';   // .hd is dark-on-dark (sidebar); .popsec reads on the light popup
@@ -1164,7 +1228,7 @@ async function fetchProspects(lat,lon,whereKey,opts){
       const pbadge=r=>r._here?(r._near!==null&&r._near<=3?`<span class="bdg rare">${L_rare}</span>`:''):`<span class="bdg new">${L_notHere}</span>`;
       const pcount=r=>(r._here?'<span>'+T_here(r.count)+'</span>':'')+(r._near===null?'':'<span>'+T_near(r._near)+'</span>');
       pr.innerHTML='<div class="popsec">'+t('pop_rare_hd')+'</div><div class="popgrid">'+res.slice(0,4).map(r=>{const tx=r.taxon;
-        return `<a href="https://www.inaturalist.org/taxa/${tx.id}" target="_blank" rel="noopener" title="${esc(tx.name)}"><img src="${safeImg(tx.default_photo.square_url)}" loading="lazy" alt=""><div class="popsptext"><div class="nm">${esc(tx.preferred_common_name||tx.name)}</div>${pbadge(r)}<div class="ct">${pcount(r)}</div></div></a>`;}).join('')+'</div>'+cap+caveat;
+        return `<a href="https://www.inaturalist.org/taxa/${tx.id}" target="_blank" rel="noopener" title="${esc(tx.name)}"><img src="${safeImg(tx.default_photo.medium_url)||safeImg(tx.default_photo.square_url)}" data-fallback="${safeImg(tx.default_photo.square_url)}" onerror="this.onerror=null;if(this.dataset.fallback)this.src=this.dataset.fallback" loading="lazy" alt=""><div class="popsptext"><div class="nm">${esc(tx.preferred_common_name||tx.name)}</div>${pbadge(r)}<div class="ct">${pcount(r)}</div></div></a>`;}).join('')+'</div>'+cap+caveat;
       return;
     }
     res=res.slice(0,6);
@@ -1349,6 +1413,7 @@ function closePopup(){if(curPopup)curPopup.remove();}   // remove() fires 'close
 function setCellState(i,fc,op){if(_mapLoaded&&map.getSource('cells'))map.setFeatureState({source:'cells',id:i},{fc:fc,op:op});}
 function lngLatBounds(latlngs){const b=new maplibregl.LngLatBounds();latlngs.forEach(p=>b.extend([p[1],p[0]]));return b;}
 document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;
+  const fp=document.getElementById('placepanel');if(fp&&!fp.hidden)return;   // Escape closes search before the selected cell
   const hp=document.getElementById('howpanel');if(hp&&hp.classList.contains('open'))return;   // Esc closes the info panel first (handled below)
   if(state.view==='explore'&&(destMarker||destCell)){closePopup();clearSelection();}});
 // Raster basemaps. Leaflet {s}/{r} templating isn't supported, so subdomains expand into a tiles[] array
@@ -1460,12 +1525,23 @@ function buildMarkers(){
 }
 function renderCellTable(){
   const el=document.getElementById('celltable');if(!el)return;   // sr-only region: always populated for screen-reader users (issue #20 removed the visible list)
-  if(overlay!=='priority'){el.innerHTML='<p>'+t('rank_layer_unavailable')+'</p>';return;}
-  if(caOnlyActive()&&!US_CELLS){el.innerHTML='<p>'+t(_usFailed?'rank_mask_unavailable':'rank_mask_loading')+'</p>';return;}
-  const top=eligibleMarkers().filter(m=>Number.isFinite(m.t)).map(m=>({r:m.r,t:m.t})).sort((a,b)=>b.t-a.t).slice(0,40);
-  if(!top.length){el.innerHTML='<p>'+t('rank_no_cells')+'</p>';return;}
-  el.innerHTML='<table><caption>'+t('table_caption')+'</caption><thead><tr><th scope="col">'+t('table_rank')+'</th><th scope="col">'+t('table_latlon')+'</th><th scope="col">'+t('table_score')+'</th></tr></thead><tbody>'+
-    top.map((o,i)=>`<tr tabindex="0" role="button" data-la="${o.r[0]}" data-lo="${o.r[1]}" aria-label="${t('rank_aria',i+1,o.r[0].toFixed(2),o.r[1].toFixed(2),(o.t*100|0))}"><td>${i+1}</td><td>${o.r[0].toFixed(2)}, ${o.r[1].toFixed(2)}</td><td>${(o.t*100|0)}/100</td></tr>`).join('')+'</tbody></table>';
+  const active=document.activeElement,row=active&&active.closest&&active.closest('#celltable tr[data-la]');
+  const origin=row?{element:row,row:{lat:row.dataset.la,lon:row.dataset.lo}}:null;
+  const paint=html=>{el.innerHTML=html;if(origin)restorePopupFocus(origin);};
+  if(overlay!=='priority'){paint('<p>'+t('rank_layer_unavailable')+'</p>');return;}
+  if(caOnlyActive()&&!US_CELLS){paint('<p>'+t(_usFailed?'rank_mask_unavailable':'rank_mask_loading')+'</p>');return;}
+  const eligible=eligibleMarkers().filter(m=>Number.isFinite(m.t));
+  const inView=state.view==='explore'&&_mapLoaded&&typeof map!=='undefined'&&map&&typeof map.getBounds==='function';
+  let nearby=eligible;
+  if(inView){
+    const bounds=map.getBounds();nearby=eligible.filter(m=>bounds.contains([m.r[1],m.r[0]]));
+    // A fine viewport can fit inside one 25 km cell without containing its centre.
+    if(!nearby.length){const centre=map.getCenter(),parent=parentMarker(centre.lat,centre.lng);nearby=parent&&eligible.includes(parent)?[parent]:[];}
+  }
+  const top=nearby.map(m=>({r:m.r,t:m.t})).sort((a,b)=>b.t-a.t).slice(0,40);
+  if(!top.length){paint('<p>'+t(inView?'rank_no_cells_in_view':'rank_no_cells')+'</p>');return;}
+  paint('<table><caption>'+t(inView?'table_caption_view':'table_caption')+'</caption><thead><tr><th scope="col">'+t('table_rank')+'</th><th scope="col">'+t('table_latlon')+'</th><th scope="col">'+t('table_score')+'</th></tr></thead><tbody>'+
+    top.map((o,i)=>`<tr tabindex="0" role="button" data-la="${o.r[0]}" data-lo="${o.r[1]}" aria-label="${t('rank_aria',i+1,o.r[0].toFixed(2),o.r[1].toFixed(2),(o.t*100|0))}"><td>${i+1}</td><td>${o.r[0].toFixed(2)}, ${o.r[1].toFixed(2)}</td><td>${(o.t*100|0)}/100</td></tr>`).join('')+'</tbody></table>');
   el.querySelectorAll('tr[data-la]').forEach(tr=>{const go=()=>{const la=+tr.dataset.la,lo=+tr.dataset.lo;map.jumpTo({center:[lo,la],zoom:8});state.view==='plan'?planTap(la,lo):exploreCell(la,lo);};tr.onclick=go;tr.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}};});
 }
 function priorityPercentiles(values){
@@ -1537,7 +1613,9 @@ function updateLegend(){
     // name the layer and say what the brightness means rather than paint a swatch we cannot verify.
     ml.innerHTML='<div class="lt">'+t('climate_gap')+'</div><div class="hint">'+t('climate_legend_hint')+'</div>';
   }else{
-    ml.innerHTML=GE_PRIORITY_LEGEND;updateLegendLabels();
+    ml.innerHTML=GE_PRIORITY_LEGEND;
+    const hint=ml.querySelector('[data-i18n-html="legend_hint"]');if(hint)hint.innerHTML=t('legend_hint');
+    updateLegendLabels();
     const lt=document.getElementById('legendtap');if(lt)lt.textContent=t(legendTapKey());
   }
 }
@@ -1894,13 +1972,13 @@ map.on('moveend',()=>{
   // Getting Even swaps tiers rather than restretching, so the crossing itself is the repaint trigger.
   if(geActive()){const tier=activeCellResM();if(tier!==_geTier){_geTier=tier;recolour();}}
   if(_mvT)clearTimeout(_mvT);
-  _mvT=setTimeout(restretch25,150);   // recolour once the view settles -- restretching mid-pan makes the ramp crawl under the cursor
+  _mvT=setTimeout(()=>{restretch25();renderCellTable();},150);   // let popup invocation retain the focused row before rebuilding the nearby list
 });
 // Return help focus to the actual invoker, including a popup link.
 let _howFocusReturn=null;
 function setHowOpen(open,origin){
   const p=document.getElementById('howpanel'),b=document.getElementById('howbtn');if(!p||!b)return;
-  if(open){_howFocusReturn=origin||document.activeElement;renderGoalContext();loadConservationInfo();}
+  if(open){setPlaceFinderOpen(false);_howFocusReturn=origin||document.activeElement;renderGoalContext();loadConservationInfo();}
   p.classList.toggle('open',open);b.setAttribute('aria-expanded',open?'true':'false');
   if(!open){const target=_howFocusReturn;if(!target||!target.isConnected||!target.getClientRects().length)b.focus();else target.focus();_howFocusReturn=null;}
 }
@@ -1959,32 +2037,136 @@ function greenestForCell(km){const budget=state.budget;
   return 'Drive';}
 function applyAutoMode(mode){state.mode=mode;markModeBtn();setModeWhy(t('mode_why',MODES[mode].icon+' '+modeName(mode),mode!=='Drive'));}
 
-// type a town/address -> Nominatim forward geocoding (biased to BC/Canada), pick from a dropdown
-const psEl=document.getElementById('placeSearch'), srEl=document.getElementById('searchResults');
-function closeResults(){srEl.classList.remove('open');srEl.innerHTML='';psEl.setAttribute('aria-expanded','false');}
-const doSearch=debounce(async q=>{
-  if(q.trim().length<3){closeResults();return;}
+// Explore navigation searches official Canadian names only after an explicit submission.
+const placeFinder={seq:0,items:[],index:-1,status:'place_hint',cache:new Map()};
+const findPlaceBtn=document.getElementById('findplacebtn'),placePanel=document.getElementById('placepanel');
+const placeQuery=document.getElementById('placeQuery'),placeResults=document.getElementById('placeResults'),placeStatus=document.getElementById('placeStatus');
+function validGeoname(p){
+  return !!(p&&typeof p.name==='string'&&p.name.trim()&&Number.isFinite(p.latitude)&&Math.abs(p.latitude)<=90&&
+    Number.isFinite(p.longitude)&&Math.abs(p.longitude)<=180);
+}
+function geonameItems(json){
+  if(!json||!Array.isArray(json.items))throw new Error('Invalid place search response');
+  const items=json.items.filter(validGeoname);
+  if(json.items.length&&!items.length)throw new Error('No valid place coordinates');
+  return items.slice(0,6);
+}
+function setPlaceFinderStatus(key,n){placeFinder.status=key;placeStatus.textContent=t(key,n);}
+function clearPlaceResults(){
+  placeFinder.items=[];placeFinder.index=-1;placeResults.replaceChildren();
+  placeQuery.removeAttribute('aria-activedescendant');placeQuery.setAttribute('aria-expanded','false');
+}
+function setPlaceFinderOpen(open,restore){
+  placeFinder.seq++;placePanel.hidden=!open;findPlaceBtn.setAttribute('aria-expanded',String(open));
+  if(open){
+    const how=document.getElementById('howpanel');how.classList.remove('open');document.getElementById('howbtn').setAttribute('aria-expanded','false');
+    placeQuery.focus();
+  }else if(restore)findPlaceBtn.focus();
+  if(!open||placeFinder.status==='place_loading'){clearPlaceResults();setPlaceFinderStatus('place_hint');}
+}
+function renderPlaceResults(items){
+  placeFinder.items=items;placeFinder.index=-1;
+  placeResults.replaceChildren(...items.map((p,i)=>{
+    const b=document.createElement('button');b.type='button';b.id='geoname-result-'+i;b.setAttribute('role','option');b.setAttribute('aria-selected','false');b.tabIndex=-1;
+    const name=document.createElement('b');name.textContent=p.name;
+    const sub=document.createElement('span');sub.className='sub';
+    const province=p.province&&t('province_name')[p.province.code];
+    sub.textContent=[typeof p.location==='string'?p.location:'',province||''].filter(Boolean).join(', ');
+    b.append(name,sub);b.onclick=()=>selectPlaceResult(p);return b;
+  }));
+  placeQuery.removeAttribute('aria-activedescendant');placeQuery.setAttribute('aria-expanded',String(items.length>0));
+  setPlaceFinderStatus(items.length?'place_found':'place_empty',items.length);
+}
+function selectPlaceResult(p){
+  if(!validGeoname(p))return;
+  _shareAction++;closePopup();clearSelection();   // also cancels a boot restoration still waiting on data
+  map.jumpTo({center:[p.longitude,p.latitude],zoom:Math.min(7,TIER_SWITCH_Z-1)});
+  renderCellTable();   // offer this place's cells before keyboard focus returns to the map
+  placeQuery.value=p.name;setPlaceFinderOpen(false);focusPopupTarget(map.getCanvas());
+}
+async function searchPlaces(){
+  const q=placeQuery.value.trim(),lang=LANG,seq=++placeFinder.seq;
+  clearPlaceResults();
+  if(q.length<3){setPlaceFinderStatus('place_short');return;}
+  setPlaceFinderStatus('place_loading');
+  const key=lang+'|'+q.toLocaleLowerCase(lang);
+  const current=()=>seq===placeFinder.seq&&lang===LANG&&q===placeQuery.value.trim()&&!placePanel.hidden;
   try{
-    const u=`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&countrycodes=ca&viewbox=-141,84,-52,41&q=${encodeURIComponent(q)}`;
-    const r=await fetch(u,{headers:{'Accept-Language':'en'}}).then(r=>r.json());
-    if(psEl.value.trim()!==q.trim())return;                       // stale
-    if(!r.length){const d=document.createElement('div');d.className='res';d.style.cssText='color:var(--mut);cursor:default';d.textContent='No places found';srEl.replaceChildren(d);psEl.setAttribute('aria-expanded','true');srEl.classList.add('open');return;}
+    let items=placeFinder.cache.get(key);
+    if(!items){
+      const url='https://geogratis.gc.ca/services/geoname/'+lang+'/geonames.json?'+new URLSearchParams({q,category:'O',num:'6'});
+      const response=await fetchT(url,9000);if(!response.ok)throw new Error('HTTP '+response.status);
+      items=geonameItems(await response.json());
+      if(placeFinder.cache.size>=30)placeFinder.cache.delete(placeFinder.cache.keys().next().value);
+      placeFinder.cache.set(key,items);
+    }
+    if(current())renderPlaceResults(items);
+  }catch(e){if(current())setPlaceFinderStatus('place_error');}
+}
+function relabelPlaceFinder(){
+  placeFinder.seq++;
+  // Names can differ across languages. Never present a stale result as the newly selected locale.
+  clearPlaceResults();setPlaceFinderStatus('place_hint');
+}
+findPlaceBtn.onclick=()=>setPlaceFinderOpen(placePanel.hidden,true);
+document.getElementById('placeclose').onclick=()=>setPlaceFinderOpen(false,true);
+document.getElementById('placeForm').onsubmit=e=>{e.preventDefault();searchPlaces();};
+placeQuery.addEventListener('input',()=>{placeFinder.seq++;clearPlaceResults();setPlaceFinderStatus('place_hint');});
+placeQuery.addEventListener('keydown',e=>{
+  const items=placeFinder.items;
+  if((e.key==='ArrowDown'||e.key==='ArrowUp')&&items.length){
+    e.preventDefault();placeFinder.index=placeFinder.index<0?(e.key==='ArrowDown'?0:items.length-1):(placeFinder.index+(e.key==='ArrowDown'?1:-1)+items.length)%items.length;
+    const rows=placeResults.querySelectorAll('[role=option]');
+    rows.forEach((b,i)=>b.setAttribute('aria-selected',String(i===placeFinder.index)));
+    const active=rows[placeFinder.index];placeQuery.setAttribute('aria-activedescendant',active.id);active.scrollIntoView({block:'nearest'});
+  }else if(e.key==='Enter'){
+    e.preventDefault();if(placeFinder.index>=0)selectPlaceResult(items[placeFinder.index]);else searchPlaces();
+  }
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!placePanel.hidden){e.preventDefault();setPlaceFinderOpen(false,true);}});
+
+// The optional Plan address search retains its existing provider, with explicit submission only.
+const psEl=document.getElementById('placeSearch'),srEl=document.getElementById('searchResults');
+const planPlaceCache=new Map();let planPlaceSeq=0,planPlaceLast=0,planPlaceQueue=Promise.resolve();
+function closeResults(){srEl.classList.remove('open');srEl.innerHTML='';psEl.setAttribute('aria-expanded','false');}
+async function doSearch(q){
+  q=q.trim();const seq=++planPlaceSeq,lang=LANG;
+  if(q.length<3){closeResults();return;}
+  const current=()=>seq===planPlaceSeq&&psEl.value.trim()===q&&LANG===lang;
+  const message=key=>{const d=document.createElement('div');d.className='res';d.textContent=t(key);srEl.replaceChildren(d);psEl.setAttribute('aria-expanded','true');srEl.classList.add('open');};
+  try{
+    const key=lang+'|'+q.toLocaleLowerCase(lang);let r=planPlaceCache.get(key);
+    if(!r){
+      const request=async()=>{
+        const wait=1000-(Date.now()-planPlaceLast);if(wait>0)await sleep(wait);planPlaceLast=Date.now();
+        const u='https://nominatim.openstreetmap.org/search?'+new URLSearchParams({format:'jsonv2',limit:'6',countrycodes:'ca',viewbox:'-141,84,-52,41','accept-language':lang,q});
+        const response=await fetchT(u,9000);if(!response.ok)throw new Error('HTTP '+response.status);
+        const items=await response.json();if(!Array.isArray(items))throw new Error('Invalid address search response');return items;
+      };
+      planPlaceQueue=planPlaceQueue.then(request,request);r=await planPlaceQueue;
+      if(planPlaceCache.size>=30)planPlaceCache.delete(planPlaceCache.keys().next().value);planPlaceCache.set(key,r);
+    }
+    if(!current())return;
+    r=r.filter(p=>p&&typeof p.display_name==='string'&&p.lat!==null&&p.lon!==null&&
+      Number.isFinite(+p.lat)&&Math.abs(+p.lat)<=90&&Number.isFinite(+p.lon)&&Math.abs(+p.lon)<=180);
+    if(!r.length){message('search_empty');return;}
     srEl.replaceChildren(...r.map(p=>{const parts=p.display_name.split(', '),head=parts[0],sub=parts.slice(1,4).join(', ');
       const d=document.createElement('div');d.className='res';d.setAttribute('role','option');d.dataset.lat=p.lat;d.dataset.lon=p.lon;
       const b=document.createElement('b');b.textContent=head;const sb=document.createElement('div');sb.className='sub';sb.textContent=sub;d.append(b,sb);
       d.onclick=()=>{map.jumpTo({center:[+p.lon,+p.lat],zoom:9});setStart(+p.lat,+p.lon,head);psEl.value=head;closeResults();};
       return d;}));
     psEl.setAttribute('aria-expanded','true');srEl.classList.add('open');
-  }catch(e){closeResults();}
-},450);
-psEl.addEventListener('input',e=>doSearch(e.target.value));
-psEl.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();const f=srEl.querySelector('.res[data-lat]');if(f)f.click();}else if(e.key==='Escape')closeResults();});
+  }catch(e){if(current())message('search_error');}
+}
+document.getElementById('planPlaceForm').onsubmit=e=>{e.preventDefault();doSearch(psEl.value);};
+psEl.addEventListener('input',()=>{planPlaceSeq++;closeResults();});
+psEl.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();const f=srEl.querySelector('.res[data-lat]');if(f)f.click();else doSearch(psEl.value);}else if(e.key==='Escape')closeResults();});
 document.addEventListener('click',e=>{if(!srEl.contains(e.target)&&e.target!==psEl)closeResults();});
 function locateMe(){setStartLabel(t('locating'));
-  let done=false;
-  const ok=(lat,lon,how)=>{if(done)return;done=true;map.jumpTo({center:[lon,lat],zoom:7});setStart(lat,lon,how);};   // idempotent: GPS resolving after the IP fallback fired can't double-set
-  const fail=()=>{if(!done)setStartLabel(t('loc_unavail'));};                                            // never clobber a successful locate
-  if(navigator.geolocation){navigator.geolocation.getCurrentPosition(p=>ok(p.coords.latitude,p.coords.longitude,t('my_loc_short')),()=>{if(!done)ipLoc(ok,fail);},{timeout:6000});setTimeout(()=>{if(!done)ipLoc(ok,fail);},6500);}else ipLoc(ok,fail);}
+  const selection=_selectionSeq;let done=false;
+  const ok=(lat,lon,how)=>{if(done||selection!==_selectionSeq)return;done=true;map.jumpTo({center:[lon,lat],zoom:7});setStart(lat,lon,how);};   // idempotent: GPS resolving after the IP fallback fired can't double-set
+  const fail=()=>{if(!done&&selection===_selectionSeq)setStartLabel(t('loc_unavail'));};                                            // never clobber a successful locate
+  if(navigator.geolocation){navigator.geolocation.getCurrentPosition(p=>ok(p.coords.latitude,p.coords.longitude,t('my_loc_short')),()=>{if(!done&&selection===_selectionSeq)ipLoc(ok,fail);},{timeout:6000});setTimeout(()=>{if(!done&&selection===_selectionSeq)ipLoc(ok,fail);},6500);}else ipLoc(ok,fail);}
 document.getElementById('setMe').onclick=locateMe;
 function ipLoc(ok,fail){fetchT('https://ipapi.co/json/',6000).then(r=>r.json()).then(j=>{if(j&&j.latitude)ok(j.latitude,j.longitude,t('my_area_ip'));else if(fail)fail();}).catch(()=>{if(fail)fail();});}
 
@@ -2244,6 +2426,23 @@ async function restoreSharedCell(shared,action,loadedTaxon,selection){
   if(!currentSelection())return;
   if(!exploreCell(c.lat,c.lon))throw new Error('Shared cell is unavailable');
 }
+// Keep the recording actions independent of live evidence, including empty and failed queries.
+function cellRecordsUrl(lat,lon,resM,taxon){
+  const params=new URLSearchParams({subview:'map',...cellBoundsForRes(lat,lon,resM),quality_grade:'research',geoprivacy:'open',taxon_geoprivacy:'open',threatened:'false'});
+  const iconic=ICONIC[taxon];if(iconic)params.set('iconic_taxa',iconic);
+  if(LANG==='fr')params.set('locale','fr');
+  return 'https://www.inaturalist.org/observations?'+params.toString();
+}
+function popupActionsHtml(lat,lon,resM,taxon){
+  return '<a href="'+esc(cellRecordsUrl(lat,lon,resM,taxon))+'" target="_blank" rel="noopener">'+t('view_cell_records')+'</a><a href="https://www.inaturalist.org/observations/new" target="_blank" rel="noopener">'+t('record_sighting')+'</a>';
+}
+function refreshPopupActions(el,lat,lon,resM,taxon){
+  const links=el.querySelectorAll('a');
+  if(links.length!==2){el.innerHTML=popupActionsHtml(lat,lon,resM,taxon);return;}
+  // MapLibre can focus the first action on open. Preserve its node during evidence and locale refreshes.
+  links[0].href=cellRecordsUrl(lat,lon,resM,taxon);links[0].textContent=t('view_cell_records');
+  links[1].textContent=t('record_sighting');
+}
 function exploreCell(lat,lon){
   if(!markers.length)return;   // map tapped before cell data loaded
   const resM=activeCellResM();
@@ -2275,8 +2474,10 @@ function exploreCell(lat,lon){
   const componentBody=document.createElement('div');_popComponentsEl=componentBody;componentBody.innerHTML=best&&Number.isFinite(best.t)?contribStr(best.r):t('pop_noscore');
   components.appendChild(componentSummary);components.appendChild(componentBody);
   const help=document.createElement('a');help.href='#how-evidence';help.className='pophelp';help.dataset.i18n='pop_help';help.textContent=t('pop_help');help.onclick=ev=>{ev.preventDefault();openHowSection('how-evidence',help);};
-  popDiv.appendChild(popScore);popDiv.appendChild(popSp);popDiv.appendChild(groups);popDiv.appendChild(components);popDiv.appendChild(help);
-  const pop=wirePopup(new maplibregl.Popup({offset:30,maxWidth:'320px',focusAfterOpen:false}).setDOMContent(popDiv));
+  const popActions=document.createElement('div');popActions.className='popactions';
+  popActions.innerHTML=popupActionsHtml(dest[0],dest[1],resM,state.taxon);
+  popDiv.appendChild(popScore);popDiv.appendChild(popSp);popDiv.appendChild(popActions);popDiv.appendChild(groups);popDiv.appendChild(components);popDiv.appendChild(help);
+  const pop=wirePopup(new maplibregl.Popup({offset:30,maxWidth:'380px',anchor:'bottom',focusAfterOpen:false}).setDOMContent(popDiv));
   destMarker=destMarkerAt(dest[0],dest[1]).addTo(map);destMarker.setPopup(pop);
   // #70: place the tapped cell low (≈1/3 of the map height below centre) so the upward-opening popup
   // clears the top chrome on laptops — true-centering hid the popup's top. MapLibre popups don't auto-pan.
@@ -2284,11 +2485,13 @@ function exploreCell(lat,lon){
   map.jumpTo({center:map.unproject([_dp.x,_dp.y-_mh/3]),zoom:_z});
   destMarker.togglePopup();
   _reselect=false;
-  fetchProspects(dest[0],dest[1],'destination',{toPopup:true,spEl:popSp,gapsEl:popGaps,resM:resM});
+  fetchProspects(dest[0],dest[1],'destination',{toPopup:true,spEl:popSp,gapsEl:popGaps,actionsEl:popActions,resM:resM});
   return true;
 }
 function setView(v){
   state.view=v;
+  const finder=document.getElementById('findplacebtn');if(finder)finder.style.display=v==='explore'?'':'none';
+  if(v!=='explore')setPlaceFinderOpen(false);
   renderGoalContext();
   document.getElementById('insights').style.display=v==='compare'?'block':'none';
   const ml=document.getElementById('maplegend');if(ml)ml.style.display=v==='compare'?'none':'block';
