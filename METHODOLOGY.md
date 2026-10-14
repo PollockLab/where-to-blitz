@@ -85,10 +85,10 @@ the number.
   iNaturalist only. Top cells now correctly flag iNat-quiet areas (e.g. James Bay: 1,319 historical, 2 recent).
 
 ### 5. Sample before it's lost — `urgency`
-- **What it measures:** recent habitat change — record before it's gone.
-- **Source:** **Hansen Global Forest Change** forest-loss fraction (per-0.05° raster).
+- **What it measures:** cumulative mapped forest loss, a reason to document changed habitat.
+- **Source:** **Hansen Global Forest Change** forest-loss fraction for 2001–2023 (per-0.05° raster).
 - **Formula:** forest-loss fraction, scaled 0–1 against fixed national bounds (0 to 0.85).
-  Cells above the top bound sit at 1. High = recent forest loss (logging, fire, dieback).
+  Cells above the top bound sit at 1. High = greater cumulative forest loss (logging, fire, dieback).
 - **Status:** REAL where the Canada loss raster is present.
 
 ---
@@ -118,95 +118,77 @@ all three, so no preset reads it. Each links to its iNaturalist project.
 
 ---
 
-## Validation — does priority actually predict discovery?
+## Validation, retrospective record novelty
 
-**Tested, not asserted.** At equal effort, the cells this tool ranks highest discover **1.1x to 3.0x
-more new species** than the cells it ranks lowest, Spearman **rho 0.40 to 0.67**, permutation
-**p < 0.001** on every taxon, and it holds out-of-sample in Eastern Canada. The per-taxon numbers are
-in the table below; every one reads straight from a committed result file.
+The backtest compares priority scores with **new taxon IDs in sampled project records**, not prospective field discoveries. Across eight BC and Eastern Canada taxon-region samples, the training-period scarcity proxy has rho 0.48 to 0.71. Its expected record novelty at K = 5 observations is 1.2x to 3.2x at upper versus lower score-tercile cutoffs. The published map score is evaluated separately; this proxy result does not establish that following the map improves a future trip.
 
-The premise, *a record in an under-sampled cell adds more than one where people already crowd*,
-is tested on a **leakage-free temporal split** of the BC 2025 pilot (iNaturalist
-project 228908): score each cell from observations **up to** a cutoff T, then measure
-**new-to-cell species recorded after T**, rarefied to **equal effort** (K = 5 observations per
-cell) so busy cells get no free credit for sheer volume. Significance is a permutation null, and
-the whole thing is re-run **out-of-sample on Eastern Canada** (disjoint from BC). Scripts:
-`voi_backtest.py`, `backtest_appscore.py` (BC), `backtest_east.py` (East).
+### Grid and score parity
 
-- **Under-sampling predicts discovery.** At equal effort, the train-only `discover` axis ranks
-  cells by new-species yield at Spearman **rho 0.40 to 0.67** across five taxa (amphibians, birds,
-  insects, mammals, reptiles), all permutation **p < 0.001**, and holds out-of-sample in the East.
-- **Chasing the crowds is the same finding, read backwards.** The `discover` axis is by construction
-  an inverse of observation density, so all-time density (the opportunistic "light up the map" signal,
-  labelled a negative control) lands at the *exact mirror* value, **rho -0.40 to -0.67**. It is one
-  result stated two ways, not two independent tests. Steering toward busy cells is the wrong move.
-  That sign flip is the "blitz the gap" result.
-- **The composite is the `discover` axis.** *Spatial Gap*, the default preset, is `discover` 1.0 and
-  nothing else, so the app's blended impact score and its `discover` axis are the same number to the
-  last decimal. The backtest still scores them under separate keys (`app_leakfree`, `discover_leakfree`)
-  so a future preset change shows up as a divergence rather than passing unnoticed.
-- **Read it per-effort, not by raw count.** Because more people visit busy cells, those cells
-  still accumulate *more* new species in absolute terms, so raw count anti-correlates with priority.
-  The validated, decision-relevant claim is the one about *your* trip: **a given amount of effort
-  discovers more in a gap cell.**
+`backtest_appscore.py` assigns observations to the same declared **25 km WGS84 LAEA lattice** as the viewer, joins by projected row and column, excludes cells hidden by the published Canada eligibility mask, and blends the original normalized axes using `goal_presets.PRESETS`. It does not renormalize axes within a regional sample. The earlier 0.25-degree join could merge independent projected cells and the earlier sample rescaling could alter mixed-preset rankings; those results are superseded by the committed reruns below. The generic proxy analysis in `voi_backtest.py` retains its legacy default grid for compatibility.
+
+The default Spatial Gap preset uses `discover` alone. The training-period alternative replaces that axis with scarcity derived from the sampled count of records dated before the split. Its legacy keys `app_leakfree` and `discover_leakfree` remain for compatibility, but they name **retrospective observed-date proxies with historical availability unknown**. They do not certify that records and IDs were available at the cutoff. The `opportunistic_density` score is the same sampled training-count ordering reversed, so its opposite correlation is not an independent negative control.
+
+### Outcome and calculation
+
+Records are split using `observed_on` at **2025-07-01**. Novelty means an iNaturalist **taxon_id** absent from that cell's sampled pre-split project records. The IDs include species, subspecies, variety, form and hybrid ranks; legacy fields containing `species` do not imply a biological-species crosswalk. Only cells with at least one pre-split record and at least K post-split records contribute. Previously unobserved cells are excluded.
+
+For a cell with N post-split observations and n_j records of an unseen taxon j, expected novelty in K observations drawn without replacement is `sum_j [1 - C(N - n_j, K) / C(N, K)]`. The calculation is exact for this sampled finite population, following the individual-based rarefaction expectation in [Hurlbert (1971)](https://doi.org/10.2307/1934145). It removes the simulation noise of the former 200 draws. It does not remove sampling bias or uncertainty about a future visit. Equal **observation counts** are not equal visits, field hours or detectability.
+
+Spearman correlations are compared with 2,000 unrestricted cell permutations. Probabilities use `(exceedances + 1) / (draws + 1)`, with minimum `1/2001`, following [Phipson and Smyth (2010)](https://doi.org/10.2202/1544-6115.1585). The correction prevents zero Monte Carlo probabilities. These are nominal exploratory probabilities: exchangeability is assumed, spatial dependence is not controlled by blocked permutations, and multiple comparisons are unadjusted.
 
 ### The numbers, per taxon
 
-| Taxon | Region | Cells (rarefied) | Leak-free rho | Shipped rho | Yield, top vs bottom |
+| Taxon | Region | Cells (K = 5) | Training proxy rho | Published Spatial Gap rho | Proxy novelty, upper/lower |
 |---|---|---:|---:|---:|---:|
-| Amphibians | BC | 77 | 0.52 | 0.09 n.s. | 2.1x |
-| Birds | BC | 106 | 0.64 | 0.28 | 1.9x |
-| Insects | BC | 86 | 0.50 | 0.24 | 1.3x |
-| Mammals | BC | 122 | 0.65 | 0.47 | 2.9x |
-| Reptiles | BC | 55 | 0.64 | 0.28 | 3.0x |
-| Birds | East | 189 | 0.59 | 0.13 n.s. | 1.4x |
-| Insects | East | 110 | 0.40 | 0.05 n.s. | 1.1x |
-| Mammals | East | 185 | 0.67 | 0.37 | 3.0x |
+| Amphibians | BC | 108 | 0.63 | 0.31 | 2.7x |
+| Birds | BC | 144 | 0.61 | 0.38 | 1.6x |
+| Insects | BC | 123 | 0.57 | 0.39 | 1.5x |
+| Mammals | BC | 173 | 0.65 | 0.50 | 2.7x |
+| Reptiles | BC | 73 | 0.59 | 0.46 | 2.1x |
+| Birds | East | 236 | 0.54 | 0.25 | 1.4x |
+| Insects | East | 141 | 0.48 | 0.22 | 1.2x |
+| Mammals | East | 228 | 0.71 | 0.52 | 3.2x |
 
-*How to read a row:* take **mammals in the East**, rank its 185 cells by the leak-free score, send the
-same five observations to each, and the top-ranked cells turn up **3.0x as many new species** as the
-bottom-ranked ones. **rho** is the rank correlation between priority and discovery (1.0 = perfect, 0 =
-none). **Yield** is that effect in plain terms, new species found per equal effort, best cells over
-worst, and it is the leak-free score's yield. Every leak-free correlation clears permutation
-**p < 0.001**. `n.s.` = not statistically significant (p > 0.05). The weakest row is **East insects at
-1.1x**, and it is the floor of the claim.
+**How to read the table:** rho is the rank correlation between the named score and expected novel taxon IDs among five later sampled observations. The last column divides mean expected novelty above the upper score tercile cutoff by the mean below the lower cutoff, including ties. It is the training proxy's sampled-record ratio, not a forecast of a visitor's yield. `n.s.` denotes a nominal permutation probability above 0.05. `test_methodology_table.py` checks the rows against the committed result files.
 
-**What the live map shows is weaker than what validates.** The `Shipped rho` column scores the
-all-time-density blend the map currently ranks by. It reaches significance on five of the eight rows
-(BC birds p = 0.004, BC insects p = 0.028, BC mammals p < 0.001, BC reptiles p = 0.043, East mammals
-p < 0.001) and is indistinguishable from random on the other three (BC amphibians p = 0.46, East birds
-p = 0.08, East insects p = 0.61). Its yields are correspondingly smaller, 0.95x to 2.1x against the
-leak-free 1.1x to 3.0x. The reason is mechanical: the shipped `discover` axis is `1/(all-time density)`,
-so a just-sampled cell instantly looks "covered" and sheds priority. That is defensible prospectively,
-but it means the *shown* score is weaker than the one the backtest validates. Anchoring the shipped axis
-to a fixed snapshot or window is the open fix.
+### Scope of inference
 
-**The `env` axis is computed and shipped but not validated.** Across all eight taxon-region pairs its
-correlation with discovery runs **-0.24 to +0.18** and reaches p < 0.05 exactly once, on East insects,
-with the *wrong* sign. No shipped preset gives it weight, so it enters no blend the user can select.
-It is not inert: `national_breaks.discover()` orders the block of cells with zero records by `env`, so
-among cells with no observations at all, the `discover` ranking is the `env` ranking. It backs no claim
-in this section.
+The CSVs are page-capped project samples pulled after the pilot. They do not reconstruct historical upload times, identifications or research-grade status, and the later published inventory does not reconstruct the historical footprint. The outcome is novelty relative to that sampled project history, not the complete local iNaturalist inventory or new-to-science species. Regional repetition is an additional retrospective check, not an independent prospective trial.
 
-*Reproduce:* both scripts read `cluster_results/inat_*.csv`, which is gitignored and so absent from a
-clean clone. The eight files the table is built from are release assets:
+Published discover and staleness axes use all-time observations. The environmental axis density-weights CHELSA climate with all-time observations, conservation uses a later GBIF occurrence download, and a pre-split urgency source vintage is not established. These scores are therefore exploratory diagnostics. A record-novelty test also does not validate conservation status or habitat-change objectives. The sampling-history sensitivity below distinguishes finding gaps in existing records from ecological discovery skill beyond the sampled history.
+
+Observer behaviour can alter spatial, temporal and taxonomic coverage, as documented by [Di Cecco et al. (2021)](https://doi.org/10.1093/biosci/biab093). Rarefying later observations fixes their count, not these biases. Prospective validation would require frozen inputs available before an outing, measured survey effort, and outcomes appropriate to each goal.
+
+### Sampling-history sensitivity
+
+A second outcome holds the sampled training history at **M = 20 records**, as well as the later sample at **K = 5**. For each test taxon, it multiplies the probability of absence from an independent M-record training draw by the probability of presence in the K-record test draw, then sums those contributions. This is a derived hypergeometric expectation for a different sampled-history estimand.
+
+Both full-history and standardized-history outcomes are compared on the **same cells** with at least M training and K test records. No association is reported below ten qualifying cells. The paired cohort size and coordinate-key hash, outcome means, correlations, nominal probabilities and inference limits are recorded in each result.
+
+| Taxon | Region | Paired cells | Scarcity rho, full history | Scarcity rho, M = 20 |
+|---|---|---:|---:|---:|
+| Amphibians | BC | 5 | unavailable | unavailable |
+| Birds | BC | 48 | 0.62 | -0.02 |
+| Insects | BC | 48 | 0.46 | 0.05 |
+| Mammals | BC | 45 | 0.66 | 0.22 |
+| Reptiles | BC | 8 | unavailable | unavailable |
+| Birds | East | 59 | 0.37 | 0.09 |
+| Insects | East | 44 | 0.38 | -0.13 |
+| Mammals | East | 63 | 0.45 | 0.10 |
+
+In these six qualifying cohorts, scarcity's full-history association weakens substantially after standardizing the sampled training count. The main result therefore cannot establish ecological discovery skill beyond differing sampled histories. Finding a gap in existing records remains a distinct recording objective. This sensitivity does not remove observer, seasonal, habitat or identification biases, and it leaves the published map weights unchanged.
+
+### Reproduce
+
+The cached input CSVs are gitignored. Download the archived files rather than treating a fresh API pull as the same historical dataset:
 
 ```bash
-gh release download grid-inputs-v1 --repo PollockLab/where-to-blitz \
-  --dir cluster_results --pattern "inat_*.csv" --clobber
+gh release download grid-inputs-v1 --repo PollockLab/where-to-blitz --dir cluster_results --pattern "inat_*.csv" --clobber
+python backtest_appscore.py
+python backtest_east.py
 ```
 
-`python pull_inat_backtest.py` (BC) and `python pull_east.py` (East) re-fetch them from iNaturalist
-instead, over a window with a fixed end date so the pull is repeatable. Then `python backtest_appscore.py` (BC) and
-`python backtest_east.py` (East) regenerate `cluster_results/voi_appscore_results.json` and
-`..._east_results.json`; the table above reads straight from those two files and `test_methodology_table.py`
-fails if it drifts from them.
-
-*Scope (honest):* retrospective over *collected* iNaturalist observations — it inherits observer
-bias (controlled via rate-per-observation and effort rarefaction, not eliminated); "new species"
-means new to that cell's iNaturalist record, not new to science. Method grounded in Di Cecco et
-al. 2021 (effort/observer-bias confound), Chao 1984 and Colwell & Coddington 1994 (richness
-extrapolation).
+The two scripts regenerate `cluster_results/voi_appscore_results.json` and `cluster_results/voi_appscore_east_results.json`. Each run records its grid, Canada mask, normalized inventory and source hashes, input and observation-frame hashes, split, seeds, permutation count, outcome definition, inference limits and package versions. A later API pull may change the source records or identifications even with fixed observation-date bounds.
 
 ---
 

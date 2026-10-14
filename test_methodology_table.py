@@ -6,6 +6,7 @@ to the two JSONs. Rounding is the table's own: rho to two decimals, yield to one
 rerun that shifts a number fails here instead of making the document silently wrong.
 """
 
+import hashlib
 import json
 import re
 from pathlib import Path
@@ -99,3 +100,22 @@ def test_composite_column_would_be_a_duplicate():
     for key, rec in _scores().items():
         s = rec["scores"]
         assert s["app_leakfree"]["spearman"] == s["discover_leakfree"]["spearman"], key
+
+
+def test_published_results_record_current_scoring_sources_and_inference_scope():
+    for rec in _scores().values():
+        run = rec["run"]
+        assert run["grid"]["res_m"] == 25000
+        assert run["grid"]["cell_keys"] == ["row", "col"]
+        assert run["grid"]["n_eligible_cells"] < run["grid"]["n_inventory_cells"]
+        for name, expected in run["source_sha256"].items():
+            assert hashlib.sha256((HERE / name).read_bytes()).hexdigest() == expected
+        assert len(run["input_sha256"]) == 64
+        assert run["outcome"]["unit"] == "iNaturalist taxon_id"
+        assert run["limitations"]["historical_availability"] == "unknown"
+        assert run["limitations"]["previously_unobserved_cells"] == "excluded"
+        assert run["limitations"]["effort_unit"] == "observation count, not field hours"
+        assert run["limitations"]["multiple_comparisons"] == "unadjusted"
+        assert rec["perm_p_floor"] == 1 / (run["n_permutations"] + 1)
+        for score in rec["scores"].values():
+            assert rec["perm_p_floor"] <= score["perm_p"] <= 1

@@ -15,6 +15,8 @@ The HTML render is what the in-app "Full methodology" link points at (served on 
 render_walkthrough_html.py wraps nbconvert and adds alt text to the figures for screen-reader users.
 Re-render whenever the notebook changes.
 
+Use --reuse-diagram only after rendering the current Mermaid source locally when kroki.io is unavailable.
+
 NOTE: The §0 flowchart is rendered to a PNG file (where-to-blitz-zoomout.png) at build time via
 the kroki.io API and referenced with a relative markdown image link. This is required because
 GitHub's .ipynb viewer does not render ```mermaid``` fenced blocks in notebook markdown cells, and
@@ -23,8 +25,10 @@ renders correctly on GitHub's notebook viewer and in the nbconvert HTML page (bo
 Pages root). The Mermaid source is preserved in a <details> block for editability and traceability.
 """
 
+import sys
 import urllib.error
 import urllib.request
+from pathlib import Path
 
 from notebook_core import NotebookBuilder
 
@@ -98,30 +102,31 @@ _ZOOM_OUT_MERMAID = r"""flowchart TB
   GOALS["② Split Canada into 25 km squares.<br/>Score each square on <b>5 goals</b> (0–1):<br/>find new species · find rare species ·<br/>cover every habitat · revisit quiet spots · beat habitat loss"]
   IMPACT["③ <b>You</b> choose how much each goal matters.<br/>→ one <b>0–100 'impact' score</b> per square"]
   APP(["④ <b>The map</b><br/>Explore · Plan a trip · Compare goals"])
-  CHECK{{"Reality-checked against a real bioblitz:<br/>do its top spots actually find more species? <b>Yes.</b>"}}
+  CHECK{{"Retrospective record check:<br/>expected new taxon IDs in sampled bioblitz records<br/>Prospective field performance remains untested"}}
 
   Q --> DATA --> GOALS --> IMPACT --> APP
-  GOALS -. "validated" .-> CHECK
+  GOALS -. "compared" .-> CHECK
 
   style Q fill:#1b4965,color:#fff,stroke:#1b4965
   style APP fill:#2a9d4a,color:#fff,stroke:#2a9d4a
   style CHECK fill:#eaf4ea,stroke:#2a9d4a"""
 
-print("rendering §0 flowchart via kroki.io …")
-_render_mermaid_to_file(_ZOOM_OUT_MERMAID, _ZOOMOUT_PNG)
+if "--reuse-diagram" in sys.argv:
+    if not Path(_ZOOMOUT_PNG).is_file():
+        raise FileNotFoundError("--reuse-diagram requires a PNG rendered from the current Mermaid source")
+    print("reusing §0 flowchart PNG rendered from the current Mermaid source")
+else:
+    print("rendering §0 flowchart via kroki.io …")
+    _render_mermaid_to_file(_ZOOM_OUT_MERMAID, _ZOOMOUT_PNG)
 
 md(f"""
 ## 0 · Zoom out — the whole tool in one picture
 
 How a question becomes a map you can act on:
 
-![Flowchart: question → free public data → 5 goals per 25 km square → impact score → the map; validated against a real bioblitz]({_ZOOMOUT_PNG})
+![Flowchart: question → free public data → 5 goals per 25 km square → impact score → the map; compared retrospectively with sampled bioblitz records]({_ZOOMOUT_PNG})
 
-**In one breath:** the tool turns six free, public datasets (no logins, no private files) into
-a score for every 25 km square of Canada, lets *you* weight what "worth visiting" means, and points you to the best
-spot you can actually reach — and its choices are checked against a real bioblitz, not just
-asserted. The rest of this notebook opens each box: what's in a square, why each goal is
-scored the way it is, and the evidence behind the headline.
+The tool combines six public datasets into priority scores for 25 km cells. Its goals express different reasons to record biodiversity. The retrospective backtest compares those priorities with sampled bioblitz records; it does not establish prospective field performance. The rest of this notebook shows the inputs, formulas and evidence behind each part.
 
 <details><summary>Mermaid source (diagram above)</summary>
 
@@ -140,7 +145,7 @@ scored the way it is, and the evidence behind the headline.
 | cluster DuckDB → `ca_inat_metrics.csv` → `ca_staleness.csv` | The **freshness** goal: all-time vs last-5-years iNaturalist density per square. |
 | `build_webapp.py` | The single source of truth for the app. Combines the five goals into **impact**, holds every UI string (EN/FR), the trip planner, and emits `index.html`. |
 | `build_provenance.py` | Freezes the national build to a hashed manifest (`provenance.json`). |
-| `voi_backtest.py`, `backtest_appscore.py` | The validation layer: do gap-filling priorities actually discover more than going where it's already busy? |
+| `voi_backtest.py`, `backtest_appscore.py` | The validation layer: retrospective associations with new taxon IDs in sampled project records |
 
 </details>
 """)
@@ -473,14 +478,10 @@ plt.tight_layout(); plt.show()
 
 # ---- urgency
 md(r"""
-### 3.5 · Sample before it's lost — recent habitat change
+### 3.5 · Sample before it's lost, cumulative forest change
 
-> **In plain terms:** *record it before it's gone.* A square scores high where forest cover
-> has recently been lost (logging, fire, dieback).
+This axis measures the Hansen forest-loss fraction accumulated over **2001–2023**, normalized to 0–1. High values indicate more cumulative mapped forest loss from causes such as logging, fire or dieback. It is not a measurement of current loss or a forecast of imminent habitat change.
 
-**Measures:** recent forest-cover loss. **Formula:**
-`urgency = normalize(Hansen forest-loss fraction)`, 0–1. High = recent loss (logging, fire,
-dieback — Hansen measures loss of any cause, deliberately *not* labelled "deforestation").
 The Fort McMurray fire scar scores ~0.75; saturated southern cities ~0.
 """)
 code(r"""
@@ -506,27 +507,29 @@ md(r"""
    viridis ramp. It is baked into a PNG per life group and goal at build time, so panning and
    zooming never change a square's colour.
 3. **Rank** — the popup shows the square's *place in the line* as 0–100. Top square → 100,
-   bottom → 0, across all squares of the selected life group in Canada.
+   bottom → 0 when untied, across eligible squares of the selected life group in Canada. Equal scores share their average rank.
 
-**Why the cut-off matters (the key choice).** A few Arctic squares are off-the-charts gaps. If
-we stretched the scale between the lowest and the highest square, those few would push every
-other square — including everywhere you could *actually reach* — to the same dull near-zero,
-and the map would say "nowhere matters," which is false and useless. The figure shows the
-*same* blended score stretched (left) and ranked (right).
+The raw blend and its percentile rank answer different questions. The raw blend expresses the chosen axis weights; the rank expresses relative position among eligible cells, with ties assigned their average position. The figure compares linear rescaling with national average ranks. Neither scale estimates ecological benefit.
+
+This illustration uses the eligibility and tie policy proposed in [the map interaction update](https://github.com/PollockLab/where-to-blitz/pull/153). It is separate from the raw preset-blend parity checked in Section 8.
 """)
 code(r"""
 from goal_presets import DEFAULT              # the shipped default preset, not a copy of it
 raw = sum(w * ALL[a].to_numpy(float) for a, w in zip(AXES, DEFAULT) if w)
-minmax = (raw - raw.min()) / (raw.max() - raw.min()) * 100
-order = raw.argsort(); pct = np.empty_like(raw); pct[order] = np.linspace(0, 100, len(raw))
+hidden = set(json.load(open(CA / "us_cells.json"))["us_cells"])
+eligible = np.array([f"{la:.3f},{lo:.3f}" not in hidden for la, lo in ALL[["lat", "lon"]].to_numpy()])
+minmax = np.full_like(raw, np.nan)
+minmax[eligible] = (raw[eligible] - raw[eligible].min()) / (raw[eligible].max() - raw[eligible].min()) * 100
+pct = np.full_like(raw, np.nan)
+pct[eligible] = (pd.Series(raw[eligible]).rank(method="average").to_numpy() - 1) * 100 / (eligible.sum() - 1)
 
 fig, axs = plt.subplots(2, 2, figsize=(12, 7.4))
-canada_map(axs[0,0], minmax, "If we stretched the raw total", cmap="magma", vmax=100)
-canada_map(axs[0,1], pct,    "Ranked: what the popup reports", cmap="magma", vmax=100)
-axs[1,0].hist(minmax, bins=60, color="#c0392b"); axs[1,0].set_title("Stretched: a few Arctic gaps crush everything to ~0"); axs[1,0].set_xlabel("score 0–100"); axs[1,0].set_ylabel("squares")
-axs[1,1].hist(pct, bins=60, color="#27ae60"); axs[1,1].set_title("Ranked: full 0–100 range, usable for planning"); axs[1,1].set_xlabel("score 0–100")
-crushed = (minmax < 5).mean()
-fig.suptitle(f"Same blended score, two ways to scale it — stretching pins {crushed*100:.0f}% of squares below 5/100", y=1.0)
+canada_map(axs[0,0], minmax, "Linear rescaling of the raw blend", cmap="magma", vmax=100)
+canada_map(axs[0,1], pct,    "National average ranks, eligible cells", cmap="magma", vmax=100)
+axs[1,0].hist(minmax[np.isfinite(minmax)], bins=60, color="#c0392b"); axs[1,0].set_title("Distribution of the linearly rescaled blend"); axs[1,0].set_xlabel("score 0–100"); axs[1,0].set_ylabel("squares")
+axs[1,1].hist(pct[np.isfinite(pct)], bins=60, color="#27ae60"); axs[1,1].set_title("Distribution of national average ranks"); axs[1,1].set_xlabel("score 0–100")
+crushed = (minmax[eligible] < 5).mean()
+fig.suptitle(f"Same eligible cells, two scales; {crushed*100:.1f}% below 5/100 on the linear scale", y=1.0)
 plt.tight_layout(); plt.show()
 """)
 
@@ -550,7 +553,9 @@ display(pdf)
 # Two presets, two genuinely different maps — same geometry, different weighting.
 def impact_pct(weights):
     raw = sum(weights[i]*ALL[AXES[i]].to_numpy(float) for i in range(5))
-    o = raw.argsort(); p = np.empty_like(raw); p[o] = np.linspace(0,100,len(raw)); return p
+    p = np.full_like(raw, np.nan)
+    p[eligible] = (pd.Series(raw[eligible]).rank(method="average").to_numpy() - 1) * 100 / (eligible.sum() - 1)
+    return p
 fig, axs = plt.subplots(1, 3, figsize=(14, 3.8))
 for ax,p in zip(axs, PRESETS):
     canada_map(ax, impact_pct(p["w"]), p["name"], cmap="magma", vmax=100)
@@ -620,83 +625,84 @@ is a defensible choice, and any estimated route is labelled.)
 
 # ---------------------------------------------------------------- validation
 md(r"""
-## 8 · Does the core idea actually work?
+## 8 · What the retrospective test measures
 
-> **In plain terms:** the whole tool bets that **sending people to under-recorded squares turns
-> up more new species than sending them where it's already busy.** So we graded it like a
-> weather forecast, against a real bioblitz after the fact.
+The backtest measures new **taxon IDs in a sampled record set**, not species that a future trip will discover. It assigns records to the viewer's eligible 25 km equal-area cells and blends the same normalized axes and preset weights. A training-period scarcity proxy is compared separately with the published scores.
 
-**How the test works** (on the real 2025 BC pilot, iNat project 228908):
+1. Split the cached project records on **observed_on = 2025-07-01**. Their historical upload, identification and research-grade availability are unknown.
+2. For each cell with earlier records and at least five later records, calculate the expected number of distinct later taxon IDs absent from its sampled earlier records, in a draw of **K = 5 observations without replacement**.
+3. Compare that expected record novelty with each score using Spearman correlation. Equal observation counts do not establish equal field hours, visits or detectability.
 
-1. **Hide the future.** Split each square's records in time. Build the map using **only the
-   earlier** records.
-2. **Score against what happened next.** Count how many **species new to that square** showed
-   up in the **later** records — the part the map never saw.
-3. **Compare fairly.** Check the same fixed number of later visits per square, so a square
-   doesn't look better just because more people happened to go there.
+The earlier 0.25-degree join could merge independent projected cells and rescaled the published axes within each sample. The corrected results below use exact projected cell assignments, preserve the shipped axis values, and record source and input hashes. The legacy key `app_leakfree` now explicitly names a retrospective training-period proxy, with historical availability unknown.
 
-If the map's high-priority squares are the ones that later turned up new species, the core idea
-holds. The bars below show the agreement (again: **+1 = it nailed it, 0 = no better than chance,
-−1 = exactly wrong**).
+The outcome includes species and infraspecific taxon IDs. The sample is page-capped and excludes previously unobserved cells. Published axes use later information, including all-time density and a later occurrence download. The permutation probabilities are nominal, assume exchangeable cells, and have no spatial blocking or multiple-comparison adjustment. These are exploratory associations, not prospective or causal estimates of trip yield. See [METHODOLOGY.md](https://github.com/PollockLab/where-to-blitz/blob/main/METHODOLOGY.md) for the full scope and reproduction commands.
 """)
 code(r"""
 app = json.load(open(RES / "voi_appscore_results.json"))
-rows = []
-for r in app:
-    s = r["scores"]
-    rows.append({"taxon": r["taxon"],
-                 "app (gap-filling)": s["app_leakfree"]["spearman"],
-                 "what the map shows": s["app_shipped"]["spearman"],
-                 "go-where-busy":     s["opportunistic_density"]["spearman"]})
-# "discover only" is deliberately not a fourth bar: the default preset is discover 1.0 and
-# nothing else, so discover_leakfree and app_leakfree are the same number.
-bt = pd.DataFrame(rows).set_index("taxon")
-
+labels = {
+    "training-period scarcity proxy": "app_leakfree",
+    "published Spatial Gap": "app_shipped",
+    "published Species discovery": "species_discovery_shipped",
+}
+bt = pd.DataFrame([
+    {"taxon": r["taxon"], **{label: r["scores"][key]["spearman"] for label, key in labels.items()}}
+    for r in app
+]).set_index("taxon")
 fig, ax = plt.subplots(figsize=(9.5, 4.4))
-bt.plot.bar(ax=ax, color=["#27ae60", "#2980b9", "#c0392b"], width=0.8)
+bt.plot.bar(ax=ax, color=["#27ae60", "#2980b9", "#a26bba"], width=0.8)
 ax.axhline(0, color="k", lw=0.8)
-ax.set_ylabel("Agreement with what was discovered next\n(+1 nailed it · 0 chance · −1 exactly wrong)")
-ax.set_title("Sending people to gaps finds more new species; sending them where it's busy finds fewer (mirror image)")
+ax.set_ylabel("Spearman correlation with expected record novelty")
+ax.set_title("Retrospective sampled-record association, BC")
 ax.legend(loc="lower right", fontsize=9); ax.set_xlabel("")
 plt.xticks(rotation=0); plt.tight_layout(); plt.show()
-
-m_app  = bt["app (gap-filling)"].mean()
-m_ship = bt["what the map shows"].mean()
-m_busy = bt["go-where-busy"].mean()
-n_ship_sig = sum(r["scores"]["app_shipped"]["perm_p"] < 0.05 for r in app)
-print(f"Average agreement — app's gap-filling map : {m_app:+.2f}  (correct on {bt['app (gap-filling)'].gt(0).sum()}/{len(bt)} animal groups)")
-print(f"Average agreement — what the map shows     : {m_ship:+.2f}  (better than chance on {n_ship_sig}/{len(bt)} groups)")
-print(f"Average agreement — 'go where it's busy'  : {m_busy:+.2f}  (the near-exact opposite)")
+display(bt.round(2))
+print("K = 5 observations, not visits or field hours. Historical record availability is unknown.")
 """)
 md(r"""
-**Two findings worth naming:**
+**The training proxy and the published map answer different questions.** The proxy uses the sampled count of records dated before the split. The published Spatial Gap score uses a national density ramp built later. Their associations cannot be interpreted as equivalent validation of the live map.
 
-**The blue bar is the score the live map actually ranks squares by.** The green bar is the
-leak-free score this test validates; the blue one is what you see in the app, and it is the
-weaker of the two on every animal group.
+**A smaller sampled history makes novelty easier to obtain.** That is useful for finding record gaps, but it does not by itself establish ecological discovery skill beyond the coverage already recorded. The inverse training-count score is the same ordering reversed and is not an independent negative control.
 
-1. **The shipped score is weaker than the one that validates.** The app's `discover` axis is
-   `1/(all-time density)`, so a square that was just surveyed instantly looks "covered" and sheds
-   priority. That is defensible when you are planning the next trip, but it costs agreement here:
-   the blue bar beats chance on four of the five BC groups and is indistinguishable from random on
-   amphibians. Pinning the shipped axis to a fixed snapshot or window is the open fix.
-2. **The signal lives entirely in the under-sampling axis.** *Spatial Gap*, the default preset, is
-   `discover` 1.0 and nothing else, so the leak-free score and the discover-only score are the same
-   number and only one green bar is drawn. `env` and `urgency` are near-uncorrelated with *this*
-   objective, because they optimise *other* goals by design.
-3. **It replicates out of region.** Re-running on a disjoint Eastern-Canada window (ON/QC/
-   Maritimes) reproduces the directed > opportunistic result — it is not a BC artifact.
+**Each goal needs an outcome matching its purpose.** The Species discovery blend includes the published staleness axis and has its own result below. Conservation prioritizes status and habitat change; a novelty association does not validate or invalidate that objective.
 """)
 code(r"""
-# Replication on a disjoint region (Eastern Canada), same harness.
 east = json.load(open(RES / "voi_appscore_east_results.json"))
-er = pd.DataFrame([{"taxon": r["taxon"],
-                    "app (gap-filling)": r["scores"]["app_leakfree"]["spearman"],
-                    "go-where-busy":     r["scores"]["opportunistic_density"]["spearman"]}
-                   for r in east]).set_index("taxon")
-print("Eastern-Canada replication (disjoint from BC):")
+er = pd.DataFrame([
+    {"taxon": r["taxon"], **{label: r["scores"][key]["spearman"] for label, key in labels.items()}}
+    for r in east
+]).set_index("taxon")
+print("Eastern Canada, a separate retrospective regional sample:")
 display(er.round(2))
-print(f"\nDirected stays positive on {er['app (gap-filling)'].gt(0).sum()}/{len(er)} eastern taxa → not a regional artifact.")
+print("A positive association in another region does not establish prospective field performance.")
+""")
+
+md(r"""
+### Sampling-history sensitivity
+
+The paired check fixes the sampled training count at M = 20 and the later count at K = 5. It compares full-history novelty and standardized-history novelty on exactly the same eligible cells. Smaller histories make taxon IDs easier to call new; this check asks whether the association extends beyond that difference in recorded coverage. It changes the estimand and does not remove observer, habitat or seasonal bias.
+""")
+code(r"""
+names = {"Aves": "Birds", "Insecta": "Insects", "Mammalia": "Mammals"}
+paired = []
+for region, records in [("BC", app), ("East", east)]:
+    for r in records:
+        h = r["training_history_sensitivity"]
+        p = h["paired_scores"].get("discover_leakfree")
+        if not p:
+            print(f"{region} / {r['taxon']}: {h['n_cells']} paired cells, association unavailable")
+            continue
+        paired.append({"sample": f"{region} / {names.get(r['taxon'], r['taxon'])} ({h['n_cells']} cells)",
+                       "full sampled history": p["full_training"]["spearman"],
+                       "20-record training draw": p["standardized_training"]["spearman"]})
+paired = pd.DataFrame(paired).set_index("sample")
+fig, ax = plt.subplots(figsize=(9.5, 4.8))
+paired.plot.bar(ax=ax, color=["#2980b9", "#a26bba"], width=0.75)
+ax.axhline(0, color="k", lw=0.8)
+ax.set_ylabel("Scarcity correlation with expected record novelty")
+ax.set_title("Sampling-history sensitivity, identical paired cohorts")
+ax.set_xlabel(""); ax.legend(fontsize=9)
+plt.xticks(rotation=25, ha="right"); plt.tight_layout(); plt.show()
+display(paired.round(2))
 """)
 
 # ---------------------------------------------------------------- responsible use
@@ -761,7 +767,7 @@ uv venv --python 3.11 .venv && uv pip install --python .venv/bin/python -r requi
 ```
 
 The build is frozen by a manifest hash (printed in Section 1); the validation results read from
-cached `cluster_results/*.json`, re-pullable with `pull_inat_backtest.py`. Optional live cell
+cached `cluster_results/*.json`. Download archived `inat_*.csv` from the `grid-inputs-v1` release to reproduce the historical inputs; a fresh API pull can change records and identifications. Optional live cell
 below shows the *"tap a cell → what to record"* loop on today's iNaturalist data.
 """)
 code(r"""
@@ -770,7 +776,7 @@ import urllib.request
 def fill_the_gap(lat, lon, radius_km=25):
     url = ("https://api.inaturalist.org/v1/observations/species_counts"
            f"?lat={lat}&lng={lon}&radius={radius_km}&quality_grade=research"
-           "&taxon_geoprivacy=open&threatened=false&per_page=5")
+           "&geoprivacy=open&taxon_geoprivacy=open&threatened=false&per_page=5")
     with urllib.request.urlopen(url, timeout=8) as r:
         return json.load(r)
 try:

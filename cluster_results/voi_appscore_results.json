@@ -1,332 +1,937 @@
 [
   {
     "taxon": "Amphibia",
-    "n_cells": 197,
-    "n_rarefied": 77,
+    "n_cells": 261,
+    "n_rarefied": 108,
     "K": 5,
-    "perm_p_floor": 0.0005,
-    "total_new_species": 239,
+    "perm_p_floor": 0.0004997501249375312,
+    "total_new_species": 320,
     "scores": {
-      "app_leakfree": {
-        "spearman": 0.5150974286709457,
-        "perm_p": 0.0,
-        "eff_ratio_top_bottom": 2.097892815662851,
-        "new_at_K_top": 1.5571428571428574,
-        "new_at_K_bottom": 0.7422413793103447
-      },
       "app_shipped": {
-        "spearman": 0.08865218039472732,
-        "perm_p": 0.459,
-        "eff_ratio_top_bottom": 1.0573333837086292,
-        "new_at_K_top": 1.1959615384615385,
-        "new_at_K_bottom": 1.1311111111111112
+        "spearman": 0.3110887516171077,
+        "perm_p": 0.0014992503748125937,
+        "eff_ratio_top_bottom": 1.6990804047400956,
+        "new_at_K_top": 1.458924071602927,
+        "new_at_K_bottom": 0.8586551098657955
       },
       "discover_leakfree": {
-        "spearman": 0.5150974286709457,
-        "perm_p": 0.0,
-        "eff_ratio_top_bottom": 2.097892815662851,
-        "new_at_K_top": 1.5571428571428574,
-        "new_at_K_bottom": 0.7422413793103447
+        "spearman": 0.6290599363783077,
+        "perm_p": 0.0004997501249375312,
+        "eff_ratio_top_bottom": 2.6682383885655625,
+        "new_at_K_top": 1.7789913823242514,
+        "new_at_K_bottom": 0.6667288012749986
       },
       "env": {
-        "spearman": 0.1750291854159163,
-        "perm_p": 0.1245,
-        "eff_ratio_top_bottom": 1.3986461075592327,
-        "new_at_K_top": 1.4303846153846154,
-        "new_at_K_bottom": 1.0226923076923078
+        "spearman": -0.03616887514716052,
+        "perm_p": 0.711144427786107,
+        "eff_ratio_top_bottom": 0.9534416636250862,
+        "new_at_K_top": 1.3089742490245118,
+        "new_at_K_bottom": 1.372893905273295
       },
       "urgency": {
-        "spearman": 0.0950106956428764,
-        "perm_p": 0.412,
-        "eff_ratio_top_bottom": 1.063579566335906,
-        "new_at_K_top": 1.113076923076923,
-        "new_at_K_bottom": 1.0465384615384614
+        "spearman": 0.14469459496221268,
+        "perm_p": 0.13493253373313344,
+        "eff_ratio_top_bottom": 1.2206217640558155,
+        "new_at_K_top": 1.3118124752408333,
+        "new_at_K_bottom": 1.0747084099844446
       },
       "opportunistic_density": {
-        "spearman": -0.5150974286709457,
-        "perm_p": 0.0,
-        "eff_ratio_top_bottom": 0.47666877570389105,
-        "new_at_K_top": 0.7422413793103447,
-        "new_at_K_bottom": 1.5571428571428574
+        "spearman": -0.6290599363783077,
+        "perm_p": 0.0004997501249375312,
+        "eff_ratio_top_bottom": 0.3747791068014718,
+        "new_at_K_top": 0.6667288012749986,
+        "new_at_K_bottom": 1.7789913823242514
+      },
+      "app_leakfree": {
+        "spearman": 0.6290599363783077,
+        "perm_p": 0.0004997501249375312,
+        "eff_ratio_top_bottom": 2.6682383885655625,
+        "new_at_K_top": 1.7789913823242514,
+        "new_at_K_bottom": 0.6667288012749986
       },
       "species_discovery_shipped": {
-        "spearman": -0.05558847238262683,
-        "perm_p": 0.621,
-        "eff_ratio_top_bottom": 0.9592933947772657,
-        "new_at_K_top": 1.2009615384615384,
-        "new_at_K_bottom": 1.251923076923077
+        "spearman": -0.07226131779125261,
+        "perm_p": 0.4607696151924038,
+        "eff_ratio_top_bottom": 0.8995514130473842,
+        "new_at_K_top": 1.200632848328693,
+        "new_at_K_bottom": 1.3347017534677024
       },
-      "conservation": {
-        "spearman": 0.08308667528906236,
-        "perm_p": 0.4735,
-        "eff_ratio_top_bottom": 1.1537251818360525,
-        "new_at_K_top": 1.128653846153846,
-        "new_at_K_bottom": 0.9782692307692307
+      "conservation_shipped": {
+        "spearman": 0.011121995926117336,
+        "perm_p": 0.9145427286356822,
+        "eff_ratio_top_bottom": 0.9967122254643884,
+        "new_at_K_top": 1.1091453632922805,
+        "new_at_K_bottom": 1.1128040119860145
       }
-    }
+    },
+    "training_history_sensitivity": {
+      "M": 20,
+      "K": 5,
+      "n_cells": 5,
+      "method": "exact independent train/test hypergeometric expectation",
+      "cohort": "identical cells with at least M sampled train and K sampled test records",
+      "cohort_keys_sha256": "3d3189054bb6437a62353287ba618666fe85d19263d0cfba379beec83913d686",
+      "estimand": "test taxon IDs absent from an independent M-record training subsample",
+      "interpretation": "sampling-history sensitivity, not validation of prospective ecological discovery",
+      "mean_full_training": 0.5955201198879714,
+      "mean_standardized_training": 0.8486020967499746,
+      "paired_scores": {},
+      "permutation_seed": 7,
+      "n_permutations": 2000,
+      "unavailable_reason": "fewer than 10 cells qualify for paired associations"
+    },
+    "run": {
+      "grid": {
+        "res_m": 25000,
+        "crs": "PROJCS[\"WGS_1984_Lambert_Azimuthal_Equal_Area\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Lambert_Azimuthal_Equal_Area\"],PARAMETER[\"latitude_of_center\",45],PARAMETER[\"longitude_of_center\",-100],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
+        "lattice": {
+          "x0": -2150000,
+          "y1": 4300000,
+          "ncol": 220,
+          "nrow": 181,
+          "cell_km2": 625.0
+        },
+        "cell_keys": [
+          "row",
+          "col"
+        ],
+        "n_inventory_cells": 23214,
+        "n_eligible_cells": 18301,
+        "inventory_sha256": "ef9d29c11da42e48773e67b7cfed9deeadde7fb534f04561800a6aa17decf47f",
+        "source_sha256": {
+          "index": "35e16b5b606d06bef8fc0e7c37488f5a0346399e72a32365d1b73060f8299494",
+          "group": "24aeda67fd0ba9477eaccd8536232f20aa0bc5d02c530ebd81648288d0bd7bbf",
+          "canada_mask": "df02332e6c9a379c75ed60aace2879330abc0927d01953f1d263bcba8e6fc6fa"
+        }
+      },
+      "split": "2025-07-01",
+      "seed": 0,
+      "permutation_seed": 7,
+      "n_permutations": 2000,
+      "permutation_probability": "(exceedances + 1) / (draws + 1)",
+      "permutation_probability_source": "https://doi.org/10.2202/1544-6115.1585",
+      "rarefaction_method": "exact hypergeometric expectation",
+      "rarefaction_source": "https://doi.org/10.2307/1934145",
+      "rarefaction_reps": null,
+      "rarefaction_seed": null,
+      "K": 5,
+      "train_only_axes": [
+        "discover"
+      ],
+      "score_scope": {
+        "app_shipped": "as-shipped exploratory association; historical availability unknown",
+        "discover_leakfree": "training-period observed_on proxy; historical availability unknown",
+        "env": "as-shipped exploratory association; historical availability unknown",
+        "urgency": "as-shipped exploratory association; historical availability unknown",
+        "opportunistic_density": "training-period count rank inverse; historical availability unknown",
+        "app_leakfree": "training-period observed_on proxy; historical availability unknown",
+        "species_discovery_shipped": "as-shipped exploratory association; historical availability unknown",
+        "conservation_shipped": "as-shipped exploratory association; historical availability unknown"
+      },
+      "outcome": {
+        "unit": "iNaturalist taxon_id",
+        "baseline": "sampled project observations with observed_on before split",
+        "ranks": [
+          "species",
+          "subspecies",
+          "variety",
+          "form",
+          "hybrid"
+        ],
+        "definition": "distinct post-split taxon IDs absent from that cell's sampled training records",
+        "legacy_field_names": "new_species/new_at_K fields count taxon IDs, not exclusively biological species"
+      },
+      "limitations": {
+        "split_field": "observed_on only",
+        "historical_availability": "unknown",
+        "identifications": "research-grade IDs at the later pull, not a historical ID snapshot",
+        "inventory": "later published footprint, not a historical footprint snapshot",
+        "record_scope": "page-capped project sample, not the complete cell inventory",
+        "previously_unobserved_cells": "excluded",
+        "effort_unit": "observation count, not field hours",
+        "exchangeability": "unrestricted cell permutations assume exchangeability, not established",
+        "spatial_dependence": "not controlled by spatial blocking",
+        "multiple_comparisons": "unadjusted",
+        "inference": "retrospective association, not a prospective or causal trip-yield estimate"
+      },
+      "observation_rows": 4955,
+      "observation_frame_sha256": "4656efdfdbd878beaeab8624749a7e191d6b5881f8d097899bc6a44e0baf8a74",
+      "input_sha256": "ede931760fea346256956dac99c1cb753d45cea52fc3f326eec58e38fd650ff0",
+      "source_sha256": {
+        "backtest_appscore.py": "41101740fc21d9ed7560d1e212bd7504021984794137f46f9fa24a961a6e1e78",
+        "voi_backtest.py": "a56a790738e6cd19233d8b64ca23a21cff4f0075360b883b779599a1f3268d91",
+        "goal_presets.py": "ba08e337008284b663f5ea973691fe06c89d9ae84cd04162bbd61884b30df189",
+        "grid_lattice.py": "457ebb75f3feac7e6def2c795e0d5120ff24a33167f8b9691d43e1a390188c68",
+        "grid_schema.py": "c5cd02f378e5989384a112204188126c39c0e0c4c7c9e6fcbc996e7e4e3a43b8"
+      },
+      "versions": {
+        "python": "3.11.13",
+        "numpy": "2.4.6",
+        "pandas": "3.0.3",
+        "pyproj": "3.7.2",
+        "PROJ": "9.5.1"
+      }
+    },
+    "region": "BC"
   },
   {
     "taxon": "Aves",
-    "n_cells": 328,
-    "n_rarefied": 106,
+    "n_cells": 423,
+    "n_rarefied": 144,
     "K": 5,
-    "perm_p_floor": 0.0005,
-    "total_new_species": 1447,
+    "perm_p_floor": 0.0004997501249375312,
+    "total_new_species": 1906,
     "scores": {
-      "app_leakfree": {
-        "spearman": 0.6388805107114084,
-        "perm_p": 0.0,
-        "eff_ratio_top_bottom": 1.8702540415704385,
-        "new_at_K_top": 3.9366249999999994,
-        "new_at_K_bottom": 2.104861111111111
-      },
       "app_shipped": {
-        "spearman": 0.27987347085256603,
-        "perm_p": 0.0035,
-        "eff_ratio_top_bottom": 1.201659947830211,
-        "new_at_K_top": 3.423918918918919,
-        "new_at_K_bottom": 2.8493243243243245
+        "spearman": 0.38030513954072115,
+        "perm_p": 0.0004997501249375312,
+        "eff_ratio_top_bottom": 1.3160654882280651,
+        "new_at_K_top": 3.6132771159009547,
+        "new_at_K_bottom": 2.7455146785786684
       },
       "discover_leakfree": {
-        "spearman": 0.6388805107114084,
-        "perm_p": 0.0,
-        "eff_ratio_top_bottom": 1.8702540415704385,
-        "new_at_K_top": 3.9366249999999994,
-        "new_at_K_bottom": 2.104861111111111
+        "spearman": 0.6085558075670224,
+        "perm_p": 0.0004997501249375312,
+        "eff_ratio_top_bottom": 1.5981243829686875,
+        "new_at_K_top": 3.8245159787020193,
+        "new_at_K_bottom": 2.3931278562921183
       },
       "env": {
-        "spearman": -0.07514273280259096,
-        "perm_p": 0.43,
-        "eff_ratio_top_bottom": 0.9523788623595507,
-        "new_at_K_top": 3.0137500000000004,
-        "new_at_K_bottom": 3.1644444444444444
+        "spearman": -0.12451249002763508,
+        "perm_p": 0.12893553223388307,
+        "eff_ratio_top_bottom": 0.9286701886317067,
+        "new_at_K_top": 3.08610686482746,
+        "new_at_K_bottom": 3.323146260756468
       },
       "urgency": {
-        "spearman": 0.021883630076525672,
-        "perm_p": 0.8205,
-        "eff_ratio_top_bottom": 1.003161801768776,
-        "new_at_K_top": 3.0405555555555557,
-        "new_at_K_bottom": 3.030972222222222
+        "spearman": 0.23620644403098373,
+        "perm_p": 0.005997001499250375,
+        "eff_ratio_top_bottom": 1.2094175899546482,
+        "new_at_K_top": 3.49405151791953,
+        "new_at_K_bottom": 2.889036464279102
       },
       "opportunistic_density": {
-        "spearman": -0.6388805107114084,
-        "perm_p": 0.0,
-        "eff_ratio_top_bottom": 0.5346867205057915,
-        "new_at_K_top": 2.104861111111111,
-        "new_at_K_bottom": 3.9366249999999994
+        "spearman": -0.6085558075670224,
+        "perm_p": 0.0004997501249375312,
+        "eff_ratio_top_bottom": 0.6257335227827466,
+        "new_at_K_top": 2.3931278562921183,
+        "new_at_K_bottom": 3.8245159787020193
+      },
+      "app_leakfree": {
+        "spearman": 0.6085558075670224,
+        "perm_p": 0.0004997501249375312,
+        "eff_ratio_top_bottom": 1.5981243829686875,
+        "new_at_K_top": 3.8245159787020193,
+        "new_at_K_bottom": 2.3931278562921183
       },
       "species_discovery_shipped": {
-        "spearman": 0.21126572788493636,
-        "perm_p": 0.029,
-        "eff_ratio_top_bottom": 1.172957038612091,
-        "new_at_K_top": 3.3711111111111114,
-        "new_at_K_bottom": 2.8740277777777776
+        "spearman": 0.004859744773922557,
+        "perm_p": 0.9555222388805598,
+        "eff_ratio_top_bottom": 0.9867124127047264,
+        "new_at_K_top": 3.245746833333596,
+        "new_at_K_bottom": 3.289455763951036
       },
-      "conservation": {
-        "spearman": -0.24440603903957842,
-        "perm_p": 0.0125,
-        "eff_ratio_top_bottom": 0.8676289010942223,
-        "new_at_K_top": 2.830277777777778,
-        "new_at_K_bottom": 3.2620833333333334
+      "conservation_shipped": {
+        "spearman": -0.1622606185940575,
+        "perm_p": 0.050974512743628186,
+        "eff_ratio_top_bottom": 0.8636581982518448,
+        "new_at_K_top": 2.860667605508811,
+        "new_at_K_bottom": 3.312268222890919
       }
-    }
+    },
+    "training_history_sensitivity": {
+      "M": 20,
+      "K": 5,
+      "n_cells": 48,
+      "method": "exact independent train/test hypergeometric expectation",
+      "cohort": "identical cells with at least M sampled train and K sampled test records",
+      "cohort_keys_sha256": "310ca40646e77660f06b6d232ac731c552446b5a893ab67d46d02206e06208f7",
+      "estimand": "test taxon IDs absent from an independent M-record training subsample",
+      "interpretation": "sampling-history sensitivity, not validation of prospective ecological discovery",
+      "mean_full_training": 2.3931278562921183,
+      "mean_standardized_training": 3.314161444635886,
+      "paired_scores": {
+        "discover_leakfree": {
+          "full_training": {
+            "spearman": 0.622251213995881,
+            "perm_p": 0.0004997501249375312
+          },
+          "standardized_training": {
+            "spearman": -0.016560337667697708,
+            "perm_p": 0.9045477261369316
+          }
+        },
+        "app_shipped": {
+          "full_training": {
+            "spearman": 0.2893257673617698,
+            "perm_p": 0.05147426286856572
+          },
+          "standardized_training": {
+            "spearman": -0.292645289598935,
+            "perm_p": 0.046476761619190406
+          }
+        }
+      },
+      "permutation_seed": 7,
+      "n_permutations": 2000
+    },
+    "run": {
+      "grid": {
+        "res_m": 25000,
+        "crs": "PROJCS[\"WGS_1984_Lambert_Azimuthal_Equal_Area\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Lambert_Azimuthal_Equal_Area\"],PARAMETER[\"latitude_of_center\",45],PARAMETER[\"longitude_of_center\",-100],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
+        "lattice": {
+          "x0": -2150000,
+          "y1": 4300000,
+          "ncol": 220,
+          "nrow": 181,
+          "cell_km2": 625.0
+        },
+        "cell_keys": [
+          "row",
+          "col"
+        ],
+        "n_inventory_cells": 23214,
+        "n_eligible_cells": 18301,
+        "inventory_sha256": "e30e752d91dc9eb459e338ebbab4bbba90cc5e97ab4e3e6195d58c94ed2248fc",
+        "source_sha256": {
+          "index": "35e16b5b606d06bef8fc0e7c37488f5a0346399e72a32365d1b73060f8299494",
+          "group": "18fb226877372b5402cc18bd8546a02882d093ee5caf0a6f6504f86daea18d57",
+          "canada_mask": "df02332e6c9a379c75ed60aace2879330abc0927d01953f1d263bcba8e6fc6fa"
+        }
+      },
+      "split": "2025-07-01",
+      "seed": 0,
+      "permutation_seed": 7,
+      "n_permutations": 2000,
+      "permutation_probability": "(exceedances + 1) / (draws + 1)",
+      "permutation_probability_source": "https://doi.org/10.2202/1544-6115.1585",
+      "rarefaction_method": "exact hypergeometric expectation",
+      "rarefaction_source": "https://doi.org/10.2307/1934145",
+      "rarefaction_reps": null,
+      "rarefaction_seed": null,
+      "K": 5,
+      "train_only_axes": [
+        "discover"
+      ],
+      "score_scope": {
+        "app_shipped": "as-shipped exploratory association; historical availability unknown",
+        "discover_leakfree": "training-period observed_on proxy; historical availability unknown",
+        "env": "as-shipped exploratory association; historical availability unknown",
+        "urgency": "as-shipped exploratory association; historical availability unknown",
+        "opportunistic_density": "training-period count rank inverse; historical availability unknown",
+        "app_leakfree": "training-period observed_on proxy; historical availability unknown",
+        "species_discovery_shipped": "as-shipped exploratory association; historical availability unknown",
+        "conservation_shipped": "as-shipped exploratory association; historical availability unknown"
+      },
+      "outcome": {
+        "unit": "iNaturalist taxon_id",
+        "baseline": "sampled project observations with observed_on before split",
+        "ranks": [
+          "species",
+          "subspecies",
+          "variety",
+          "form",
+          "hybrid"
+        ],
+        "definition": "distinct post-split taxon IDs absent from that cell's sampled training records",
+        "legacy_field_names": "new_species/new_at_K fields count taxon IDs, not exclusively biological species"
+      },
+      "limitations": {
+        "split_field": "observed_on only",
+        "historical_availability": "unknown",
+        "identifications": "research-grade IDs at the later pull, not a historical ID snapshot",
+        "inventory": "later published footprint, not a historical footprint snapshot",
+        "record_scope": "page-capped project sample, not the complete cell inventory",
+        "previously_unobserved_cells": "excluded",
+        "effort_unit": "observation count, not field hours",
+        "exchangeability": "unrestricted cell permutations assume exchangeability, not established",
+        "spatial_dependence": "not controlled by spatial blocking",
+        "multiple_comparisons": "unadjusted",
+        "inference": "retrospective association, not a prospective or causal trip-yield estimate"
+      },
+      "observation_rows": 12768,
+      "observation_frame_sha256": "e4edeccd8bca11913dcd8d3ff7206c15eb801600a6a6ad8722ea31a34fd061b6",
+      "input_sha256": "288fb0d6ff4f187ae1affba6a5b02ccf5f6499a12783113a6652f02a851e6cf0",
+      "source_sha256": {
+        "backtest_appscore.py": "41101740fc21d9ed7560d1e212bd7504021984794137f46f9fa24a961a6e1e78",
+        "voi_backtest.py": "a56a790738e6cd19233d8b64ca23a21cff4f0075360b883b779599a1f3268d91",
+        "goal_presets.py": "ba08e337008284b663f5ea973691fe06c89d9ae84cd04162bbd61884b30df189",
+        "grid_lattice.py": "457ebb75f3feac7e6def2c795e0d5120ff24a33167f8b9691d43e1a390188c68",
+        "grid_schema.py": "c5cd02f378e5989384a112204188126c39c0e0c4c7c9e6fcbc996e7e4e3a43b8"
+      },
+      "versions": {
+        "python": "3.11.13",
+        "numpy": "2.4.6",
+        "pandas": "3.0.3",
+        "pyproj": "3.7.2",
+        "PROJ": "9.5.1"
+      }
+    },
+    "region": "BC"
   },
   {
     "taxon": "Insecta",
-    "n_cells": 279,
-    "n_rarefied": 86,
+    "n_cells": 381,
+    "n_rarefied": 123,
     "K": 5,
-    "perm_p_floor": 0.0005,
-    "total_new_species": 1731,
+    "perm_p_floor": 0.0004997501249375312,
+    "total_new_species": 2468,
     "scores": {
-      "app_leakfree": {
-        "spearman": 0.4955052523977001,
-        "perm_p": 0.0,
-        "eff_ratio_top_bottom": 1.3431176535208174,
-        "new_at_K_top": 4.216,
-        "new_at_K_bottom": 3.1389655172413793
-      },
       "app_shipped": {
-        "spearman": 0.2416387599301102,
-        "perm_p": 0.0275,
-        "eff_ratio_top_bottom": 1.1807982994803967,
-        "new_at_K_top": 4.022586206896552,
-        "new_at_K_bottom": 3.4066666666666667
+        "spearman": 0.39050750424781966,
+        "perm_p": 0.0004997501249375312,
+        "eff_ratio_top_bottom": 1.240330168719473,
+        "new_at_K_top": 4.102982858107498,
+        "new_at_K_bottom": 3.307976344994858
       },
       "discover_leakfree": {
-        "spearman": 0.4955052523977001,
-        "perm_p": 0.0,
-        "eff_ratio_top_bottom": 1.3431176535208174,
-        "new_at_K_top": 4.216,
-        "new_at_K_bottom": 3.1389655172413793
+        "spearman": 0.5655390580495051,
+        "perm_p": 0.0004997501249375312,
+        "eff_ratio_top_bottom": 1.4600843962786054,
+        "new_at_K_top": 4.275232279296601,
+        "new_at_K_bottom": 2.9280720280232515
       },
       "env": {
-        "spearman": 0.007059134689594123,
-        "perm_p": 0.9485,
-        "eff_ratio_top_bottom": 0.9704589414454019,
-        "new_at_K_top": 3.8062068965517244,
-        "new_at_K_bottom": 3.922068965517241
+        "spearman": -0.1373783301321342,
+        "perm_p": 0.12243878060969515,
+        "eff_ratio_top_bottom": 0.9031197979298972,
+        "new_at_K_top": 3.62954351381583,
+        "new_at_K_bottom": 4.018894859945885
       },
       "urgency": {
-        "spearman": -0.10863585037373502,
-        "perm_p": 0.326,
-        "eff_ratio_top_bottom": 0.9561282616685042,
-        "new_at_K_top": 3.588448275862069,
-        "new_at_K_bottom": 3.753103448275862
+        "spearman": -0.05103107915979075,
+        "perm_p": 0.5742128935532234,
+        "eff_ratio_top_bottom": 1.020487736697814,
+        "new_at_K_top": 3.7925633967772696,
+        "new_at_K_bottom": 3.716422314931081
       },
       "opportunistic_density": {
-        "spearman": -0.4955052523977001,
-        "perm_p": 0.0,
-        "eff_ratio_top_bottom": 0.7445364130079173,
-        "new_at_K_top": 3.1389655172413793,
-        "new_at_K_bottom": 4.216
+        "spearman": -0.5655390580495051,
+        "perm_p": 0.0004997501249375312,
+        "eff_ratio_top_bottom": 0.6848919162130306,
+        "new_at_K_top": 2.9280720280232515,
+        "new_at_K_bottom": 4.275232279296601
+      },
+      "app_leakfree": {
+        "spearman": 0.5655390580495051,
+        "perm_p": 0.0004997501249375312,
+        "eff_ratio_top_bottom": 1.4600843962786054,
+        "new_at_K_top": 4.275232279296601,
+        "new_at_K_bottom": 2.9280720280232515
       },
       "species_discovery_shipped": {
-        "spearman": 0.16713381801086521,
-        "perm_p": 0.119,
-        "eff_ratio_top_bottom": 1.0659493553473707,
-        "new_at_K_top": 3.9627586206896557,
-        "new_at_K_bottom": 3.717586206896551
+        "spearman": 0.05731412091176859,
+        "perm_p": 0.5232383808095952,
+        "eff_ratio_top_bottom": 1.0321008919186812,
+        "new_at_K_top": 3.894940831726974,
+        "new_at_K_bottom": 3.7737985328994896
       },
-      "conservation": {
-        "spearman": -0.16132518644758528,
-        "perm_p": 0.15,
-        "eff_ratio_top_bottom": 0.954385150812065,
-        "new_at_K_top": 3.5460344827586208,
-        "new_at_K_bottom": 3.7155172413793105
+      "conservation_shipped": {
+        "spearman": -0.0922989425064113,
+        "perm_p": 0.2868565717141429,
+        "eff_ratio_top_bottom": 1.0112586191294395,
+        "new_at_K_top": 3.7392047448462282,
+        "new_at_K_bottom": 3.6975751544794653
       }
-    }
+    },
+    "training_history_sensitivity": {
+      "M": 20,
+      "K": 5,
+      "n_cells": 48,
+      "method": "exact independent train/test hypergeometric expectation",
+      "cohort": "identical cells with at least M sampled train and K sampled test records",
+      "cohort_keys_sha256": "97b909ef0a0cb432d4d61543f8f3022fd4d8630f65de33258bc1ae6dd6ec30fe",
+      "estimand": "test taxon IDs absent from an independent M-record training subsample",
+      "interpretation": "sampling-history sensitivity, not validation of prospective ecological discovery",
+      "mean_full_training": 3.108220433843648,
+      "mean_standardized_training": 3.618563507423044,
+      "paired_scores": {
+        "discover_leakfree": {
+          "full_training": {
+            "spearman": 0.456576653926787,
+            "perm_p": 0.0009995002498750624
+          },
+          "standardized_training": {
+            "spearman": 0.05467626239793964,
+            "perm_p": 0.7151424287856072
+          }
+        },
+        "app_shipped": {
+          "full_training": {
+            "spearman": -0.003930733832197245,
+            "perm_p": 0.9845077461269365
+          },
+          "standardized_training": {
+            "spearman": -0.3634290989019036,
+            "perm_p": 0.015492253873063468
+          }
+        }
+      },
+      "permutation_seed": 7,
+      "n_permutations": 2000
+    },
+    "run": {
+      "grid": {
+        "res_m": 25000,
+        "crs": "PROJCS[\"WGS_1984_Lambert_Azimuthal_Equal_Area\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Lambert_Azimuthal_Equal_Area\"],PARAMETER[\"latitude_of_center\",45],PARAMETER[\"longitude_of_center\",-100],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
+        "lattice": {
+          "x0": -2150000,
+          "y1": 4300000,
+          "ncol": 220,
+          "nrow": 181,
+          "cell_km2": 625.0
+        },
+        "cell_keys": [
+          "row",
+          "col"
+        ],
+        "n_inventory_cells": 23214,
+        "n_eligible_cells": 18301,
+        "inventory_sha256": "10ee844ef262fb14eee3b8d5fada910edcef92c7344cd6510a6b68117b3e3230",
+        "source_sha256": {
+          "index": "35e16b5b606d06bef8fc0e7c37488f5a0346399e72a32365d1b73060f8299494",
+          "group": "ceae8f1bc581d48d566919e4ca7ab02cfa6d7c9c4e3002688580dc58986b6cf9",
+          "canada_mask": "df02332e6c9a379c75ed60aace2879330abc0927d01953f1d263bcba8e6fc6fa"
+        }
+      },
+      "split": "2025-07-01",
+      "seed": 0,
+      "permutation_seed": 7,
+      "n_permutations": 2000,
+      "permutation_probability": "(exceedances + 1) / (draws + 1)",
+      "permutation_probability_source": "https://doi.org/10.2202/1544-6115.1585",
+      "rarefaction_method": "exact hypergeometric expectation",
+      "rarefaction_source": "https://doi.org/10.2307/1934145",
+      "rarefaction_reps": null,
+      "rarefaction_seed": null,
+      "K": 5,
+      "train_only_axes": [
+        "discover"
+      ],
+      "score_scope": {
+        "app_shipped": "as-shipped exploratory association; historical availability unknown",
+        "discover_leakfree": "training-period observed_on proxy; historical availability unknown",
+        "env": "as-shipped exploratory association; historical availability unknown",
+        "urgency": "as-shipped exploratory association; historical availability unknown",
+        "opportunistic_density": "training-period count rank inverse; historical availability unknown",
+        "app_leakfree": "training-period observed_on proxy; historical availability unknown",
+        "species_discovery_shipped": "as-shipped exploratory association; historical availability unknown",
+        "conservation_shipped": "as-shipped exploratory association; historical availability unknown"
+      },
+      "outcome": {
+        "unit": "iNaturalist taxon_id",
+        "baseline": "sampled project observations with observed_on before split",
+        "ranks": [
+          "species",
+          "subspecies",
+          "variety",
+          "form",
+          "hybrid"
+        ],
+        "definition": "distinct post-split taxon IDs absent from that cell's sampled training records",
+        "legacy_field_names": "new_species/new_at_K fields count taxon IDs, not exclusively biological species"
+      },
+      "limitations": {
+        "split_field": "observed_on only",
+        "historical_availability": "unknown",
+        "identifications": "research-grade IDs at the later pull, not a historical ID snapshot",
+        "inventory": "later published footprint, not a historical footprint snapshot",
+        "record_scope": "page-capped project sample, not the complete cell inventory",
+        "previously_unobserved_cells": "excluded",
+        "effort_unit": "observation count, not field hours",
+        "exchangeability": "unrestricted cell permutations assume exchangeability, not established",
+        "spatial_dependence": "not controlled by spatial blocking",
+        "multiple_comparisons": "unadjusted",
+        "inference": "retrospective association, not a prospective or causal trip-yield estimate"
+      },
+      "observation_rows": 12764,
+      "observation_frame_sha256": "a4346b68d510599e0927f820e9e6862645b2db80cfdad474806c07bb72934e68",
+      "input_sha256": "6d60736cf5d0c799c7199a3a0a5d405497873e56a2528cb508fbcef13487bbe9",
+      "source_sha256": {
+        "backtest_appscore.py": "41101740fc21d9ed7560d1e212bd7504021984794137f46f9fa24a961a6e1e78",
+        "voi_backtest.py": "a56a790738e6cd19233d8b64ca23a21cff4f0075360b883b779599a1f3268d91",
+        "goal_presets.py": "ba08e337008284b663f5ea973691fe06c89d9ae84cd04162bbd61884b30df189",
+        "grid_lattice.py": "457ebb75f3feac7e6def2c795e0d5120ff24a33167f8b9691d43e1a390188c68",
+        "grid_schema.py": "c5cd02f378e5989384a112204188126c39c0e0c4c7c9e6fcbc996e7e4e3a43b8"
+      },
+      "versions": {
+        "python": "3.11.13",
+        "numpy": "2.4.6",
+        "pandas": "3.0.3",
+        "pyproj": "3.7.2",
+        "PROJ": "9.5.1"
+      }
+    },
+    "region": "BC"
   },
   {
     "taxon": "Mammalia",
-    "n_cells": 384,
-    "n_rarefied": 122,
+    "n_cells": 496,
+    "n_rarefied": 173,
     "K": 5,
-    "perm_p_floor": 0.0005,
-    "total_new_species": 646,
+    "perm_p_floor": 0.0004997501249375312,
+    "total_new_species": 928,
     "scores": {
-      "app_leakfree": {
-        "spearman": 0.646876492710238,
-        "perm_p": 0.0,
-        "eff_ratio_top_bottom": 2.9354956268221573,
-        "new_at_K_top": 2.5023469387755104,
-        "new_at_K_bottom": 0.8524444444444446
-      },
       "app_shipped": {
-        "spearman": 0.4712949856227839,
-        "perm_p": 0.0,
-        "eff_ratio_top_bottom": 2.1204852119394846,
-        "new_at_K_top": 2.3572727272727274,
-        "new_at_K_bottom": 1.1116666666666668
+        "spearman": 0.4996298067076099,
+        "perm_p": 0.0004997501249375312,
+        "eff_ratio_top_bottom": 2.1491081461614696,
+        "new_at_K_top": 2.3538939043674834,
+        "new_at_K_bottom": 1.0952887171228598
       },
       "discover_leakfree": {
-        "spearman": 0.646876492710238,
-        "perm_p": 0.0,
-        "eff_ratio_top_bottom": 2.9354956268221573,
-        "new_at_K_top": 2.5023469387755104,
-        "new_at_K_bottom": 0.8524444444444446
+        "spearman": 0.6484593260546918,
+        "perm_p": 0.0004997501249375312,
+        "eff_ratio_top_bottom": 2.741528532870236,
+        "new_at_K_top": 2.7090194797002307,
+        "new_at_K_bottom": 0.9881419971449393
       },
       "env": {
-        "spearman": -0.05555289519116838,
-        "perm_p": 0.553,
-        "eff_ratio_top_bottom": 0.9478448858262398,
-        "new_at_K_top": 1.7109756097560977,
-        "new_at_K_bottom": 1.8051219512195122
+        "spearman": -0.0775971781208978,
+        "perm_p": 0.312343828085957,
+        "eff_ratio_top_bottom": 0.880199353235133,
+        "new_at_K_top": 1.7005447773817979,
+        "new_at_K_bottom": 1.9319995761545636
       },
       "urgency": {
-        "spearman": 0.09264178386655146,
-        "perm_p": 0.3125,
-        "eff_ratio_top_bottom": 1.156189292097288,
-        "new_at_K_top": 1.8145121951219512,
-        "new_at_K_bottom": 1.569390243902439
+        "spearman": 0.16250337605079404,
+        "perm_p": 0.0239880059970015,
+        "eff_ratio_top_bottom": 1.3896533281073178,
+        "new_at_K_top": 1.9891581022773386,
+        "new_at_K_bottom": 1.4314059931670406
       },
       "opportunistic_density": {
-        "spearman": -0.646876492710238,
-        "perm_p": 0.0,
-        "eff_ratio_top_bottom": 0.3406579764121664,
-        "new_at_K_top": 0.8524444444444446,
-        "new_at_K_bottom": 2.5023469387755104
+        "spearman": -0.6484593260546918,
+        "perm_p": 0.0004997501249375312,
+        "eff_ratio_top_bottom": 0.36476001909527916,
+        "new_at_K_top": 0.9881419971449393,
+        "new_at_K_bottom": 2.7090194797002307
+      },
+      "app_leakfree": {
+        "spearman": 0.6484593260546918,
+        "perm_p": 0.0004997501249375312,
+        "eff_ratio_top_bottom": 2.741528532870236,
+        "new_at_K_top": 2.7090194797002307,
+        "new_at_K_bottom": 0.9881419971449393
       },
       "species_discovery_shipped": {
-        "spearman": 0.2992019023890101,
-        "perm_p": 0.0005,
-        "eff_ratio_top_bottom": 1.5747493567562771,
-        "new_at_K_top": 2.1645121951219513,
-        "new_at_K_bottom": 1.3745121951219512
+        "spearman": 0.1290810869696074,
+        "perm_p": 0.07946026986506746,
+        "eff_ratio_top_bottom": 1.173873974893236,
+        "new_at_K_top": 1.9963781632254485,
+        "new_at_K_bottom": 1.7006750349048494
       },
-      "conservation": {
-        "spearman": -0.09439173548049884,
-        "perm_p": 0.3045,
-        "eff_ratio_top_bottom": 0.7765743563136391,
-        "new_at_K_top": 1.4602439024390246,
-        "new_at_K_bottom": 1.8803658536585366
+      "conservation_shipped": {
+        "spearman": -0.06540152409920584,
+        "perm_p": 0.40379810094952523,
+        "eff_ratio_top_bottom": 0.8710038743981334,
+        "new_at_K_top": 1.5826094495035723,
+        "new_at_K_bottom": 1.8169947298996352
       }
-    }
+    },
+    "training_history_sensitivity": {
+      "M": 20,
+      "K": 5,
+      "n_cells": 45,
+      "method": "exact independent train/test hypergeometric expectation",
+      "cohort": "identical cells with at least M sampled train and K sampled test records",
+      "cohort_keys_sha256": "043d193b4f4e8232982a76b4e8ec834d14cd7f5019957af3be91b60752bf95b4",
+      "estimand": "test taxon IDs absent from an independent M-record training subsample",
+      "interpretation": "sampling-history sensitivity, not validation of prospective ecological discovery",
+      "mean_full_training": 0.8055653154582051,
+      "mean_standardized_training": 1.2287935708222213,
+      "paired_scores": {
+        "discover_leakfree": {
+          "full_training": {
+            "spearman": 0.6630156788187767,
+            "perm_p": 0.0004997501249375312
+          },
+          "standardized_training": {
+            "spearman": 0.21590087460589527,
+            "perm_p": 0.15092453773113443
+          }
+        },
+        "app_shipped": {
+          "full_training": {
+            "spearman": 0.38297701236815995,
+            "perm_p": 0.009995002498750625
+          },
+          "standardized_training": {
+            "spearman": 0.08668508880017971,
+            "perm_p": 0.5722138930534733
+          }
+        }
+      },
+      "permutation_seed": 7,
+      "n_permutations": 2000
+    },
+    "run": {
+      "grid": {
+        "res_m": 25000,
+        "crs": "PROJCS[\"WGS_1984_Lambert_Azimuthal_Equal_Area\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Lambert_Azimuthal_Equal_Area\"],PARAMETER[\"latitude_of_center\",45],PARAMETER[\"longitude_of_center\",-100],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
+        "lattice": {
+          "x0": -2150000,
+          "y1": 4300000,
+          "ncol": 220,
+          "nrow": 181,
+          "cell_km2": 625.0
+        },
+        "cell_keys": [
+          "row",
+          "col"
+        ],
+        "n_inventory_cells": 23214,
+        "n_eligible_cells": 18301,
+        "inventory_sha256": "137efe4cafbee006167512519dd15377d7c5abbe3f718cefebacf111079a9db0",
+        "source_sha256": {
+          "index": "35e16b5b606d06bef8fc0e7c37488f5a0346399e72a32365d1b73060f8299494",
+          "group": "d33257f4d3ca9fca7e220207b5496e08ce0714f98681856fa2c163bf03eef64a",
+          "canada_mask": "df02332e6c9a379c75ed60aace2879330abc0927d01953f1d263bcba8e6fc6fa"
+        }
+      },
+      "split": "2025-07-01",
+      "seed": 0,
+      "permutation_seed": 7,
+      "n_permutations": 2000,
+      "permutation_probability": "(exceedances + 1) / (draws + 1)",
+      "permutation_probability_source": "https://doi.org/10.2202/1544-6115.1585",
+      "rarefaction_method": "exact hypergeometric expectation",
+      "rarefaction_source": "https://doi.org/10.2307/1934145",
+      "rarefaction_reps": null,
+      "rarefaction_seed": null,
+      "K": 5,
+      "train_only_axes": [
+        "discover"
+      ],
+      "score_scope": {
+        "app_shipped": "as-shipped exploratory association; historical availability unknown",
+        "discover_leakfree": "training-period observed_on proxy; historical availability unknown",
+        "env": "as-shipped exploratory association; historical availability unknown",
+        "urgency": "as-shipped exploratory association; historical availability unknown",
+        "opportunistic_density": "training-period count rank inverse; historical availability unknown",
+        "app_leakfree": "training-period observed_on proxy; historical availability unknown",
+        "species_discovery_shipped": "as-shipped exploratory association; historical availability unknown",
+        "conservation_shipped": "as-shipped exploratory association; historical availability unknown"
+      },
+      "outcome": {
+        "unit": "iNaturalist taxon_id",
+        "baseline": "sampled project observations with observed_on before split",
+        "ranks": [
+          "species",
+          "subspecies",
+          "variety",
+          "form",
+          "hybrid"
+        ],
+        "definition": "distinct post-split taxon IDs absent from that cell's sampled training records",
+        "legacy_field_names": "new_species/new_at_K fields count taxon IDs, not exclusively biological species"
+      },
+      "limitations": {
+        "split_field": "observed_on only",
+        "historical_availability": "unknown",
+        "identifications": "research-grade IDs at the later pull, not a historical ID snapshot",
+        "inventory": "later published footprint, not a historical footprint snapshot",
+        "record_scope": "page-capped project sample, not the complete cell inventory",
+        "previously_unobserved_cells": "excluded",
+        "effort_unit": "observation count, not field hours",
+        "exchangeability": "unrestricted cell permutations assume exchangeability, not established",
+        "spatial_dependence": "not controlled by spatial blocking",
+        "multiple_comparisons": "unadjusted",
+        "inference": "retrospective association, not a prospective or causal trip-yield estimate"
+      },
+      "observation_rows": 10664,
+      "observation_frame_sha256": "bd214fe009eda08f3f11dadf8c8806b2af156ff593e1ffa88cb68520976b4d42",
+      "input_sha256": "2dd309288bd8652e6a97a6b37250748568b3cad55cf8827897496d721ab3e6d1",
+      "source_sha256": {
+        "backtest_appscore.py": "41101740fc21d9ed7560d1e212bd7504021984794137f46f9fa24a961a6e1e78",
+        "voi_backtest.py": "a56a790738e6cd19233d8b64ca23a21cff4f0075360b883b779599a1f3268d91",
+        "goal_presets.py": "ba08e337008284b663f5ea973691fe06c89d9ae84cd04162bbd61884b30df189",
+        "grid_lattice.py": "457ebb75f3feac7e6def2c795e0d5120ff24a33167f8b9691d43e1a390188c68",
+        "grid_schema.py": "c5cd02f378e5989384a112204188126c39c0e0c4c7c9e6fcbc996e7e4e3a43b8"
+      },
+      "versions": {
+        "python": "3.11.13",
+        "numpy": "2.4.6",
+        "pandas": "3.0.3",
+        "pyproj": "3.7.2",
+        "PROJ": "9.5.1"
+      }
+    },
+    "region": "BC"
   },
   {
     "taxon": "Reptilia",
-    "n_cells": 129,
-    "n_rarefied": 55,
+    "n_cells": 163,
+    "n_rarefied": 73,
     "K": 5,
-    "perm_p_floor": 0.0005,
-    "total_new_species": 203,
+    "perm_p_floor": 0.0004997501249375312,
+    "total_new_species": 263,
     "scores": {
-      "app_leakfree": {
-        "spearman": 0.6355205307801548,
-        "perm_p": 0.0,
-        "eff_ratio_top_bottom": 2.996559400930985,
-        "new_at_K_top": 2.243333333333333,
-        "new_at_K_bottom": 0.7486363636363638
-      },
       "app_shipped": {
-        "spearman": 0.27746857766099325,
-        "perm_p": 0.0425,
-        "eff_ratio_top_bottom": 1.5766459627329192,
-        "new_at_K_top": 1.67,
-        "new_at_K_bottom": 1.0592105263157894
+        "spearman": 0.4638630963917019,
+        "perm_p": 0.0004997501249375312,
+        "eff_ratio_top_bottom": 2.284724500722981,
+        "new_at_K_top": 1.9180760725342767,
+        "new_at_K_bottom": 0.8395218206516007
       },
       "discover_leakfree": {
-        "spearman": 0.6355205307801548,
-        "perm_p": 0.0,
-        "eff_ratio_top_bottom": 2.996559400930985,
-        "new_at_K_top": 2.243333333333333,
-        "new_at_K_bottom": 0.7486363636363638
+        "spearman": 0.5868650277223114,
+        "perm_p": 0.0004997501249375312,
+        "eff_ratio_top_bottom": 2.0860582885419285,
+        "new_at_K_top": 1.9251547958978301,
+        "new_at_K_bottom": 0.9228672115597674
       },
       "env": {
-        "spearman": -0.12771683270613135,
-        "perm_p": 0.3575,
-        "eff_ratio_top_bottom": 0.7187884378843789,
-        "new_at_K_top": 1.230263157894737,
-        "new_at_K_bottom": 1.7115789473684213
+        "spearman": -0.36235641305351207,
+        "perm_p": 0.0024987506246876563,
+        "eff_ratio_top_bottom": 0.5682595419432608,
+        "new_at_K_top": 1.0373236859300965,
+        "new_at_K_bottom": 1.8254399783288997
       },
       "urgency": {
-        "spearman": 0.3454700569105871,
-        "perm_p": 0.0055,
-        "eff_ratio_top_bottom": 1.753046505844317,
-        "new_at_K_top": 1.8549999999999998,
-        "new_at_K_bottom": 1.0581578947368422
+        "spearman": 0.3604956205715429,
+        "perm_p": 0.001999000499750125,
+        "eff_ratio_top_bottom": 1.6533889191922058,
+        "new_at_K_top": 1.799757219395714,
+        "new_at_K_bottom": 1.0885262375382432
       },
       "opportunistic_density": {
-        "spearman": -0.6355205307801548,
-        "perm_p": 0.0,
-        "eff_ratio_top_bottom": 0.3337160610563286,
-        "new_at_K_top": 0.7486363636363638,
-        "new_at_K_bottom": 2.243333333333333
+        "spearman": -0.5868650277223114,
+        "perm_p": 0.0004997501249375312,
+        "eff_ratio_top_bottom": 0.4793729904349701,
+        "new_at_K_top": 0.9228672115597674,
+        "new_at_K_bottom": 1.9251547958978301
+      },
+      "app_leakfree": {
+        "spearman": 0.5868650277223114,
+        "perm_p": 0.0004997501249375312,
+        "eff_ratio_top_bottom": 2.0860582885419285,
+        "new_at_K_top": 1.9251547958978301,
+        "new_at_K_bottom": 0.9228672115597674
       },
       "species_discovery_shipped": {
-        "spearman": 0.03205834918286349,
-        "perm_p": 0.8315,
-        "eff_ratio_top_bottom": 0.9966904720431982,
-        "new_at_K_top": 1.5057894736842106,
-        "new_at_K_bottom": 1.5107894736842105
+        "spearman": 0.0506013692694753,
+        "perm_p": 0.6891554222888556,
+        "eff_ratio_top_bottom": 0.9931438793201111,
+        "new_at_K_top": 1.5370938570212334,
+        "new_at_K_bottom": 1.547705110032497
       },
-      "conservation": {
-        "spearman": -0.24697203463960488,
-        "perm_p": 0.0665,
-        "eff_ratio_top_bottom": 0.7958211706867414,
-        "new_at_K_top": 1.3631578947368421,
-        "new_at_K_bottom": 1.7128947368421052
+      "conservation_shipped": {
+        "spearman": -0.26908805188186535,
+        "perm_p": 0.017491254372813594,
+        "eff_ratio_top_bottom": 0.7280897065744029,
+        "new_at_K_top": 1.0856930269525877,
+        "new_at_K_bottom": 1.4911528306871369
       }
-    }
+    },
+    "training_history_sensitivity": {
+      "M": 20,
+      "K": 5,
+      "n_cells": 8,
+      "method": "exact independent train/test hypergeometric expectation",
+      "cohort": "identical cells with at least M sampled train and K sampled test records",
+      "cohort_keys_sha256": "0406508fc97fb933f880d662d57386a44c6f0541d43c9769d2ffd1dbe5d71c1e",
+      "estimand": "test taxon IDs absent from an independent M-record training subsample",
+      "interpretation": "sampling-history sensitivity, not validation of prospective ecological discovery",
+      "mean_full_training": 0.5479320434450573,
+      "mean_standardized_training": 0.774570243229419,
+      "paired_scores": {},
+      "permutation_seed": 7,
+      "n_permutations": 2000,
+      "unavailable_reason": "fewer than 10 cells qualify for paired associations"
+    },
+    "run": {
+      "grid": {
+        "res_m": 25000,
+        "crs": "PROJCS[\"WGS_1984_Lambert_Azimuthal_Equal_Area\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Lambert_Azimuthal_Equal_Area\"],PARAMETER[\"latitude_of_center\",45],PARAMETER[\"longitude_of_center\",-100],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
+        "lattice": {
+          "x0": -2150000,
+          "y1": 4300000,
+          "ncol": 220,
+          "nrow": 181,
+          "cell_km2": 625.0
+        },
+        "cell_keys": [
+          "row",
+          "col"
+        ],
+        "n_inventory_cells": 23214,
+        "n_eligible_cells": 18301,
+        "inventory_sha256": "7f3da5c1e5a48a0093b1132044947b2670b83f1b05137fec385130f0d7b7849a",
+        "source_sha256": {
+          "index": "35e16b5b606d06bef8fc0e7c37488f5a0346399e72a32365d1b73060f8299494",
+          "group": "ce089b1749c5ac3b83573de850248018ee0ab3b9fd40c9dc450affc84428b3ea",
+          "canada_mask": "df02332e6c9a379c75ed60aace2879330abc0927d01953f1d263bcba8e6fc6fa"
+        }
+      },
+      "split": "2025-07-01",
+      "seed": 0,
+      "permutation_seed": 7,
+      "n_permutations": 2000,
+      "permutation_probability": "(exceedances + 1) / (draws + 1)",
+      "permutation_probability_source": "https://doi.org/10.2202/1544-6115.1585",
+      "rarefaction_method": "exact hypergeometric expectation",
+      "rarefaction_source": "https://doi.org/10.2307/1934145",
+      "rarefaction_reps": null,
+      "rarefaction_seed": null,
+      "K": 5,
+      "train_only_axes": [
+        "discover"
+      ],
+      "score_scope": {
+        "app_shipped": "as-shipped exploratory association; historical availability unknown",
+        "discover_leakfree": "training-period observed_on proxy; historical availability unknown",
+        "env": "as-shipped exploratory association; historical availability unknown",
+        "urgency": "as-shipped exploratory association; historical availability unknown",
+        "opportunistic_density": "training-period count rank inverse; historical availability unknown",
+        "app_leakfree": "training-period observed_on proxy; historical availability unknown",
+        "species_discovery_shipped": "as-shipped exploratory association; historical availability unknown",
+        "conservation_shipped": "as-shipped exploratory association; historical availability unknown"
+      },
+      "outcome": {
+        "unit": "iNaturalist taxon_id",
+        "baseline": "sampled project observations with observed_on before split",
+        "ranks": [
+          "species",
+          "subspecies",
+          "variety",
+          "form",
+          "hybrid"
+        ],
+        "definition": "distinct post-split taxon IDs absent from that cell's sampled training records",
+        "legacy_field_names": "new_species/new_at_K fields count taxon IDs, not exclusively biological species"
+      },
+      "limitations": {
+        "split_field": "observed_on only",
+        "historical_availability": "unknown",
+        "identifications": "research-grade IDs at the later pull, not a historical ID snapshot",
+        "inventory": "later published footprint, not a historical footprint snapshot",
+        "record_scope": "page-capped project sample, not the complete cell inventory",
+        "previously_unobserved_cells": "excluded",
+        "effort_unit": "observation count, not field hours",
+        "exchangeability": "unrestricted cell permutations assume exchangeability, not established",
+        "spatial_dependence": "not controlled by spatial blocking",
+        "multiple_comparisons": "unadjusted",
+        "inference": "retrospective association, not a prospective or causal trip-yield estimate"
+      },
+      "observation_rows": 3044,
+      "observation_frame_sha256": "c0ce02674d0cd7b79bf490de5295cb2b29a9724931a8f18b76aafdbbd51cc93f",
+      "input_sha256": "f2d6e939b45325cc95901b282fdd93aa5cc431c9b91561cbeacb92f74317699c",
+      "source_sha256": {
+        "backtest_appscore.py": "41101740fc21d9ed7560d1e212bd7504021984794137f46f9fa24a961a6e1e78",
+        "voi_backtest.py": "a56a790738e6cd19233d8b64ca23a21cff4f0075360b883b779599a1f3268d91",
+        "goal_presets.py": "ba08e337008284b663f5ea973691fe06c89d9ae84cd04162bbd61884b30df189",
+        "grid_lattice.py": "457ebb75f3feac7e6def2c795e0d5120ff24a33167f8b9691d43e1a390188c68",
+        "grid_schema.py": "c5cd02f378e5989384a112204188126c39c0e0c4c7c9e6fcbc996e7e4e3a43b8"
+      },
+      "versions": {
+        "python": "3.11.13",
+        "numpy": "2.4.6",
+        "pandas": "3.0.3",
+        "pyproj": "3.7.2",
+        "PROJ": "9.5.1"
+      }
+    },
+    "region": "BC"
   }
 ]

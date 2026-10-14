@@ -1,6 +1,7 @@
-"""Geographic generalization check: rerun the app-score backtest on a region
-DISJOINT from BC (Eastern Canada). Same method, same app axes, same outcome —
-does directed>opportunistic survive out-of-sample geography?"""
+"""Additional retrospective regional check on sampled Eastern Canada project records.
+
+Use the same published grid, scores and taxon-ID novelty outcome as the BC analysis. This geographic comparison does not establish prospective field performance.
+"""
 import json
 
 import pandas as pd
@@ -9,8 +10,9 @@ import backtest_appscore as bas
 
 results = []
 for tx in ["Aves", "Insecta", "Mammalia"]:
-    df = pd.read_csv(f"cluster_results/inat_east_{tx}.csv")
-    r = bas.analyse(tx, df)
+    input_path = f"cluster_results/inat_east_{tx}.csv"
+    df = pd.read_csv(input_path)
+    r = bas.analyse(tx, df, input_path=input_path)
     if r is None:
         print(f"{tx}: insufficient"); continue
     out, _ = r
