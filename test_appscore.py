@@ -324,3 +324,45 @@ def test_app_defaults_to_exact_expectation_and_retains_historical_mc_option(app_
     assert sampled["run"]["rarefaction_seed"] == vb.SEED
     with pytest.raises(ValueError, match="outcome_method"):
         bas.analyse("Amphibia", frame, data_dir=app_dir, outcome_method="bad")
+
+
+def test_training_history_sensitivity_uses_same_cohort(app_dir, monkeypatch):
+    monkeypatch.setattr(vb, "N_PERM", 7)
+    rows=[]
+    for i in range(12):
+        lat,lon=geographic_point(80+i,40)
+        nt=10 if i<2 else 20+i
+        for j in range(nt):
+            rows.append([lat,lon,"2025-06-01",100+j % (i+1),"species"])
+        for j in range(12):
+            rows.append([lat,lon,"2025-08-01",100+j % 6,"species"])
+    frame=pd.DataFrame(rows,columns=["lat","lon","observed_on","taxon_id","rank"])
+    out,rk=bas.analyse("Amphibia",frame,data_dir=app_dir)
+    sensitivity=out["training_history_sensitivity"]
+    assert out["n_rarefied"]==12
+    assert sensitivity["M"]==20 and sensitivity["K"]==5
+    assert sensitivity["n_cells"]==10
+    grid=bas.AppGrid("Amphibia",app_dir)
+    aux=vb.build_cells(frame,grid=grid).attrs["aux"]
+    paired=rk[rk.n_train>=20]
+    standardized=vb.expected_standardized_new_at_k(paired,aux,M=20,K=5)
+    assert sensitivity["mean_full_training"]==pytest.approx(paired.rare_newK.mean())
+    assert sensitivity["mean_standardized_training"]==pytest.approx(standardized.mean())
+    for key,score in [("discover_leakfree",paired.scarcity),("app_shipped",paired.app_shipped)]:
+        record=sensitivity["paired_scores"][key]
+        for label,values in [("full_training",paired.rare_newK),("standardized_training",standardized)]:
+            rho,p,*_=vb.perm_test(score.to_numpy(),np.asarray(values),np.random.default_rng(7),n=7)
+            assert record[label]["spearman"]==pytest.approx(rho,nan_ok=True)
+            assert record[label]["perm_p"]==pytest.approx(p,nan_ok=True)
+    assert len(sensitivity["cohort_keys_sha256"])==64
+
+
+def test_unavailable_training_history_cohort_is_explicit(app_dir,monkeypatch):
+    monkeypatch.setattr(vb,"N_PERM",3)
+    out,_=bas.analyse("Amphibia",observation_frame(),data_dir=app_dir)
+    sensitivity=out["training_history_sensitivity"]
+    assert sensitivity["n_cells"]==0
+    assert sensitivity["paired_scores"]=={}
+    assert sensitivity["mean_full_training"] is None
+    assert sensitivity["mean_standardized_training"] is None
+    assert "fewer than 10" in sensitivity["unavailable_reason"]

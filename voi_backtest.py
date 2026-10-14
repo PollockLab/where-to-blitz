@@ -177,6 +177,32 @@ def expected_new_at_k(cells, aux, K=5):
     return np.asarray(out, dtype=float)
 
 
+def expected_standardized_new_at_k(cells, aux, M=20, K=5):
+    """Exact novelty after independent M-train and K-test record subsamples.
+
+    Each test taxon contributes P(absent from M train draws) times P(present
+    in K test draws). This changes the sampled-history estimand and is reported
+    separately from novelty against the full training record set. Insufficient
+    train or test pools return NaN, matching the paired sensitivity cohort.
+    """
+    if any(isinstance(v, (bool, np.bool_)) or not isinstance(v, (int, np.integer)) or v < 0
+           for v in (M, K)):
+        raise ValueError("sample budgets M and K must be non-negative integers")
+    out = []
+    positions = [cells.columns.get_loc("gi"), cells.columns.get_loc("gj")]
+    for gi, gj in cells.to_numpy(copy=False)[:, positions]:
+        _, test, train = aux.get((gi, gj), (set(), [], []))
+        if len(train) < M or len(test) < K:
+            out.append(np.nan); continue
+        train_counts = Counter(train)
+        frequencies = Counter((train_counts[taxon], count) for taxon, count in Counter(test).items())
+        value = sum(multiplicity * np.exp(_log_probability_miss(a, len(train), M))
+                    * -np.expm1(_log_probability_miss(b, len(test), K))
+                    for (a, b), multiplicity in sorted(frequencies.items()))
+        out.append(min(float(value), float(K)))
+    return np.asarray(out, dtype=float)
+
+
 def double_rarefy_new_at_k(cells, aux, rng, M=20, K=5, reps=DOUBLE_REPS):
     """Effort-equalized on BOTH sides: subsample M train ("already seen") and K test
     observations per cell, then count test species absent from the M-sample.

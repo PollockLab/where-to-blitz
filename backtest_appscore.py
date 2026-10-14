@@ -221,6 +221,38 @@ def eff_ratio(rk, score):
     return float(top.mean() / bot.mean()), float(top.mean()), float(bot.mean())
 
 
+def training_history_sensitivity(cells, aux, scores, K, M=20):
+    """Pair full-history and standardized novelty on the same qualifying cells."""
+    standardized = vb.expected_standardized_new_at_k(cells, aux, M=M, K=K)
+    valid = np.isfinite(standardized)
+    paired = cells.loc[valid]
+    full = vb.expected_new_at_k(paired, aux, K=K)
+    positions = [paired.columns.get_loc("gi"), paired.columns.get_loc("gj")]
+    keys = sorted((int(gi), int(gj)) for gi, gj in paired.to_numpy(copy=False)[:, positions])
+    record = {
+        "M": M, "K": K, "n_cells": len(paired),
+        "method": "exact independent train/test hypergeometric expectation",
+        "cohort": "identical cells with at least M sampled train and K sampled test records",
+        "cohort_keys_sha256": hashlib.sha256(json.dumps(keys).encode()).hexdigest(),
+        "estimand": "test taxon IDs absent from an independent M-record training subsample",
+        "interpretation": "sampling-history sensitivity, not validation of prospective ecological discovery",
+        "mean_full_training": float(full.mean()) if len(paired) else None,
+        "mean_standardized_training": float(standardized[valid].mean()) if len(paired) else None,
+        "paired_scores": {},
+        "permutation_seed": vb.SEED + 7, "n_permutations": vb.N_PERM,
+    }
+    if len(paired) < 10:
+        record["unavailable_reason"] = "fewer than 10 cells qualify for paired associations"
+        return record
+    for key in ("discover_leakfree", "app_shipped"):
+        score = scores[key].to_numpy()[valid]
+        record["paired_scores"][key] = {}
+        for label, outcome in (("full_training", full), ("standardized_training", standardized[valid])):
+            rho, p, _mu, _sd = vb.perm_test(score, outcome, np.random.default_rng(vb.SEED + 7), n=vb.N_PERM)
+            record["paired_scores"][key][label] = {"spearman": rho, "perm_p": p}
+    return record
+
+
 def analyse(name, df, K=5, data_dir=CA, input_path=None, outcome_method="exact"):
     grid = AppGrid(GROUP[name], data_dir)
     cells = vb.build_cells(df, grid=grid)
@@ -288,6 +320,7 @@ def analyse(name, df, K=5, data_dir=CA, input_path=None, outcome_method="exact")
             "new_at_K_bottom": botm,
         }
     out["scores"] = res
+    out["training_history_sensitivity"] = training_history_sensitivity(rk, aux, scores, K=K, M=20)
     canonical = df.sort_values(list(df.columns)).to_csv(index=False).encode()
     out["run"] = {
         "grid": grid.metadata,
