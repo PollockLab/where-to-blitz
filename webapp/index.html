@@ -7,13 +7,13 @@
 <meta name="theme-color" content="#0f1620">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Where to Blitz the Gap">
-<meta property="og:description" content="Find Canada's biodiversity gaps and plan a low-carbon trip to the best spot you can reach and get back from.">
+<meta property="og:description" content="Explore Canada's biodiversity recording gaps and the evidence behind each goal.">
 <meta property="og:url" content="https://pollocklab.github.io/where-to-blitz/">
 <meta property="og:image" content="https://pollocklab.github.io/where-to-blitz/og-image.png">
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Where to Blitz the Gap">
-<meta name="twitter:description" content="Find Canada's biodiversity gaps and plan a trip to the best spot you can reach.">
+<meta name="twitter:description" content="Explore Canada's biodiversity recording gaps and choose what to record.">
 <meta name="twitter:image" content="https://pollocklab.github.io/where-to-blitz/og-image.png">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"
   integrity="sha384-MinO0mNliZ3vwppuPOUnGa+iq619pfMhLVUXfC4LHwSCvF9H+6P/KO4Q7qBOYV5V" crossorigin="anonymous"/>
@@ -125,22 +125,28 @@ input[type=range]{width:100%;accent-color:var(--acc);margin:0}
 .foot{color:var(--mut);font-size:12.5px;line-height:1.5;margin-top:8px}
 .sronly{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 #celltable{max-height:300px;overflow:auto;margin-top:6px}
+#celltable:focus-within{position:static;width:auto;height:auto;margin:6px 0 0;clip:auto;white-space:normal}
+#celltable:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 #celltable table{width:100%;border-collapse:collapse;font-size:12.5px}
 #celltable caption{text-align:left;color:var(--mut);font-size:11px;margin-bottom:5px;caption-side:top}
 #celltable th,#celltable td{text-align:left;padding:3px 6px;border-bottom:1px solid #243446}
 #celltable th{color:var(--mut);font-weight:700}
 #celltable tbody tr{cursor:pointer}
-#celltable tbody tr:hover,#celltable tbody tr:focus-visible{background:#16263a;outline:2px solid var(--acc);outline-offset:-2px}
+#celltable tbody tr:hover,#celltable tbody tr:focus-visible{background:#16263a;color:#e8eef5;outline:2px solid var(--acc);outline-offset:-2px}
 details.adv{border-top:1px solid #243446;margin-top:8px}
 details.adv>summary{cursor:pointer;list-style:none;padding:10px 0 5px;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);font-weight:700;display:flex;align-items:center;gap:7px}
 details.adv>summary::-webkit-details-marker{display:none}
 details.adv>summary::before{content:"▸";font-size:11.5px;display:inline-block;transition:transform .15s}
 details.adv[open]>summary::before{transform:rotate(90deg)}
 details.adv>summary:hover{color:var(--ink)}
-.maplibregl-popup-content{font-size:15px;padding:12px 16px 14px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.25)}.maplibregl-popup-content b{color:#0a2a44}.maplibregl-popup-close-button{font-size:18px;padding:0 5px;color:#667}
+.maplibregl-popup{z-index:1150}
+.maplibregl-popup-content{font-size:15px;padding:12px 16px 14px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.25);max-height:calc(75dvh - 64px);overflow-y:auto;overscroll-behavior:contain}.maplibregl-popup-content b{color:#0a2a44}.maplibregl-popup-close-button{min-width:26px;min-height:26px;font-size:18px;padding:0 5px;color:#667}
+.maplibregl-popup-content:has(>.popbody){display:grid}
+.maplibregl-popup-content>.popbody{grid-area:1/1;min-width:0}
+.maplibregl-popup-content:has(>.popbody)>.maplibregl-popup-close-button{grid-area:1/1;position:sticky;top:0;align-self:start;justify-self:end;z-index:1;background:#fff}
 /* Issue #44: per-cell coverage + rare species live in the popup. Headings, a scroll-capped group list, and a 4-up species grid (no horizontal scroll). */
 .popsec{font-size:12.5px;font-weight:700;color:#0a2a44;margin:9px 0 5px}
-.popsec:first-child{margin-top:1px;padding-right:22px}
+.popsec:first-child{margin-top:1px;padding-right:28px}
 .popscroll{max-height:150px;overflow:hidden auto}
 .popscroll .gaptree{margin-top:0}
 /* #44 popup is ~258px wide: tighten the row so the coverage bar stays visible and the name never clips/side-scrolls (status word dropped from the count — see paintGapTree). */
@@ -194,16 +200,18 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
 .infobox ul{margin:5px 0 0;padding-left:15px}
 .infobox li{margin:3px 0}
 @media(max-width:640px){
-  #app{flex-direction:column}
-  #panel{position:static;width:100%;min-width:0;height:auto;max-height:50vh;border-radius:0;border:0;border-bottom:1px solid #0a1119;box-shadow:none}
-  #map{height:50vh;flex:none}
+  #app{flex-direction:column;height:calc(100dvh - var(--bh))}
+  #panel{position:static;width:100%;min-width:0;height:auto;max-height:calc(50% - 56px);flex-shrink:0;border-radius:0;border:0;border-bottom:1px solid #0a1119;box-shadow:none}
+  #panelInner{position:relative}
+  #map{height:auto;min-height:0;flex:1 1 0}
   #viewtoggle{left:50%;top:auto;bottom:12px}
   #insights{left:0;top:0;height:100%;padding:54px 12px 24px}
   .infobtn{width:24px;height:24px;line-height:22px;font-size:13px}
-  /* the panel is stacked, not floating, so left:300px drops the chevron on top of its own
-     content. Park it in the map's free top-right corner, which slides up when the panel goes. */
-  #panelToggle{left:auto;right:8px;top:calc(var(--bh) + 50vh + 8px)}
-  body.panel-collapsed #panelToggle{left:auto;right:8px;top:calc(var(--bh) + 8px)}
+  /* Keep the controls in their own row above the title. The same row floats over the map
+     after collapse, so the language, help and restore controls remain available. */
+  #panelToggle{position:static;flex:none;align-self:center}
+  body.panel-collapsed #panelToggle{left:auto;right:auto;top:auto}
+  .maplibregl-popup-content{max-width:calc(100vw - 24px);max-height:calc(40dvh - 54px)}
 }
 #maplegend{position:fixed;bottom:24px;right:14px;z-index:1050;background:rgba(255,255,255,.93);border-radius:9px;padding:6px 10px;box-shadow:0 2px 10px rgba(0,0,0,.22);font-size:14px;color:#16233a;min-width:188px;max-width:244px;line-height:1.25}
 #maplegend .lt{font-weight:700;font-size:14px}/* retained: reused by the Getting Even categorical legend title (the priority-legend title div was removed for #47) */
@@ -222,7 +230,7 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
 #maplegend .hint{margin-top:3px;color:#46566a;font-size:10.5px}/* #82: two sizes under the .lab labels (12.5px) */
 .maplibregl-ctrl-bottom-left{left:14px;bottom:14px;z-index:1060}
 .maplibregl-ctrl-attrib a{text-decoration:underline}   /* link-in-text-block: colour alone does not separate them from the surrounding text */
-@media(max-width:640px){#maplegend{left:auto;right:8px;bottom:8px;top:auto;min-width:0;max-width:158px;padding:6px 8px}}/* the corner is free now that attribution moved bottom-left: same position at every breakpoint */
+@media(max-width:640px){#maplegend{left:auto;right:8px;bottom:8px;top:auto;min-width:0;max-width:158px;max-height:calc(50dvh - 16px);overflow-y:auto;overscroll-behavior:contain;padding:6px 8px}}/* the corner is free now that attribution moved bottom-left: same position at every breakpoint */
 @media(max-width:640px){.maplibregl-ctrl-bottom-left{left:8px;bottom:8px}
   /* expanded, the attribution runs nearly the full width; keep it clear of the legend's 158px column instead of under it */
   .maplibregl-ctrl-attrib.maplibregl-compact-show{box-sizing:border-box;max-width:calc(100vw - 190px)}}
@@ -235,9 +243,14 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
 #howpanel{position:fixed;right:14px;top:calc(52px + var(--bh));z-index:1200;width:330px;max-width:calc(100vw - 28px);max-height:calc(100vh - 72px - var(--bh));overflow-y:auto;background:var(--panel);color:var(--mut);border:1px solid #2a3a4d;border-radius:10px;box-shadow:0 6px 22px rgba(0,0,0,.45);padding:30px 15px 14px;display:none;font-size:12px;line-height:1.5}
 #howpanel.open{display:block}
 #howpanel .foot{margin-top:10px;font-size:11px;color:#7e91a6}
-#howclose{position:absolute;top:6px;right:8px;background:transparent;border:0;color:var(--mut);font-size:20px;line-height:1;cursor:pointer;padding:2px 6px}
+#howclose{position:sticky;top:0;float:right;margin-top:-24px;background:var(--panel);border:0;color:var(--mut);font-size:20px;line-height:1;cursor:pointer;padding:2px 6px}
 #howclose:hover{color:var(--ink)}
-@media(max-width:640px){#topctrls{right:8px}#howbtn{max-width:none;font-size:12px}#howpanel{left:8px;right:8px;width:auto;top:calc(50vh + 44px);max-height:44vh}}
+@media(max-width:640px){
+  #topctrls{position:relative;inset:auto;order:-1;flex:none;width:100%;padding:8px 12px;background:#fff}
+  #howbtn{flex:1;min-width:0;max-width:none;font-size:12px;justify-content:center}
+  body.panel-collapsed #topctrls{position:fixed;top:calc(8px + var(--bh));left:8px;right:8px;width:auto;padding:0;background:transparent}
+  #howpanel{left:8px;right:8px;width:auto;top:calc(72px + var(--bh));max-height:calc(100dvh - 88px - var(--bh))}
+}
 /* #84: French strings run longer — widen these two elements (desktop only; the mobile rules above already size them) so the How-scored label, legend labels and notice don't wrap to extra lines. */
 @media(min-width:641px){html[lang=fr] #howbtn{max-width:none}html[lang=fr] #maplegend{max-width:320px}}
 </style></head>
@@ -324,21 +337,21 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
 
   <div id="celltable" class="sronly" role="region" tabindex="0" data-i18n-aria="aria_top_cells" aria-label="Top cells (accessible list)"></div>
 </div></div>
-<button id="panelToggle" type="button" data-i18n-aria="hide_panel" data-i18n-title="hide_panel" aria-label="Hide the panel" title="Hide the panel">‹</button>
 <div id="map" role="application" data-i18n-aria="aria_map" aria-label="Interactive priority map (screen-reader users: use the Top cells list)"></div>
 <div id="viewtoggle" role="navigation" data-i18n-aria="aria_map_view" aria-label="Map view"><button id="vexplore" class="on" aria-pressed="true" data-i18n="view_explore">Explore</button><button id="vplan" aria-pressed="false" data-i18n="view_plan">Plan a trip</button><button id="vcompare" aria-pressed="false" data-i18n="view_compare">Compare goals</button></div>
 <div id="loading" role="status" aria-live="polite" data-i18n="loading">Loading the map…</div>
 <div id="maplegend" role="region" data-i18n-aria="aria_map_legend" aria-label="Map legend"><div class="ramp"></div><div class="lab"><span data-i18n="legend_low">well-sampled</span><span data-i18n="legend_high">biggest gaps</span></div><div class="hint" data-i18n-html="legend_hint"></div><div class="hint" id="legendscope"></div></div>
-<div id="topctrls"><button id="langbtn" type="button" data-i18n-aria="aria_language" data-i18n-title="lang_switch" aria-label="Language" title="Switch language">FR</button><button id="howbtn" type="button" aria-expanded="false" aria-controls="howpanel" data-i18n-title="how_scored" title="How impact is scored & data sources"><span data-i18n="how_scored">How impact is scored & data sources</span></button></div>
+<div id="topctrls"><button id="langbtn" type="button" data-i18n-aria="aria_language" data-i18n-title="lang_switch" aria-label="Language" title="Switch language">FR</button><button id="howbtn" type="button" aria-expanded="false" aria-controls="howpanel" data-i18n-title="how_scored" title="How impact is scored & data sources"><span data-i18n="how_scored">How impact is scored & data sources</span></button><button id="panelToggle" type="button" data-i18n-aria="hide_panel" data-i18n-title="hide_panel" aria-label="Hide the panel" title="Hide the panel">‹</button></div>
 <div id="howpanel" role="region" data-i18n-aria="how_scored" aria-label="How impact is scored & data sources">
   <button id="howclose" type="button" data-i18n-aria="aria_close" data-i18n-title="aria_close" aria-label="Close" title="Close">×</button>
   <div class="legend" style="margin-top:2px"><span data-i18n="skip">skip</span><div class="bar"></div><span data-i18n="go_here">go here</span></div>
   <div style="color:var(--mut);font-size:11px;line-height:1.45;margin-top:7px" data-i18n-html="impact_expl"></div>
   <div style="color:var(--mut);font-size:11px;line-height:1.45;margin-top:9px" data-i18n-html="colour_expl"></div>
-  <div style="color:var(--mut);font-size:11px;line-height:1.5;margin-top:9px" data-i18n-html="axis_method"></div>
+  <div id="goalmethods" style="color:var(--mut);font-size:11px;line-height:1.5;margin-top:9px"></div>
   <div style="color:var(--mut);font-size:11px;line-height:1.45;margin-top:9px" data-i18n-html="leak_note"></div>
   <div style="margin-top:9px"><a href="https://pollocklab.github.io/where-to-blitz/where-to-blitz-walkthrough.html" target="_blank" rel="noopener" style="color:var(--acc);font-size:12px;font-weight:600" data-i18n="methodology_link">Full methodology &amp; data — trace every number →</a></div>
   <p class="foot" data-i18n-html="foot"></p>
+  <p class="foot" id="plansource" data-i18n-html="plan_source" style="display:none"></p>
 </div>
 <div id="insights"></div>
 </div>
@@ -358,7 +371,7 @@ const I18N={
     sub:"Choose what counts as <b>impact</b>, then <b>explore</b> the priority map — or <b>plan a trip</b> to the best spot you can reach and get back from.",
     sec_group:"Life group & goal", sec_taxon:"Species group", sec_goal:"Goal", goal_inactive:"The map is showing iNaturalist records. Pick a goal to go back to the goal map.",
     info_btn:"Where do these scores come from?",
-    taxinfo:`<b style="color:var(--ink)">Higher priority = a place where one new sighting adds more to what we know.</b> Canada-wide, on an equal-area grid: 25&nbsp;km cells, 5&nbsp;km when you zoom in. <b>How impact is scored</b>, top right, lists the data behind each goal. Cells with no records at all share the top of the scale and are not ranked against each other. <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">How Blitz the Gap works →</a>`,
+    taxinfo:`<b style="color:var(--ink)">Choose a recording goal, then tap a cell for local evidence.</b> The equal-area grid uses 25&nbsp;km cells, and 5&nbsp;km cells when you zoom in. The three numeric goals rank recording proxies, not expected species discoveries. Getting Even and Climate Gap have separate meanings. <b>How impact is scored</b>, top right, explains the inputs. <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">How Blitz the Gap works →</a>`,
     finetune:"Fine-tune the five goals",
     your_trip:"Your trip",
     search_ph:"Search a town or address",
@@ -368,8 +381,13 @@ const I18N={
     aria_search:"Search for a start place", aria_search_results:"Search results", aria_time_unit:"Time unit",
     aria_time_budget:"Time budget", aria_max_travel:"Max travel each way", aria_worth_drive:"Worth the drive",
     aria_map_style:"Map style", aria_map_brightness:"Map brightness", aria_data_opacity:"Density opacity", aria_climate_opacity:"Climate layer opacity", aria_top_cells:"Top cells (accessible list)",
+    rank_mask_loading:"Loading Canada's boundary data before ranking cells.",
+    rank_mask_unavailable:"Canada's boundary data could not be loaded. National rankings are unavailable. Reload the page to try again.",
+    rank_layer_unavailable:"This layer has no national priority ranking. Choose Spatial Gap, Species discovery or Conservation to list ranked cells.",
+    rank_no_cells:"No cells are loaded for a national priority ranking.",
     aria_map:"Interactive priority map (screen-reader users: use the Top cells list)", aria_map_view:"Map view",
     aria_map_legend:"Map legend", aria_close:"Close",
+    aria_zoom_in:"Zoom in", aria_zoom_out:"Zoom out", aria_attribution:"Toggle attribution", aria_popup_close:"Close popup",
     rank_aria:(i,la,lo,sc)=>`Rank ${i}: latitude ${la}, longitude ${lo}, score ${sc} of 100`,
     prio_map_aria:(grp,goal)=>`${grp}, ${goal} priority map`,
     vancouver:"Vancouver",
@@ -393,9 +411,10 @@ const I18N={
     gaptree_lookup:"Reading what's recorded…",
     gaptree_sparse:"Too few nearby records to rank groups here yet — every sighting helps fill the map.",
     gaptree_err:"Couldn’t read what's recorded just now — tap the cell again.",
+    gaptree_partial:"Partial species lists cannot reliably compare groups here.",
     pop_groups_hd:"Under-sampled groups", pop_groups_cap:"Each bar compares the group's coverage here against this cell's average across groups. A short bar means the group lags the rest.", pop_rare_hd:"Top species to record here",
     gt_dense:"Dense area: the nearby sample is capped, so these shares are approximate.",
-    gt_caveat:"iNaturalist records: an effort proxy, not a census.",
+    gt_caveat:"Public research-grade iNaturalist records, excluding threatened species and species with protected locations. Counts reflect recording effort.",
     gt_gap:"gap", gt_partial:"partial", gt_ok:"well recorded",
     gt_count:(c,n)=>`${c} here · ~${n} nearby`,   // two observed iNat record tallies, not a ratio-of-total: "X of ~Y" wrongly read as complete coverage at equality (5 of ~5). ~Y is a floor, never true richness.
     gt_switch:(g)=>`Switch the map to ${g}`,
@@ -408,12 +427,7 @@ const I18N={
     coverage_hint:"Where records already are: bright = well sampled, dark = gaps (Biodiversité Québec).",
     getting_even:"Getting Even (under-represented groups)",
     ge_info_btn:"How is the recommended group worked out?",
-    ge_method:`<b>Which group to record here.</b> Tap a cell and the app asks iNaturalist, live, how many research-grade species each group has <b style="color:var(--ink)">in the cell</b> versus <b style="color:var(--ink)">within ~40&nbsp;km</b> (birds excluded — eBird already covers them).
-      <ul>
-      <li>That share, divided by the cell's overall recording rate, puts an average group at <b style="color:var(--ink)">1</b>.</li>
-      <li>Groups well below 1 are under-recorded next to their neighbours. Normalising is what surfaces the real gaps even where everything is under-recorded — one cell can't hold a whole region's diversity.</li>
-      </ul>
-      The map's colours come from a second, offline pass over the whole grid: each group's share of a cell's records, standardised against that group's share across every other cell, and the cell takes the lowest-scoring group. That is the 2025 <i>Getting Even</i> calculation, on these cells. Grey means too few records to judge. Tap for the live ranking, tap a group to map it.`,
+    ge_method:`<b>Map colours and popup bars answer different questions.</b> The Getting Even map compares each group's share of records with that group's share across cells, then names the lowest standardised group. Birds are excluded from that offline map. At 5&nbsp;km the comparison uses a different cell population, so the recommended group can change with zoom. Thinly recorded cells can give unstable recommendations.<br><br>The popup uses live research-grade iNaturalist species counts in the cell's bounding box and a 40&nbsp;km radius around its centre. Each group's here/nearby ratio is divided by the overall recording ratio across groups. A short bar means less recorded here relative to the other groups, not that the species are absent. Queries can be capped at 500 species per query; sensitive records are excluded.`,
     ge_cats:["Fishes","Fungi","Reptiles & Amphibians","Invertebrates","Mammals","Plants"],
     ge_all:"All groups under-sampled",
     canada_only:"Canada only",
@@ -432,11 +446,25 @@ const I18N={
     climate_opacity:"Climate layer opacity",
     how_scored:"How impact is scored & data sources",
     skip:"skip", go_here:"go here",
-    impact_expl:`Picking a goal from the dropdown weights the five goals, then cells are <b style="color:var(--ink)">ranked against every other cell in Canada</b> as <b style="color:var(--ink)">impact 0–100</b> — a percentile, so 100 is the top cell nationally. Tap a cell: the number sits at the foot of the popup, under what is actually worth recording there.`,
-    colour_expl:`<b style="color:var(--ink)">Colour follows the view.</b> Cells are shaded against the others on screen, so zooming in re-ranks what you see and a busy region stops reading as flat purple. The impact number stays national, and the legend says which scale is live: <i>scaled to this view</i>, or <i>scaled across Canada</i> when a view holds too few cells, or too little spread, to rank.`,
-    axis_method:`<b style="color:var(--ink)">Each goal, scored 0–1 per cell:</b><br>• <b style="color:var(--ink)">Discover the most species</b> — few have recorded here: inverse iNaturalist density.<br>• <b style="color:var(--ink)">Find species at risk</b> — at-risk species recorded nearby, weighted by status: CAN-SAR (COSEWIC/SARA) × GBIF.<br>• <b style="color:var(--ink)">Freshest gaps</b> — much recorded long ago, little lately: iNaturalist recent vs all-time.<br>• <b style="color:var(--ink)">Sample before it's lost</b> — recent forest loss: Hansen Global Forest Change.<br>Climate Gap, on the style dropdown, is a separate raster of under-sampled climates built outside this page — it is not one of the goals scored above.`,
-    leak_note:"The map ranks by an all-time record-density score; the leak-free version validated in the walkthrough scores higher, but this one is shown because it can be worked out for every cell.",
-    foot:`<b style="color:var(--ink)">How it works:</b> <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">Blitz the Gap</a> is a Canada-wide bioblitz — go to a high-priority cell, record what you see on <a href="https://www.inaturalist.org" target="_blank" rel="noopener" style="color:var(--acc)">iNaturalist</a>, and your research-grade sightings flow into the <a href="https://www.inaturalist.org/projects/blitz-the-gap-2026-general" target="_blank" rel="noopener" style="color:var(--acc)">2026 project</a>. Led by the <a href="https://pollocklab.github.io/blitz-the-gap/" target="_blank" rel="noopener" style="color:var(--acc)">Pollock Lab</a> at McGill; a companion tool, not an official project page.<br><br>Routes from OSRM (FOSSGIS), travel time from Weiss 2018. Driving CO₂ ≈ 0.18&nbsp;kg/km; cycling and walking zero. <b style="color:var(--ink)">iNaturalist records show where people looked, not what lives there</b> — a planning aid, not a census.<br><br>This map spans many <b style="color:var(--ink)">Indigenous territories</b> — see whose at <a href="https://native-land.ca" target="_blank" rel="noopener" style="color:var(--acc)">native-land.ca</a>, obscure sensitive-species locations, and seek consent before recording on their lands.`,
+    impact_expl:`<b style="color:var(--ink)">Spatial Gap, Species discovery and Conservation have a national percentile.</b> Their weighted scores are ranked across the 25&nbsp;km cells. The number shows a cell’s relative position in the national ranking. Equal scores share their average position. This is relative priority, not an expected species count, a probability of finding a species, or the measured benefit of a visit. Getting Even, Climate Gap and sampling density have no national percentile.`,
+    colour_expl:`<b style="color:var(--ink)">Priority colour follows the view.</b> The three numeric goals rescale colours against cells on screen, while the popup percentile stays national. The legend names the colour scale: <i>scaled to this view</i>, or <i>scaled across Canada</i> when too few cells or distinct values are visible. At 5&nbsp;km, colour uses the finer data; the popup percentile belongs to the enclosing 25&nbsp;km cell. The other layers use their own legends.`,
+    axis_method:`<b style="color:var(--ink)">The five choices in the Goal menu:</b> Each input to a numeric goal is scaled 0–1 before these weights are applied.`,
+    axis_basis:["recording gap (iNaturalist density; zero-density cells are ordered by climate distinctiveness)","recorded species at risk (CAN-SAR status weights × GBIF records, all groups)","under-sampled climate","older recording gap (iNaturalist recent vs all-time records)","tree cover loss (Hansen, cumulative 2001–2023)"],
+    method_ge:"A categorical recommendation of which group to record, from relative iNaturalist recording shares. It is not a ranking of places; recommendations can change with cell size.",
+    method_climate:"A separate supplied CHELSA-based layer of under-sampled climates. Its calculation is independent of the numeric goal scores and is not evaluated by the linked species-discovery backtest.",
+    ge_blurb:"Which group is relatively under-recorded here. Colours name groups, not priority scores; sparse records make recommendations uncertain.",
+    climate_blurb:"Under-sampled climates (CHELSA), supplied as a separate layer shared across species groups.",
+    density_blurb:"Recorded iNaturalist observation density (Biodiversité Québec). Bright means more records, not a bigger recording gap.",
+    plan_source:"Routes from OSRM (FOSSGIS), travel estimates from Weiss 2018. Driving CO₂ ≈ 0.18 kg/km; walking and cycling count no direct travel emissions.",
+    pop_cell:km=>`Selected ${km} km cell. Species evidence: live iNaturalist queries within its bounding box.`,
+    pop_parent:"National percentile of the enclosing 25 km cell",
+    pop_national:"National percentile of this 25 km cell",
+    pop_rank_caveat:"Relative recording priority, not an expected species count.",
+    pop_layer_ge:"Getting Even recommends a group; this layer has no national priority percentile.",
+    pop_layer_climate:"Climate Gap shows climate under-representation; this layer has no national priority percentile.",
+    pop_layer_density:"Sampling density shows existing records; this layer has no national priority percentile.",
+    leak_note:`The walkthrough compares the all-time density blend with a separate score using earlier observations. This retrospective comparison does not establish how many species a visit to this cell will discover.`,
+    foot:`<b style="color:var(--ink)">How it works:</b> <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">Blitz the Gap</a> is a Canada-wide bioblitz, go to a high-priority cell, record what you see on <a href="https://www.inaturalist.org" target="_blank" rel="noopener" style="color:var(--acc)">iNaturalist</a>, and your research-grade sightings flow into the <a href="https://www.inaturalist.org/projects/blitz-the-gap-2026-general" target="_blank" rel="noopener" style="color:var(--acc)">2026 project</a>. Led by the <a href="https://pollocklab.github.io/blitz-the-gap/" target="_blank" rel="noopener" style="color:var(--acc)">Pollock Lab</a> at McGill; a companion tool, not an official project page.<br><br><b style="color:var(--ink)">iNaturalist records show where people looked, not what lives there</b>, a planning aid, not a census.<br><br>This map spans many <b style="color:var(--ink)">Indigenous territories</b>, see whose at <a href="https://native-land.ca" target="_blank" rel="noopener" style="color:var(--acc)">native-land.ca</a>, obscure sensitive-species locations, and seek consent before recording on their lands.`,
     top_cells:"Top cells (accessible list)",
     view_explore:"Explore", view_plan:"Plan a trip", view_compare:"Compare goals",
     loading:"Loading the map…",
@@ -455,12 +483,15 @@ const I18N={
     cells_loading:t=>`Loading ${t}…`,
     prospects_where_start:"Around your start", pop_go_title2:"Your destination",
     prospects_lookup:"Looking up what lives here…",
-    prospects_none:"No research-grade records here yet — you could be the first to document what lives here.",
+    prospects_none:"No matching public research-grade iNaturalist records found here.",
+    prospects_filtered:"No species suggestions are available from these records.",
+    prospects_capped:"Only part of the local species list is available. Suggestions include only species already recorded here.",
+    prospects_checked_cap:"Only part of the local species list is available. Candidates marked no matching record were checked separately under the same filters.",
     prospects_err:"Couldn’t load species just now — tap the cell again.",
     prospects_hd:(where,n,nearby)=>`<b style="color:var(--ink)">${where}</b> · ${n} species recorded on iNaturalist. Worth looking for${nearby?' (nearby)':''}:`,
     rare:"rare nearby", gap:"gap",
-    here_count:n=>`${n} here`, near_count:n=>`${n} within ~40 km`, new_here:"new here", not_here_tag:"not here yet",
-    inat_caveat:"iNaturalist counts — what people logged, not a full census.",
+    here_count:n=>`${n} here`, near_count:n=>`${n} within 40 km`, new_here:"no matching record", not_here_tag:"no matching record here",
+    inat_caveat:"Public research-grade iNaturalist records. Threatened species and species with protected locations are excluded. Other records or unrecorded species may exist.",
     explore_all:"Explore all on iNaturalist →", log_sighting:"Log a sighting", for_challenge:"for this challenge",
     join:"join →",
     more_challenges:"+ see all official challenges →",
@@ -491,10 +522,10 @@ const I18N={
     ins_v_agree:"For the groups shown, the two goals mostly <b>agree</b> here.",
     ins_v_some:(neg,n)=>`They point to different places in <b>${neg} of ${n}</b> groups shown — under-sampling and at-risk species often diverge, but not always.`,
     // OBJ / PRESET / group display names (indexed)
-    obj_name:["Discover the most species","Find species at risk","Climate under-sampling","Freshest gaps","Sample before it's lost"],
-    obj_q:["go where few people have looked","go where COSEWIC/SARA species at risk concentrate","go where the climate is under-sampled","go where lots was recorded long ago but little lately (iNaturalist recent vs all-time density)","go where forest cover was recently lost (logging, fire, dieback)"],
+    obj_name:["Recording gap","Recorded species at risk","Under-sampled climate","Older recording gap","Tree cover loss, 2001–2023"],
+    obj_q:["go where few people have looked","go where COSEWIC/SARA species at risk concentrate","go where the climate is under-sampled","go where lots was recorded long ago but little lately (iNaturalist recent vs all-time density)","go where tree cover was lost during 2001–2023"],
     preset_name:["Spatial Gap","Species discovery","Conservation"],
-    preset_blurb:["Under-recorded places: where few have logged on iNaturalist (inverse observation density).","Where new-to-the-record species are likeliest: under-sampling plus cells recorded long ago but quiet lately.","Where species at risk concentrate, weighted toward recently changed habitat (COSEWIC/SARA via CAN-SAR + GBIF)."],
+    preset_blurb:["Places with fewer iNaturalist records, with climate used to distinguish unrecorded areas.","Recording gaps and older records help prioritize new records on iNaturalist.","Recorded species at risk, weighted by cumulative tree cover loss, 2001–2023 (CAN-SAR + GBIF; Hansen). Shared across species groups."],
     group:{Amphibia:"Amphibians",Aves:"Birds",Insecta:"Insects",Mammalia:"Mammals",Reptilia:"Reptiles",Plantae:"Plants",Fungi:"Fungi",Actinopterygii:"Fishes",Arachnida:"Arachnids",Mollusca:"Molluscs","All biodiversity":"All biodiversity"},
     modes:{Walk:"Walk",Cycle:"Cycle",Drive:"Drive"},
   },
@@ -503,7 +534,7 @@ const I18N={
     sub:"Choisissez ce qui compte comme <b>impact</b>, puis <b>explorez</b> la carte des priorités — ou <b>planifiez une sortie</b> vers le meilleur endroit que vous pouvez atteindre et d'où vous pouvez revenir.",
     sec_group:"Groupe d'espèces et objectif", sec_taxon:"Groupe d'espèces", sec_goal:"Objectif", goal_inactive:"La carte affiche les observations iNaturalist. Choisissez un objectif pour revenir à la carte des objectifs.",
     info_btn:"D'où viennent ces scores?",
-    taxinfo:`<b style="color:var(--ink)">Priorité élevée = un endroit où une nouvelle observation ajoute le plus à nos connaissances.</b> À l'échelle du Canada, sur une grille à surface égale&nbsp;: cellules de 25&nbsp;km, 5&nbsp;km en zoomant. <b>Calcul de l'impact</b>, en haut à droite, donne les données derrière chaque objectif. Les cellules sans aucune observation partagent le haut de l'échelle et ne sont pas classées entre elles. <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">Fonctionnement de Blitz the Gap →</a>`,
+    taxinfo:`<b style="color:var(--ink)">Choisissez un objectif, puis touchez une cellule pour consulter les observations locales.</b> La grille à surface égale utilise des cellules de 25&nbsp;km, et de 5&nbsp;km en zoomant. Les trois objectifs numériques classent des indicateurs d'observation, pas le nombre attendu de découvertes. Combler l'écart et Lacune climatique ont des significations distinctes. <b>Calcul de l'impact</b>, en haut à droite, explique les données. <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">Fonctionnement de Blitz the Gap →</a>`,
     finetune:"Ajuster les cinq objectifs",
     your_trip:"Votre sortie",
     search_ph:"Rechercher une ville ou une adresse",
@@ -513,8 +544,13 @@ const I18N={
     aria_search:"Rechercher un lieu de départ", aria_search_results:"Résultats de recherche", aria_time_unit:"Unité de temps",
     aria_time_budget:"Temps disponible", aria_max_travel:"Trajet max (aller)", aria_worth_drive:"Vaut le déplacement",
     aria_map_style:"Style de carte", aria_map_brightness:"Luminosité de la carte", aria_data_opacity:"Opacité des données", aria_climate_opacity:"Opacité de la couche climatique", aria_top_cells:"Meilleures cellules (liste accessible)",
+    rank_mask_loading:"Chargement des limites du Canada avant le classement des cellules.",
+    rank_mask_unavailable:"Les limites du Canada n'ont pas pu être chargées. Le classement national est indisponible. Rechargez la page pour réessayer.",
+    rank_layer_unavailable:"Cette couche n'a pas de classement national des priorités. Choisissez Lacune spatiale, Découverte d'espèces ou Conservation pour afficher les cellules classées.",
+    rank_no_cells:"Aucune cellule n'est chargée pour un classement national des priorités.",
     aria_map:"Carte de priorité interactive (lecteurs d'écran : utilisez la liste des meilleures cellules)", aria_map_view:"Vue de la carte",
     aria_map_legend:"Légende de la carte", aria_close:"Fermer",
+    aria_zoom_in:"Agrandir la carte", aria_zoom_out:"Réduire la carte", aria_attribution:"Afficher l'attribution", aria_popup_close:"Fermer la fenêtre de la cellule",
     rank_aria:(i,la,lo,sc)=>`Rang ${i} : latitude ${la}, longitude ${lo}, score ${sc} sur 100`,
     prio_map_aria:(grp,goal)=>`${grp}, ${goal} carte de priorité`,
     vancouver:"Vancouver",
@@ -538,9 +574,10 @@ const I18N={
     gaptree_lookup:"Lecture de ce qui est déjà enregistré…",
     gaptree_sparse:"Trop peu d’observations à proximité pour classer les groupes ici — chaque observation aide à combler la carte.",
     gaptree_err:"Impossible de lire ce qui est déjà enregistré pour l’instant — touchez la cellule à nouveau.",
+    gaptree_partial:"Des listes d'espèces partielles ne permettent pas de comparer les groupes ici de façon fiable.",
     pop_groups_hd:"Groupes sous-échantillonnés", pop_groups_cap:"Chaque barre compare la couverture du groupe ici à la moyenne de la cellule, tous groupes confondus. Une barre courte signale un retard.", pop_rare_hd:"Espèces à noter en priorité ici",
     gt_dense:"Zone dense&nbsp;: l'échantillon voisin est plafonné, ces parts sont approximatives.",
-    gt_caveat:"Observations iNaturalist&nbsp;: un indice d'effort, pas un inventaire.",
+    gt_caveat:"Observations publiques de qualité recherche sur iNaturalist, sans les espèces menacées ni celles dont les localisations sont protégées. Les nombres reflètent l'effort d'observation.",
     gt_gap:"lacune", gt_partial:"partielle", gt_ok:"bien documenté",
     gt_count:(c,n)=>`${c} ici · ~${n} à proximité`,
     gt_switch:(g)=>`Afficher ${g} sur la carte`,
@@ -553,12 +590,7 @@ const I18N={
     coverage_hint:"Où les observations existent déjà&nbsp;: clair = bien échantillonné, foncé = lacunes (Biodiversité Québec).",
     getting_even:"Combler l'écart (groupes sous-représentés)",
     ge_info_btn:"Comment le groupe recommandé est-il déterminé ?",
-    ge_method:`<b>Quel groupe noter ici.</b> Touchez une cellule et l'application interroge iNaturalist, en direct&nbsp;: combien d'espèces de qualité recherche chaque groupe compte <b style="color:var(--ink)">dans la cellule</b> par rapport aux <b style="color:var(--ink)">~40&nbsp;km autour</b> (oiseaux exclus — eBird les couvre déjà).
-      <ul>
-      <li>Cette part, divisée par le taux d'enregistrement global de la cellule, place un groupe moyen à <b style="color:var(--ink)">1</b>.</li>
-      <li>Les groupes bien en dessous de 1 sont sous-documentés par rapport à leurs voisins. C'est cette normalisation qui fait ressortir les vraies lacunes même là où tout est sous-documenté — une cellule ne peut contenir toute la diversité d'une région.</li>
-      </ul>
-      Les couleurs de la carte proviennent d'un second calcul, hors ligne, sur toute la grille&nbsp;: la part de chaque groupe dans les observations d'une cellule, normalisée par rapport à la part de ce groupe dans toutes les autres cellules, la cellule prenant le groupe au score le plus bas. C'est le calcul <i>Combler l'écart</i> de 2025, appliqué à ces cellules. Le gris signifie trop peu d'observations pour trancher. Touchez pour le classement en direct, touchez un groupe pour le cartographier.`,
+    ge_method:`<b>Les couleurs de la carte et les barres de la fenêtre répondent à des questions différentes.</b> La carte Combler l'écart compare la part d'observations de chaque groupe à sa part dans l'ensemble des cellules, puis indique le groupe au score standardisé le plus faible. Les oiseaux sont exclus de cette carte calculée hors ligne. À 5&nbsp;km, la comparaison utilise une autre population de cellules, donc le groupe recommandé peut changer avec le zoom. Les recommandations sont instables quand les observations sont rares.<br><br>La fenêtre utilise les nombres d'espèces de qualité recherche iNaturalist dans le rectangle englobant la cellule et un rayon de 40&nbsp;km autour de son centre, interrogés en direct. Le rapport ici/à proximité de chaque groupe est divisé par le rapport global des groupes. Une barre courte signifie moins d'espèces notées ici relativement aux autres groupes, pas leur absence. Les requêtes peuvent être limitées à 500 espèces par requête; les observations sensibles sont exclues.`,
     ge_cats:["Poissons","Champignons","Reptiles et amphibiens","Invertébrés","Mammifères","Plantes"],
     ge_all:"Tous sous-échantillonnés",
     canada_only:"Canada seulement",
@@ -577,11 +609,25 @@ const I18N={
     climate_opacity:"Opacité de la couche climatique",
     how_scored:"Calcul de l'impact et sources de données",
     skip:"à éviter", go_here:"y aller",
-    impact_expl:`Choisir un objectif dans le menu déroulant pondère les cinq objectifs, puis les cellules sont <b style="color:var(--ink)">classées par rapport à toutes les cellules du Canada</b> en <b style="color:var(--ink)">impact 0–100</b> — un centile, donc 100 = la meilleure cellule au pays. Touchez une cellule&nbsp;: le score est au bas de la fenêtre, sous ce qui vaut vraiment la peine d'être noté.`,
-    colour_expl:`<b style="color:var(--ink)">La couleur suit la vue.</b> Chaque cellule est classée par rapport aux autres à l'écran : un zoom recalcule donc l'affichage, et une région bien couverte cesse d'être uniformément violette. Le score d'impact reste national, et la légende indique l'échelle active : <i>calibré sur cette vue</i>, ou <i>calibré sur tout le Canada</i> quand la vue contient trop peu de cellules, ou trop peu d'écart, pour être classée.`,
-    axis_method:`<b style="color:var(--ink)">Chaque objectif, noté 0–1 par cellule&nbsp;:</b><br>• <b style="color:var(--ink)">Découvrir le plus d'espèces</b> — peu de gens ont observé ici&nbsp;: densité iNaturalist inversée.<br>• <b style="color:var(--ink)">Trouver des espèces en péril</b> — espèces en péril observées à proximité, pondérées par statut&nbsp;: CAN-SAR (COSEWIC/SARA) × GBIF.<br>• <b style="color:var(--ink)">Lacunes les plus fraîches</b> — beaucoup observé autrefois, peu récemment&nbsp;: densité iNaturalist récente vs historique.<br>• <b style="color:var(--ink)">Échantillonner avant qu'il soit trop tard</b> — perte forestière récente&nbsp;: Hansen Global Forest Change.<br>Climat sous-échantillonné, dans le menu déroulant du style, est une couche distincte construite en dehors de cette page&nbsp;: elle ne fait pas partie des objectifs notés ci-dessus.`,
-    leak_note:"La carte classe les cellules selon un score de densité d'observations sur toute la période; la version sans fuite validée dans le guide méthodologique obtient un meilleur score, mais c'est celle-ci qui est utilisée ici car elle peut être calculée pour chaque cellule.",
-    foot:`<b style="color:var(--ink)">Fonctionnement&nbsp;:</b> <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">Blitz the Gap</a> est un bioblitz pancanadien — rendez-vous dans une cellule prioritaire, notez ce que vous voyez sur <a href="https://www.inaturalist.org" target="_blank" rel="noopener" style="color:var(--acc)">iNaturalist</a>, et vos observations de qualité recherche alimentent le <a href="https://www.inaturalist.org/projects/blitz-the-gap-2026-general" target="_blank" rel="noopener" style="color:var(--acc)">projet 2026</a>. Mené par le <a href="https://pollocklab.github.io/blitz-the-gap/" target="_blank" rel="noopener" style="color:var(--acc)">Pollock Lab</a> de l'Université McGill; un outil complémentaire, non officiel.<br><br>Itinéraires d'OSRM (FOSSGIS), temps de déplacement de Weiss 2018. CO₂ en voiture ≈ 0,18&nbsp;kg/km; vélo et marche nuls. <b style="color:var(--ink)">Les observations iNaturalist montrent où les gens ont cherché, pas ce qui vit là</b> — un outil de planification, pas un inventaire.<br><br>Cette carte couvre de nombreux <b style="color:var(--ink)">territoires autochtones</b> — voyez lesquels sur <a href="https://native-land.ca" target="_blank" rel="noopener" style="color:var(--acc)">native-land.ca</a>, masquez les lieux d'espèces sensibles, et obtenez le consentement avant d'observer sur leurs terres.`,
+    impact_expl:`<b style="color:var(--ink)">Lacune spatiale, Découverte d'espèces et Conservation ont un centile national.</b> Leurs scores pondérés sont classés parmi les cellules de 25&nbsp;km. Le nombre indique la position relative d’une cellule dans le classement national. Les scores égaux partagent leur position moyenne. Il s'agit d'une priorité relative, pas du nombre attendu d'espèces, de la probabilité d'en trouver une, ni du bénéfice mesuré d'une visite. Combler l'écart, Lacune climatique et la densité d'observations n'ont pas de centile national.`,
+    colour_expl:`<b style="color:var(--ink)">La couleur des priorités suit la vue.</b> Les trois objectifs numériques recalibrent les couleurs parmi les cellules à l'écran, tandis que le centile reste national. La légende précise l'échelle des couleurs&nbsp;: <i>calibré sur cette vue</i>, ou <i>calibré sur tout le Canada</i> si trop peu de cellules ou de valeurs distinctes sont visibles. À 5&nbsp;km, la couleur utilise les données fines; le centile appartient à la cellule englobante de 25&nbsp;km. Les autres couches ont leurs propres légendes.`,
+    axis_method:`<b style="color:var(--ink)">Les cinq choix du menu Objectif&nbsp;:</b> Chaque indicateur numérique est ramené à 0–1 avant l'application des pondérations suivantes.`,
+    axis_basis:["lacune d'observation (densité iNaturalist; les cellules de densité nulle sont ordonnées selon leur singularité climatique)","espèces en péril observées (pondérations CAN-SAR × observations GBIF, tous groupes)","climat sous-échantillonné","lacune historique (observations iNaturalist récentes vs historiques)","perte de couvert arboré (Hansen, cumul 2001–2023)"],
+    method_ge:"Une recommandation du groupe à observer, fondée sur les parts relatives d'observations iNaturalist. Elle ne classe pas les lieux; le groupe recommandé peut changer avec la taille des cellules.",
+    method_climate:"Une couche distincte fournie de climats sous-échantillonnés, basée sur CHELSA. Son calcul est indépendant des scores numériques et n'est pas évalué par la validation de découverte d'espèces liée ci-dessous.",
+    ge_blurb:"Le groupe relativement sous-observé ici. Les couleurs indiquent des groupes, pas des scores de priorité; peu d'observations rendent les recommandations incertaines.",
+    climate_blurb:"Climats sous-échantillonnés (CHELSA), fournis par une couche distincte commune aux groupes d'espèces.",
+    density_blurb:"Densité d'observations iNaturalist enregistrées (Biodiversité Québec). Plus clair signifie plus d'observations, pas une lacune plus grande.",
+    plan_source:"Itinéraires d'OSRM (FOSSGIS), estimations de déplacement de Weiss 2018. CO₂ en voiture ≈ 0,18 kg/km; la marche et le vélo ne comptent aucune émission directe de déplacement.",
+    pop_cell:km=>`Cellule sélectionnée de ${km} km. Espèces observées : requêtes iNaturalist en direct dans son rectangle englobant.`,
+    pop_parent:"Centile national de la cellule englobante de 25 km",
+    pop_national:"Centile national de cette cellule de 25 km",
+    pop_rank_caveat:"Priorité relative d'observation, pas un nombre attendu d'espèces.",
+    pop_layer_ge:"Combler l'écart recommande un groupe; cette couche n'a pas de centile national de priorité.",
+    pop_layer_climate:"Lacune climatique montre la sous-représentation climatique; cette couche n'a pas de centile national de priorité.",
+    pop_layer_density:"La densité montre les observations existantes; cette couche n'a pas de centile national de priorité.",
+    leak_note:`Le guide compare la combinaison fondée sur la densité historique à un score distinct utilisant des observations antérieures. Cette comparaison rétrospective ne mesure pas combien d'espèces une visite permettra de découvrir.`,
+    foot:`<b style="color:var(--ink)">Fonctionnement&nbsp;:</b> <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">Blitz the Gap</a> est un bioblitz pancanadien, rendez-vous dans une cellule prioritaire, notez ce que vous voyez sur <a href="https://www.inaturalist.org" target="_blank" rel="noopener" style="color:var(--acc)">iNaturalist</a>, et vos observations de qualité recherche alimentent le <a href="https://www.inaturalist.org/projects/blitz-the-gap-2026-general" target="_blank" rel="noopener" style="color:var(--acc)">projet 2026</a>. Mené par le <a href="https://pollocklab.github.io/blitz-the-gap/" target="_blank" rel="noopener" style="color:var(--acc)">Pollock Lab</a> de l'Université McGill; un outil complémentaire, non officiel.<br><br><b style="color:var(--ink)">Les observations iNaturalist montrent où les gens ont cherché, pas ce qui vit là</b>, un outil de planification, pas un inventaire.<br><br>Cette carte couvre de nombreux <b style="color:var(--ink)">territoires autochtones</b>, voyez lesquels sur <a href="https://native-land.ca" target="_blank" rel="noopener" style="color:var(--acc)">native-land.ca</a>, masquez les lieux d'espèces sensibles, et obtenez le consentement avant d'observer sur leurs terres.`,
     top_cells:"Meilleures cellules (liste accessible)",
     view_explore:"Explorer", view_plan:"Planifier une sortie", view_compare:"Comparer les objectifs",
     loading:"Chargement de la carte…",
@@ -600,12 +646,15 @@ const I18N={
     cells_loading:t=>`Chargement de ${t}…`,
     prospects_where_start:"Près de votre départ", pop_go_title2:"Votre destination",
     prospects_lookup:"Recherche de ce qui vit ici…",
-    prospects_none:"Aucune observation de qualité recherche ici pour l'instant — vous pourriez être la première personne à documenter ce qui vit ici.",
+    prospects_none:"Aucune observation publique de qualité recherche sur iNaturalist ne correspond aux critères ici.",
+    prospects_filtered:"Aucune suggestion d'espèce n'est disponible à partir de ces observations.",
+    prospects_capped:"Seule une partie de la liste locale des espèces est disponible. Les suggestions incluent uniquement les espèces déjà enregistrées ici.",
+    prospects_checked_cap:"Seule une partie de la liste locale des espèces est disponible. Les candidates sans observation retenue ont été vérifiées séparément avec les mêmes filtres.",
     prospects_err:"Impossible de charger les espèces pour l’instant — touchez la cellule à nouveau.",
     prospects_hd:(where,n,nearby)=>`<b style="color:var(--ink)">${where}</b> · ${n} espèces observées sur iNaturalist. À surveiller${nearby?' (à proximité)':''} :`,
     rare:"rare à proximité", gap:"lacune",
-    here_count:n=>`${n} ici`, near_count:n=>`${n} dans ~40 km`, new_here:"nouveau ici", not_here_tag:"pas encore ici",
-    inat_caveat:"Nombres iNaturalist — ce qui a été noté, pas un inventaire complet.",
+    here_count:n=>`${n} ici`, near_count:n=>`${n} dans 40 km`, new_here:"aucune obs. retenue", not_here_tag:"aucune observation retenue ici",
+    inat_caveat:"Observations publiques de qualité recherche sur iNaturalist. Les espèces menacées et celles dont les localisations sont protégées sont exclues. D'autres observations ou des espèces non documentées peuvent exister.",
     explore_all:"Tout explorer sur iNaturalist →", log_sighting:"Noter une observation", for_challenge:"pour ce défi",
     join:"se joindre →",
     more_challenges:"+ voir tous les défis officiels →",
@@ -635,10 +684,10 @@ const I18N={
     ins_v_all_diff:"Les deux objectifs pointent vers des <b>lieux différents dans chaque groupe affiché</b> — les cellules les plus sous-représentées ne sont pas là où sont les espèces en péril.",
     ins_v_agree:"Pour les groupes affichés, les deux objectifs <b>concordent</b> surtout ici.",
     ins_v_some:(neg,n)=>`Ils pointent vers des lieux différents dans <b>${neg} des ${n}</b> groupes affichés — sous-représentation et espèces en péril divergent souvent, mais pas toujours.`,
-    obj_name:["Découvrir le plus d'espèces","Trouver des espèces en péril","Sous-échantillonnage climatique","Lacunes les plus fraîches","Échantillonner avant qu'il soit trop tard"],
-    obj_q:["allez où peu de gens ont cherché","allez où se concentrent les espèces en péril (COSEWIC/SARA)","allez où le climat est sous-échantillonné","allez où l'on a beaucoup observé autrefois mais peu récemment (densité iNaturalist récente vs historique)","allez où le couvert forestier a été récemment perdu (coupe, feu, dépérissement)"],
+    obj_name:["Lacune d'observation","Espèces en péril observées","Climat sous-échantillonné","Lacune historique","Perte de couvert arboré, 2001–2023"],
+    obj_q:["allez où peu de gens ont cherché","allez où se concentrent les espèces en péril (COSEWIC/SARA)","allez où le climat est sous-échantillonné","allez où l'on a beaucoup observé autrefois mais peu récemment (densité iNaturalist récente vs historique)","allez où le couvert arboré a été perdu entre 2001 et 2023"],
     preset_name:["Lacune spatiale","Découverte d'espèces","Conservation"],
-    preset_blurb:["Lieux sous-observés : là où peu de gens ont enregistré sur iNaturalist (densité d'observation inversée).","Là où de nouvelles espèces pour le registre sont les plus probables : sous-représentation et cellules observées autrefois mais calmes récemment.","Là où se concentrent les espèces en péril, pondéré vers les habitats récemment modifiés (COSEWIC/SARA; CAN-SAR + GBIF)."],
+    preset_blurb:["Lieux avec moins d'observations iNaturalist; le climat distingue les zones sans observations.","Les lacunes d'observation et les observations anciennes aident à prioriser de nouvelles observations iNaturalist.","Espèces en péril observées, pondérées par la perte cumulée de couvert arboré, 2001–2023 (CAN-SAR + GBIF; Hansen). Commun aux groupes d'espèces."],
     group:{Amphibia:"Amphibiens",Aves:"Oiseaux",Insecta:"Insectes",Mammalia:"Mammifères",Reptilia:"Reptiles",Plantae:"Plantes",Fungi:"Champignons",Actinopterygii:"Poissons",Arachnida:"Arachnides",Mollusca:"Mollusques","All biodiversity":"Toute la biodiversité"},
     modes:{Walk:"Marche",Cycle:"Vélo",Drive:"Voiture"},
   }
@@ -653,6 +702,22 @@ function presetName(i){return t('preset_name')[i];}
 function presetBlurb(i){return t('preset_blurb')[i];}
 function groupName(k){return t('group')[k]||k;}
 function modeName(k){return t('modes')[k]||k;}
+function goalMethodsHtml(){
+  const basis=t('axis_basis');
+  const numeric=PRESETS.map((p,i)=>'<br>• <b style="color:var(--ink)">'+presetName(i)+'</b> = '+
+    p.w.map((w,k)=>w>0?w+' × '+basis[k]:null).filter(Boolean).join(' + ')+'.').join('');
+  return t('axis_method')+numeric+'<br>• <b style="color:var(--ink)">'+t('crit_ge')+'</b>: '+t('method_ge')+
+    '<br>• <b style="color:var(--ink)">'+t('crit_climate')+'</b>: '+t('method_climate');
+}
+function renderGoalContext(){
+  const methods=document.getElementById('goalmethods');if(methods)methods.innerHTML=goalMethodsHtml();
+  const cb=document.getElementById('challengeBlurb');if(cb){
+    if(overlay!=='priority')cb.textContent=t(geActive()?'ge_blurb':climateOn()?'climate_blurb':'density_blurb');
+    else{const i=window.__activePreset||0,p=PRESETS[i];
+      cb.innerHTML=presetBlurb(i)+' <a href="https://www.inaturalist.org/projects/'+p.proj+'" target="_blank" rel="noopener" style="color:var(--acc);white-space:nowrap">'+t('join')+'</a>';}
+  }
+  const ps=document.getElementById('plansource');if(ps)ps.style.display=state.view==='plan'?'':'none';
+}
 function applyI18N(){
   document.documentElement.lang=LANG;   // WCAG 3.1.1
   // preserve a user-moved start label across re-paints of the start_hint block
@@ -664,6 +729,7 @@ function applyI18N(){
   document.querySelectorAll('[data-i18n-title]').forEach(el=>{const v=t(el.getAttribute('data-i18n-title'));if(v!=null)el.title=v;});
   document.querySelectorAll('[data-i18n-aria]').forEach(el=>{const v=t(el.getAttribute('data-i18n-aria'));if(v!=null)el.setAttribute('aria-label',v);});
   const lb=document.getElementById('langbtn');if(lb)lb.textContent=(LANG==='en'?'FR':'EN');   // #81: button shows the language you switch TO, not the active one
+  localizeMapControls();
 }
 function relabelDynamic(){
   // re-render the JS-built widgets whose static strings come from the dict
@@ -690,6 +756,7 @@ function relabelDynamic(){
   // same problem. updateLegend() picks the right branch itself, so it needs no guard beyond
   // "is it defined yet".
   if(typeof updateLegend==='function')updateLegend();
+  renderGoalContext();
   // start marker's tooltip/title/alt (created once at init) follow the language
   if(typeof startMarker!=='undefined'&&startMarker){const se=startMarker.getElement();if(se){se.setAttribute('title',t('start_tip'));se.setAttribute('aria-label',t('start_alt'));}}
   // start-place prospects idle text (only if untouched)
@@ -763,11 +830,15 @@ function geCat(v,col,row){
 // the style dropdown follow it, never the reverse.
 const OVERLAY_TOGGLE={coverage:'tgCoverage',gettingeven:'tgGettingEven',climate:'tgClimateGap'};
 let overlay='priority';   // 'priority' (the goal grid) | 'coverage' | 'gettingeven' | 'climate'
+let _overlaySeq=0,_overlayReady=Promise.resolve();
 function geActive(){return overlay==='gettingeven';}
 function covOn(){return overlay==='coverage';}
 function climateOn(){return overlay==='climate';}
 function setOverlay(kind){
+  const seq=++_overlaySeq;
   overlay=OVERLAY_TOGGLE[kind]?kind:'priority';
+  if(overlay==='priority'){const cs=document.getElementById('criteria');if(cs&&(cs.value==='ge'||cs.value==='climate'))cs.value=String(window.__activePreset||0);}
+  renderCellTable();paintPopScore();   // invalidate previous priority evidence before an overlay's async load
   for(const[k,id]of Object.entries(OVERLAY_TOGGLE)){const el=document.getElementById(id);if(el)el.checked=(overlay===k);}
   // the style dropdown's iNat entry is the coverage overlay under another name; keep the two agreed.
   // Read the element rather than the bmSel const: this function is hoisted above that declaration.
@@ -775,33 +846,51 @@ function setOverlay(kind){
   if(sel){const want=covOn()?'__inat__':(sel.value==='__inat__'?'Standard':sel.value);
     if(sel.value!==want){sel.value=want;setBase(want==='__inat__'?'Light':want);}}
   setGridLines();
+  renderGoalContext();
   {const n=document.getElementById('goalnote');if(n)n.style.display=covOn()?'':'none';}
   {const gib=document.getElementById('geinfobtn');if(gib){gib.style.display=geActive()?'':'none';if(!geActive()){const gi=document.getElementById('geinfo');if(gi)gi.classList.remove('open');}}}
-  const paint=()=>{setCoverage();setClimate();updateLegend();recolour();};
+  const paint=()=>{if(seq!==_overlaySeq)return;setCoverage();setClimate();updateLegend();recolour();syncSharedCellUrl();};
   // loadGE() had no rejection path: when its fetch failed (offline, a 404, a blocked scheme) paint()
   // never ran, so `overlay` said gettingeven while the map and the legend still showed the previous
   // layer and the checkbox agreed with neither. Fall back the way the taxon dropdown already does on
   // a failed load: put the overlay and the dropdown back where they were. Read #criteria off the DOM
   // rather than the critSel const, for the same reason the basemap select is read that way above.
-  geActive()?loadGE().then(paint,()=>{setOverlay('priority');
-    const cs=document.getElementById('criteria');if(cs)cs.value=String(window.__activePreset||0);}):paint();
+  syncSharedCellUrl();
+  return _overlayReady=geActive()?loadGE().then(paint,()=>{if(seq!==_overlaySeq)return;setOverlay('priority');
+    const cs=document.getElementById('criteria');if(cs)cs.value=String(window.__activePreset||0);syncSharedCellUrl();}):Promise.resolve(paint());
 }
 // The 25 km lattice outline is the shape of the goal grid, so it explains the cells it traces.
 // Under a raster overlay (iNat density, climate gap) it traces nothing the pixels below it share,
 // and just reads as chart junk over the data. Hide it while one of those is up.
 function setGridLines(){if(_mapLoaded&&map.getLayer('cells-line'))map.setLayoutProperty('cells-line','visibility',(covOn()||climateOn())?'none':'visible');}
 function caOnlyActive(){const e=document.getElementById('tgCanadaOnly');return e?e.checked:true;}        // issue #20 removed the toggle; behaviour stays on by default
-// US-side cells (approx, lazy-loaded): hidden when "Canada only" is on -- the cross-border band is a data edge, not a real gap (#5).
+// The shared country mask governs ranking and candidate eligibility as well as rendering.
 let US_CELLS=null;
+let _usLoad=null, _usFailed=false;
 let _lineFilterIds=-1;
-async function loadUS(){if(US_CELLS)return;try{const r=await fetchT(DATA_DIR+'us_cells.json',8000);US_CELLS=new Set((await r.json()).us_cells||[]);}catch(e){US_CELLS=new Set();}}
+function eligibleMarkers(){return caOnlyActive()?(US_CELLS?markers.filter(m=>!US_CELLS.has(gekey(m.r[0],m.r[1]))):[]):markers;}
+async function loadUS(){
+  if(US_CELLS)return true;
+  if(_usLoad)return _usLoad;
+  _usFailed=false;
+  _usLoad=(async()=>{
+    try{
+      const r=await fetchT(DATA_DIR+'us_cells.json',8000);
+      if(!r.ok)throw Error('Canada mask unavailable');
+      const data=await r.json();
+      if(!Array.isArray(data.us_cells)||!data.us_cells.every(k=>typeof k==='string'))throw Error('Invalid Canada mask');
+      US_CELLS=new Set(data.us_cells);return true;
+    }catch(e){_usFailed=true;return false;}finally{_usLoad=null;}
+  })();
+  return _usLoad;
+}
 function applyCanadaMask(){
   if(!caOnlyActive()){
     if(_mapLoaded&&map.getLayer('cells-line'))map.setFilter('cells-line',null);
     _lineFilterIds=-1;
     return;
   }
-  if(!US_CELLS){loadUS().then(recolour);return;}
+  if(!US_CELLS){if(!_usLoad&&!_usFailed)loadUS().then(recolour);return;}
   const hiddenIds=[];
   markers.forEach(m=>{if(US_CELLS.has(gekey(m.r[0],m.r[1]))){setCellState(m.i,'rgba(0,0,0,0)',0);hiddenIds.push(m.i);}});
   // The lattice and the mask are both taxon-invariant, so the (linear-scan) id filter is set once
@@ -831,10 +920,16 @@ let _popScoreEl=null;    // the open cell popup's footer score line, repainted i
 // taxon switch, and the 5 km tier snaps to a different cell than the 25 km one.
 function paintPopScore(){
   if(!_popScoreEl||!_popScoreEl.isConnected||!_lastProspect)return;
-  _popScoreEl.innerHTML=popScoreHtml(parentMarker(_lastProspect.lat,_lastProspect.lon));
+  _popScoreEl.innerHTML=popScoreHtml(parentMarker(_lastProspect.lat,_lastProspect.lon),_lastProspect.resM);
 }
 // A drawn 5 km cell can sit in a 25 km cell with no data row: it still opens, just without a national score.
-function popScoreHtml(m){return m?`${t('pop_impact')} <b>${(m.t*100|0)}/100</b> · ${contribStr(m.r)}`:t('pop_noscore');}
+function popScoreHtml(m,resM){
+  const cell=t('pop_cell',(resM||25000)/1000);
+  if(overlay!=='priority')return cell+'<br>'+t(geActive()?'pop_layer_ge':climateOn()?'pop_layer_climate':'pop_layer_density');
+  if(!m||!Number.isFinite(m.t))return cell+'<br>'+t('pop_noscore');
+  const basis=t(resM===5000?'pop_parent':'pop_national');
+  return `${cell}<br>${basis}: <b>${(m.t*100|0)}/100</b> · ${contribStr(m.r)}<br>${t('pop_rank_caveat')}`;
+}
 const LATTICE_X0=__LATTICE_X0__, LATTICE_Y1=__LATTICE_Y1__, LATTICE_W=__LATTICE_W__, LATTICE_H=__LATTICE_H__;   // injected from grid_lattice.py — the clickable lattice and the coloured grid are the same lattice
 function activeCellResM(){return map&&map.getZoom&&map.getZoom()>=TIER_SWITCH_Z?5000:25000;}
 function snapToLattice(lat,lon,resM){
@@ -870,7 +965,7 @@ const safeImg=u=>{u=String(u==null?'':u);return /^https:\/\//.test(u)?esc(u):'';
 // gap tree and rare-species lists live in the popup now; fill-the-gap was dropped.
 const DOMESTIC=new Set(['Felis catus','Canis familiaris','Canis lupus familiaris','Bos taurus','Ovis aries','Capra hircus','Equus caballus','Equus asinus','Sus scrofa domesticus','Gallus gallus domesticus','Anas platyrhynchos domesticus','Columba livia domestica','Meleagris gallopavo domesticus','Oryctolagus cuniculus domesticus','Mustela furo','Cavia porcellus']);
 // Obligately marine clades (iNat taxon ids): Cetacea, Phocidae, Otariidae, Odobenidae, Sirenia, Asteroidea,
-// Echinoidea, Cephalopoda, Anthozoa, Cheloniidae, Dermochelyidae, Alcidae. The ~0.5° neighbourhood of a
+// Echinoidea, Cephalopoda, Anthozoa, Cheloniidae, Dermochelyidae, Alcidae. The 40 km neighbourhood of a
 // cell can cross the shoreline, so "new here" offered whales on land and moose at sea. The neighbourhood
 // is cut to the cell's own surface by geography (land_sea_5000m.png, build_canada_mask.py), not by
 // records, so a sparsely sampled shore keeps both: a land-only cell drops marine clades, a sea-only cell
@@ -887,8 +982,29 @@ async function surfaceFilter(lat,lon,resM){
   for(let r=r0;r<r0+k;r++)for(let c=c0;c<c0+k;c++){if(c>=w.w||r>=w.h)continue;const i=(r*w.w+c)*4;sea=sea||w.d[i]>=128;land=land||w.d[i+1]>=128;}
   return sea===land?'':(sea?'&taxon_id=':'&without_taxon_id=')+MARINE;   // both, or neither (off the mask): no cut
 }
+function completeSpeciesCounts(j){
+  if(!j||!Array.isArray(j.results)||!Number.isInteger(j.total_results)||j.total_results!==j.results.length||j.results.length>500||(j.page!==undefined&&j.page!==1))return false;
+  const ids=new Set();
+  return j.results.every(r=>{const id=r&&r.taxon&&r.taxon.id;
+    if(!Number.isInteger(id)||id<=0||ids.has(id)||!Number.isInteger(r.count)||r.count<=0)return false;
+    ids.add(id);return true;});
+}
+function checkedCandidateAbsences(candidates,j){
+  if(!completeSpeciesCounts(j))return [];
+  const requested=new Set(candidates.map(r=>r.taxon.id)),present=new Set();
+  for(const r of j.results){
+    if(requested.has(r.taxon.id)){present.add(r.taxon.id);continue;}
+    const ancestors=r.taxon.ancestor_ids;
+    if(!Array.isArray(ancestors)||!ancestors.every(id=>Number.isInteger(id)&&id>0))return [];
+    const matching=ancestors.filter(id=>requested.has(id));
+    if(matching.length!==1)return [];   // unresolved or ambiguous taxonomy cannot support an absence
+    present.add(matching[0]);
+  }
+  return candidates.filter(r=>!present.has(r.taxon.id));
+}
 async function fetchProspects(lat,lon,whereKey,opts){
-  const myseq=++prospectSeq;
+  const myseq=++prospectSeq,taxon=state.taxon,lang=LANG;
+  const current=()=>myseq===prospectSeq&&taxon===state.taxon&&lang===LANG;
   const toPopup=!!(opts&&opts.toPopup);
   const resM=(opts&&opts.resM)||25000;
   const box=cellBoundsForRes(lat,lon,resM);
@@ -900,69 +1016,93 @@ async function fetchProspects(lat,lon,whereKey,opts){
   const where=t(WHERE_LBL[whereKey]||'here');
   const pr=toPopup?spEl:document.getElementById('prospects'); if(!pr) return;   // popup closed -> nothing to fill
   const msg=s=>toPopup?'<div class="popsec">'+s+'</div>':'<div class="hd">'+s+'</div>';   // .hd is dark-on-dark (sidebar); .popsec reads on the light popup
+  const note=s=>(toPopup?'<div class="popcap">':'<div style="margin-top:8px;font-size:10.5px;color:var(--mut);line-height:1.35">')+s+'</div>';
   if(!toPopup) pr.dataset.idle='0';
   pr.innerHTML=toPopup?'<div class="popsec">'+t('pop_rare_hd')+'</div><div class="popcap">'+t('prospects_lookup')+'</div>':msg(t('prospects_lookup'));
   if(toPopup) fetchGapTree(lat,lon,gapsEl,resM);   // the coverage-by-group tree only lives in the popup now
   const T_here=n=>t('here_count',n),T_near=n=>t('near_count',n);
   const L_rare=t('rare'),L_new=t('new_here'),L_notHere=t('not_here_tag');
-  const ic=ICONIC[state.taxon]||'';
-  const q=(b)=>`https://api.inaturalist.org/v1/observations/species_counts?swlat=${b.swlat}&nelat=${b.nelat}&swlng=${b.swlng}&nelng=${b.nelng}&quality_grade=research&taxon_geoprivacy=open&threatened=false&per_page=500&order_by=count`+(ic?`&iconic_taxa=${ic}`:'')+inatLocale();
+  const ic=ICONIC[taxon]||'',locale=inatLocale();
+  const q=geo=>'https://api.inaturalist.org/v1/observations/species_counts?'+Object.entries(geo).map(([k,v])=>k+'='+v).join('&')+
+    '&quality_grade=research&geoprivacy=open&taxon_geoprivacy=open&threatened=false&per_page=500&order_by=count'+(ic?`&iconic_taxa=${ic}`:'')+locale;
   const mxP=surfaceFilter(lat,lon,resM);   // in flight alongside the cell query; only the neighbourhood call waits on it
   try{
     const j=await jget(q(box));
-    if(myseq!==prospectSeq)return;
-    const total=j.total_results||0;
-    // Issue #48: rank by RECORDING VALUE, not global iNaturalist popularity. We always pull the ~40 km
+    if(!current())return;
+    const localRows=j&&Array.isArray(j.results)?j.results:[];
+    const totalKnown=j&&Array.isArray(j.results)&&Number.isInteger(j.total_results)&&j.total_results>=localRows.length;
+    const total=totalKnown?j.total_results:localRows.length;
+    const complete=completeSpeciesCounts(j);
+    const caveat=note(t('inat_caveat'));
+    // Issue #48: rank by RECORDING VALUE, not global iNaturalist popularity. We always pull the 40 km
     // neighbourhood so every candidate carries a regional count, which lets us prefer (a) species present
     // nearby but not yet in this cell (a new-to-cell record adds the most) and (b) species genuinely
     // uncommon *around here* (each record is more informative) — instead of sorting by global
     // observations_count, which is photo popularity, not value. Best-effort: if the neighbourhood call
     // fails, reg falls back to the local count and the ranking degrades to a within-cell order.
-    const cell=(j.results||[]).filter(r=>r.count>=2 && r.taxon && r.taxon.default_photo && !DOMESTIC.has(r.taxon.name));
-    const k=await jget(q({swlat:lat-0.5,nelat:lat+0.5,swlng:lon-0.5,nelng:lon+0.5})+(await mxP)).catch(()=>null);
-    if(myseq!==prospectSeq)return;
-    const reg={}; ((k&&k.results)||[]).forEach(r=>{if(r.taxon)reg[r.taxon.id]=r.count;});
-    const have=new Set(cell.map(r=>r.taxon.id));
-    // new-to-cell: present in the ~40 km neighbourhood but not recorded in the cell itself
-    const nearbyOnly=((k&&k.results)||[]).filter(r=>r.taxon&&r.taxon.default_photo&&r.count>=3&&!have.has(r.taxon.id)&&!DOMESTIC.has(r.taxon.name))
-      .map(r=>({count:0,taxon:r.taxon,_here:false,reg:r.count}));
-    let res=cell.map(r=>({count:r.count,taxon:r.taxon,_here:true,reg:Math.max(r.count,reg[r.taxon.id]||0)})).concat(nearbyOnly);
+    const recorded=localRows.filter(r=>r&&r.taxon&&Number.isInteger(r.count)&&r.count>0&&Number.isInteger(r.taxon.id)&&r.taxon.id>0);
+    const have=new Set();   // a subspecies record also establishes its parent species' presence
+    recorded.forEach(r=>{have.add(r.taxon.id);if(Array.isArray(r.taxon.ancestor_ids))r.taxon.ancestor_ids.forEach(id=>{if(Number.isInteger(id)&&id>0)have.add(id);});});
+    const cell=recorded.filter(r=>r.count>=2 && r.taxon.default_photo && !DOMESTIC.has(r.taxon.name));
+    const mx=(await mxP);if(!current())return;
+    const k=await jget(q({lat:lat,lng:lon,radius:40})+mx).catch(()=>null);
+    if(!current())return;
+    const regionalRows=k&&Array.isArray(k.results)?k.results:[];
+    const reg={};regionalRows.forEach(r=>{if(r&&r.taxon&&Number.isInteger(r.taxon.id)&&r.taxon.id>0&&Number.isInteger(r.count)&&r.count>0)reg[r.taxon.id]=r.count;});
+    // Keep the rarest-first species candidates bounded and unique. A filtered local request can
+    // verify these candidates even when the unfiltered local list has more than one page.
+    const candidateIds=new Set();
+    const candidates=regionalRows.filter(r=>r&&r.taxon&&Number.isInteger(r.taxon.id)&&r.taxon.id>0&&
+      r.taxon.rank==='species'&&r.taxon.default_photo&&Number.isInteger(r.count)&&r.count>=3&&!have.has(r.taxon.id)&&
+      !DOMESTIC.has(r.taxon.name)&&(r.taxon.observations_count||0)>40).sort((a,b)=>a.count-b.count)
+      .filter(r=>{if(candidateIds.has(r.taxon.id))return false;candidateIds.add(r.taxon.id);return true;}).slice(0,8);
+    let absent=complete?candidates:[];
+    if(!complete&&candidates.length){
+      if(!current())return;
+      const check=await jget(q(box)+'&taxon_id='+candidates.map(r=>r.taxon.id).join(',')+'&page=1',9000,1).catch(()=>null);
+      if(!current())return;
+      absent=checkedCandidateAbsences(candidates,check);
+    }
+    const nearbyOnly=absent
+      .map(r=>({count:0,taxon:r.taxon,_here:false,reg:r.count,_near:r.count}));
+    const cap=complete?'':note(t(nearbyOnly.length?'prospects_checked_cap':'prospects_capped'));
+    let res=cell.map(r=>({count:r.count,taxon:r.taxon,_here:true,reg:Math.max(r.count,reg[r.taxon.id]||0),_near:reg[r.taxon.id]||null})).concat(nearbyOnly);
     const nearby=nearbyOnly.length>0;
-    if(!res.length){pr.innerHTML=msg(t('prospects_none'));return;}
     res=res.filter(r=>(r.taxon.observations_count||0)>40);                         // drop unverifiable global one-offs (data quality, not the ranking signal)
+    if(!res.length){pr.innerHTML=msg(t(complete&&total===0?'prospects_none':'prospects_filtered'))+cap+caveat;return;}
     // lexicographic priority: (1) new-to-cell before already-here; (2) bigger local gap first
     // (lower local/regional share); (3) tie-break by regional scarcity (fewer nearby records).
     const share=r=>r._here?(r.count/Math.max(1,r.reg)):0;
     res.sort((a,b)=>((a._here?1:0)-(b._here?1:0))||(share(a)-share(b))||(a.reg-b.reg));
-    const badge=r=>r._here?(r.reg<=3?`<span class="rare">${L_rare}</span>`:''):`<span class="first">${L_new}</span>`;
-    const ctline=r=>`${r._here?T_here(r.count):L_notHere} · ${T_near(r.reg)}`;
+    const badge=r=>r._here?(r._near!==null&&r._near<=3?`<span class="rare">${L_rare}</span>`:''):`<span class="first">${L_new}</span>`;
+    const ctline=r=>`${r._here?T_here(r.count):L_notHere}${r._near===null?'':' · '+T_near(r._near)}`;
     if(toPopup){
       // Issue #48: the four highest-priority species to record here, side by side, no horizontal scroll.
-      const pbadge=r=>r._here?(r.reg<=3?`<span class="bdg rare">${L_rare}</span>`:''):`<span class="bdg new">${L_new}</span>`;
+      const pbadge=r=>r._here?(r._near!==null&&r._near<=3?`<span class="bdg rare">${L_rare}</span>`:''):`<span class="bdg new">${L_new}</span>`;
       pr.innerHTML='<div class="popsec">'+t('pop_rare_hd')+'</div><div class="popgrid">'+res.slice(0,4).map(r=>{const tx=r.taxon;
-        return `<a href="https://www.inaturalist.org/taxa/${tx.id}" target="_blank" rel="noopener" title="${esc(tx.name)}"><img src="${safeImg(tx.default_photo.square_url)}" loading="lazy" alt="">${pbadge(r)}<div class="nm">${esc(tx.preferred_common_name||tx.name)}</div><div class="ct">${ctline(r)}</div></a>`;}).join('')+'</div>';
+        return `<a href="https://www.inaturalist.org/taxa/${tx.id}" target="_blank" rel="noopener" title="${esc(tx.name)}"><img src="${safeImg(tx.default_photo.square_url)}" loading="lazy" alt="">${pbadge(r)}<div class="nm">${esc(tx.preferred_common_name||tx.name)}</div><div class="ct">${ctline(r)}</div></a>`;}).join('')+'</div>'+cap+caveat;
       return;
     }
     res=res.slice(0,6);
     const ex=`https://www.inaturalist.org/observations?subview=map&swlat=${lat-HH}&nelat=${lat+HH}&swlng=${lon-HH}&nelng=${lon+HH}&quality_grade=research`;
-    pr.innerHTML=`<div class="hd">${t('prospects_hd','<b style="color:var(--ink)">'+(where||t('here'))+'</b>',total.toLocaleString(LANG==='fr'?'fr-CA':'en-CA'),nearby)}</div>`+
+    pr.innerHTML=`<div class="hd">${t('prospects_hd','<b style="color:var(--ink)">'+(where||t('here'))+'</b>',(totalKnown?'':'≥')+total.toLocaleString(LANG==='fr'?'fr-CA':'en-CA'),nearby)}</div>`+
       '<div class="prospects">'+res.map(r=>{const tx=r.taxon;
         return `<a class="sp" href="https://www.inaturalist.org/taxa/${tx.id}" target="_blank" rel="noopener" title="${esc(tx.name)}"><img src="${safeImg(tx.default_photo.square_url)}" loading="lazy" alt=""><div class="nm">${esc(tx.preferred_common_name||tx.name)}${badge(r)}</div><div class="ct">${ctline(r)}</div></a>`;}).join('')+'</div>'+
-      `<div style="margin-top:8px;font-size:10.5px;color:var(--mut);line-height:1.35">${t('inat_caveat')}</div>`+
+      cap+caveat+
       `<div style="margin-top:7px;font-size:11px"><a href="${ex}" target="_blank" rel="noopener" style="color:var(--acc)">${t('explore_all')}</a> &nbsp;·&nbsp; <a href="https://www.inaturalist.org/observations/new" target="_blank" rel="noopener" style="color:var(--gd)">${t('log_sighting')}</a> &nbsp;·&nbsp; <a href="https://www.inaturalist.org/projects/${state.project}" target="_blank" rel="noopener" style="color:var(--mut)">${t('for_challenge')}</a></div>`;
   }catch(e){
     // Only the primary cell query (and any other un-isolated step) can land here -- the widening
     // top-up swallows its own transient errors, so a single tail abort or 429 no longer blanks an
     // otherwise-loadable cell. This IS a genuine load failure (not emptiness: empty cells render
     // prospects_none above), so honour the stale-seq guard and offer a retry.
-    if(myseq!==prospectSeq)return;
+    if(!current())return;
     pr.innerHTML=msg(t('prospects_err')+' <a href="#" data-prospect-retry="1" style="color:var(--acc)">'+t('retry')+'</a>');
     const rl=pr.querySelector('[data-prospect-retry]'); if(rl)rl.onclick=ev=>{ev.preventDefault();fetchProspects(lat,lon,whereKey,opts);};
   }
 }
 const showProspects=debounce((lat,lon)=>fetchProspects(lat,lon,'around_start'),500);
 // Per-cell taxonomic-coverage tree: distinct research-grade iNat species recorded in this cell
-// per iconic group vs the ~50km neighbourhood. A group rich nearby but sparse here = a real
+// per iconic group vs the 40 km neighbourhood. A group rich nearby but sparse here = a real
 // recording gap. iconic_taxon_name == the app's group keys, so rows switch the map on click.
 let gapSeq=0;
 const GT_CACHE={};   // computed rows keyed by cell -- taxon-independent, so re-taps and taxon switches are instant and re-fire nothing
@@ -984,7 +1124,8 @@ function paintGapTree(el,rows,dense){
   el.querySelectorAll('.gtrow').forEach(b=>b.onclick=()=>{const g=b.dataset.g;if(!FILES[g]||state.taxon===g)return;taxonSel.value=g;taxonSel.onchange();});
 }
 async function fetchGapTree(lat,lon,el,resM){
-  const myseq=++gapSeq;
+  const myseq=++gapSeq,taxon=state.taxon,lang=LANG;
+  const current=()=>myseq===gapSeq&&taxon===state.taxon&&lang===LANG;
   // `el` is the PERSISTENT popup element passed by exploreCell, not a getElementById lookup: Leaflet
   // rebuilds the popup content node during the autoPan/setView churn of a tap, so a queried node goes
   // stale mid-fetch and the on-screen popup keeps its loading text (issue #56).
@@ -992,36 +1133,28 @@ async function fetchGapTree(lat,lon,el,resM){
   const ck=gtkey(lat,lon)+'|'+String(resM||25000);
   if(GT_CACHE[ck]!==undefined){paintGapTree(el,GT_CACHE[ck],GT_DENSE[ck]);return;}
   el.innerHTML=gtHead()+'<div class="popcap">'+t('gaptree_lookup')+'</div>';
-  const R=0.5,GR=t('group'),groups=Object.keys(ICONIC);
+  const GR=t('group'),groups=Object.keys(ICONIC),locale=inatLocale();
   const inner=cellBoundsForRes(lat,lon,resM||25000);
   const box=(b)=>`swlat=${b.swlat}&nelat=${b.nelat}&swlng=${b.swlng}&nelng=${b.nelng}`;
-  const base='https://api.inaturalist.org/v1/observations/species_counts?quality_grade=research&taxon_geoprivacy=open&threatened=false&order_by=count';
+  const base='https://api.inaturalist.org/v1/observations/species_counts?quality_grade=research&geoprivacy=open&taxon_geoprivacy=open&threatened=false&order_by=count';
   try{
-    // Two calls total (issue #56): the cell numerator and the neighbourhood denominator are each ONE
-    // species_counts page aggregated by group client-side. The old version made one total_results call
-    // per iconic group (~10 extra requests on EVERY tap), which flooded iNaturalist's per-IP rate limit
-    // during normal browsing and left the popup stuck on "Reading taxonomic coverage…". The neighbourhood
-    // count is now a top-500 sample per box rather than exact per-group totals -- approximate for very
-    // rich areas (a dense group can cap at its share of 500), fine as a coverage heuristic and revisitable
-    // when the goal calculations are finalised (#49). Each leg swallows its own error.
-    let cellFail=false,nbFail=false;
-    const cellP=jget(`${base}&${box(inner)}&per_page=500`).catch(()=>{cellFail=true;return{results:[]};});
-    const nbP=surfaceFilter(lat,lon,resM||25000).then(mx=>jget(`${base}&swlat=${lat-R}&nelat=${lat+R}&swlng=${lon-R}&nelng=${lon+R}&per_page=500${mx}`)).catch(()=>{nbFail=true;return{results:[]};});
+    // Keep two calls total (issue #56): per-group requests flooded iNaturalist's per-IP rate limit.
+    // Both areas need complete species lists. An omitted group in a capped page is unknown, not zero.
+    const cellP=jget(`${base}&${box(inner)}&per_page=500${locale}`);
+    const nbP=surfaceFilter(lat,lon,resM||25000).then(mx=>current()?jget(`${base}&lat=${lat}&lng=${lon}&radius=40&per_page=500${mx}${locale}`):null);
     const [cj,nj]=await Promise.all([cellP,nbP]);
-    if(myseq!==gapSeq)return;
-    // total outage (both calls failed) -> "tap again", not a misleading "too few records here".
-    if(cellFail&&nbFail){paintGapTree(el,null);return;}
+    if(!current())return;
+    if(!completeSpeciesCounts(cj)||!completeSpeciesCounts(nj)){el.innerHTML=gtHead()+'<div class="popcap">'+t('gaptree_partial')+'</div>';return;}
     const cell={};(cj.results||[]).forEach(r=>{const g=r.taxon&&r.taxon.iconic_taxon_name;if(g)cell[g]=(cell[g]||0)+1;});
     const nbhd={};(nj.results||[]).forEach(r=>{const g=r.taxon&&r.taxon.iconic_taxon_name;if(g)nbhd[g]=(nbhd[g]||0)+1;});
     const elig=groups.filter(g=>nbhd[g]>=3&&GR[g]);
     let sumC=0,sumN=0;elig.forEach(g=>{sumC+=Math.min(cell[g]||0,nbhd[g]);sumN+=nbhd[g];});
     const rate=sumC>0?sumC/sumN:0;   // this cell's overall coverage rate; normalise so an avg group sits at 1
     const rows=elig.map(g=>{const c=Math.min(cell[g]||0,nbhd[g]);return{g,c,n:nbhd[g],cov:rate>0?(c/nbhd[g])/rate:0};}).sort((a,b)=>a.cov-b.cov);
-    if(myseq!==gapSeq)return;
-    const dense=(cj.results||[]).length>=500||(nj.results||[]).length>=500;
-    GT_CACHE[ck]=rows; GT_DENSE[ck]=dense;
-    paintGapTree(el,rows,dense);
-  }catch(e){if(myseq===gapSeq)paintGapTree(el,null);}   // do not cache failures -- next tap retries
+    if(!current())return;
+    GT_CACHE[ck]=rows; GT_DENSE[ck]=false;
+    paintGapTree(el,rows,false);
+  }catch(e){if(current())paintGapTree(el,null);}   // do not cache failures -- next tap retries
 }
 
 const RAMP=[[255,255,217],[237,248,177],[199,233,180],[127,205,187],[65,182,196],[29,145,192],[34,94,168],[37,52,148],[8,29,88]]; // YlGnBu (ColorBrewer, CVD-safe): pale yellow=well-sampled, dark navy=biggest gaps
@@ -1070,11 +1203,45 @@ map.on('load',()=>{
 });
 // Esc / map-click popup close -> deselect (issue #16). MapLibre has no global popup events, so each popup we
 // open is wired to onPopupOpen/onPopupClose and tracked in curPopup; map clicks auto-close (closeOnClick).
-let _ppf=null,curPopup=null;
-function onPopupOpen(){_ppf=document.activeElement;}
-function onPopupClose(){try{if(_ppf&&_ppf.focus)_ppf.focus();}catch(e){}_ppf=null;curPopup=null;
-  if(!_reselect&&state.view==='explore'&&(destMarker||destCell))clearSelection();}
-function wirePopup(p){p.on('open',onPopupOpen);p.on('close',onPopupClose);curPopup=p;return p;}
+let curPopup=null;
+function localizeMapControls(){
+  for(const [selector,key] of [['.maplibregl-ctrl-zoom-in','aria_zoom_in'],['.maplibregl-ctrl-zoom-out','aria_zoom_out'],
+    ['.maplibregl-ctrl-attrib-button','aria_attribution'],['.maplibregl-popup-close-button','aria_popup_close']]){
+    document.querySelectorAll(selector).forEach(el=>{el.setAttribute('aria-label',t(key));el.title=t(key);});
+  }
+}
+function popupFocusOrigin(){
+  const element=document.activeElement,row=element&&element.closest&&element.closest('#celltable tr[data-la]');
+  return {element:element,row:row?{lat:row.dataset.la,lon:row.dataset.lo}:null};
+}
+function focusPopupTarget(el){
+  if(!el||!el.isConnected||typeof el.focus!=='function'||!el.getClientRects().length)return false;
+  const style=getComputedStyle(el);if(style.visibility==='hidden'||style.display==='none')return false;
+  el.focus();return document.activeElement===el;
+}
+function restorePopupFocus(origin){
+  if(focusPopupTarget(origin.element))return;
+  const table=document.getElementById('celltable');
+  if(origin.row&&table){
+    const row=Array.from(table.querySelectorAll('tr[data-la]')).find(el=>el.dataset.la===origin.row.lat&&el.dataset.lo===origin.row.lon);
+    if(focusPopupTarget(row))return;
+  }
+  focusPopupTarget(map.getCanvas());
+}
+function onPopupOpen(p){curPopup=p;localizeMapControls();}
+function onPopupClose(p,origin){
+  if(curPopup!==p)return;
+  curPopup=null;
+  if(_reselect)return;   // a replacement popup owns focus; do not jump back to the old row
+  const active=document.activeElement,root=p.getElement();
+  const restore=!active||active===document.body||(root&&root.contains(active));
+  if(state.view==='explore'&&(destMarker||destCell))clearSelection();
+  if(restore)restorePopupFocus(origin);
+}
+function wirePopup(p){
+  const origin=popupFocusOrigin();   // capture before MapLibre moves focus into the popup
+  p.on('open',()=>onPopupOpen(p));p.on('close',()=>onPopupClose(p,origin));curPopup=p;return p;
+}
 function closePopup(){if(curPopup)curPopup.remove();}   // remove() fires 'close' -> onPopupClose
 function setCellState(i,fc,op){if(_mapLoaded&&map.getSource('cells'))map.setFeatureState({source:'cells',id:i},{fc:fc,op:op});}
 function lngLatBounds(latlngs){const b=new maplibregl.LngLatBounds();latlngs.forEach(p=>b.extend([p[1],p[0]]));return b;}
@@ -1106,6 +1273,7 @@ function setBase(name){
 }
 
 let markers=[], routeLine=null, destMarker=null, destCell=null, lastFit=null, lastScored=null, planned=false, lastDest=null;
+var _committedTaxon=null,_bootTaxon=null;
 const VAN=[49.28,-123.12];
 const w0={}; OBJ.forEach((o,i)=>w0[o.key]=DEFAULT[i]);
 const state={taxon:(FILES["All biodiversity"]?"All biodiversity":Object.keys(FILES)[0]), w:w0, start:VAN.slice(), budget:5, maxLeg:0, minRatio:0.5, unit:'Hours', lowc:false, mode:'Walk', modeSet:false, startProsp:false, view:'explore', startSet:false, planMode:'auto', project:'blitz-the-gap-2026-general'};
@@ -1179,19 +1347,35 @@ function buildMarkers(){
   const rs=rows();
   // The lattice geometry is identical across taxa, so after the first build a taxon switch only swaps each
   // cell's data row + restyles via feature-state -- the 23k-feature source is never reparsed (setData runs once).
-  if(markers.length===rs.length){markers.forEach((m,i)=>m.r=rs[i]);recolour();return;}
+  if(markers.length===rs.length){markers.forEach((m,i)=>m.r=rs[i]);recolour();if(Array.isArray(DATA[state.taxon]))_committedTaxon=state.taxon;return;}
   const feats=rs.map((r,i)=>({type:'Feature',id:i,properties:{},geometry:{type:'Polygon',coordinates:[cellPoly(r[0],r[1])]}}));
   map.getSource('cells').setData({type:'FeatureCollection',features:feats});
   markers=rs.map((r,i)=>({r:r,i:i,t:0}));   // r[0],r[1] invariant across taxa; i = stable feature id for setFeatureState
   M25=new Map();markers.forEach(m=>{const s=snapToLattice(m.r[0],m.r[1],25000);if(s)M25.set(latKey(s),m);});
   recolour();
+  if(Array.isArray(DATA[state.taxon]))_committedTaxon=state.taxon;
 }
 function renderCellTable(){
   const el=document.getElementById('celltable');if(!el)return;   // sr-only region: always populated for screen-reader users (issue #20 removed the visible list)
-  const top=markers.map(m=>({r:m.r,t:m.t||0})).sort((a,b)=>b.t-a.t).slice(0,40);
+  if(overlay!=='priority'){el.innerHTML='<p>'+t('rank_layer_unavailable')+'</p>';return;}
+  if(caOnlyActive()&&!US_CELLS){el.innerHTML='<p>'+t(_usFailed?'rank_mask_unavailable':'rank_mask_loading')+'</p>';return;}
+  const top=eligibleMarkers().filter(m=>Number.isFinite(m.t)).map(m=>({r:m.r,t:m.t})).sort((a,b)=>b.t-a.t).slice(0,40);
+  if(!top.length){el.innerHTML='<p>'+t('rank_no_cells')+'</p>';return;}
   el.innerHTML='<table><caption>'+t('table_caption')+'</caption><thead><tr><th scope="col">'+t('table_rank')+'</th><th scope="col">'+t('table_latlon')+'</th><th scope="col">'+t('table_score')+'</th></tr></thead><tbody>'+
     top.map((o,i)=>`<tr tabindex="0" role="button" data-la="${o.r[0]}" data-lo="${o.r[1]}" aria-label="${t('rank_aria',i+1,o.r[0].toFixed(2),o.r[1].toFixed(2),(o.t*100|0))}"><td>${i+1}</td><td>${o.r[0].toFixed(2)}, ${o.r[1].toFixed(2)}</td><td>${(o.t*100|0)}/100</td></tr>`).join('')+'</tbody></table>';
   el.querySelectorAll('tr[data-la]').forEach(tr=>{const go=()=>{const la=+tr.dataset.la,lo=+tr.dataset.lo;map.jumpTo({center:[lo,la],zoom:8});state.view==='plan'?planTap(la,lo):exploreCell(la,lo);};tr.onclick=go;tr.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}};});
+}
+function priorityPercentiles(values){
+  const ord=values.map((v,i)=>[v,i]).sort((a,b)=>a[0]-b[0]),rank=new Array(values.length).fill(0);
+  // Empty, singleton and constant populations have no relative priority to display.
+  if(ord.length<2||ord[0][0]===ord[ord.length-1][0])return rank;
+  for(let lo=0;lo<ord.length;){
+    let hi=lo+1;while(hi<ord.length&&ord[hi][0]===ord[lo][0])hi++;
+    const pct=(lo+hi-1)/(2*(ord.length-1));
+    for(let k=lo;k<hi;k++)rank[ord[k][1]]=pct;
+    lo=hi;
+  }
+  return rank;
 }
 function recolour(){
   if(geActive()){
@@ -1210,14 +1394,12 @@ function recolour(){
   // popup impact and the accessible Top-cells list, neither of
   // which should change as you pan. Viewport-relative ranking (when on) recolours ONLY the fill so
   // local gaps read at a glance, without redefining what a cell's score means (#1).
-  const vals=markers.map(m=>impact(m.r));
+  const eligible=eligibleMarkers(),vals=eligible.map(m=>impact(m.r));
   // Percentile-rank, not min-max: a few Arctic super-gaps (max discover + rare climate)
   // otherwise dominate the scale and crush every reachable cell to ~0/100. Rank spreads it evenly.
-  const ord=vals.map((v,i)=>[v,i]).sort((a,b)=>a[0]-b[0]);const rank=new Array(vals.length);ord.forEach((p,k)=>rank[p[1]]=k);const n1=Math.max(vals.length-1,1);
-  // If the chosen goal mix has no spatial signal (every cell scores the same), rank would paint
-  // a fake index gradient -- show a flat map instead.
-  const flat=ord.length>0&&(ord[ord.length-1][0]-ord[0][0])<1e-9;   // guard empty markers (recolour runs during init before data loads)
-  markers.forEach((m,i)=>{m.t=flat?0:rank[i]/n1;});   // national score, stable across pan/zoom
+  const rank=priorityPercentiles(vals);
+  markers.forEach(m=>{m.t=null;});   // foreign cells and an unavailable mask have no national rank
+  eligible.forEach((m,i)=>{m.t=rank[i];});   // exact ties share their mean percentile, stable across pan/zoom
   // m.t is the stable national percentile; the baked values grids carry the colour (setGridFill
   // paints them onto the cell polygons). With "Rescale colours to the current view" on, moveend
   // restretches that FILL against the visible cells -- m.t is untouched either way. The interaction
@@ -1258,18 +1440,23 @@ function updateLegend(){
 }
 
 // controls
+function refreshProspectGroup(){prospectSeq++;const p=_lastProspect;if(p)fetchProspects(p.lat,p.lon,p.whereKey,p);}
 const taxonSel=document.getElementById('taxon');
+let _taxonSeq=0,_taxonPending=null;
 function rebuildTaxonOptions(){const cur=state.taxon;taxonSel.innerHTML='';
   Object.keys(FILES).forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=groupName(k);taxonSel.appendChild(o);});
   taxonSel.value=cur;}
 rebuildTaxonOptions();
-taxonSel.onchange=()=>{const prev=state.taxon;state.taxon=taxonSel.value;
+taxonSel.onchange=()=>{const seq=++_taxonSeq;_shareAction++;const prev=state.taxon,wanted=taxonSel.value;state.taxon=wanted;
   const pr=document.getElementById('prospects');if(pr){pr.dataset.idle='0';pr.innerHTML='<div class="hd">'+t('cells_loading',groupName(state.taxon))+'</div>';}
   if(typeof showLoading==='function')showLoading(true);
   setCoverage();   // the density overlay needs only state.taxon, so its tiles load alongside the group's cells
-  loadGroup(state.taxon).then(()=>{buildMarkers();if(document.getElementById('insights').style.display==='block')renderInsights();})
-    .catch(()=>{state.taxon=prev;taxonSel.value=prev;setCoverage();if(pr){pr.dataset.idle='1';pr.innerHTML='<div class="hd" style="margin-top:10px">'+t('prospects_idle')+'</div>';}})   // load failed: revert dropdown, don't leave a half-switched map
-    .finally(()=>{if(typeof showLoading==='function')showLoading(false);});};
+  syncSharedCellUrl();
+  refreshProspectGroup();
+  const pending=loadGroup(wanted).then(()=>{if(seq!==_taxonSeq)return;buildMarkers();if(document.getElementById('insights').style.display==='block')renderInsights();})
+    .catch(()=>{if(seq!==_taxonSeq)return;const fallback=_committedTaxon||_bootTaxon||prev;state.taxon=fallback;taxonSel.value=fallback;setCoverage();if(Array.isArray(DATA[fallback]))buildMarkers();syncSharedCellUrl();if(pr){pr.dataset.idle='1';pr.innerHTML='<div class="hd" style="margin-top:10px">'+t('prospects_idle')+'</div>';}refreshProspectGroup();})   // revert to rendered rows, not another pending request's group
+    .finally(()=>{if(seq===_taxonSeq&&typeof showLoading==='function')showLoading(false);});
+  _taxonPending={taxon:wanted,promise:pending};return pending;};
 
 function applyWeights(arr,name){OBJ.forEach((o,i)=>{state.w[o.key]=arr[i];});markPreset(name);recolour();updateLegendLabels();replan();}
 // Issue #20: criteria is a dropdown (was preset chips). Getting Even is one of the options;
@@ -1285,8 +1472,8 @@ function rebuildCriteria(){if(!critSel)return;const cur=critSel.value;critSel.in
 rebuildCriteria();
 function applyChallenge(p){const i=PRESETS.indexOf(p);window.__activePreset=i;
   applyWeights(p.w,presetName(i));state.project=p.proj;
-  const cb=document.getElementById('challengeBlurb');if(cb)cb.innerHTML=presetBlurb(i)+' <a href="https://www.inaturalist.org/projects/'+p.proj+'" target="_blank" rel="noopener" style="color:var(--acc);white-space:nowrap">'+t('join')+'</a>';}
-if(critSel)critSel.onchange=()=>{const v=critSel.value;
+  renderGoalContext();syncSharedCellUrl();}
+if(critSel)critSel.onchange=()=>{_shareAction++;const v=critSel.value;
   if(v==='ge'){
     if(state.taxon!=='All biodiversity'&&FILES['All biodiversity']){taxonSel.value='All biodiversity';taxonSel.onchange();}
     setOverlay('gettingeven');
@@ -1328,9 +1515,9 @@ const bmSel=document.getElementById('basemap');
 const MAP_STYLES=[['Standard','style_standard'],['Satellite','style_satellite'],['Terrain','style_terrain'],['__inat__','style_inat_density']];
 function rebuildStyles(){const cur=bmSel.value||'Standard';bmSel.innerHTML='';MAP_STYLES.forEach(([v,k])=>{const o=document.createElement('option');o.value=v;o.textContent=t(k);bmSel.appendChild(o);});bmSel.value=cur;}
 rebuildStyles();
-bmSel.onchange=()=>{const v=bmSel.value;
+bmSel.onchange=()=>{_shareAction++;const v=bmSel.value;
   if(v==='__inat__'){setBase('Light');setOverlay('coverage');}
-  else{setBase(v);if(covOn())setOverlay('priority');}};
+  else{setBase(v);if(covOn())setOverlay('priority');}syncSharedCellUrl();};
 // dec25 100 m density is served as local raster PMTiles (issue #10): the magma colormap
 // (rescale 0,10) is baked into transparent WEBP tiles so the overlay sharpens as you zoom
 // to ~300 m, where the 1 km COG via TiTiler stayed coarse.
@@ -1648,7 +1835,7 @@ rebuildModes();
 // (same predicate planTrip filters on) so it's instant and needs no routing call.
 function estOneH(km,mode){return (km*ROAD_FACTOR)/MODES[mode].kmh;}
 function greenestForAnyGap(){const [sl,so]=state.start,budget=state.budget,cap=state.maxLeg>0?state.maxLeg:Infinity;
-  const kms=markers.filter(m=>impact(m.r)>0).map(m=>haversine(sl,so,m.r[0],m.r[1]));
+  const kms=eligibleMarkers().filter(m=>impact(m.r)>0).map(m=>haversine(sl,so,m.r[0],m.r[1]));
   for(const mn of Object.keys(MODES))if(kms.some(km=>{const e=estOneH(km,mn);return 2*e<=budget-MIN_FIELD_H&&e<=cap*1.5;}))return mn;
   return 'Drive';}   // nothing greener reaches a gap in budget — driving is the honest fallback
 function greenestForCell(km){const budget=state.budget;
@@ -1688,10 +1875,12 @@ function ipLoc(ok,fail){fetchT('https://ipapi.co/json/',6000).then(r=>r.json()).
 // the trip planner
 document.getElementById('plan').onclick=async()=>{await planTrip();const t=document.getElementById('trips');if(t)t.scrollIntoView({behavior:'smooth',block:'start'});};
 async function planTrip(){
+  if(caOnlyActive()&&!US_CELLS){await loadUS();recolour();}
   planned=true;state.planMode='auto';
   if(!state.modeSet)applyAutoMode(greenestForAnyGap());
   const trips=document.getElementById('trips');const [slat,slon]=state.start,budget=state.budget,M=MODES[state.mode];
-  const all=markers.map(m=>{const km=haversine(slat,slon,m.r[0],m.r[1]);return {m,km,estOne:(km*ROAD_FACTOR)/M.kmh,imp:impact(m.r)};});
+  const all=eligibleMarkers().map(m=>{const km=haversine(slat,slon,m.r[0],m.r[1]);return {m,km,estOne:(km*ROAD_FACTOR)/M.kmh,imp:impact(m.r)};});
+  if(!all.length){trips.textContent=t(_usFailed?'rank_mask_unavailable':'rank_no_cells');return;}
   // Pick candidates BEFORE we know routability, so blend two signals: the highest-impact
   // cells AND the nearest cells. Picking by impact alone can hand back 8 cells that all
   // sit across water/mountains (OSRM can't reach them) and leave nothing to show.
@@ -1722,8 +1911,9 @@ async function planTrip(){
 // Route to a destination the user tapped (vs planTrip, which auto-suggests the best gaps).
 // Snaps to the gap cell under the tap, routes from the (fixed) start, and shows it.
 async function setDest(lat,lon){
+  if(caOnlyActive()&&!US_CELLS){await loadUS();recolour();}
   planned=true;state.planMode='dest';lastDest=[lat,lon];
-  let best=markers[0],bd=1e9;for(const m of markers){const d=Math.abs(m.r[0]-lat)+Math.abs(m.r[1]-lon);if(d<bd){bd=d;best=m;}}
+  let best=null,bd=1e9;for(const m of eligibleMarkers()){const d=Math.abs(m.r[0]-lat)+Math.abs(m.r[1]-lon);if(d<bd){bd=d;best=m;}}
   if(!best)return;
   const [slat,slon]=state.start,budget=state.budget;
   const km=haversine(slat,slon,best.r[0],best.r[1]);
@@ -1788,12 +1978,12 @@ function addRoute(coords,paint){if(!_mapLoaded)return;const id='rt'+routeIds.len
   map.addLayer({id:id,type:'line',source:id,layout:{'line-cap':'round','line-join':'round'},paint:p});routeIds.push(id);routeLine=true;}
 function clearRouteLines(){if(_mapLoaded)routeIds.forEach(id=>{if(map.getLayer(id))map.removeLayer(id);if(map.getSource(id))map.removeSource(id);});routeIds=[];routeLine=null;}
 function clearRoute(){clearRouteLines();removeDestCell();const dm=destMarker;destMarker=null;destCell=null;routeLine=null;if(dm)dm.remove();}
-// Issue #16: deselect a cell and return to the "nothing selected" home state without editing the URL.
+// Issue #16: deselect the cell while preserving its group, goal and layer context in the URL.
 let _reselect=false;   // true only while exploreCell swaps one selection for another (suppress the close-driven clear)
-function clearSelection(){clearRoute();
+function clearSelection(){_selectionSeq++;clearRoute();
   const pr=document.getElementById('prospects');if(pr){pr.dataset.idle='1';pr.innerHTML='<div class="hd" style="margin-top:10px" data-i18n="prospects_idle">'+t('prospects_idle')+'</div>';}
   _lastProspect=null; _popScoreEl=null;   // the cell popup (which held the coverage tree + species) is gone; nothing for setLang to re-render
-  try{history.replaceState(null,'',location.pathname);}catch(e){}}
+  _sharedCell=null;syncSharedCellUrl(true);}
 function openDestPopup(lat,lon,html){const p=wirePopup(new maplibregl.Popup({offset:30,maxWidth:'340px'}).setHTML(html));
   destMarker=destMarkerAt(lat,lon).addTo(map);destMarker.setPopup(p);destMarker.togglePopup();}
 function selectTrip(o){clearRoute();const dest=[o.m.r[0],o.m.r[1]];
@@ -1873,6 +2063,71 @@ async function renderInsights(){
   document.getElementById('idis').innerHTML=t('ins_spearman',objName(gi),objName(gj),dis,verdict);
 }
 // Explore mode: tap a cell to see its score + what to record there (no trip planning).
+var _sharedCell=null,_shareContext=false,_shareAction=0,_selectionSeq=0;   // var: controls can refresh the URL during initial setup
+function parseSharedContext(search){
+  const u=new URLSearchParams(search),g=u.get('g'),v=u.get('goal'),r=u.get('res');
+  const taxon=Object.hasOwn(FILES,g)?g:(FILES['All biodiversity']?'All biodiversity':Object.keys(FILES)[0]);
+  const goal=v==='ge'||v==='climate'?v:(/^(0|[1-9]\d*)$/.test(v||'')&&+v<PRESETS.length?v:'0');
+  const styles={standard:'Standard',satellite:'Satellite',terrain:'Terrain',density:'__inat__'},s=u.get('style');
+  const style=Object.hasOwn(styles,s)?styles[s]:'Standard';
+  const p=(u.get('at')||'').split(',');
+  const valid=p.length===2&&p.every(x=>x.trim()!==''&&Number.isFinite(+x))&&+p[0]>=BB.minlat&&+p[0]<=BB.maxlat&&+p[1]>=BB.minlon&&+p[1]<=BB.maxlon;
+  return{taxon,goal,style,linked:['at','g','res','goal','style'].some(k=>u.has(k)),cell:valid?{lat:+p[0],lon:+p[1],resM:r==='5000'?5000:25000}:null};
+}
+function sharedCellUrl(cell,taxon,goal,style,href){
+  const u=new URL(href),p=u.searchParams;
+  if(cell){p.set('at',cell.lat.toFixed(3)+','+cell.lon.toFixed(3));p.set('res',String(cell.resM));}
+  else{p.delete('at');p.delete('res');}
+  p.set('g',taxon);p.set('goal',goal);p.set('style',style);
+  return u.pathname+u.search+u.hash;
+}
+function syncSharedCellUrl(force){
+  if(!_shareContext&&!_sharedCell&&!force)return;
+  _shareContext=true;
+  const cs=document.getElementById('criteria'),sel=document.getElementById('basemap');
+  const v=cs&&cs.value,goal=geActive()?'ge':climateOn()?'climate':(covOn()&&v==='ge'||covOn()&&v==='climate'||/^(0|[1-9]\d*)$/.test(v||''))?v:String(window.__activePreset||0);
+  const style=covOn()?'density':((sel&&sel.value)==='__inat__'?'density':(sel&&sel.value||'Standard').toLowerCase());
+  try{history.replaceState(null,'',sharedCellUrl(_sharedCell,state.taxon,goal,style,location.href));}catch(e){}
+}
+async function restoreSharedCell(shared,action,loadedTaxon,selection){
+  const currentSelection=()=>selection===_selectionSeq;
+  if(!currentSelection())return;
+  if(!_mapLoaded)await new Promise(resolve=>whenMap(resolve));
+  if(!currentSelection())return;
+  let readyTaxon=loadedTaxon;
+  const latestGroup=async()=>{let changed=false;while(readyTaxon!==state.taxon){
+    const g=state.taxon,p=_taxonPending;await(p&&p.taxon===g?p.promise:loadGroup(g));
+    if(!currentSelection())return false;readyTaxon=g;changed=true;
+  }return changed;};
+  await latestGroup();
+  if(!currentSelection())return;
+  buildMarkers();setView('explore');
+  if(action===_shareAction){
+    critSel.value=shared.goal;
+    if(shared.goal!=='ge'&&shared.goal!=='climate')applyChallenge(PRESETS[+shared.goal]);
+    bmSel.value=shared.style;setBase(shared.style==='__inat__'?'Light':shared.style);
+    const kind=shared.style==='__inat__'?'coverage':shared.goal==='ge'?'gettingeven':shared.goal==='climate'?'climate':'priority';
+    await setOverlay(kind);
+    if(!currentSelection())return;
+  }
+  await loadUS();
+  if(!currentSelection())return;
+  const c=shared.cell;if(!c){if(shared.linked)syncSharedCellUrl(true);locateMe();return;}
+  let current;
+  do{current=_shareAction;const changed=await latestGroup();if(!currentSelection())return;
+    if(changed)buildMarkers();await _overlayReady;
+    if(!currentSelection())return;
+    if(current!==_shareAction)continue;
+    map.jumpTo({center:[c.lon,c.lat],zoom:c.resM===5000?TIER_SWITCH_Z+1:Math.min(7,TIER_SWITCH_Z-1)});
+    if(c.resM===5000&&!covOn()&&!climateOn()){
+      await refreshCells5();if(!currentSelection())return;if(current!==_shareAction)continue;
+      const s=snapToLattice(c.lat,c.lon,5000);
+      if(!s||!DRAWN5||!DRAWN5.has(latKey(s)))throw new Error('Shared 5 km cell is unavailable');
+    }
+  }while(current!==_shareAction);
+  if(!currentSelection())return;
+  if(!exploreCell(c.lat,c.lon))throw new Error('Shared cell is unavailable');
+}
 function exploreCell(lat,lon){
   if(!markers.length)return;   // map tapped before cell data loaded
   const resM=activeCellResM();
@@ -1884,16 +2139,17 @@ function exploreCell(lat,lon){
   // handler already guards direct cell taps, this covers taps on the bare map.
   const open=resM===5000&&DRAWN5?DRAWN5.has(latKey(snap)):!!best;
   if(!open||(best&&caOnlyActive()&&US_CELLS&&US_CELLS.has(gekey(best.r[0],best.r[1]))))return;
+  _selectionSeq++;   // a valid explicit selection supersedes a pending shared-link restoration
   _reselect=true;   // swapping selections: suppress the close-driven deselect until the new popup is open (issue #16)
   const dest=[snap.lat,snap.lon];clearRoute();
-  try{history.replaceState(null,'','?at='+dest[0].toFixed(3)+','+dest[1].toFixed(3)+'&g='+encodeURIComponent(state.taxon));}catch(e){}
+  _sharedCell={lat:dest[0],lon:dest[1],resM};syncSharedCellUrl();
   setDestCell(dest[0],dest[1],resM);
   // Issue #44/#56: the popup holds the per-cell coverage tree and the rarest species, filled async. setDOMContent
   // keeps the same persistent element (the two child containers stay attached) so an in-flight fetch can fill it.
-  const popDiv=document.createElement('div');
+  const popDiv=document.createElement('div');popDiv.className='popbody';
   // #?: the national percentile bottoms out at 0 in well-recorded cells, which reads as a verdict on the
   // outing rather than a fact about the map. Demoted to a muted footer line so the actionable gaps lead.
-  const popScore=document.createElement('div'); popScore.className='popscore'; _popScoreEl=popScore; popScore.innerHTML=popScoreHtml(best);
+  const popScore=document.createElement('div'); popScore.className='popscore'; _popScoreEl=popScore; popScore.innerHTML=popScoreHtml(best,resM);
   const popGaps=document.createElement('div'); popGaps.id='popgaps'; popGaps.innerHTML='<div class="popsec">'+t('pop_groups_hd')+'</div><div class="popcap">'+t('gaptree_lookup')+'</div>';
   const popSp=document.createElement('div'); popSp.id='popsp'; popSp.innerHTML='<div class="popsec">'+t('pop_rare_hd')+'</div><div class="popcap">'+t('prospects_lookup')+'</div>';
   popDiv.appendChild(popGaps); popDiv.appendChild(popSp); popDiv.appendChild(popScore);
@@ -1906,9 +2162,11 @@ function exploreCell(lat,lon){
   destMarker.togglePopup();
   _reselect=false;
   fetchProspects(dest[0],dest[1],'destination',{toPopup:true,spEl:popSp,gapsEl:popGaps,resM:resM});
+  return true;
 }
 function setView(v){
   state.view=v;
+  renderGoalContext();
   document.getElementById('insights').style.display=v==='compare'?'block':'none';
   const ml=document.getElementById('maplegend');if(ml)ml.style.display=v==='compare'?'none':'block';
   const lt=document.getElementById('legendtap');if(lt)lt.textContent=t(legendTapKey());
@@ -1932,12 +2190,12 @@ function showLoading(on){const el=document.getElementById('loading');if(el)el.st
 document.getElementById('langbtn').onclick=()=>setLang(LANG==='en'?'fr':'en');   // #69: one button toggles EN/FR
 applyI18N();   // paint static chrome + set <html lang> for the seeded language
 
-function bootSeq(){return loadGroup(state.taxon).then(()=>{buildMarkers();setView('explore');showLoading(false);
-  try{const u=new URLSearchParams(location.search),at=u.get('at'),g=u.get('g');
-    const go=()=>{if(at){const p=at.split(',').map(Number);if(p.length===2&&isFinite(p[0])&&isFinite(p[1])&&p[0]>=BB.minlat&&p[0]<=BB.maxlat&&p[1]>=BB.minlon&&p[1]<=BB.maxlon){map.jumpTo({center:[p[1],p[0]],zoom:7});exploreCell(p[0],p[1]);}}};
-    if(g&&FILES[g]&&g!==state.taxon){state.taxon=g;taxonSel.value=g;loadGroup(g).then(()=>{buildMarkers();go();}).catch(()=>{});}else{go();}
-    if(!at)locateMe();   // default Explore to the user's location (no shared cell to restore)
-  }catch(e){}}).catch(()=>{const el=document.getElementById('loading');if(el){el.style.display='block';el.innerHTML=t('load_error')+' <a href="#" onclick="bootRetry();return false;" style="color:var(--acc);text-decoration:underline">'+t('retry')+'</a>';}});}
+function bootSeq(){const shared=parseSharedContext(location.search),action=_shareAction,taxonSeq=_taxonSeq,selection=_selectionSeq;
+  _bootTaxon=shared.taxon;
+  state.taxon=shared.taxon;taxonSel.value=shared.taxon;critSel.value=shared.goal;bmSel.value=shared.style;
+  return loadGroup(shared.taxon).then(()=>shared.taxon,e=>{if(taxonSeq===_taxonSeq)throw e;return null;})
+    .then(loaded=>restoreSharedCell(shared,action,loaded,selection)).then(()=>showLoading(false))
+    .catch(()=>{if(selection!==_selectionSeq){showLoading(false);return;}const el=document.getElementById('loading');if(el){el.style.display='block';el.innerHTML=t('load_error')+' <a href="#" onclick="bootRetry();return false;" style="color:var(--acc);text-decoration:underline">'+t('retry')+'</a>';}});}
 function bootRetry(){const el=document.getElementById('loading');if(el){el.style.display='block';el.textContent=t('loading');}bootSeq();}
 bootSeq();
 window._map=map;   // console handle for tuning TIER_SWITCH_Z by eye (#87 D5: Ryan screenshots z8/9/10)
