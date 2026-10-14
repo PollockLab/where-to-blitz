@@ -309,3 +309,18 @@ def test_outcome_and_retrospective_limits_are_recorded(app_dir, monkeypatch):
     assert run["limitations"]["effort_unit"] == "observation count, not field hours"
     assert run["limitations"]["multiple_comparisons"] == "unadjusted"
     assert "certified" not in json.dumps(run)
+
+
+def test_app_defaults_to_exact_expectation_and_retains_historical_mc_option(app_dir, monkeypatch):
+    monkeypatch.setattr(vb, "N_PERM", 3)
+    frame = observation_frame()
+    exact, cells = bas.analyse("Amphibia", frame, data_dir=app_dir)
+    assert exact["run"]["rarefaction_method"] == "exact hypergeometric expectation"
+    assert exact["run"]["rarefaction_reps"] is None
+    assert exact["run"]["rarefaction_seed"] is None
+    np.testing.assert_allclose(cells.rare_newK.to_numpy(), 5, rtol=0, atol=1e-12)
+    sampled, _ = bas.analyse("Amphibia", frame, data_dir=app_dir, outcome_method="monte_carlo")
+    assert sampled["run"]["rarefaction_reps"] == 200
+    assert sampled["run"]["rarefaction_seed"] == vb.SEED
+    with pytest.raises(ValueError, match="outcome_method"):
+        bas.analyse("Amphibia", frame, data_dir=app_dir, outcome_method="bad")

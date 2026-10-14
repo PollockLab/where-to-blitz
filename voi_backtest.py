@@ -1,25 +1,19 @@
-"""Self-contained VOI / sampling-priority backtest on public iNaturalist data.
+"""Retrospective sampling-priority associations in sampled iNaturalist records.
 
-Closes north-star bar #4 ("VOI is validated, not asserted") WITHOUT Larocque's
-private rasters: a leakage-free temporal split of iNat project 228908 (BC, 2025
-pilot season). Compute each grid cell's priority from observations up to T, then
-test on observations after T whether high-priority cells actually yielded more
-NEW-to-cell species.
+The historical proxy uses a 0.25-degree grid and an observed_on split; callers
+may supply an explicit projected app inventory. Priority inputs use records dated
+before the split, and outcomes use records dated after it. Cached research-grade
+IDs and record availability were not reconstructed as historical snapshots.
 
-Method grounded in: Di Cecco et al. 2021 (BioScience, effort/observer-bias
-confound -> use rate-per-observation on revisited cells); Chao 1984 / Colwell &
-Coddington 1994 (richness extrapolation); Mondain-Monval et al. 2024 MEE
-(adaptive sampling improves SDMs -- motivation, a simulation study not a
-temporal-split backtest, so this is a novel composite). Lift + Spearman +
-permutation null are standard.
-
-Honest scope: retrospective simulation over *collected* observations, not
-prospective field guidance; "new species" = new to that cell's iNat record, not
-new-to-science; inherits iNat observer bias (controlled, not eliminated).
+Novelty counts taxon IDs absent from the sampled project training history, not
+biological-species discovery or novelty relative to a complete cell inventory.
+Equalized record counts do not establish equal field hours. Observer bias,
+spatial dependence and permutation exchangeability remain limitations.
 """
 import glob
 import json
 import sys
+from collections import Counter
 from pathlib import Path
 
 import numpy as np
@@ -64,7 +58,7 @@ def build_cells(df, grid=None):
     df = df.dropna(subset=["taxon_id", "observed_on"]).copy()
     df["date"] = pd.to_datetime(df["observed_on"], errors="coerce")
     df = df.dropna(subset=["date"])
-    # species-level only (rank species/subspecies); drop coarse IDs that can't be "new species"
+    # Retain species and the listed infraspecific/hybrid taxon ID ranks.
     df = df[df["rank"].isin(["species", "subspecies", "variety", "form", "hybrid"])]
     if grid is None:
         df["gi"] = np.floor(df.lat / RES).astype(int)
@@ -78,7 +72,7 @@ def build_cells(df, grid=None):
     if len(train) == 0 or len(test) == 0:
         return None
 
-    # --- train: priority inputs, computed ONLY on pre-T data (leakage-free) ---
+    # --- train: priority inputs from records dated before the observed_on split ---
     rows = []
     train_sp = {k: set(v) for k, v in train.groupby(["gi", "gj"]).taxon_id}
     last_seen = train.groupby(["gi", "gj"]).date.max()
@@ -148,6 +142,39 @@ def rarefy_new_at_k(cells, aux, rng, K=5, reps=200):
             acc += len(set(samp.tolist()) - seen)
         out.append(acc / reps)
     return np.array(out, dtype=float)
+
+
+def _log_probability_miss(count, total, k):
+    """log(C(total-count, k) / C(total, k)), using the shorter symmetric product."""
+    if count + k > total:
+        return float("-inf")
+    steps, removed = min(count, k), max(count, k)
+    if not steps:
+        return 0.0
+    return float(np.log1p(-removed / (total - np.arange(steps, dtype=float))).sum())
+
+
+def expected_new_at_k(cells, aux, K=5):
+    """Exact expected novel taxon IDs in K uniform test-record draws without replacement.
+
+    A test taxon absent from the full sampled training set contributes its chance
+    of appearing at least once: 1 - C(N-count, K)/C(N, K). Repeated taxon records
+    remain sampling units, matching rarefy_new_at_k's estimand. No simulation seed
+    or draw count is needed. Cells with fewer than K test records remain unavailable.
+    """
+    if isinstance(K, (bool, np.bool_)) or not isinstance(K, (int, np.integer)) or K < 0:
+        raise ValueError("sample budget K must be a non-negative integer")
+    out = []
+    positions = [cells.columns.get_loc("gi"), cells.columns.get_loc("gj")]
+    for gi, gj in cells.to_numpy(copy=False)[:, positions]:
+        seen, pool, _ = aux.get((gi, gj), (set(), [], []))
+        if len(pool) < K:
+            out.append(np.nan); continue
+        frequencies = Counter(count for taxon, count in Counter(pool).items() if taxon not in seen)
+        value = sum(multiplicity * -np.expm1(_log_probability_miss(count, len(pool), K))
+                    for count, multiplicity in sorted(frequencies.items()))
+        out.append(min(float(value), float(K)))
+    return np.asarray(out, dtype=float)
 
 
 def double_rarefy_new_at_k(cells, aux, rng, M=20, K=5, reps=DOUBLE_REPS):

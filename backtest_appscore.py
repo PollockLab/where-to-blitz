@@ -27,6 +27,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pyproj
 from pyproj import CRS, Transformer
 
 import voi_backtest as vb
@@ -220,7 +221,7 @@ def eff_ratio(rk, score):
     return float(top.mean() / bot.mean()), float(top.mean()), float(bot.mean())
 
 
-def analyse(name, df, K=5, data_dir=CA, input_path=None):
+def analyse(name, df, K=5, data_dir=CA, input_path=None, outcome_method="exact"):
     grid = AppGrid(GROUP[name], data_dir)
     cells = vb.build_cells(df, grid=grid)
     if cells is None or len(cells) < 10:
@@ -231,7 +232,12 @@ def analyse(name, df, K=5, data_dir=CA, input_path=None):
     if len(cells) < 10:
         return None
     # Novel taxon IDs relative to sampled project training records, at K test observations.
-    cells["rare_newK"] = vb.rarefy_new_at_k(cells, aux, np.random.default_rng(vb.SEED), K=K)
+    if outcome_method == "exact":
+        cells["rare_newK"] = vb.expected_new_at_k(cells, aux, K=K)
+    elif outcome_method == "monte_carlo":
+        cells["rare_newK"] = vb.rarefy_new_at_k(cells, aux, np.random.default_rng(vb.SEED), K=K)
+    else:
+        raise ValueError("outcome_method must be 'exact' or 'monte_carlo'")
     rk = cells.dropna(subset=["rare_newK", "app_env", "app_urgency"]).copy()
     if len(rk) < 10:
         return None
@@ -291,7 +297,11 @@ def analyse(name, df, K=5, data_dir=CA, input_path=None):
         "n_permutations": vb.N_PERM,
         "permutation_probability": "(exceedances + 1) / (draws + 1)",
         "permutation_probability_source": "https://doi.org/10.2202/1544-6115.1585",
-        "rarefaction_reps": 200,
+        "rarefaction_method": ("exact hypergeometric expectation" if outcome_method == "exact"
+                               else "Monte Carlo without-replacement draws"),
+        "rarefaction_source": "https://doi.org/10.2307/1934145",
+        "rarefaction_reps": None if outcome_method == "exact" else 200,
+        "rarefaction_seed": None if outcome_method == "exact" else vb.SEED,
         "K": K,
         "train_only_axes": sorted(TRAIN_ONLY_AXES),
         "score_scope": {
@@ -332,7 +342,8 @@ def analyse(name, df, K=5, data_dir=CA, input_path=None):
             "voi_backtest.py": sha256(vb.__file__),
             "goal_presets.py": sha256(Path(__file__).with_name("goal_presets.py")),
         },
-        "versions": {"python": sys.version.split()[0], "numpy": np.__version__, "pandas": pd.__version__},
+        "versions": {"python": sys.version.split()[0], "numpy": np.__version__, "pandas": pd.__version__,
+                     "pyproj": pyproj.__version__, "PROJ": pyproj.proj_version_str},
     }
     return out, rk
 
