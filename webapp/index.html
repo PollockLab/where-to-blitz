@@ -745,8 +745,7 @@ async function loadGE(){if(GE_LOADED)return;const r=await fetchT(DATA_DIR+'webap
 const GE_VALS={}, GE_UNSCORED=255;   // GE_UNSCORED matches PNG_UNSCORED in build_gettingeven.py
 async function loadGEVals(res){
   const key='gettingeven_grid_'+res+'m';
-  if(GE_VALS[key])return GE_VALS[key];
-  return GE_VALS[key]=await readPng(DATA_DIR+key+'.png');
+  return cachedPng(GE_VALS,key,DATA_DIR+key+'.png');
 }
 // -1 means "draw nothing here": no cell, or a cell holding too few records to name a group. At
 // 25 km the second case is the grey "all under-sampled" swatch, but at 5 km most of the country
@@ -1356,10 +1355,16 @@ async function readPng(url){
   const cx=cv.getContext('2d',{willReadFrequently:true});cx.drawImage(img,0,0);
   return {w:img.width,h:img.height,d:cx.getImageData(0,0,img.width,img.height).data};
 }
+// Concurrent callers share one in-flight read: two first paints racing for the same PNG otherwise
+// fetch it twice, the second queued behind the first by the browser's cache lock (one extra round trip).
+const _pngP={};
+async function cachedPng(cache,key,url){
+  if(cache[key])return cache[key];
+  return _pngP[url]=_pngP[url]||readPng(url).then(v=>cache[key]=v).finally(()=>{delete _pngP[url];});
+}
 async function loadVals(res){
   const key=gridSlug()+'_'+goalSlug()+'_grid_'+res+'m';
-  if(VALS[key])return VALS[key];
-  return VALS[key]=await readPng(DATA_DIR+'values/'+key+'.png');
+  return cachedPng(VALS,key,DATA_DIR+'values/'+key+'.png');
 }
 function valColor(v,col,row){
   if(col<0||row<0||col>=v.w||row>=v.h)return null;
@@ -1440,6 +1445,7 @@ function setGridFill(){
     if(map.getZoom()<TIER_SWITCH_Z)STRETCH=makeStretch(sample25(v));   // above the switch the 5 km tier is the visible one and sets STRETCH itself
     paintGrid25(v);
     updateLegendLabels();
+    map.once('idle',warmOverlays);
   }).catch(()=>{});
   refreshCells5();
   updateOpacityControl();
@@ -1501,8 +1507,33 @@ const COVPM=['All','Amphibia','Aves','Insecta','Mammalia','Plantae','Reptilia','
 // Raster PMTiles now ride the native MapLibre pmtiles:// protocol (registered once) instead of a custom
 // GridLayer that hand-decoded WEBP to canvas. The protocol reads each archive's TileJSON (native z9) and
 // MapLibre overzooms past it; the magma alpha is baked in, so it composites straight over the basemap.
-let _pmReg=false;
-function ensurePM(){if(_pmReg)return;_pmReg=true;maplibregl.addProtocol('pmtiles',new pmtiles.Protocol().tile);}
+let _pmProto=null;
+function ensurePM(){if(!_pmProto){_pmProto=new pmtiles.Protocol();maplibregl.addProtocol('pmtiles',_pmProto.tile);}return _pmProto;}
+// Read an overlay archive's header and the directory under the view's centre tile, so the first
+// toggle goes straight to its tiles instead of one or two directory round trips first. ~25 KB each.
+function warmPM(name){
+  const p=ensurePM(),url=PM_BASE+'/'+name+'.pmtiles';if(p.get(url))return;
+  const pm=new pmtiles.PMTiles(url);p.add(pm);
+  pm.getHeader().then(h=>{
+    const z=Math.max(h.minZoom,Math.min(h.maxZoom,Math.round(map.getZoom()))),n=2**z,c=map.getCenter(),lat=c.lat*Math.PI/180;
+    return pm.getZxy(z,Math.floor((c.lng+180)/360*n),Math.floor((1-Math.log(Math.tan(lat)+1/Math.cos(lat))/Math.PI)/2*n));
+  }).catch(()=>{});
+}
+// The overlay archives hold 512 px tiles. Declared at 512 they map 1:1 and need a quarter of the requests; on dense
+// screens that drops a level of detail, so those keep 256 (2x oversampled).
+const PM_TILE=devicePixelRatio>=1.5?256:512;
+const warmCov=()=>warmPM('density_'+(COVPM.includes(state.taxon)?state.taxon:'All'));
+const warmClimate=()=>warmPM('climate_gap');
+// Warm both once the first painted grid settles, unless the visitor asked to save data or is on 2g.
+// Reaching for the goal or map-style select warms that overlay either way (focus on a select comes
+// seconds before its change; on mobile a tap's pointerdown alone is shorter than one round trip).
+let _pmWarm=false;
+function warmOverlays(){
+  if(_pmWarm)return;_pmWarm=true;
+  const c=navigator.connection;if(c&&(c.saveData||/2g/.test(c.effectiveType||'')))return;
+  warmClimate();warmCov();
+}
+for(const[el,fn]of[[critSel,warmClimate],[bmSel,warmCov]])if(el)['pointerdown','focus'].forEach(ev=>el.addEventListener(ev,()=>{if(_mapLoaded)fn();}));
 function removeCov(){if(map.getLayer('cov'))map.removeLayer('cov');if(map.getSource('cov'))map.removeSource('cov');}
 function setCoverage(){
   if(!_mapLoaded){whenMap(setCoverage);return;}
@@ -1511,7 +1542,7 @@ function setCoverage(){
   const ct=COVPM.includes(state.taxon)?state.taxon:'All';
   const attr='iNaturalist density &copy; Biodiversit\u00e9 Qu\u00e9bec';
   ensurePM();
-  map.addSource('cov',{type:'raster',url:'pmtiles://'+PM_BASE+'/density_'+ct+'.pmtiles',tileSize:256,attribution:attr});
+  map.addSource('cov',{type:'raster',url:'pmtiles://'+PM_BASE+'/density_'+ct+'.pmtiles',tileSize:PM_TILE,attribution:attr});
   map.addLayer({id:'cov',type:'raster',source:'cov',paint:{'raster-opacity':covOpacity}},map.getLayer(CELL_LAYER)?CELL_LAYER:undefined);
   updateOpacityControl();
 }
@@ -1527,7 +1558,7 @@ function setClimate(){
   if(map.getSource('climate-gap'))map.removeSource('climate-gap');
   if(!climateOn()){updateOpacityControl();return;}
   ensurePM();
-  map.addSource('climate-gap',{type:'raster',url:'pmtiles://'+PM_BASE+'/climate_gap.pmtiles',tileSize:256,
+  map.addSource('climate-gap',{type:'raster',url:'pmtiles://'+PM_BASE+'/climate_gap.pmtiles',tileSize:PM_TILE,
     attribution:'Climate gap layer &copy; Pollock Lab · climate data <a href="https://chelsa-climate.org" target="_blank" rel="noopener">CHELSA</a>'});
   map.addLayer({id:'climate-gap',type:'raster',source:'climate-gap',paint:{'raster-opacity':climateOpacity}},map.getLayer(CELL_LAYER)?CELL_LAYER:undefined);
   updateOpacityControl();
