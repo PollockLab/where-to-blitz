@@ -451,7 +451,7 @@ jobs:
           set -euo pipefail
           mkdir -p _site/tiles _site/cluster_results/ca
           cp artifacts/index.html _site/
-          for f in blitz-logo.png og-image.png where-to-blitz-walkthrough.html; do
+          for f in blitz-logo.png og-image.png where-to-blitz-walkthrough.html where-to-blitz-zoomout.png; do
             [ -f "$f" ] && cp "$f" _site/
           done
           # Density tiles live on the release (density_<Taxon>.pmtiles, the app's tiles/ name), like climate_gap.
@@ -533,7 +533,7 @@ jobs:
           set -euo pipefail
           mkdir -p _site/tiles _site/cluster_results/ca
           cp index.html _site/
-          for f in blitz-logo.png og-image.png where-to-blitz-walkthrough.html; do
+          for f in blitz-logo.png og-image.png where-to-blitz-walkthrough.html where-to-blitz-zoomout.png; do
             [ -f "$f" ] && cp "$f" _site/
           done
           # Density tiles live on the release (density_<Taxon>.pmtiles, the app's tiles/ name), like climate_gap.
