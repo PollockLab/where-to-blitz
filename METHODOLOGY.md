@@ -158,17 +158,45 @@ Both full-history and standardized-history outcomes are compared on the **same c
 
 In these six qualifying cohorts, scarcity's full-history association weakens substantially after standardizing the sampled training count. The main result therefore cannot establish ecological discovery skill beyond differing sampled histories. Finding a gap in existing records remains a distinct recording objective. This sensitivity does not remove observer, seasonal, habitat or identification biases, and it leaves the published map weights unchanged.
 
-### Reproduce
+### Spatial sensitivity
 
-The cached input CSVs are gitignored. Download the archived files and restore the original grid inputs matching `run.grid.source_sha256` before reproducing the archived coefficients. Running these scripts against newer grid inputs produces a new evaluation:
+The archived [spatial sensitivity report](cluster_results/appscore_spatial_sensitivity.json) checks whether the paired M20 association change depends on one geographic cluster. It deletes each occupied projected LAEA block in turn, at all three widths of 50, 100 and 200 km and all four combinations of zero and half-width row/column offsets. Each deletion uses identical retained cells for both outcomes, preserves the original score definitions, and re-ranks the scores and outcomes for Spearman correlation. Every deletion is reported, with fewer than ten retained cells or constant scores/outcomes marked unavailable.
+
+Across all reported deletions, the M20-minus-full-training scarcity correlation change remains negative in all six qualifying cohorts. The ranges below combine every predefined partition; they are descriptive sensitivity envelopes, not confidence intervals, calibrated probabilities or estimates of performance in an unobserved location.
+
+| Region | Taxon | Paired cells | Scarcity correlation change, all deletions |
+|---|---|---|---|
+| BC | Birds | 48 | -0.698 to -0.556 |
+| BC | Insects | 48 | -0.460 to -0.312 |
+| BC | Mammals | 45 | -0.522 to -0.389 |
+| East | Birds | 59 | -0.303 to -0.233 |
+| East | Insects | 44 | -0.540 to -0.428 |
+| East | Mammals | 63 | -0.417 to -0.217 |
+
+BC amphibians and reptiles remain unavailable with five and eight paired cells. The result is specific to the scarcity proxy: East insects' published-map correlation change spans -0.188 to +0.019. This diagnostic does not remove spatial dependence, establish causation or validate future field yield. [Roberts et al.](https://doi.org/10.1111/ecog.02881) describe why spatial structure matters for predictive evaluation; the deletion analysis here is an influence check, not their blocked cross-validation procedure.
+
+Regenerate the report from the same hash-verified raw archives. Derived per-cell CSVs are not a numerical replay boundary because serialization can alter exact rank ties:
 
 ```bash
-gh release download grid-inputs-v1 --repo PollockLab/where-to-blitz --dir cluster_results --pattern "inat_*.csv" --clobber
-python backtest_appscore.py
-python backtest_east.py
+.venv/bin/python verify_appscore_results.py --download --inputs-dir /tmp/wtb-record-benchmarks
+.venv/bin/python backtest_spatial_sensitivity.py --input-dir /tmp/wtb-record-benchmarks --output /tmp/wtb-spatial-sensitivity.json
 ```
 
-The two scripts regenerate `cluster_results/voi_appscore_results.json` and `cluster_results/voi_appscore_east_results.json`. Each run records its grid, Canada mask, normalized inventory and source hashes, input and observation-frame hashes, split, seeds, permutation count, outcome definition, inference limits and package versions. A later API pull may change the source records or identifications even with fixed observation-date bounds.
+The report verifies all eight input, canonical observation-frame, inventory, source and paired-cohort hashes and original statistics before writing. It records the diagnostic's own source hash and runtime versions, and preserves any existing output if verification fails. The published primary results and weights remain unchanged.
+
+### Reproduce
+
+Replay all eight frozen benchmarks against the committed result JSONs without replacing them. The cached input CSVs are gitignored; the command checks their archived hashes and the original grid inputs before analysis:
+
+```bash
+.venv/bin/python verify_appscore_results.py --download
+```
+
+The verifier downloads the eight public `grid-inputs-v1` CSV assets into a private temporary directory and removes it afterwards. For existing archived assets, use `.venv/bin/python verify_appscore_results.py --inputs-dir PATH`; relative input paths resolve from the script's directory. Add `--download` to download missing files into that directory. A cached file with the wrong SHA-256 fails rather than being replaced, and a failed download checksum leaves no installed file. No observation rows or coordinates are printed.
+
+Before any analysis, all eight cases must pass schema and fixed-configuration checks, source and input SHA-256 checks, and grid index, Canada mask, group-file and normalized-inventory checks, including cell counts. The replay uses the original analysis defaults, adds the archived region label in memory, and compares every scientific and provenance field, including missing or extra keys, with exact discrete values and 1e-12 absolute and relative float tolerance. Runtime package versions are reported separately; numerical agreement does not establish an identical environment. Mismatches identify the JSON path and return a nonzero exit status.
+
+These are frozen retrospective sampled-record benchmarks on the committed 25 km inventory. They do not validate later rebuilt live Conservation data, the 5 km inventory or prospective trip yield. A fresh API pull can change source records or identifications even with fixed observation-date bounds, so it is not the archived input.
 
 ---
 
