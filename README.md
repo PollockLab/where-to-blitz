@@ -67,6 +67,8 @@ Why Fungi differs: `build_density_pmtiles.py` docstring.
 Climate Gap is the one layer no script in this repo regenerates, so the release asset is its only
 source; both `_site` assembly jobs `test -s` it rather than let a missing file blank the map.
 
+The published file is cut to z0-8 with `repack_pmtiles.py` so its whole directory arrives in the first 16 KB read (z9 added no visible detail). Rerun it on any new upload: `python repack_pmtiles.py climate_gap_z0-9.pmtiles climate_gap.pmtiles --maxzoom 8`.
+
 ### Run it locally
 
 A fresh clone looks empty on the map: `cluster_results/ca/*.json` is in git, but `tiles/` and
