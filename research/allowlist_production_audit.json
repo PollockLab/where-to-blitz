@@ -22,7 +22,7 @@
     },
     "policy": {
       "path": "cluster_results/ca/atrisk_shipping_policy.json",
-      "sha256": "72db718593e2777b24eee243ed025887e19f4338f52663faf19ffb443abf99a1"
+      "sha256": "6c604e10376f6d05c0bd96ad1df286bc3f27497fddc26fc6897c6d23aa430326"
     },
     "test_set": {
       "path": "research/subspecies_test_set.csv",
@@ -38,7 +38,7 @@
     },
     "production_provenance": {
       "path": "cluster_results/ca/ca_atrisk_provenance.json",
-      "sha256": "9766acb4509af104666ebefd682a732ebcd9bdc68783a0ddbcc897359b6c400d"
+      "sha256": "257eb64d2782c851493171d73932225e6ab5e7d7d8210ff108cc1fc4f3dce385"
     }
   },
   "inputs_and_outputs_stable_during_audit": true,

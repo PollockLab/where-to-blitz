@@ -25,37 +25,43 @@
         "commit": "4db48ce5e0fca475dda48859ee611eebe9a0cd5f",
         "path": "research/GATE-range-clip.md",
         "sha256": "d1264a35cc20aed5d83973e04d750fb0951fd649f1b5af50ac6caaa9cbde8e3e",
-        "git_blob_sha1": "8c0e4d4d1f2ddef96d0044a07956b843bbcabc46"
+        "git_blob_sha1": "8c0e4d4d1f2ddef96d0044a07956b843bbcabc46",
+        "rebased_commit": "595c54523d4e5d93659b846070c8e2a0d26fc626"
       },
       "comparison_gate": {
         "commit": "f07e732e60d41a31e61c3283c52dc3db4ea38050",
         "path": "research/GATE-range-clip.md",
         "sha256": "edd59a41a943e11f6121649c8ce616ea927b264f3b17590c2f116cc02fd8c6e5",
-        "git_blob_sha1": "4b672498db550255be4b394a52a15917dbf1eeeb"
+        "git_blob_sha1": "4b672498db550255be4b394a52a15917dbf1eeeb",
+        "rebased_commit": "4d57c9c6bd4ecf372ad0259268ea2ca42cce9d49"
       },
       "final_gate": {
         "commit": "7da9d9b9deb56b9b8df298f08e628a6695749b1e",
         "path": "research/GATE-range-clip.md",
         "sha256": "4598182de2b72947007106b42c85bc62fe4ab65d9311d284d0a9b4f5477ebc79",
-        "git_blob_sha1": "cf17c4f8e47e12a75fc36b6353cd762ecfaf4ed9"
+        "git_blob_sha1": "cf17c4f8e47e12a75fc36b6353cd762ecfaf4ed9",
+        "rebased_commit": "15a37a8c64974d0b5b69a99c00b3a8bd98123c13"
       },
       "test_set": {
         "commit": "f07e732e60d41a31e61c3283c52dc3db4ea38050",
         "path": "research/subspecies_test_set.csv",
         "sha256": "ebd07f668fb78536aeb5b4caab3a348e8aca5cd7cded646607e427da6c51ffef",
-        "git_blob_sha1": "629f0c658a186f38e3b2658a23ba427ab19e83cf"
+        "git_blob_sha1": "629f0c658a186f38e3b2658a23ba427ab19e83cf",
+        "rebased_commit": "4d57c9c6bd4ecf372ad0259268ea2ca42cce9d49"
       },
       "overrides": {
         "commit": "f07e732e60d41a31e61c3283c52dc3db4ea38050",
         "path": "cluster_results/ca/atrisk_range_overrides.csv",
         "sha256": "7faa4d63fbd2f9421da97cdd771d43d00cc944782ed5c5be9f1dafaf4a755ef1",
-        "git_blob_sha1": "59c37724c7bf89227d3d9342d49ce7f18923b59e"
+        "git_blob_sha1": "59c37724c7bf89227d3d9342d49ce7f18923b59e",
+        "rebased_commit": "4d57c9c6bd4ecf372ad0259268ea2ca42cce9d49"
       },
       "scorer": {
         "commit": "d765666575f362f79f2cc4ff9deba10f25ee5cfb",
         "path": "research/allowlist_compare.py",
         "sha256": "0ed079d12aaa298c5bc389a5a674c41a9d340e421cd05aa643a0a67624eccacb",
-        "git_blob_sha1": "a007e9d28bea1c86ea713d15ecd2cdbf434d4873"
+        "git_blob_sha1": "a007e9d28bea1c86ea713d15ecd2cdbf434d4873",
+        "rebased_commit": "7cf8f9c6f7caa20c74838dbdae43d14bcfa4c00a"
       }
     },
     "candidate_code": {
@@ -63,31 +69,36 @@
         "commit": "5569d4a2cb00bf20d2c8483542d81a7eca357094",
         "path": "atrisk_ranges.py",
         "sha256": "051bc22eca51682060fb4a7031101a9a7dbb9d17ec8d443d72bf422da97591a7",
-        "git_blob_sha1": "1c5edfc54da749ce8922291b33b09bd32c266a54"
+        "git_blob_sha1": "1c5edfc54da749ce8922291b33b09bd32c266a54",
+        "rebased_commit": "258bfea2fed876ff0456c7330b9dbd72c29c6828"
       },
       "build_atrisk_layer.py": {
         "commit": "5569d4a2cb00bf20d2c8483542d81a7eca357094",
         "path": "build_atrisk_layer.py",
         "sha256": "db4d71e5ba8b19ab807ad67a3712ee5bb1a74788afa79935d258c3c00e805743",
-        "git_blob_sha1": "a938c9822a9bc4763f5141162d00d37c23238149"
+        "git_blob_sha1": "a938c9822a9bc4763f5141162d00d37c23238149",
+        "rebased_commit": "258bfea2fed876ff0456c7330b9dbd72c29c6828"
       },
       "atrisk_crosswalk.py": {
         "commit": "5569d4a2cb00bf20d2c8483542d81a7eca357094",
         "path": "atrisk_crosswalk.py",
         "sha256": "678baf771632aa6e587ade596dbbc2f59133c35ef0eb7717cf7e27053eeb180d",
-        "git_blob_sha1": "5504b5907b2bb3c27a25cb35e8bb49fef08c391f"
+        "git_blob_sha1": "5504b5907b2bb3c27a25cb35e8bb49fef08c391f",
+        "rebased_commit": "258bfea2fed876ff0456c7330b9dbd72c29c6828"
       },
       "research/range_clip_gate.py": {
         "commit": "5569d4a2cb00bf20d2c8483542d81a7eca357094",
         "path": "research/range_clip_gate.py",
         "sha256": "d366fd518ba5b0dd9800de2158cd36bf782cad800edbc2137414527347c3fbe8",
-        "git_blob_sha1": "7829487c5e5d0aa3e4ce4495bf90bf2a8a6d6296"
+        "git_blob_sha1": "7829487c5e5d0aa3e4ce4495bf90bf2a8a6d6296",
+        "rebased_commit": "258bfea2fed876ff0456c7330b9dbd72c29c6828"
       },
       "research/allowlist_compare.py": {
         "commit": "5569d4a2cb00bf20d2c8483542d81a7eca357094",
         "path": "research/allowlist_compare.py",
         "sha256": "0ed079d12aaa298c5bc389a5a674c41a9d340e421cd05aa643a0a67624eccacb",
-        "git_blob_sha1": "a007e9d28bea1c86ea713d15ecd2cdbf434d4873"
+        "git_blob_sha1": "a007e9d28bea1c86ea713d15ecd2cdbf434d4873",
+        "rebased_commit": "258bfea2fed876ff0456c7330b9dbd72c29c6828"
       }
     },
     "inputs": {
@@ -2174,7 +2185,8 @@
     "candidate_clip_table_matches_logged_acceptance_and_losses": true,
     "supplemental_input_hashes_match_current_input_files": true,
     "ship_rule_not_modified": true,
-    "range_source_download_hashes_match_registered_provenance": true
+    "range_source_download_hashes_match_registered_provenance": true,
+    "post_rebase_checks_passed": true
   },
   "raw_logs": {
     "fetch": "status: SUCCEEDED\nDOI: 10.15468/dl.6hqdyd\n1091177 fine-cell rows; 11999 cells host >=1 at-risk listing\ncount check: 6/6 species match the search API\ncells with at-risk score: 11999; max score=170.0\nwrote cluster_results/ca/ca_atrisk_richness.csv\nwrote cluster_results/ca/atrisk_listing_clip.csv\nwrote cluster_results/ca/ca_atrisk_provenance.json\n",
@@ -2228,145 +2240,6 @@
       ]
     }
   },
-  "production_verification": {
-    "report_path": "/tmp/wtb_production_audit.json",
-    "report_sha256": "c489dd6ca0d6c31f31394bfd37fff59c4a5292e1734badc325b18af8398640b9",
-    "independent_reconstruction": {
-      "purpose": "Independent whole-layer selected-production verification",
-      "implementation": "No imports or calls to atrisk_shipping or atrisk_ranges scoring/selection functions; independent key graph, Shapely predicates and pandas max/sum aggregation",
-      "status": "PASS",
-      "script_sha256": "78babfcacf3fdd29159cb1928984b6a2cf344318ffedd03bdb355bc33e0a091f",
-      "input_output_hashes": {
-        "download": {
-          "path": "/private/tmp/claude-503/-Users-w-Documents-Github-nosync/f78136ad-2557-4468-a491-1b852e987d8c/scratchpad/gbif_dl/0026614-260928105237408.zip",
-          "sha256": "4b16a59371966b1f717fdaf10f2d0af8e92e15ba385800351a02e0b6681c5c52"
-        },
-        "crosswalk": {
-          "path": "/Users/w/Documents/Github.nosync/where-to-blitz/.claude/worktrees/agent-aea2582c48b34f174/cluster_results/ca/atrisk_species_keys.csv",
-          "sha256": "3ff7323e81c4578eccb769356e56d6b66e80330d6fb2c619ca273ea6d298ecc7"
-        },
-        "listings": {
-          "path": "/Users/w/Documents/Github.nosync/where-to-blitz/.claude/worktrees/agent-aea2582c48b34f174/cluster_results/ca/atrisk_listings.csv",
-          "sha256": "7b10abf771df7556bc8fd4411ce8e325db1f3ec50be5438d3766af125745dfc3"
-        },
-        "ranges": {
-          "path": "/Users/w/Documents/Github.nosync/where-to-blitz/.claude/worktrees/agent-aea2582c48b34f174/cluster_results/ca/atrisk_ranges.geojson",
-          "sha256": "2feb0fc8f6e7f47e46e60a775a45c64dd6c9d7e32dbc7defd51282a90662658a"
-        },
-        "policy": {
-          "path": "/Users/w/Documents/Github.nosync/where-to-blitz/.claude/worktrees/agent-aea2582c48b34f174/cluster_results/ca/atrisk_shipping_policy.json",
-          "sha256": "72db718593e2777b24eee243ed025887e19f4338f52663faf19ffb443abf99a1"
-        },
-        "test_set": {
-          "path": "/Users/w/Documents/Github.nosync/where-to-blitz/.claude/worktrees/agent-aea2582c48b34f174/research/subspecies_test_set.csv",
-          "sha256": "ebd07f668fb78536aeb5b4caab3a348e8aca5cd7cded646607e427da6c51ffef"
-        },
-        "production_layer": {
-          "path": "/Users/w/Documents/Github.nosync/where-to-blitz/.claude/worktrees/agent-aea2582c48b34f174/cluster_results/ca/ca_atrisk_richness.csv",
-          "sha256": "d74ad7110afe75d1696c3df29b4c247d34455c1d7856123425fddc98dbd1409d"
-        },
-        "production_listing_audit": {
-          "path": "/Users/w/Documents/Github.nosync/where-to-blitz/.claude/worktrees/agent-aea2582c48b34f174/cluster_results/ca/atrisk_listing_clip.csv",
-          "sha256": "12a5f109e8111473b3491001893aee88ec2910f2a2c32e4a26149d072ed8a1eb"
-        },
-        "production_provenance": {
-          "path": "/Users/w/Documents/Github.nosync/where-to-blitz/.claude/worktrees/agent-aea2582c48b34f174/cluster_results/ca/ca_atrisk_provenance.json",
-          "sha256": "9766acb4509af104666ebefd682a732ebcd9bdc68783a0ddbcc897359b6c400d"
-        }
-      },
-      "inputs_and_outputs_stable_during_audit": true,
-      "cells_checked": 12805,
-      "maximum_score": 188,
-      "score_raw_n_species_normalization_and_centres_match_all_cells": true,
-      "listing_audit_matches_all_matched_and_unmatched_listings": true,
-      "drop_count": 35,
-      "dropped_listing_ids": [
-        "40",
-        "81",
-        "109",
-        "111",
-        "112",
-        "114",
-        "121",
-        "125",
-        "132",
-        "137",
-        "139",
-        "142",
-        "170",
-        "177",
-        "179",
-        "186",
-        "215",
-        "217",
-        "252",
-        "261",
-        "295",
-        "296",
-        "308",
-        "331",
-        "336",
-        "480",
-        "499",
-        "500",
-        "501",
-        "509",
-        "510",
-        "525",
-        "532",
-        "1026",
-        "1501"
-      ],
-      "dropped_rows_keep_zero_with_full_species_totals": true,
-      "polygon_guarded_ids": [
-        "58",
-        "96",
-        "418"
-      ],
-      "flagships": {
-        "piping_plover": {
-          "454": 17918,
-          "483": 17918
-        },
-        "spotted_owl": {
-          "507": 9
-        },
-        "greater_sage_grouse": {
-          "204": 13
-        }
-      },
-      "stats": {
-        "fine_rows": 1091177,
-        "occurrence_count": 9114203,
-        "matched_listing_count": 549,
-        "retained_listing_count": 514,
-        "species_level_listing_count": 511,
-        "western_waterfan_listing_records": 10,
-        "eastern_waterfan_listing_records": 82,
-        "western_waterfan_only_cells": 3,
-        "eastern_waterfan_only_cells": 30,
-        "western_waterfan_unit_weight": [
-          1
-        ],
-        "eastern_waterfan_unit_weight": [
-          2
-        ]
-      },
-      "synthetic_validation": {
-        "alias_keys_deduplicated": true,
-        "per_unit_max_weight": true,
-        "zero_weight_rows_omitted": true,
-        "two_units_score": 5,
-        "two_units_n_species": 2
-      },
-      "long_point": {
-        "gi": 170,
-        "gj": -322,
-        "score_raw": 188,
-        "rank": 1
-      }
-    }
-  },
   "selected_production_comparison": {
     "live_cells": 13914,
     "selected_cells": 12805,
@@ -2410,7 +2283,7 @@
       },
       "policy": {
         "path": "cluster_results/ca/atrisk_shipping_policy.json",
-        "sha256": "72db718593e2777b24eee243ed025887e19f4338f52663faf19ffb443abf99a1"
+        "sha256": "6c604e10376f6d05c0bd96ad1df286bc3f27497fddc26fc6897c6d23aa430326"
       },
       "test_set": {
         "path": "research/subspecies_test_set.csv",
@@ -2426,7 +2299,7 @@
       },
       "production_provenance": {
         "path": "cluster_results/ca/ca_atrisk_provenance.json",
-        "sha256": "9766acb4509af104666ebefd682a732ebcd9bdc68783a0ddbcc897359b6c400d"
+        "sha256": "257eb64d2782c851493171d73932225e6ab5e7d7d8210ff108cc1fc4f3dce385"
       }
     },
     "inputs_and_outputs_stable_during_audit": true,
@@ -2641,5 +2514,325 @@
       "532"
     ],
     "boundary": "Geographic consistency is reviewed; no claim every excluded record is taxonomically false or any zero count implies biological absence"
-  }
+  },
+  "rebased_commit_equivalents": {
+    "98be5d2809dcdbfd92ef2849b11af01738d9b227": "5d1ee53ebf6b059deae9d34d1c2ff54e037014a1",
+    "d47387258047d04c424d6e38e26b560abb0c4cbc": "623373e8c60dc8a2d0e62a8c9f57cf18eb4a8281",
+    "4db48ce5e0fca475dda48859ee611eebe9a0cd5f": "595c54523d4e5d93659b846070c8e2a0d26fc626",
+    "f07e732e60d41a31e61c3283c52dc3db4ea38050": "4d57c9c6bd4ecf372ad0259268ea2ca42cce9d49",
+    "7da9d9b9deb56b9b8df298f08e628a6695749b1e": "15a37a8c64974d0b5b69a99c00b3a8bd98123c13",
+    "d765666575f362f79f2cc4ff9deba10f25ee5cfb": "7cf8f9c6f7caa20c74838dbdae43d14bcfa4c00a",
+    "b0d2244f27dc6dacef2f3251b2af3f4314f7fe0f": "db403a9fd33921ca34d2763fd55850d7562b882f",
+    "a6833459fab96d0db5d6214c9e83d2e563174181": "46a580517de60d1a4537dd14d50a4aab3a97da3c",
+    "7aaa084393dcb6cc94f361c85a957afac9da2b7b": "3d2baa0c79b91271259c05812f5f8e7e957cf066",
+    "bf4c168181c4bb0d116c3ad14fd021a5fd43b3eb": "f9ea09fd04f3e5e15bcbd1d10958f9a9e3582a7a",
+    "5569d4a2cb00bf20d2c8483542d81a7eca357094": "258bfea2fed876ff0456c7330b9dbd72c29c6828",
+    "bbc77d8464a54bff3733829c3ed95e5a5f804bdf": "caa5ba5a3defd2b0f715db8beb832663c9489bd2",
+    "4b69deac39fa5c8040ee42c7856a1283947b8ff8": "da484566852c7e5cf175c96aa14e573098455d27",
+    "39d4b8efd7ac88349b588e567e4b6d96fc753d60": "d661d48d5d27b44666dd1a6482bcaedae7acee45",
+    "a0182a99ad0d17cac0348b2b97152de02ccadcab": "e81e23ac990a105e2c3184de6273042f4fcf0e24",
+    "215983e496dcdbcf5f458166aa11ac159f2da521": "55a35d57bb9e02e0f69c26f3bacf8178846c8e2d",
+    "b7b5ec499386801d1d6e98a99b77f1e889bd3973": "594ca0527443a057e62b66150e14a7fcd9371a74",
+    "f512952c66a24c2b062312296f4809dddcc082bd": "384245b16bdb6c99b165f8e25470c81b0a8aae88",
+    "ff0636cac7ee6d8277e0245b6a8fdb3ee6acb8a4": "19c22a63b9bfb4a76172c698da2955f90ae93b6a"
+  },
+  "rebased_equivalent_candidate_code_commit": "258bfea2fed876ff0456c7330b9dbd72c29c6828",
+  "original_production_verification": {
+    "report_path": "/tmp/wtb_production_audit.json",
+    "report_sha256": "c489dd6ca0d6c31f31394bfd37fff59c4a5292e1734badc325b18af8398640b9",
+    "independent_reconstruction": {
+      "purpose": "Independent whole-layer selected-production verification",
+      "implementation": "No imports or calls to atrisk_shipping or atrisk_ranges scoring/selection functions; independent key graph, Shapely predicates and pandas max/sum aggregation",
+      "status": "PASS",
+      "script_sha256": "78babfcacf3fdd29159cb1928984b6a2cf344318ffedd03bdb355bc33e0a091f",
+      "input_output_hashes": {
+        "download": {
+          "path": "/private/tmp/claude-503/-Users-w-Documents-Github-nosync/f78136ad-2557-4468-a491-1b852e987d8c/scratchpad/gbif_dl/0026614-260928105237408.zip",
+          "sha256": "4b16a59371966b1f717fdaf10f2d0af8e92e15ba385800351a02e0b6681c5c52"
+        },
+        "crosswalk": {
+          "path": "/Users/w/Documents/Github.nosync/where-to-blitz/.claude/worktrees/agent-aea2582c48b34f174/cluster_results/ca/atrisk_species_keys.csv",
+          "sha256": "3ff7323e81c4578eccb769356e56d6b66e80330d6fb2c619ca273ea6d298ecc7"
+        },
+        "listings": {
+          "path": "/Users/w/Documents/Github.nosync/where-to-blitz/.claude/worktrees/agent-aea2582c48b34f174/cluster_results/ca/atrisk_listings.csv",
+          "sha256": "7b10abf771df7556bc8fd4411ce8e325db1f3ec50be5438d3766af125745dfc3"
+        },
+        "ranges": {
+          "path": "/Users/w/Documents/Github.nosync/where-to-blitz/.claude/worktrees/agent-aea2582c48b34f174/cluster_results/ca/atrisk_ranges.geojson",
+          "sha256": "2feb0fc8f6e7f47e46e60a775a45c64dd6c9d7e32dbc7defd51282a90662658a"
+        },
+        "policy": {
+          "path": "/Users/w/Documents/Github.nosync/where-to-blitz/.claude/worktrees/agent-aea2582c48b34f174/cluster_results/ca/atrisk_shipping_policy.json",
+          "sha256": "72db718593e2777b24eee243ed025887e19f4338f52663faf19ffb443abf99a1"
+        },
+        "test_set": {
+          "path": "/Users/w/Documents/Github.nosync/where-to-blitz/.claude/worktrees/agent-aea2582c48b34f174/research/subspecies_test_set.csv",
+          "sha256": "ebd07f668fb78536aeb5b4caab3a348e8aca5cd7cded646607e427da6c51ffef"
+        },
+        "production_layer": {
+          "path": "/Users/w/Documents/Github.nosync/where-to-blitz/.claude/worktrees/agent-aea2582c48b34f174/cluster_results/ca/ca_atrisk_richness.csv",
+          "sha256": "d74ad7110afe75d1696c3df29b4c247d34455c1d7856123425fddc98dbd1409d"
+        },
+        "production_listing_audit": {
+          "path": "/Users/w/Documents/Github.nosync/where-to-blitz/.claude/worktrees/agent-aea2582c48b34f174/cluster_results/ca/atrisk_listing_clip.csv",
+          "sha256": "12a5f109e8111473b3491001893aee88ec2910f2a2c32e4a26149d072ed8a1eb"
+        },
+        "production_provenance": {
+          "path": "/Users/w/Documents/Github.nosync/where-to-blitz/.claude/worktrees/agent-aea2582c48b34f174/cluster_results/ca/ca_atrisk_provenance.json",
+          "sha256": "9766acb4509af104666ebefd682a732ebcd9bdc68783a0ddbcc897359b6c400d"
+        }
+      },
+      "inputs_and_outputs_stable_during_audit": true,
+      "cells_checked": 12805,
+      "maximum_score": 188,
+      "score_raw_n_species_normalization_and_centres_match_all_cells": true,
+      "listing_audit_matches_all_matched_and_unmatched_listings": true,
+      "drop_count": 35,
+      "dropped_listing_ids": [
+        "40",
+        "81",
+        "109",
+        "111",
+        "112",
+        "114",
+        "121",
+        "125",
+        "132",
+        "137",
+        "139",
+        "142",
+        "170",
+        "177",
+        "179",
+        "186",
+        "215",
+        "217",
+        "252",
+        "261",
+        "295",
+        "296",
+        "308",
+        "331",
+        "336",
+        "480",
+        "499",
+        "500",
+        "501",
+        "509",
+        "510",
+        "525",
+        "532",
+        "1026",
+        "1501"
+      ],
+      "dropped_rows_keep_zero_with_full_species_totals": true,
+      "polygon_guarded_ids": [
+        "58",
+        "96",
+        "418"
+      ],
+      "flagships": {
+        "piping_plover": {
+          "454": 17918,
+          "483": 17918
+        },
+        "spotted_owl": {
+          "507": 9
+        },
+        "greater_sage_grouse": {
+          "204": 13
+        }
+      },
+      "stats": {
+        "fine_rows": 1091177,
+        "occurrence_count": 9114203,
+        "matched_listing_count": 549,
+        "retained_listing_count": 514,
+        "species_level_listing_count": 511,
+        "western_waterfan_listing_records": 10,
+        "eastern_waterfan_listing_records": 82,
+        "western_waterfan_only_cells": 3,
+        "eastern_waterfan_only_cells": 30,
+        "western_waterfan_unit_weight": [
+          1
+        ],
+        "eastern_waterfan_unit_weight": [
+          2
+        ]
+      },
+      "synthetic_validation": {
+        "alias_keys_deduplicated": true,
+        "per_unit_max_weight": true,
+        "zero_weight_rows_omitted": true,
+        "two_units_score": 5,
+        "two_units_n_species": 2
+      },
+      "long_point": {
+        "gi": 170,
+        "gj": -322,
+        "score_raw": 188,
+        "rank": 1
+      }
+    }
+  },
+  "rebased_shipping_policy": {
+    "download_key": "0026614-260928105237408",
+    "doi": "10.15468/dl.6hqdyd",
+    "method": "allowlist",
+    "gate_commit": "15a37a8c64974d0b5b69a99c00b3a8bd98123c13",
+    "scorer_commit": "7cf8f9c6f7caa20c74838dbdae43d14bcfa4c00a",
+    "geometry_code_commit": "258bfea2fed876ff0456c7330b9dbd72c29c6828",
+    "shipping_code_commit": "caa5ba5a3defd2b0f715db8beb832663c9489bd2",
+    "gate_sha256": "4598182de2b72947007106b42c85bc62fe4ab65d9311d284d0a9b4f5477ebc79",
+    "scorer_sha256": "0ed079d12aaa298c5bc389a5a674c41a9d340e421cd05aa643a0a67624eccacb",
+    "dropped_listing_ids": [
+      "40",
+      "81",
+      "109",
+      "111",
+      "112",
+      "114",
+      "121",
+      "125",
+      "132",
+      "137",
+      "139",
+      "142",
+      "170",
+      "177",
+      "179",
+      "186",
+      "215",
+      "217",
+      "252",
+      "261",
+      "295",
+      "296",
+      "308",
+      "331",
+      "336",
+      "480",
+      "499",
+      "500",
+      "501",
+      "509",
+      "510",
+      "525",
+      "532",
+      "1026",
+      "1501"
+    ],
+    "dropped_listing_reasons": {
+      "40": "Frozen allowlist excludes Euphyes vestris: no COVERS test name and not one of the retained UNCLEAR species",
+      "81": "Frozen allowlist excludes Pituophis catenifer: no COVERS test name and not one of the retained UNCLEAR species",
+      "109": "Frozen allowlist excludes Ammodramus savannarum: no COVERS test name and not one of the retained UNCLEAR species",
+      "111": "Frozen allowlist excludes Nerodia sipedon: no COVERS test name and not one of the retained UNCLEAR species",
+      "112": "Frozen allowlist excludes Mustela erminea: no COVERS test name and not one of the retained UNCLEAR species",
+      "114": "Frozen allowlist excludes Loxia curvirostra: no COVERS test name and not one of the retained UNCLEAR species",
+      "121": "Frozen allowlist excludes Astur atricapillus: no COVERS test name and not one of the retained UNCLEAR species",
+      "125": "Frozen allowlist excludes Salvelinus malma: no COVERS test name and not one of the retained UNCLEAR species",
+      "132": "Frozen allowlist excludes Plebejus saepiolus: no COVERS test name and not one of the retained UNCLEAR species",
+      "137": "Frozen allowlist excludes Cicuta maculata: no COVERS test name and not one of the retained UNCLEAR species",
+      "139": "Frozen allowlist excludes Gentianopsis virgata: no COVERS test name and not one of the retained UNCLEAR species",
+      "142": "Frozen allowlist excludes Armeria maritima: no COVERS test name and not one of the retained UNCLEAR species",
+      "170": "Frozen allowlist excludes Eremophila alpestris: no COVERS test name and not one of the retained UNCLEAR species",
+      "177": "Frozen allowlist excludes Phoca vitulina: no COVERS test name and not one of the retained UNCLEAR species",
+      "179": "Frozen allowlist excludes Falco peregrinus: no COVERS test name and not one of the retained UNCLEAR species",
+      "186": "Frozen allowlist excludes Cicindela formosa: no COVERS test name and not one of the retained UNCLEAR species",
+      "215": "Frozen allowlist excludes Erynnis persius: no COVERS test name and not one of the retained UNCLEAR species",
+      "217": "Frozen allowlist excludes Occidryas editha: no COVERS test name and not one of the retained UNCLEAR species",
+      "252": "Frozen allowlist excludes Pooecetes gramineus: no COVERS test name and not one of the retained UNCLEAR species",
+      "261": "Frozen allowlist excludes Silene scouleri: no COVERS test name and not one of the retained UNCLEAR species",
+      "295": "Frozen allowlist excludes Aegolius acadicus: no COVERS test name and not one of the retained UNCLEAR species",
+      "296": "Frozen allowlist excludes Bartonia paniculata: no COVERS test name and not one of the retained UNCLEAR species",
+      "308": "Frozen allowlist excludes Martes americana: no COVERS test name and not one of the retained UNCLEAR species",
+      "331": "Frozen allowlist excludes Sylvilagus nuttallii: no COVERS test name and not one of the retained UNCLEAR species",
+      "336": "Frozen allowlist excludes Ardea herodias: no COVERS test name and not one of the retained UNCLEAR species",
+      "480": "Frozen allowlist excludes Passerculus sandwichensis: no COVERS test name and not one of the retained UNCLEAR species",
+      "499": "Frozen allowlist excludes Oncorhynchus clarkii: no COVERS test name and not one of the retained UNCLEAR species",
+      "500": "Frozen allowlist excludes Chrysemys picta: no COVERS test name and not one of the retained UNCLEAR species",
+      "501": "Frozen allowlist excludes Chrysemys picta: no COVERS test name and not one of the retained UNCLEAR species",
+      "509": "Frozen allowlist excludes Oncorhynchus clarkii: no COVERS test name and not one of the retained UNCLEAR species",
+      "510": "Frozen allowlist excludes Phocoena phocoena: no COVERS test name and not one of the retained UNCLEAR species",
+      "525": "Frozen allowlist excludes Salix brachycarpa: no COVERS test name and not one of the retained UNCLEAR species",
+      "532": "Frozen allowlist excludes Tanacetum bipinnatum: no COVERS test name and not one of the retained UNCLEAR species",
+      "1026": "Frozen allowlist excludes Arnica griscomii: no COVERS test name and not one of the retained UNCLEAR species",
+      "1501": "Frozen allowlist excludes Achillea millefolium: no COVERS test name and not one of the retained UNCLEAR species"
+    },
+    "selection": {
+      "incremental_true": 3830,
+      "incremental_false": 7224,
+      "incremental_true_share": 0.3464809118870997,
+      "ci95_reported": [
+        0.086,
+        0.97
+      ],
+      "incremental_species": 26,
+      "requirement": "95% species-bootstrap CI lower bound strictly greater than 0.5",
+      "decision": "allowlist ships",
+      "record_cohort": "Resolved listed and unlisted infraspecific records in the frozen test set only"
+    },
+    "polygon_safeguards": [
+      "58",
+      "96",
+      "418"
+    ],
+    "audit_results": "research/range_clip_results.json",
+    "shared_key_safeguard_commit": "d661d48d5d27b44666dd1a6482bcaedae7acee45",
+    "original_commit_references": {
+      "gate_commit": "7da9d9b9deb56b9b8df298f08e628a6695749b1e",
+      "scorer_commit": "d765666575f362f79f2cc4ff9deba10f25ee5cfb",
+      "geometry_code_commit": "5569d4a2cb00bf20d2c8483542d81a7eca357094",
+      "shipping_code_commit": "bbc77d8464a54bff3733829c3ed95e5a5f804bdf",
+      "shared_key_safeguard_commit": "39d4b8efd7ac88349b588e567e4b6d96fc753d60"
+    },
+    "rebase_note": "Reachable references updated after rebase onto origin/main; original registration and scored code references are retained, and frozen file bytes and selection are unchanged"
+  },
+  "production_verification": {
+    "status": "PASS",
+    "artifact": "research/allowlist_production_audit.json",
+    "script": "research/allowlist_production_audit.py",
+    "source_head_before_metadata_commit": "19c22a63b9bfb4a76172c698da2955f90ae93b6a",
+    "checks": "Full configured pytest, ruff and pre-commit passed after rebase; every selected cell and listing audit matched the independent reconstruction",
+    "input_output_hashes": {
+      "download": {
+        "path": "GBIF DOI 10.15468/dl.6hqdyd",
+        "sha256": "4b16a59371966b1f717fdaf10f2d0af8e92e15ba385800351a02e0b6681c5c52"
+      },
+      "crosswalk": {
+        "path": "cluster_results/ca/atrisk_species_keys.csv",
+        "sha256": "3ff7323e81c4578eccb769356e56d6b66e80330d6fb2c619ca273ea6d298ecc7"
+      },
+      "listings": {
+        "path": "cluster_results/ca/atrisk_listings.csv",
+        "sha256": "7b10abf771df7556bc8fd4411ce8e325db1f3ec50be5438d3766af125745dfc3"
+      },
+      "ranges": {
+        "path": "cluster_results/ca/atrisk_ranges.geojson",
+        "sha256": "2feb0fc8f6e7f47e46e60a775a45c64dd6c9d7e32dbc7defd51282a90662658a"
+      },
+      "policy": {
+        "path": "cluster_results/ca/atrisk_shipping_policy.json",
+        "sha256": "6c604e10376f6d05c0bd96ad1df286bc3f27497fddc26fc6897c6d23aa430326"
+      },
+      "test_set": {
+        "path": "research/subspecies_test_set.csv",
+        "sha256": "ebd07f668fb78536aeb5b4caab3a348e8aca5cd7cded646607e427da6c51ffef"
+      },
+      "production_layer": {
+        "path": "cluster_results/ca/ca_atrisk_richness.csv",
+        "sha256": "d74ad7110afe75d1696c3df29b4c247d34455c1d7856123425fddc98dbd1409d"
+      },
+      "production_listing_audit": {
+        "path": "cluster_results/ca/atrisk_listing_clip.csv",
+        "sha256": "12a5f109e8111473b3491001893aee88ec2910f2a2c32e4a26149d072ed8a1eb"
+      },
+      "production_provenance": {
+        "path": "cluster_results/ca/ca_atrisk_provenance.json",
+        "sha256": "257eb64d2782c851493171d73932225e6ab5e7d7d8210ff108cc1fc4f3dce385"
+      }
+    }
+  },
+  "rebase_onto": "8161238ef1bd0ed61ac40d8c62abca423e1194d0"
 }

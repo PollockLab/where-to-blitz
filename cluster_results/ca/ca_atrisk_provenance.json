@@ -8,14 +8,15 @@
     "download_key": "0026614-260928105237408",
     "doi": "10.15468/dl.6hqdyd",
     "method": "allowlist",
-    "gate_commit": "7da9d9b9deb56b9b8df298f08e628a6695749b1e",
-    "scorer_commit": "d765666575f362f79f2cc4ff9deba10f25ee5cfb",
-    "geometry_code_commit": "5569d4a2cb00bf20d2c8483542d81a7eca357094",
-    "shipping_code_commit": "bbc77d8464a54bff3733829c3ed95e5a5f804bdf",
+    "gate_commit": "15a37a8c64974d0b5b69a99c00b3a8bd98123c13",
+    "scorer_commit": "7cf8f9c6f7caa20c74838dbdae43d14bcfa4c00a",
+    "geometry_code_commit": "258bfea2fed876ff0456c7330b9dbd72c29c6828",
+    "shipping_code_commit": "caa5ba5a3defd2b0f715db8beb832663c9489bd2",
     "gate_sha256": "4598182de2b72947007106b42c85bc62fe4ab65d9311d284d0a9b4f5477ebc79",
     "scorer_sha256": "0ed079d12aaa298c5bc389a5a674c41a9d340e421cd05aa643a0a67624eccacb",
     "dropped_listing_ids": [
-      "1026",
+      "40",
+      "81",
       "109",
       "111",
       "112",
@@ -26,7 +27,6 @@
       "137",
       "139",
       "142",
-      "1501",
       "170",
       "177",
       "179",
@@ -40,7 +40,6 @@
       "308",
       "331",
       "336",
-      "40",
       "480",
       "499",
       "500",
@@ -49,10 +48,12 @@
       "510",
       "525",
       "532",
-      "81"
+      "1026",
+      "1501"
     ],
     "dropped_listing_reasons": {
-      "1026": "Frozen allowlist excludes Arnica griscomii: no COVERS test name and not one of the retained UNCLEAR species",
+      "40": "Frozen allowlist excludes Euphyes vestris: no COVERS test name and not one of the retained UNCLEAR species",
+      "81": "Frozen allowlist excludes Pituophis catenifer: no COVERS test name and not one of the retained UNCLEAR species",
       "109": "Frozen allowlist excludes Ammodramus savannarum: no COVERS test name and not one of the retained UNCLEAR species",
       "111": "Frozen allowlist excludes Nerodia sipedon: no COVERS test name and not one of the retained UNCLEAR species",
       "112": "Frozen allowlist excludes Mustela erminea: no COVERS test name and not one of the retained UNCLEAR species",
@@ -63,7 +64,6 @@
       "137": "Frozen allowlist excludes Cicuta maculata: no COVERS test name and not one of the retained UNCLEAR species",
       "139": "Frozen allowlist excludes Gentianopsis virgata: no COVERS test name and not one of the retained UNCLEAR species",
       "142": "Frozen allowlist excludes Armeria maritima: no COVERS test name and not one of the retained UNCLEAR species",
-      "1501": "Frozen allowlist excludes Achillea millefolium: no COVERS test name and not one of the retained UNCLEAR species",
       "170": "Frozen allowlist excludes Eremophila alpestris: no COVERS test name and not one of the retained UNCLEAR species",
       "177": "Frozen allowlist excludes Phoca vitulina: no COVERS test name and not one of the retained UNCLEAR species",
       "179": "Frozen allowlist excludes Falco peregrinus: no COVERS test name and not one of the retained UNCLEAR species",
@@ -77,7 +77,6 @@
       "308": "Frozen allowlist excludes Martes americana: no COVERS test name and not one of the retained UNCLEAR species",
       "331": "Frozen allowlist excludes Sylvilagus nuttallii: no COVERS test name and not one of the retained UNCLEAR species",
       "336": "Frozen allowlist excludes Ardea herodias: no COVERS test name and not one of the retained UNCLEAR species",
-      "40": "Frozen allowlist excludes Euphyes vestris: no COVERS test name and not one of the retained UNCLEAR species",
       "480": "Frozen allowlist excludes Passerculus sandwichensis: no COVERS test name and not one of the retained UNCLEAR species",
       "499": "Frozen allowlist excludes Oncorhynchus clarkii: no COVERS test name and not one of the retained UNCLEAR species",
       "500": "Frozen allowlist excludes Chrysemys picta: no COVERS test name and not one of the retained UNCLEAR species",
@@ -86,7 +85,8 @@
       "510": "Frozen allowlist excludes Phocoena phocoena: no COVERS test name and not one of the retained UNCLEAR species",
       "525": "Frozen allowlist excludes Salix brachycarpa: no COVERS test name and not one of the retained UNCLEAR species",
       "532": "Frozen allowlist excludes Tanacetum bipinnatum: no COVERS test name and not one of the retained UNCLEAR species",
-      "81": "Frozen allowlist excludes Pituophis catenifer: no COVERS test name and not one of the retained UNCLEAR species"
+      "1026": "Frozen allowlist excludes Arnica griscomii: no COVERS test name and not one of the retained UNCLEAR species",
+      "1501": "Frozen allowlist excludes Achillea millefolium: no COVERS test name and not one of the retained UNCLEAR species"
     },
     "selection": {
       "incremental_true": 3830,
@@ -107,7 +107,7 @@
       "418"
     ],
     "audit_results": "research/range_clip_results.json",
-    "shared_key_safeguard_commit": "39d4b8e",
+    "shared_key_safeguard_commit": "d661d48d5d27b44666dd1a6482bcaedae7acee45",
     "applied": true,
     "requested_dropped_listing_ids": [
       "1026",
@@ -703,7 +703,15 @@
       "418",
       "58",
       "96"
-    ]
+    ],
+    "original_commit_references": {
+      "gate_commit": "7da9d9b9deb56b9b8df298f08e628a6695749b1e",
+      "scorer_commit": "d765666575f362f79f2cc4ff9deba10f25ee5cfb",
+      "geometry_code_commit": "5569d4a2cb00bf20d2c8483542d81a7eca357094",
+      "shipping_code_commit": "bbc77d8464a54bff3733829c3ed95e5a5f804bdf",
+      "shared_key_safeguard_commit": "39d4b8efd7ac88349b588e567e4b6d96fc753d60"
+    },
+    "rebase_note": "Reachable references updated after rebase onto origin/main; original registration and scored code references are retained, and frozen file bytes and selection are unchanged"
   },
   "taxonomy": {
     "dataset_key": "7ddf754f-d193-4cc9-b351-99906754a03b",

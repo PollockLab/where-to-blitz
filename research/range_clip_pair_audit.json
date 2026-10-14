@@ -2198,5 +2198,7 @@
       "unresolved_false_epithets": []
     }
   },
-  "skipped": []
+  "skipped": [],
+  "rebased_scorer_commit": "7cf8f9c6f7caa20c74838dbdae43d14bcfa4c00a",
+  "rebased_geometry_code_commit": "258bfea2fed876ff0456c7330b9dbd72c29c6828"
 }
