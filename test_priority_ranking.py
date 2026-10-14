@@ -36,7 +36,7 @@ const geColour=()=>"grey",TIER_SWITCH_Z=9;
 const _mapLoaded=false,map={getZoom:()=>3};
 const setCellState=()=>{},setGridFill=()=>{},paintPopScore=()=>{scoreOverlay=overlay;};
 const OVERLAY_TOGGLE={gettingeven:"tgGettingEven",climate:"tgClimateGap",coverage:"tgCoverage"};
-const covOn=()=>overlay==="coverage",setGridLines=()=>{},setCoverage=()=>{},setClimate=()=>{},updateLegend=()=>{},renderGoalContext=()=>{};
+const covOn=()=>overlay==="coverage",setGridLines=()=>{},setCoverage=()=>{},setClimate=()=>{},updateLegend=()=>{},renderGoalContext=()=>{},syncSharedCellUrl=()=>{};
 let loadGE=()=>new Promise(()=>{});
 const routeRequests=[];
 const fetchT=async url=>{requests++;if(url.includes("route/v1"))routeRequests.push(url);

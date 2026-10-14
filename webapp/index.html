@@ -828,13 +828,14 @@ function geCat(v,col,row){
 // the style dropdown follow it, never the reverse.
 const OVERLAY_TOGGLE={coverage:'tgCoverage',gettingeven:'tgGettingEven',climate:'tgClimateGap'};
 let overlay='priority';   // 'priority' (the goal grid) | 'coverage' | 'gettingeven' | 'climate'
-let _overlaySeq=0;
+let _overlaySeq=0,_overlayReady=Promise.resolve();
 function geActive(){return overlay==='gettingeven';}
 function covOn(){return overlay==='coverage';}
 function climateOn(){return overlay==='climate';}
 function setOverlay(kind){
-  overlay=OVERLAY_TOGGLE[kind]?kind:'priority';
   const seq=++_overlaySeq;
+  overlay=OVERLAY_TOGGLE[kind]?kind:'priority';
+  if(overlay==='priority'){const cs=document.getElementById('criteria');if(cs&&(cs.value==='ge'||cs.value==='climate'))cs.value=String(window.__activePreset||0);}
   renderCellTable();paintPopScore();   // invalidate previous priority evidence before an overlay's async load
   for(const[k,id]of Object.entries(OVERLAY_TOGGLE)){const el=document.getElementById(id);if(el)el.checked=(overlay===k);}
   // the style dropdown's iNat entry is the coverage overlay under another name; keep the two agreed.
@@ -846,14 +847,15 @@ function setOverlay(kind){
   renderGoalContext();
   {const n=document.getElementById('goalnote');if(n)n.style.display=covOn()?'':'none';}
   {const gib=document.getElementById('geinfobtn');if(gib){gib.style.display=geActive()?'':'none';if(!geActive()){const gi=document.getElementById('geinfo');if(gi)gi.classList.remove('open');}}}
-  const paint=()=>{if(seq!==_overlaySeq)return;setCoverage();setClimate();updateLegend();recolour();};
+  const paint=()=>{if(seq!==_overlaySeq)return;setCoverage();setClimate();updateLegend();recolour();syncSharedCellUrl();};
   // loadGE() had no rejection path: when its fetch failed (offline, a 404, a blocked scheme) paint()
   // never ran, so `overlay` said gettingeven while the map and the legend still showed the previous
   // layer and the checkbox agreed with neither. Fall back the way the taxon dropdown already does on
   // a failed load: put the overlay and the dropdown back where they were. Read #criteria off the DOM
   // rather than the critSel const, for the same reason the basemap select is read that way above.
-  geActive()?loadGE().then(paint,()=>{if(seq!==_overlaySeq)return;setOverlay('priority');
-    const cs=document.getElementById('criteria');if(cs)cs.value=String(window.__activePreset||0);}):paint();
+  syncSharedCellUrl();
+  return _overlayReady=geActive()?loadGE().then(paint,()=>{if(seq!==_overlaySeq)return;setOverlay('priority');
+    const cs=document.getElementById('criteria');if(cs)cs.value=String(window.__activePreset||0);syncSharedCellUrl();}):Promise.resolve(paint());
 }
 // The 25 km lattice outline is the shape of the goal grid, so it explains the cells it traces.
 // Under a raster overlay (iNat density, climate gap) it traces nothing the pixels below it share,
@@ -1229,6 +1231,7 @@ function setBase(name){
 }
 
 let markers=[], routeLine=null, destMarker=null, destCell=null, lastFit=null, lastScored=null, planned=false, lastDest=null;
+var _committedTaxon=null,_bootTaxon=null;
 const VAN=[49.28,-123.12];
 const w0={}; OBJ.forEach((o,i)=>w0[o.key]=DEFAULT[i]);
 const state={taxon:(FILES["All biodiversity"]?"All biodiversity":Object.keys(FILES)[0]), w:w0, start:VAN.slice(), budget:5, maxLeg:0, minRatio:0.5, unit:'Hours', lowc:false, mode:'Walk', modeSet:false, startProsp:false, view:'explore', startSet:false, planMode:'auto', project:'blitz-the-gap-2026-general'};
@@ -1302,12 +1305,13 @@ function buildMarkers(){
   const rs=rows();
   // The lattice geometry is identical across taxa, so after the first build a taxon switch only swaps each
   // cell's data row + restyles via feature-state -- the 23k-feature source is never reparsed (setData runs once).
-  if(markers.length===rs.length){markers.forEach((m,i)=>m.r=rs[i]);recolour();return;}
+  if(markers.length===rs.length){markers.forEach((m,i)=>m.r=rs[i]);recolour();if(Array.isArray(DATA[state.taxon]))_committedTaxon=state.taxon;return;}
   const feats=rs.map((r,i)=>({type:'Feature',id:i,properties:{},geometry:{type:'Polygon',coordinates:[cellPoly(r[0],r[1])]}}));
   map.getSource('cells').setData({type:'FeatureCollection',features:feats});
   markers=rs.map((r,i)=>({r:r,i:i,t:0}));   // r[0],r[1] invariant across taxa; i = stable feature id for setFeatureState
   M25=new Map();markers.forEach(m=>{const s=snapToLattice(m.r[0],m.r[1],25000);if(s)M25.set(latKey(s),m);});
   recolour();
+  if(Array.isArray(DATA[state.taxon]))_committedTaxon=state.taxon;
 }
 function renderCellTable(){
   const el=document.getElementById('celltable');if(!el)return;   // sr-only region: always populated for screen-reader users (issue #20 removed the visible list)
@@ -1394,18 +1398,23 @@ function updateLegend(){
 }
 
 // controls
+function refreshProspectGroup(){prospectSeq++;const p=_lastProspect;if(p)fetchProspects(p.lat,p.lon,p.whereKey,p);}
 const taxonSel=document.getElementById('taxon');
+let _taxonSeq=0,_taxonPending=null;
 function rebuildTaxonOptions(){const cur=state.taxon;taxonSel.innerHTML='';
   Object.keys(FILES).forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=groupName(k);taxonSel.appendChild(o);});
   taxonSel.value=cur;}
 rebuildTaxonOptions();
-taxonSel.onchange=()=>{const prev=state.taxon;state.taxon=taxonSel.value;
+taxonSel.onchange=()=>{const seq=++_taxonSeq;_shareAction++;const prev=state.taxon,wanted=taxonSel.value;state.taxon=wanted;
   const pr=document.getElementById('prospects');if(pr){pr.dataset.idle='0';pr.innerHTML='<div class="hd">'+t('cells_loading',groupName(state.taxon))+'</div>';}
   if(typeof showLoading==='function')showLoading(true);
   setCoverage();   // the density overlay needs only state.taxon, so its tiles load alongside the group's cells
-  loadGroup(state.taxon).then(()=>{buildMarkers();if(document.getElementById('insights').style.display==='block')renderInsights();})
-    .catch(()=>{state.taxon=prev;taxonSel.value=prev;setCoverage();if(pr){pr.dataset.idle='1';pr.innerHTML='<div class="hd" style="margin-top:10px">'+t('prospects_idle')+'</div>';}})   // load failed: revert dropdown, don't leave a half-switched map
-    .finally(()=>{if(typeof showLoading==='function')showLoading(false);});};
+  syncSharedCellUrl();
+  refreshProspectGroup();
+  const pending=loadGroup(wanted).then(()=>{if(seq!==_taxonSeq)return;buildMarkers();if(document.getElementById('insights').style.display==='block')renderInsights();})
+    .catch(()=>{if(seq!==_taxonSeq)return;const fallback=_committedTaxon||_bootTaxon||prev;state.taxon=fallback;taxonSel.value=fallback;setCoverage();if(Array.isArray(DATA[fallback]))buildMarkers();syncSharedCellUrl();if(pr){pr.dataset.idle='1';pr.innerHTML='<div class="hd" style="margin-top:10px">'+t('prospects_idle')+'</div>';}refreshProspectGroup();})   // revert to rendered rows, not another pending request's group
+    .finally(()=>{if(seq===_taxonSeq&&typeof showLoading==='function')showLoading(false);});
+  _taxonPending={taxon:wanted,promise:pending};return pending;};
 
 function applyWeights(arr,name){OBJ.forEach((o,i)=>{state.w[o.key]=arr[i];});markPreset(name);recolour();updateLegendLabels();replan();}
 // Issue #20: criteria is a dropdown (was preset chips). Getting Even is one of the options;
@@ -1421,8 +1430,8 @@ function rebuildCriteria(){if(!critSel)return;const cur=critSel.value;critSel.in
 rebuildCriteria();
 function applyChallenge(p){const i=PRESETS.indexOf(p);window.__activePreset=i;
   applyWeights(p.w,presetName(i));state.project=p.proj;
-  renderGoalContext();}
-if(critSel)critSel.onchange=()=>{const v=critSel.value;
+  renderGoalContext();syncSharedCellUrl();}
+if(critSel)critSel.onchange=()=>{_shareAction++;const v=critSel.value;
   if(v==='ge'){
     if(state.taxon!=='All biodiversity'&&FILES['All biodiversity']){taxonSel.value='All biodiversity';taxonSel.onchange();}
     setOverlay('gettingeven');
@@ -1464,9 +1473,9 @@ const bmSel=document.getElementById('basemap');
 const MAP_STYLES=[['Standard','style_standard'],['Satellite','style_satellite'],['Terrain','style_terrain'],['__inat__','style_inat_density']];
 function rebuildStyles(){const cur=bmSel.value||'Standard';bmSel.innerHTML='';MAP_STYLES.forEach(([v,k])=>{const o=document.createElement('option');o.value=v;o.textContent=t(k);bmSel.appendChild(o);});bmSel.value=cur;}
 rebuildStyles();
-bmSel.onchange=()=>{const v=bmSel.value;
+bmSel.onchange=()=>{_shareAction++;const v=bmSel.value;
   if(v==='__inat__'){setBase('Light');setOverlay('coverage');}
-  else{setBase(v);if(covOn())setOverlay('priority');}};
+  else{setBase(v);if(covOn())setOverlay('priority');}syncSharedCellUrl();};
 // dec25 100 m density is served as local raster PMTiles (issue #10): the magma colormap
 // (rescale 0,10) is baked into transparent WEBP tiles so the overlay sharpens as you zoom
 // to ~300 m, where the 1 km COG via TiTiler stayed coarse.
@@ -1927,12 +1936,12 @@ function addRoute(coords,paint){if(!_mapLoaded)return;const id='rt'+routeIds.len
   map.addLayer({id:id,type:'line',source:id,layout:{'line-cap':'round','line-join':'round'},paint:p});routeIds.push(id);routeLine=true;}
 function clearRouteLines(){if(_mapLoaded)routeIds.forEach(id=>{if(map.getLayer(id))map.removeLayer(id);if(map.getSource(id))map.removeSource(id);});routeIds=[];routeLine=null;}
 function clearRoute(){clearRouteLines();removeDestCell();const dm=destMarker;destMarker=null;destCell=null;routeLine=null;if(dm)dm.remove();}
-// Issue #16: deselect a cell and return to the "nothing selected" home state without editing the URL.
+// Issue #16: deselect the cell while preserving its group, goal and layer context in the URL.
 let _reselect=false;   // true only while exploreCell swaps one selection for another (suppress the close-driven clear)
 function clearSelection(){clearRoute();
   const pr=document.getElementById('prospects');if(pr){pr.dataset.idle='1';pr.innerHTML='<div class="hd" style="margin-top:10px" data-i18n="prospects_idle">'+t('prospects_idle')+'</div>';}
   _lastProspect=null; _popScoreEl=null;   // the cell popup (which held the coverage tree + species) is gone; nothing for setLang to re-render
-  try{history.replaceState(null,'',location.pathname);}catch(e){}}
+  _sharedCell=null;syncSharedCellUrl(true);}
 function openDestPopup(lat,lon,html){const p=wirePopup(new maplibregl.Popup({offset:30,maxWidth:'340px'}).setHTML(html));
   destMarker=destMarkerAt(lat,lon).addTo(map);destMarker.setPopup(p);destMarker.togglePopup();}
 function selectTrip(o){clearRoute();const dest=[o.m.r[0],o.m.r[1]];
@@ -2012,6 +2021,61 @@ async function renderInsights(){
   document.getElementById('idis').innerHTML=t('ins_spearman',objName(gi),objName(gj),dis,verdict);
 }
 // Explore mode: tap a cell to see its score + what to record there (no trip planning).
+var _sharedCell=null,_shareContext=false,_shareAction=0;   // var: controls can refresh the URL during initial setup
+function parseSharedContext(search){
+  const u=new URLSearchParams(search),g=u.get('g'),v=u.get('goal'),r=u.get('res');
+  const taxon=Object.hasOwn(FILES,g)?g:(FILES['All biodiversity']?'All biodiversity':Object.keys(FILES)[0]);
+  const goal=v==='ge'||v==='climate'?v:(/^(0|[1-9]\d*)$/.test(v||'')&&+v<PRESETS.length?v:'0');
+  const styles={standard:'Standard',satellite:'Satellite',terrain:'Terrain',density:'__inat__'},s=u.get('style');
+  const style=Object.hasOwn(styles,s)?styles[s]:'Standard';
+  const p=(u.get('at')||'').split(',');
+  const valid=p.length===2&&p.every(x=>x.trim()!==''&&Number.isFinite(+x))&&+p[0]>=BB.minlat&&+p[0]<=BB.maxlat&&+p[1]>=BB.minlon&&+p[1]<=BB.maxlon;
+  return{taxon,goal,style,linked:['at','g','res','goal','style'].some(k=>u.has(k)),cell:valid?{lat:+p[0],lon:+p[1],resM:r==='5000'?5000:25000}:null};
+}
+function sharedCellUrl(cell,taxon,goal,style,href){
+  const u=new URL(href),p=u.searchParams;
+  if(cell){p.set('at',cell.lat.toFixed(3)+','+cell.lon.toFixed(3));p.set('res',String(cell.resM));}
+  else{p.delete('at');p.delete('res');}
+  p.set('g',taxon);p.set('goal',goal);p.set('style',style);
+  return u.pathname+u.search+u.hash;
+}
+function syncSharedCellUrl(force){
+  if(!_shareContext&&!_sharedCell&&!force)return;
+  _shareContext=true;
+  const cs=document.getElementById('criteria'),sel=document.getElementById('basemap');
+  const v=cs&&cs.value,goal=geActive()?'ge':climateOn()?'climate':(covOn()&&v==='ge'||covOn()&&v==='climate'||/^(0|[1-9]\d*)$/.test(v||''))?v:String(window.__activePreset||0);
+  const style=covOn()?'density':((sel&&sel.value)==='__inat__'?'density':(sel&&sel.value||'Standard').toLowerCase());
+  try{history.replaceState(null,'',sharedCellUrl(_sharedCell,state.taxon,goal,style,location.href));}catch(e){}
+}
+async function restoreSharedCell(shared,action,loadedTaxon){
+  if(!_mapLoaded)await new Promise(resolve=>whenMap(resolve));
+  let readyTaxon=loadedTaxon;
+  const latestGroup=async()=>{let changed=false;while(readyTaxon!==state.taxon){
+    const g=state.taxon,p=_taxonPending;await(p&&p.taxon===g?p.promise:loadGroup(g));readyTaxon=g;changed=true;
+  }return changed;};
+  await latestGroup();
+  buildMarkers();setView('explore');
+  if(action===_shareAction){
+    critSel.value=shared.goal;
+    if(shared.goal!=='ge'&&shared.goal!=='climate')applyChallenge(PRESETS[+shared.goal]);
+    bmSel.value=shared.style;setBase(shared.style==='__inat__'?'Light':shared.style);
+    const kind=shared.style==='__inat__'?'coverage':shared.goal==='ge'?'gettingeven':shared.goal==='climate'?'climate':'priority';
+    await setOverlay(kind);
+  }
+  await loadUS();
+  const c=shared.cell;if(!c){if(shared.linked)syncSharedCellUrl(true);locateMe();return;}
+  let current;
+  do{current=_shareAction;if(await latestGroup())buildMarkers();await _overlayReady;
+    if(current!==_shareAction)continue;
+    map.jumpTo({center:[c.lon,c.lat],zoom:c.resM===5000?TIER_SWITCH_Z+1:Math.min(7,TIER_SWITCH_Z-1)});
+    if(c.resM===5000&&!covOn()&&!climateOn()){
+      await refreshCells5();if(current!==_shareAction)continue;
+      const s=snapToLattice(c.lat,c.lon,5000);
+      if(!s||!DRAWN5||!DRAWN5.has(latKey(s)))throw new Error('Shared 5 km cell is unavailable');
+    }
+  }while(current!==_shareAction);
+  if(!exploreCell(c.lat,c.lon))throw new Error('Shared cell is unavailable');
+}
 function exploreCell(lat,lon){
   if(!markers.length)return;   // map tapped before cell data loaded
   const resM=activeCellResM();
@@ -2025,7 +2089,7 @@ function exploreCell(lat,lon){
   if(!open||(best&&caOnlyActive()&&US_CELLS&&US_CELLS.has(gekey(best.r[0],best.r[1]))))return;
   _reselect=true;   // swapping selections: suppress the close-driven deselect until the new popup is open (issue #16)
   const dest=[snap.lat,snap.lon];clearRoute();
-  try{history.replaceState(null,'','?at='+dest[0].toFixed(3)+','+dest[1].toFixed(3)+'&g='+encodeURIComponent(state.taxon));}catch(e){}
+  _sharedCell={lat:dest[0],lon:dest[1],resM};syncSharedCellUrl();
   setDestCell(dest[0],dest[1],resM);
   // Issue #44/#56: the popup holds the per-cell coverage tree and the rarest species, filled async. setDOMContent
   // keeps the same persistent element (the two child containers stay attached) so an in-flight fetch can fill it.
@@ -2045,6 +2109,7 @@ function exploreCell(lat,lon){
   destMarker.togglePopup();
   _reselect=false;
   fetchProspects(dest[0],dest[1],'destination',{toPopup:true,spEl:popSp,gapsEl:popGaps,resM:resM});
+  return true;
 }
 function setView(v){
   state.view=v;
@@ -2072,12 +2137,12 @@ function showLoading(on){const el=document.getElementById('loading');if(el)el.st
 document.getElementById('langbtn').onclick=()=>setLang(LANG==='en'?'fr':'en');   // #69: one button toggles EN/FR
 applyI18N();   // paint static chrome + set <html lang> for the seeded language
 
-function bootSeq(){return loadGroup(state.taxon).then(()=>{buildMarkers();setView('explore');showLoading(false);
-  try{const u=new URLSearchParams(location.search),at=u.get('at'),g=u.get('g');
-    const go=()=>{if(at){const p=at.split(',').map(Number);if(p.length===2&&isFinite(p[0])&&isFinite(p[1])&&p[0]>=BB.minlat&&p[0]<=BB.maxlat&&p[1]>=BB.minlon&&p[1]<=BB.maxlon){map.jumpTo({center:[p[1],p[0]],zoom:7});exploreCell(p[0],p[1]);}}};
-    if(g&&FILES[g]&&g!==state.taxon){state.taxon=g;taxonSel.value=g;loadGroup(g).then(()=>{buildMarkers();go();}).catch(()=>{});}else{go();}
-    if(!at)locateMe();   // default Explore to the user's location (no shared cell to restore)
-  }catch(e){}}).catch(()=>{const el=document.getElementById('loading');if(el){el.style.display='block';el.innerHTML=t('load_error')+' <a href="#" onclick="bootRetry();return false;" style="color:var(--acc);text-decoration:underline">'+t('retry')+'</a>';}});}
+function bootSeq(){const shared=parseSharedContext(location.search),action=_shareAction,taxonSeq=_taxonSeq;
+  _bootTaxon=shared.taxon;
+  state.taxon=shared.taxon;taxonSel.value=shared.taxon;critSel.value=shared.goal;bmSel.value=shared.style;
+  return loadGroup(shared.taxon).then(()=>shared.taxon,e=>{if(taxonSeq===_taxonSeq)throw e;return null;})
+    .then(loaded=>restoreSharedCell(shared,action,loaded)).then(()=>showLoading(false))
+    .catch(()=>{const el=document.getElementById('loading');if(el){el.style.display='block';el.innerHTML=t('load_error')+' <a href="#" onclick="bootRetry();return false;" style="color:var(--acc);text-decoration:underline">'+t('retry')+'</a>';}});}
 function bootRetry(){const el=document.getElementById('loading');if(el){el.style.display='block';el.textContent=t('loading');}bootSeq();}
 bootSeq();
 window._map=map;   // console handle for tuning TIER_SWITCH_Z by eye (#87 D5: Ryan screenshots z8/9/10)
