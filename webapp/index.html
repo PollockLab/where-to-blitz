@@ -7,13 +7,13 @@
 <meta name="theme-color" content="#0f1620">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Where to Blitz the Gap">
-<meta property="og:description" content="Find Canada's biodiversity gaps and plan a low-carbon trip to the best spot you can reach and get back from.">
+<meta property="og:description" content="Explore Canada's biodiversity recording gaps and the evidence behind each goal.">
 <meta property="og:url" content="https://pollocklab.github.io/where-to-blitz/">
 <meta property="og:image" content="https://pollocklab.github.io/where-to-blitz/og-image.png">
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Where to Blitz the Gap">
-<meta name="twitter:description" content="Find Canada's biodiversity gaps and plan a trip to the best spot you can reach.">
+<meta name="twitter:description" content="Explore Canada's biodiversity recording gaps and choose what to record.">
 <meta name="twitter:image" content="https://pollocklab.github.io/where-to-blitz/og-image.png">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"
   integrity="sha384-MinO0mNliZ3vwppuPOUnGa+iq619pfMhLVUXfC4LHwSCvF9H+6P/KO4Q7qBOYV5V" crossorigin="anonymous"/>
@@ -335,10 +335,11 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
   <div class="legend" style="margin-top:2px"><span data-i18n="skip">skip</span><div class="bar"></div><span data-i18n="go_here">go here</span></div>
   <div style="color:var(--mut);font-size:11px;line-height:1.45;margin-top:7px" data-i18n-html="impact_expl"></div>
   <div style="color:var(--mut);font-size:11px;line-height:1.45;margin-top:9px" data-i18n-html="colour_expl"></div>
-  <div style="color:var(--mut);font-size:11px;line-height:1.5;margin-top:9px" data-i18n-html="axis_method"></div>
+  <div id="goalmethods" style="color:var(--mut);font-size:11px;line-height:1.5;margin-top:9px"></div>
   <div style="color:var(--mut);font-size:11px;line-height:1.45;margin-top:9px" data-i18n-html="leak_note"></div>
   <div style="margin-top:9px"><a href="https://pollocklab.github.io/where-to-blitz/where-to-blitz-walkthrough.html" target="_blank" rel="noopener" style="color:var(--acc);font-size:12px;font-weight:600" data-i18n="methodology_link">Full methodology &amp; data — trace every number →</a></div>
   <p class="foot" data-i18n-html="foot"></p>
+  <p class="foot" id="plansource" data-i18n-html="plan_source" style="display:none"></p>
 </div>
 <div id="insights"></div>
 </div>
@@ -358,7 +359,7 @@ const I18N={
     sub:"Choose what counts as <b>impact</b>, then <b>explore</b> the priority map — or <b>plan a trip</b> to the best spot you can reach and get back from.",
     sec_group:"Life group & goal", sec_taxon:"Species group", sec_goal:"Goal", goal_inactive:"The map is showing iNaturalist records. Pick a goal to go back to the goal map.",
     info_btn:"Where do these scores come from?",
-    taxinfo:`<b style="color:var(--ink)">Higher priority = a place where one new sighting adds more to what we know.</b> Canada-wide, on an equal-area grid: 25&nbsp;km cells, 5&nbsp;km when you zoom in. <b>How impact is scored</b>, top right, lists the data behind each goal. Cells with no records at all share the top of the scale and are not ranked against each other. <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">How Blitz the Gap works →</a>`,
+    taxinfo:`<b style="color:var(--ink)">Choose a recording goal, then tap a cell for local evidence.</b> The equal-area grid uses 25&nbsp;km cells, and 5&nbsp;km cells when you zoom in. The three numeric goals rank recording proxies, not expected species discoveries. Getting Even and Climate Gap have separate meanings. <b>How impact is scored</b>, top right, explains the inputs. <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">How Blitz the Gap works →</a>`,
     finetune:"Fine-tune the five goals",
     your_trip:"Your trip",
     search_ph:"Search a town or address",
@@ -413,12 +414,7 @@ const I18N={
     coverage_hint:"Where records already are: bright = well sampled, dark = gaps (Biodiversité Québec).",
     getting_even:"Getting Even (under-represented groups)",
     ge_info_btn:"How is the recommended group worked out?",
-    ge_method:`<b>Which group to record here.</b> Tap a cell and the app asks iNaturalist, live, how many research-grade species each group has <b style="color:var(--ink)">in the cell</b> versus <b style="color:var(--ink)">within ~40&nbsp;km</b> (birds excluded — eBird already covers them).
-      <ul>
-      <li>That share, divided by the cell's overall recording rate, puts an average group at <b style="color:var(--ink)">1</b>.</li>
-      <li>Groups well below 1 are under-recorded next to their neighbours. Normalising is what surfaces the real gaps even where everything is under-recorded — one cell can't hold a whole region's diversity.</li>
-      </ul>
-      The map's colours come from a second, offline pass over the whole grid: each group's share of a cell's records, standardised against that group's share across every other cell, and the cell takes the lowest-scoring group. That is the 2025 <i>Getting Even</i> calculation, on these cells. Grey means too few records to judge. Tap for the live ranking, tap a group to map it.`,
+    ge_method:`<b>Map colours and popup bars answer different questions.</b> The Getting Even map compares each group's share of records with that group's share across cells, then names the lowest standardised group. Birds are excluded from that offline map. At 5&nbsp;km the comparison uses a different cell population, so the recommended group can change with zoom. Thinly recorded cells can give unstable recommendations.<br><br>The popup uses live research-grade iNaturalist species counts in the cell's bounding box and the surrounding ~40&nbsp;km box. Each group's here/nearby ratio is divided by the overall recording ratio across groups. A short bar means less recorded here relative to the other groups, not that the species are absent. Queries can be capped at 500 species per box; sensitive records are excluded.`,
     ge_cats:["Fishes","Fungi","Reptiles & Amphibians","Invertebrates","Mammals","Plants"],
     ge_all:"All groups under-sampled",
     canada_only:"Canada only",
@@ -437,11 +433,25 @@ const I18N={
     climate_opacity:"Climate layer opacity",
     how_scored:"How impact is scored & data sources",
     skip:"skip", go_here:"go here",
-    impact_expl:`Picking a goal from the dropdown weights the five goals, then cells are <b style="color:var(--ink)">ranked against every other cell in Canada</b> as <b style="color:var(--ink)">impact 0–100</b> — a percentile, so 100 is the top cell nationally. Tap a cell: the number sits at the foot of the popup, under what is actually worth recording there.`,
-    colour_expl:`<b style="color:var(--ink)">Colour follows the view.</b> Cells are shaded against the others on screen, so zooming in re-ranks what you see and a busy region stops reading as flat purple. The impact number stays national, and the legend says which scale is live: <i>scaled to this view</i>, or <i>scaled across Canada</i> when a view holds too few cells, or too little spread, to rank.`,
-    axis_method:`<b style="color:var(--ink)">Each goal, scored 0–1 per cell:</b><br>• <b style="color:var(--ink)">Discover the most species</b> — few have recorded here: inverse iNaturalist density.<br>• <b style="color:var(--ink)">Find species at risk</b> — at-risk species recorded nearby, weighted by status: CAN-SAR (COSEWIC/SARA) × GBIF.<br>• <b style="color:var(--ink)">Freshest gaps</b> — much recorded long ago, little lately: iNaturalist recent vs all-time.<br>• <b style="color:var(--ink)">Sample before it's lost</b> — recent forest loss: Hansen Global Forest Change.<br>Climate Gap, on the style dropdown, is a separate raster of under-sampled climates built outside this page — it is not one of the goals scored above.`,
-    leak_note:"The map ranks by an all-time record-density score; the leak-free version validated in the walkthrough scores higher, but this one is shown because it can be worked out for every cell.",
-    foot:`<b style="color:var(--ink)">How it works:</b> <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">Blitz the Gap</a> is a Canada-wide bioblitz — go to a high-priority cell, record what you see on <a href="https://www.inaturalist.org" target="_blank" rel="noopener" style="color:var(--acc)">iNaturalist</a>, and your research-grade sightings flow into the <a href="https://www.inaturalist.org/projects/blitz-the-gap-2026-general" target="_blank" rel="noopener" style="color:var(--acc)">2026 project</a>. Led by the <a href="https://pollocklab.github.io/blitz-the-gap/" target="_blank" rel="noopener" style="color:var(--acc)">Pollock Lab</a> at McGill; a companion tool, not an official project page.<br><br>Routes from OSRM (FOSSGIS), travel time from Weiss 2018. Driving CO₂ ≈ 0.18&nbsp;kg/km; cycling and walking zero. <b style="color:var(--ink)">iNaturalist records show where people looked, not what lives there</b> — a planning aid, not a census.<br><br>This map spans many <b style="color:var(--ink)">Indigenous territories</b> — see whose at <a href="https://native-land.ca" target="_blank" rel="noopener" style="color:var(--acc)">native-land.ca</a>, obscure sensitive-species locations, and seek consent before recording on their lands.`,
+    impact_expl:`<b style="color:var(--ink)">Spatial Gap, Species discovery and Conservation have a national percentile.</b> Their weighted scores are ranked across the 25&nbsp;km cells. A value of 80/100 means a higher score than about 80% of those cells. Equal scores share a rank. This is relative priority, not an expected species count, a probability of finding a species, or the measured benefit of a visit. Getting Even, Climate Gap and sampling density have no national percentile.`,
+    colour_expl:`<b style="color:var(--ink)">Priority colour follows the view.</b> The three numeric goals rescale colours against cells on screen, while the popup percentile stays national. The legend names the colour scale: <i>scaled to this view</i>, or <i>scaled across Canada</i> when too few cells or distinct values are visible. At 5&nbsp;km, colour uses the finer data; the popup percentile belongs to the enclosing 25&nbsp;km cell. The other layers use their own legends.`,
+    axis_method:`<b style="color:var(--ink)">The five choices in the Goal menu:</b> Each input to a numeric goal is scaled 0–1 before these weights are applied.`,
+    axis_basis:["recording gap (iNaturalist density; zero-density cells are ordered by climate distinctiveness)","recorded species at risk (CAN-SAR status weights × GBIF records, all groups)","under-sampled climate","older recording gap (iNaturalist recent vs all-time records)","tree cover loss (Hansen, cumulative 2001–2023)"],
+    method_ge:"A categorical recommendation of which group to record, from relative iNaturalist recording shares. It is not a ranking of places; recommendations can change with cell size.",
+    method_climate:"A separate supplied CHELSA-based layer of under-sampled climates. Its calculation is independent of the numeric goal scores and is not evaluated by the linked species-discovery backtest.",
+    ge_blurb:"Which group is relatively under-recorded here. Colours name groups, not priority scores; sparse records make recommendations uncertain.",
+    climate_blurb:"Under-sampled climates (CHELSA), supplied as a separate layer shared across species groups.",
+    density_blurb:"Recorded iNaturalist observation density (Biodiversité Québec). Bright means more records, not a bigger recording gap.",
+    plan_source:"Routes from OSRM (FOSSGIS), travel estimates from Weiss 2018. Driving CO₂ ≈ 0.18 kg/km; walking and cycling count no direct travel emissions.",
+    pop_cell:km=>`Selected ${km} km cell. Species evidence: live iNaturalist queries within its bounding box.`,
+    pop_parent:"National percentile of the enclosing 25 km cell",
+    pop_national:"National percentile of this 25 km cell",
+    pop_rank_caveat:"Relative recording priority, not an expected species count.",
+    pop_layer_ge:"Getting Even recommends a group; this layer has no national priority percentile.",
+    pop_layer_climate:"Climate Gap shows climate under-representation; this layer has no national priority percentile.",
+    pop_layer_density:"Sampling density shows existing records; this layer has no national priority percentile.",
+    leak_note:`The walkthrough compares the all-time density blend with a separate score using earlier observations. This retrospective comparison does not establish how many species a visit to this cell will discover.`,
+    foot:`<b style="color:var(--ink)">How it works:</b> <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">Blitz the Gap</a> is a Canada-wide bioblitz, go to a high-priority cell, record what you see on <a href="https://www.inaturalist.org" target="_blank" rel="noopener" style="color:var(--acc)">iNaturalist</a>, and your research-grade sightings flow into the <a href="https://www.inaturalist.org/projects/blitz-the-gap-2026-general" target="_blank" rel="noopener" style="color:var(--acc)">2026 project</a>. Led by the <a href="https://pollocklab.github.io/blitz-the-gap/" target="_blank" rel="noopener" style="color:var(--acc)">Pollock Lab</a> at McGill; a companion tool, not an official project page.<br><br><b style="color:var(--ink)">iNaturalist records show where people looked, not what lives there</b>, a planning aid, not a census.<br><br>This map spans many <b style="color:var(--ink)">Indigenous territories</b>, see whose at <a href="https://native-land.ca" target="_blank" rel="noopener" style="color:var(--acc)">native-land.ca</a>, obscure sensitive-species locations, and seek consent before recording on their lands.`,
     top_cells:"Top cells (accessible list)",
     view_explore:"Explore", view_plan:"Plan a trip", view_compare:"Compare goals",
     loading:"Loading the map…",
@@ -498,10 +508,10 @@ const I18N={
     ins_v_agree:"For the groups shown, the two goals mostly <b>agree</b> here.",
     ins_v_some:(neg,n)=>`They point to different places in <b>${neg} of ${n}</b> groups shown — under-sampling and at-risk species often diverge, but not always.`,
     // OBJ / PRESET / group display names (indexed)
-    obj_name:["Discover the most species","Find species at risk","Climate under-sampling","Freshest gaps","Sample before it's lost"],
-    obj_q:["go where few people have looked","go where COSEWIC/SARA species at risk concentrate","go where the climate is under-sampled","go where lots was recorded long ago but little lately (iNaturalist recent vs all-time density)","go where forest cover was recently lost (logging, fire, dieback)"],
+    obj_name:["Recording gap","Recorded species at risk","Under-sampled climate","Older recording gap","Tree cover loss, 2001–2023"],
+    obj_q:["go where few people have looked","go where COSEWIC/SARA species at risk concentrate","go where the climate is under-sampled","go where lots was recorded long ago but little lately (iNaturalist recent vs all-time density)","go where tree cover was lost during 2001–2023"],
     preset_name:["Spatial Gap","Species discovery","Conservation"],
-    preset_blurb:["Under-recorded places: where few have logged on iNaturalist (inverse observation density).","Where new-to-the-record species are likeliest: under-sampling plus cells recorded long ago but quiet lately.","Where species at risk concentrate, weighted toward recently changed habitat (COSEWIC/SARA via CAN-SAR + GBIF)."],
+    preset_blurb:["Places with fewer iNaturalist records, with climate used to distinguish unrecorded areas.","Recording gaps and older records help prioritize new records on iNaturalist.","Recorded species at risk, weighted by cumulative tree cover loss, 2001–2023 (CAN-SAR + GBIF; Hansen). Shared across species groups."],
     group:{Amphibia:"Amphibians",Aves:"Birds",Insecta:"Insects",Mammalia:"Mammals",Reptilia:"Reptiles",Plantae:"Plants",Fungi:"Fungi",Actinopterygii:"Fishes",Arachnida:"Arachnids",Mollusca:"Molluscs","All biodiversity":"All biodiversity"},
     modes:{Walk:"Walk",Cycle:"Cycle",Drive:"Drive"},
   },
@@ -510,7 +520,7 @@ const I18N={
     sub:"Choisissez ce qui compte comme <b>impact</b>, puis <b>explorez</b> la carte des priorités — ou <b>planifiez une sortie</b> vers le meilleur endroit que vous pouvez atteindre et d'où vous pouvez revenir.",
     sec_group:"Groupe d'espèces et objectif", sec_taxon:"Groupe d'espèces", sec_goal:"Objectif", goal_inactive:"La carte affiche les observations iNaturalist. Choisissez un objectif pour revenir à la carte des objectifs.",
     info_btn:"D'où viennent ces scores?",
-    taxinfo:`<b style="color:var(--ink)">Priorité élevée = un endroit où une nouvelle observation ajoute le plus à nos connaissances.</b> À l'échelle du Canada, sur une grille à surface égale&nbsp;: cellules de 25&nbsp;km, 5&nbsp;km en zoomant. <b>Calcul de l'impact</b>, en haut à droite, donne les données derrière chaque objectif. Les cellules sans aucune observation partagent le haut de l'échelle et ne sont pas classées entre elles. <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">Fonctionnement de Blitz the Gap →</a>`,
+    taxinfo:`<b style="color:var(--ink)">Choisissez un objectif, puis touchez une cellule pour consulter les observations locales.</b> La grille à surface égale utilise des cellules de 25&nbsp;km, et de 5&nbsp;km en zoomant. Les trois objectifs numériques classent des indicateurs d'observation, pas le nombre attendu de découvertes. Combler l'écart et Lacune climatique ont des significations distinctes. <b>Calcul de l'impact</b>, en haut à droite, explique les données. <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">Fonctionnement de Blitz the Gap →</a>`,
     finetune:"Ajuster les cinq objectifs",
     your_trip:"Votre sortie",
     search_ph:"Rechercher une ville ou une adresse",
@@ -565,12 +575,7 @@ const I18N={
     coverage_hint:"Où les observations existent déjà&nbsp;: clair = bien échantillonné, foncé = lacunes (Biodiversité Québec).",
     getting_even:"Combler l'écart (groupes sous-représentés)",
     ge_info_btn:"Comment le groupe recommandé est-il déterminé ?",
-    ge_method:`<b>Quel groupe noter ici.</b> Touchez une cellule et l'application interroge iNaturalist, en direct&nbsp;: combien d'espèces de qualité recherche chaque groupe compte <b style="color:var(--ink)">dans la cellule</b> par rapport aux <b style="color:var(--ink)">~40&nbsp;km autour</b> (oiseaux exclus — eBird les couvre déjà).
-      <ul>
-      <li>Cette part, divisée par le taux d'enregistrement global de la cellule, place un groupe moyen à <b style="color:var(--ink)">1</b>.</li>
-      <li>Les groupes bien en dessous de 1 sont sous-documentés par rapport à leurs voisins. C'est cette normalisation qui fait ressortir les vraies lacunes même là où tout est sous-documenté — une cellule ne peut contenir toute la diversité d'une région.</li>
-      </ul>
-      Les couleurs de la carte proviennent d'un second calcul, hors ligne, sur toute la grille&nbsp;: la part de chaque groupe dans les observations d'une cellule, normalisée par rapport à la part de ce groupe dans toutes les autres cellules, la cellule prenant le groupe au score le plus bas. C'est le calcul <i>Combler l'écart</i> de 2025, appliqué à ces cellules. Le gris signifie trop peu d'observations pour trancher. Touchez pour le classement en direct, touchez un groupe pour le cartographier.`,
+    ge_method:`<b>Les couleurs de la carte et les barres de la fenêtre répondent à des questions différentes.</b> La carte Combler l'écart compare la part d'observations de chaque groupe à sa part dans l'ensemble des cellules, puis indique le groupe au score standardisé le plus faible. Les oiseaux sont exclus de cette carte calculée hors ligne. À 5&nbsp;km, la comparaison utilise une autre population de cellules, donc le groupe recommandé peut changer avec le zoom. Les recommandations sont instables quand les observations sont rares.<br><br>La fenêtre utilise les nombres d'espèces de qualité recherche iNaturalist dans le rectangle englobant la cellule et le rectangle voisin d'environ 40&nbsp;km, interrogés en direct. Le rapport ici/à proximité de chaque groupe est divisé par le rapport global des groupes. Une barre courte signifie moins d'espèces notées ici relativement aux autres groupes, pas leur absence. Les requêtes peuvent être limitées à 500 espèces par rectangle; les observations sensibles sont exclues.`,
     ge_cats:["Poissons","Champignons","Reptiles et amphibiens","Invertébrés","Mammifères","Plantes"],
     ge_all:"Tous sous-échantillonnés",
     canada_only:"Canada seulement",
@@ -589,11 +594,25 @@ const I18N={
     climate_opacity:"Opacité de la couche climatique",
     how_scored:"Calcul de l'impact et sources de données",
     skip:"à éviter", go_here:"y aller",
-    impact_expl:`Choisir un objectif dans le menu déroulant pondère les cinq objectifs, puis les cellules sont <b style="color:var(--ink)">classées par rapport à toutes les cellules du Canada</b> en <b style="color:var(--ink)">impact 0–100</b> — un centile, donc 100 = la meilleure cellule au pays. Touchez une cellule&nbsp;: le score est au bas de la fenêtre, sous ce qui vaut vraiment la peine d'être noté.`,
-    colour_expl:`<b style="color:var(--ink)">La couleur suit la vue.</b> Chaque cellule est classée par rapport aux autres à l'écran : un zoom recalcule donc l'affichage, et une région bien couverte cesse d'être uniformément violette. Le score d'impact reste national, et la légende indique l'échelle active : <i>calibré sur cette vue</i>, ou <i>calibré sur tout le Canada</i> quand la vue contient trop peu de cellules, ou trop peu d'écart, pour être classée.`,
-    axis_method:`<b style="color:var(--ink)">Chaque objectif, noté 0–1 par cellule&nbsp;:</b><br>• <b style="color:var(--ink)">Découvrir le plus d'espèces</b> — peu de gens ont observé ici&nbsp;: densité iNaturalist inversée.<br>• <b style="color:var(--ink)">Trouver des espèces en péril</b> — espèces en péril observées à proximité, pondérées par statut&nbsp;: CAN-SAR (COSEWIC/SARA) × GBIF.<br>• <b style="color:var(--ink)">Lacunes les plus fraîches</b> — beaucoup observé autrefois, peu récemment&nbsp;: densité iNaturalist récente vs historique.<br>• <b style="color:var(--ink)">Échantillonner avant qu'il soit trop tard</b> — perte forestière récente&nbsp;: Hansen Global Forest Change.<br>Climat sous-échantillonné, dans le menu déroulant du style, est une couche distincte construite en dehors de cette page&nbsp;: elle ne fait pas partie des objectifs notés ci-dessus.`,
-    leak_note:"La carte classe les cellules selon un score de densité d'observations sur toute la période; la version sans fuite validée dans le guide méthodologique obtient un meilleur score, mais c'est celle-ci qui est utilisée ici car elle peut être calculée pour chaque cellule.",
-    foot:`<b style="color:var(--ink)">Fonctionnement&nbsp;:</b> <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">Blitz the Gap</a> est un bioblitz pancanadien — rendez-vous dans une cellule prioritaire, notez ce que vous voyez sur <a href="https://www.inaturalist.org" target="_blank" rel="noopener" style="color:var(--acc)">iNaturalist</a>, et vos observations de qualité recherche alimentent le <a href="https://www.inaturalist.org/projects/blitz-the-gap-2026-general" target="_blank" rel="noopener" style="color:var(--acc)">projet 2026</a>. Mené par le <a href="https://pollocklab.github.io/blitz-the-gap/" target="_blank" rel="noopener" style="color:var(--acc)">Pollock Lab</a> de l'Université McGill; un outil complémentaire, non officiel.<br><br>Itinéraires d'OSRM (FOSSGIS), temps de déplacement de Weiss 2018. CO₂ en voiture ≈ 0,18&nbsp;kg/km; vélo et marche nuls. <b style="color:var(--ink)">Les observations iNaturalist montrent où les gens ont cherché, pas ce qui vit là</b> — un outil de planification, pas un inventaire.<br><br>Cette carte couvre de nombreux <b style="color:var(--ink)">territoires autochtones</b> — voyez lesquels sur <a href="https://native-land.ca" target="_blank" rel="noopener" style="color:var(--acc)">native-land.ca</a>, masquez les lieux d'espèces sensibles, et obtenez le consentement avant d'observer sur leurs terres.`,
+    impact_expl:`<b style="color:var(--ink)">Lacune spatiale, Découverte d'espèces et Conservation ont un centile national.</b> Leurs scores pondérés sont classés parmi les cellules de 25&nbsp;km. Une valeur de 80/100 dépasse le score d'environ 80&nbsp;% de ces cellules. Les scores égaux partagent un rang. Il s'agit d'une priorité relative, pas du nombre attendu d'espèces, de la probabilité d'en trouver une, ni du bénéfice mesuré d'une visite. Combler l'écart, Lacune climatique et la densité d'observations n'ont pas de centile national.`,
+    colour_expl:`<b style="color:var(--ink)">La couleur des priorités suit la vue.</b> Les trois objectifs numériques recalibrent les couleurs parmi les cellules à l'écran, tandis que le centile reste national. La légende précise l'échelle des couleurs&nbsp;: <i>calibré sur cette vue</i>, ou <i>calibré sur tout le Canada</i> si trop peu de cellules ou de valeurs distinctes sont visibles. À 5&nbsp;km, la couleur utilise les données fines; le centile appartient à la cellule englobante de 25&nbsp;km. Les autres couches ont leurs propres légendes.`,
+    axis_method:`<b style="color:var(--ink)">Les cinq choix du menu Objectif&nbsp;:</b> Chaque indicateur numérique est ramené à 0–1 avant l'application des pondérations suivantes.`,
+    axis_basis:["lacune d'observation (densité iNaturalist; les cellules de densité nulle sont ordonnées selon leur singularité climatique)","espèces en péril observées (pondérations CAN-SAR × observations GBIF, tous groupes)","climat sous-échantillonné","lacune historique (observations iNaturalist récentes vs historiques)","perte de couvert arboré (Hansen, cumul 2001–2023)"],
+    method_ge:"Une recommandation du groupe à observer, fondée sur les parts relatives d'observations iNaturalist. Elle ne classe pas les lieux; le groupe recommandé peut changer avec la taille des cellules.",
+    method_climate:"Une couche distincte fournie de climats sous-échantillonnés, basée sur CHELSA. Son calcul est indépendant des scores numériques et n'est pas évalué par la validation de découverte d'espèces liée ci-dessous.",
+    ge_blurb:"Le groupe relativement sous-observé ici. Les couleurs indiquent des groupes, pas des scores de priorité; peu d'observations rendent les recommandations incertaines.",
+    climate_blurb:"Climats sous-échantillonnés (CHELSA), fournis par une couche distincte commune aux groupes d'espèces.",
+    density_blurb:"Densité d'observations iNaturalist enregistrées (Biodiversité Québec). Plus clair signifie plus d'observations, pas une lacune plus grande.",
+    plan_source:"Itinéraires d'OSRM (FOSSGIS), estimations de déplacement de Weiss 2018. CO₂ en voiture ≈ 0,18 kg/km; la marche et le vélo ne comptent aucune émission directe de déplacement.",
+    pop_cell:km=>`Cellule sélectionnée de ${km} km. Espèces observées : requêtes iNaturalist en direct dans son rectangle englobant.`,
+    pop_parent:"Centile national de la cellule englobante de 25 km",
+    pop_national:"Centile national de cette cellule de 25 km",
+    pop_rank_caveat:"Priorité relative d'observation, pas un nombre attendu d'espèces.",
+    pop_layer_ge:"Combler l'écart recommande un groupe; cette couche n'a pas de centile national de priorité.",
+    pop_layer_climate:"Lacune climatique montre la sous-représentation climatique; cette couche n'a pas de centile national de priorité.",
+    pop_layer_density:"La densité montre les observations existantes; cette couche n'a pas de centile national de priorité.",
+    leak_note:`Le guide compare la combinaison fondée sur la densité historique à un score distinct utilisant des observations antérieures. Cette comparaison rétrospective ne mesure pas combien d'espèces une visite permettra de découvrir.`,
+    foot:`<b style="color:var(--ink)">Fonctionnement&nbsp;:</b> <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">Blitz the Gap</a> est un bioblitz pancanadien, rendez-vous dans une cellule prioritaire, notez ce que vous voyez sur <a href="https://www.inaturalist.org" target="_blank" rel="noopener" style="color:var(--acc)">iNaturalist</a>, et vos observations de qualité recherche alimentent le <a href="https://www.inaturalist.org/projects/blitz-the-gap-2026-general" target="_blank" rel="noopener" style="color:var(--acc)">projet 2026</a>. Mené par le <a href="https://pollocklab.github.io/blitz-the-gap/" target="_blank" rel="noopener" style="color:var(--acc)">Pollock Lab</a> de l'Université McGill; un outil complémentaire, non officiel.<br><br><b style="color:var(--ink)">Les observations iNaturalist montrent où les gens ont cherché, pas ce qui vit là</b>, un outil de planification, pas un inventaire.<br><br>Cette carte couvre de nombreux <b style="color:var(--ink)">territoires autochtones</b>, voyez lesquels sur <a href="https://native-land.ca" target="_blank" rel="noopener" style="color:var(--acc)">native-land.ca</a>, masquez les lieux d'espèces sensibles, et obtenez le consentement avant d'observer sur leurs terres.`,
     top_cells:"Meilleures cellules (liste accessible)",
     view_explore:"Explorer", view_plan:"Planifier une sortie", view_compare:"Comparer les objectifs",
     loading:"Chargement de la carte…",
@@ -649,10 +668,10 @@ const I18N={
     ins_v_all_diff:"Les deux objectifs pointent vers des <b>lieux différents dans chaque groupe affiché</b> — les cellules les plus sous-représentées ne sont pas là où sont les espèces en péril.",
     ins_v_agree:"Pour les groupes affichés, les deux objectifs <b>concordent</b> surtout ici.",
     ins_v_some:(neg,n)=>`Ils pointent vers des lieux différents dans <b>${neg} des ${n}</b> groupes affichés — sous-représentation et espèces en péril divergent souvent, mais pas toujours.`,
-    obj_name:["Découvrir le plus d'espèces","Trouver des espèces en péril","Sous-échantillonnage climatique","Lacunes les plus fraîches","Échantillonner avant qu'il soit trop tard"],
-    obj_q:["allez où peu de gens ont cherché","allez où se concentrent les espèces en péril (COSEWIC/SARA)","allez où le climat est sous-échantillonné","allez où l'on a beaucoup observé autrefois mais peu récemment (densité iNaturalist récente vs historique)","allez où le couvert forestier a été récemment perdu (coupe, feu, dépérissement)"],
+    obj_name:["Lacune d'observation","Espèces en péril observées","Climat sous-échantillonné","Lacune historique","Perte de couvert arboré, 2001–2023"],
+    obj_q:["allez où peu de gens ont cherché","allez où se concentrent les espèces en péril (COSEWIC/SARA)","allez où le climat est sous-échantillonné","allez où l'on a beaucoup observé autrefois mais peu récemment (densité iNaturalist récente vs historique)","allez où le couvert arboré a été perdu entre 2001 et 2023"],
     preset_name:["Lacune spatiale","Découverte d'espèces","Conservation"],
-    preset_blurb:["Lieux sous-observés : là où peu de gens ont enregistré sur iNaturalist (densité d'observation inversée).","Là où de nouvelles espèces pour le registre sont les plus probables : sous-représentation et cellules observées autrefois mais calmes récemment.","Là où se concentrent les espèces en péril, pondéré vers les habitats récemment modifiés (COSEWIC/SARA; CAN-SAR + GBIF)."],
+    preset_blurb:["Lieux avec moins d'observations iNaturalist; le climat distingue les zones sans observations.","Les lacunes d'observation et les observations anciennes aident à prioriser de nouvelles observations iNaturalist.","Espèces en péril observées, pondérées par la perte cumulée de couvert arboré, 2001–2023 (CAN-SAR + GBIF; Hansen). Commun aux groupes d'espèces."],
     group:{Amphibia:"Amphibiens",Aves:"Oiseaux",Insecta:"Insectes",Mammalia:"Mammifères",Reptilia:"Reptiles",Plantae:"Plantes",Fungi:"Champignons",Actinopterygii:"Poissons",Arachnida:"Arachnides",Mollusca:"Mollusques","All biodiversity":"Toute la biodiversité"},
     modes:{Walk:"Marche",Cycle:"Vélo",Drive:"Voiture"},
   }
@@ -667,6 +686,22 @@ function presetName(i){return t('preset_name')[i];}
 function presetBlurb(i){return t('preset_blurb')[i];}
 function groupName(k){return t('group')[k]||k;}
 function modeName(k){return t('modes')[k]||k;}
+function goalMethodsHtml(){
+  const basis=t('axis_basis');
+  const numeric=PRESETS.map((p,i)=>'<br>• <b style="color:var(--ink)">'+presetName(i)+'</b> = '+
+    p.w.map((w,k)=>w>0?w+' × '+basis[k]:null).filter(Boolean).join(' + ')+'.').join('');
+  return t('axis_method')+numeric+'<br>• <b style="color:var(--ink)">'+t('crit_ge')+'</b>: '+t('method_ge')+
+    '<br>• <b style="color:var(--ink)">'+t('crit_climate')+'</b>: '+t('method_climate');
+}
+function renderGoalContext(){
+  const methods=document.getElementById('goalmethods');if(methods)methods.innerHTML=goalMethodsHtml();
+  const cb=document.getElementById('challengeBlurb');if(cb){
+    if(overlay!=='priority')cb.textContent=t(geActive()?'ge_blurb':climateOn()?'climate_blurb':'density_blurb');
+    else{const i=window.__activePreset||0,p=PRESETS[i];
+      cb.innerHTML=presetBlurb(i)+' <a href="https://www.inaturalist.org/projects/'+p.proj+'" target="_blank" rel="noopener" style="color:var(--acc);white-space:nowrap">'+t('join')+'</a>';}
+  }
+  const ps=document.getElementById('plansource');if(ps)ps.style.display=state.view==='plan'?'':'none';
+}
 function applyI18N(){
   document.documentElement.lang=LANG;   // WCAG 3.1.1
   // preserve a user-moved start label across re-paints of the start_hint block
@@ -704,6 +739,7 @@ function relabelDynamic(){
   // same problem. updateLegend() picks the right branch itself, so it needs no guard beyond
   // "is it defined yet".
   if(typeof updateLegend==='function')updateLegend();
+  renderGoalContext();
   // start marker's tooltip/title/alt (created once at init) follow the language
   if(typeof startMarker!=='undefined'&&startMarker){const se=startMarker.getElement();if(se){se.setAttribute('title',t('start_tip'));se.setAttribute('aria-label',t('start_alt'));}}
   // start-place prospects idle text (only if untouched)
@@ -792,6 +828,7 @@ function setOverlay(kind){
   if(sel){const want=covOn()?'__inat__':(sel.value==='__inat__'?'Standard':sel.value);
     if(sel.value!==want){sel.value=want;setBase(want==='__inat__'?'Light':want);}}
   setGridLines();
+  renderGoalContext();
   {const n=document.getElementById('goalnote');if(n)n.style.display=covOn()?'':'none';}
   {const gib=document.getElementById('geinfobtn');if(gib){gib.style.display=geActive()?'':'none';if(!geActive()){const gi=document.getElementById('geinfo');if(gi)gi.classList.remove('open');}}}
   const paint=()=>{if(seq!==_overlaySeq)return;setCoverage();setClimate();updateLegend();recolour();};
@@ -864,10 +901,16 @@ let _popScoreEl=null;    // the open cell popup's footer score line, repainted i
 // taxon switch, and the 5 km tier snaps to a different cell than the 25 km one.
 function paintPopScore(){
   if(!_popScoreEl||!_popScoreEl.isConnected||!_lastProspect)return;
-  _popScoreEl.innerHTML=popScoreHtml(parentMarker(_lastProspect.lat,_lastProspect.lon));
+  _popScoreEl.innerHTML=popScoreHtml(parentMarker(_lastProspect.lat,_lastProspect.lon),_lastProspect.resM);
 }
 // A drawn 5 km cell can sit in a 25 km cell with no data row: it still opens, just without a national score.
-function popScoreHtml(m){return m?`${t('pop_impact')} <b>${(m.t*100|0)}/100</b> · ${contribStr(m.r)}`:t('pop_noscore');}
+function popScoreHtml(m,resM){
+  const cell=t('pop_cell',(resM||25000)/1000);
+  if(overlay!=='priority')return cell+'<br>'+t(geActive()?'pop_layer_ge':climateOn()?'pop_layer_climate':'pop_layer_density');
+  if(!m||!Number.isFinite(m.t))return cell+'<br>'+t('pop_noscore');
+  const basis=t(resM===5000?'pop_parent':'pop_national');
+  return `${cell}<br>${basis}: <b>${(m.t*100|0)}/100</b> · ${contribStr(m.r)}<br>${t('pop_rank_caveat')}`;
+}
 const LATTICE_X0=__LATTICE_X0__, LATTICE_Y1=__LATTICE_Y1__, LATTICE_W=__LATTICE_W__, LATTICE_H=__LATTICE_H__;   // injected from grid_lattice.py — the clickable lattice and the coloured grid are the same lattice
 function activeCellResM(){return map&&map.getZoom&&map.getZoom()>=TIER_SWITCH_Z?5000:25000;}
 function snapToLattice(lat,lon,resM){
@@ -1329,7 +1372,7 @@ function rebuildCriteria(){if(!critSel)return;const cur=critSel.value;critSel.in
 rebuildCriteria();
 function applyChallenge(p){const i=PRESETS.indexOf(p);window.__activePreset=i;
   applyWeights(p.w,presetName(i));state.project=p.proj;
-  const cb=document.getElementById('challengeBlurb');if(cb)cb.innerHTML=presetBlurb(i)+' <a href="https://www.inaturalist.org/projects/'+p.proj+'" target="_blank" rel="noopener" style="color:var(--acc);white-space:nowrap">'+t('join')+'</a>';}
+  renderGoalContext();}
 if(critSel)critSel.onchange=()=>{const v=critSel.value;
   if(v==='ge'){
     if(state.taxon!=='All biodiversity'&&FILES['All biodiversity']){taxonSel.value='All biodiversity';taxonSel.onchange();}
@@ -1940,7 +1983,7 @@ function exploreCell(lat,lon){
   const popDiv=document.createElement('div');
   // #?: the national percentile bottoms out at 0 in well-recorded cells, which reads as a verdict on the
   // outing rather than a fact about the map. Demoted to a muted footer line so the actionable gaps lead.
-  const popScore=document.createElement('div'); popScore.className='popscore'; _popScoreEl=popScore; popScore.innerHTML=popScoreHtml(best);
+  const popScore=document.createElement('div'); popScore.className='popscore'; _popScoreEl=popScore; popScore.innerHTML=popScoreHtml(best,resM);
   const popGaps=document.createElement('div'); popGaps.id='popgaps'; popGaps.innerHTML='<div class="popsec">'+t('pop_groups_hd')+'</div><div class="popcap">'+t('gaptree_lookup')+'</div>';
   const popSp=document.createElement('div'); popSp.id='popsp'; popSp.innerHTML='<div class="popsec">'+t('pop_rare_hd')+'</div><div class="popcap">'+t('prospects_lookup')+'</div>';
   popDiv.appendChild(popGaps); popDiv.appendChild(popSp); popDiv.appendChild(popScore);
@@ -1956,6 +1999,7 @@ function exploreCell(lat,lon){
 }
 function setView(v){
   state.view=v;
+  renderGoalContext();
   document.getElementById('insights').style.display=v==='compare'?'block':'none';
   const ml=document.getElementById('maplegend');if(ml)ml.style.display=v==='compare'?'none':'block';
   const lt=document.getElementById('legendtap');if(lt)lt.textContent=t(legendTapKey());
