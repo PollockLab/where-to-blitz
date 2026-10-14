@@ -41,3 +41,21 @@ Computed from a new GBIF SQL download with the live filters at 0.01 deg, grouped
 ## Reported, not gated
 
 Spearman rank correlation of cell scores vs the live layer (13,914 cells, top cell (170, -322) score 213), cells gained and lost, and the 20 listings with the largest record losses.
+
+## Ship rule: range clip vs the allowlist
+
+Range clipping is only worth its complexity if it beats the simpler rule on independent evidence. Added before any clipped result was computed.
+
+**Test set.** `research/subspecies_test_set.csv`: the 57 subspecies, variety and population listing names (49 species) classified COVERS (19), SPILLS (33) or UNCLEAR (5), with their listed and unlisted Canadian subspecies. Test records are the records of those species in the new download whose GBIF accepted taxon is infraspecific. A record of a listed subspecies (`listed_ssp_counts`, pooled over all test names of the species) is true; a record of an unlisted Canadian subspecies (`unlisted_ssp_counts`, minus any listed one) is false; any other infraspecific record is ignored. Subspecies are matched by epithet of the accepted name. The classification uses CAN-SAR status as is (badger jeffersonii and shrike migrans are false), and the pooled result is also reported without the UNCLEAR species.
+
+**No leakage.** Scoring range clipping ignores rule 2 (infraspecific records count outside the range): a test record counts only when it lies inside the buffered range of one of the species' test listings. The ecozone overrides were fixed from COSEWIC range text in `atrisk_range_overrides.csv` (committed with this gate), not from where the test records fall. Overrides are only for listings that split within a province; more than 10 stops the work for review.
+
+**Methods**, each scored on the test listings only:
+
+1. Live: species-level counting, every record of the species counts.
+2. Allowlist: species of COVERS names plus badger, shrike and bison count everywhere; species of SPILLS names and Silene scouleri count nowhere.
+3. Range clip, with the ecozone overrides (3a) and without them, the five override listings falling back to their CAN-SAR provinces (3b).
+
+**Metrics**, pooled and per species with n >= 20 test records: recall (true records counted / true records) and false share (false records counted / false records). Also, per method, the number of (listing, 0.25 deg cell) pairs the method weights for a test listing where the cell holds at least one false test record and no true one (a listing weighted with only an unlisted subspecies in evidence). A method weights a cell for a listing when any record of the species in the cell counts under that method.
+
+**Ship rule.** Range clipping (3a) ships only if, pooled, it counts more true records than the allowlist and no more false records than the allowlist, and the 95% bootstrap CI (2,000 resamples of species with test records) of the difference in true records counted lies above 0. Otherwise the allowlist ships with the matching fixes (alias keys, Lupinus override). If fewer than 5 species carry both true and false test records, the samples are too thin to decide and the result says so; the allowlist then ships by default. All three methods' numbers are reported either way.
