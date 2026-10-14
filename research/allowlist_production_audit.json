@@ -1,0 +1,135 @@
+{
+  "purpose": "Independent whole-layer selected-production verification",
+  "implementation": "No imports or calls to atrisk_shipping or atrisk_ranges scoring/selection functions; independent key graph, Shapely predicates and pandas max/sum aggregation",
+  "status": "PASS",
+  "script_sha256": "19083994eb1d447af4b94040d84d5a556948968acb8a84d021dbc88e62658d48",
+  "input_output_hashes": {
+    "download": {
+      "path": "GBIF DOI 10.15468/dl.6hqdyd",
+      "sha256": "4b16a59371966b1f717fdaf10f2d0af8e92e15ba385800351a02e0b6681c5c52"
+    },
+    "crosswalk": {
+      "path": "cluster_results/ca/atrisk_species_keys.csv",
+      "sha256": "3ff7323e81c4578eccb769356e56d6b66e80330d6fb2c619ca273ea6d298ecc7"
+    },
+    "listings": {
+      "path": "cluster_results/ca/atrisk_listings.csv",
+      "sha256": "7b10abf771df7556bc8fd4411ce8e325db1f3ec50be5438d3766af125745dfc3"
+    },
+    "ranges": {
+      "path": "cluster_results/ca/atrisk_ranges.geojson",
+      "sha256": "2feb0fc8f6e7f47e46e60a775a45c64dd6c9d7e32dbc7defd51282a90662658a"
+    },
+    "policy": {
+      "path": "cluster_results/ca/atrisk_shipping_policy.json",
+      "sha256": "72db718593e2777b24eee243ed025887e19f4338f52663faf19ffb443abf99a1"
+    },
+    "test_set": {
+      "path": "research/subspecies_test_set.csv",
+      "sha256": "ebd07f668fb78536aeb5b4caab3a348e8aca5cd7cded646607e427da6c51ffef"
+    },
+    "production_layer": {
+      "path": "cluster_results/ca/ca_atrisk_richness.csv",
+      "sha256": "d74ad7110afe75d1696c3df29b4c247d34455c1d7856123425fddc98dbd1409d"
+    },
+    "production_listing_audit": {
+      "path": "cluster_results/ca/atrisk_listing_clip.csv",
+      "sha256": "12a5f109e8111473b3491001893aee88ec2910f2a2c32e4a26149d072ed8a1eb"
+    },
+    "production_provenance": {
+      "path": "cluster_results/ca/ca_atrisk_provenance.json",
+      "sha256": "9766acb4509af104666ebefd682a732ebcd9bdc68783a0ddbcc897359b6c400d"
+    }
+  },
+  "inputs_and_outputs_stable_during_audit": true,
+  "cells_checked": 12805,
+  "maximum_score": 188,
+  "score_raw_n_species_normalization_and_centres_match_all_cells": true,
+  "listing_audit_matches_all_matched_and_unmatched_listings": true,
+  "drop_count": 35,
+  "dropped_listing_ids": [
+    "40",
+    "81",
+    "109",
+    "111",
+    "112",
+    "114",
+    "121",
+    "125",
+    "132",
+    "137",
+    "139",
+    "142",
+    "170",
+    "177",
+    "179",
+    "186",
+    "215",
+    "217",
+    "252",
+    "261",
+    "295",
+    "296",
+    "308",
+    "331",
+    "336",
+    "480",
+    "499",
+    "500",
+    "501",
+    "509",
+    "510",
+    "525",
+    "532",
+    "1026",
+    "1501"
+  ],
+  "dropped_rows_keep_zero_with_full_species_totals": true,
+  "polygon_guarded_ids": [
+    "58",
+    "96",
+    "418"
+  ],
+  "flagships": {
+    "piping_plover": {
+      "454": 17918,
+      "483": 17918
+    },
+    "spotted_owl": {
+      "507": 9
+    },
+    "greater_sage_grouse": {
+      "204": 13
+    }
+  },
+  "stats": {
+    "fine_rows": 1091177,
+    "occurrence_count": 9114203,
+    "matched_listing_count": 549,
+    "retained_listing_count": 514,
+    "species_level_listing_count": 511,
+    "western_waterfan_listing_records": 10,
+    "eastern_waterfan_listing_records": 82,
+    "western_waterfan_only_cells": 3,
+    "eastern_waterfan_only_cells": 30,
+    "western_waterfan_unit_weight": [
+      1
+    ],
+    "eastern_waterfan_unit_weight": [
+      2
+    ]
+  },
+  "synthetic_validation": {
+    "alias_keys_deduplicated": true,
+    "per_unit_max_weight": true,
+    "zero_weight_rows_omitted": true,
+    "two_units_score": 5,
+    "two_units_n_species": 2
+  },
+  "long_point": {
+    "gi": 170,
+    "gj": -322,
+    "score_raw": 188,
+    "rank": 1
+  }
+}

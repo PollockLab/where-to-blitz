@@ -1,0 +1,10 @@
+name,status,in_layer,backbone_key,backbone_name,backbone_records,col_key,col_name,col_matchType,col_records,ratio
+Bartramia stricta,Endangered,True,,,0,KSV8,Bartramia stricta,EXACT,13,inf
+Apodemia mormo,Endangered,True,,,0,FRHG,Apodemia mormo,EXACT,347,inf
+Armeria maritima ssp. Interior,Special Concern,False,,,0,GS9T,Armeria maritima,EXACT,1744,inf
+Charadrius montanus,Endangered,True,2480292,Charadrius montanus,0,TMX8,Charadrius montanus,EXACT,14,inf
+Ixobrychus exilis,Threatened,True,2480852,Ixobrychus exilis,355,CR94R,Botaurus exilis,EXACT,24852,70
+Lampetra richardsoni,Endangered,True,5216507,Lampetra richardsoni,1,KVYB5,Occidentis ayresii,EXACT,56,56
+Accipiter gentilis laingi,Threatened,False,2480589,Accipiter gentilis,1463,CTQ6J,Astur atricapillus,EXACT,49140,33.6
+Lachnanthes caroliniana,Special Concern,True,2765922,Lachnanthes caroliniana,2,3RNXW,Lachnanthes caroliniana,EXACT,37,18.5
+Peltigera gowardii,Special Concern,True,9818231,Peltigera gowardii,7,76F7Q,Peltigera hydrothyria,EXACT,92,13.1

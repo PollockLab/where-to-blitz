@@ -1,0 +1,566 @@
+listing_id,common_name,names,status_weight,provinces,range_source,range_ids
+1,bert's predaceous diving beetle,Sanfilippodytes bertae,3,AB,province,prov:AB
+2,wood bison,Bison bison athabascae,1,AB BC MB NT YT,province,prov:AB prov:BC prov:MB prov:NT prov:YT
+3,fin whale atlantic population,Balaenoptera physalus,1,Atlantic_Ocean,dfo,dfo:3
+4,fin whale pacific population,Balaenoptera physalus,2,Pacific_Ocean,dfo,dfo:4
+5,killer whale northeast pacific transient population,Orcinus orca,2,Pacific_Ocean,dfo,dfo:5
+6,killer whale northeast pacific offshore population,Orcinus orca,2,Pacific_Ocean,dfo,dfo:6
+7,killer whale northeast pacific southern resident population,Orcinus orca,3,Pacific_Ocean,dfo,dfo:7
+8,killer whale northeast pacific northern resident population,Orcinus orca,2,Pacific_Ocean,dfo,dfo:8
+9,rocky mountain tailed frog,Ascaphus montanus,2,BC,province,prov:BC
+10,western prairie fringed orchid,Platanthera praeclara,3,MB,province,prov:MB
+11,burrowing owl,Athene cunicularia,3,AB BC MB SK,province,prov:AB prov:BC prov:MB prov:SK
+12,blue whale pacific population,Balaenoptera musculus,3,Pacific_Ocean,dfo,dfo:12
+13,spoon-leaved moss,Bryoandersonia illecebra,2,ON,province,prov:ON
+14,carmine shiner,Notropis percobromus,3,MB,dfo,dfo:14
+15,black-footed albatross,Phoebastria nigripes,1,Pacific_Ocean,none,
+16,loggerhead shrike prairie subspecies,Lanius ludovicianus excubitorides,2,AB MB SK,province,prov:AB prov:MB prov:SK
+17,eastern whip-poor-will,Antrostomus vociferus,2,MB NB NS ON QC SK,province,prov:MB prov:NB prov:NS prov:ON prov:QC prov:SK
+18,blue whale atlantic population,Balaenoptera musculus,3,Atlantic_Ocean,dfo,dfo:18
+19,rigid apple moss,Bartramia stricta,3,BC,province,prov:BC
+20,coeur d'alene salamander,Plethodon idahoensis,1,BC,province,prov:BC
+21,bear's-foot sanicle,Sanicula arctopoides,2,BC,province,prov:BC
+22,greater short-horned lizard,Phrynosoma hernandesi,3,AB SK,province,prov:AB prov:SK
+23,bridle shiner,Notropis bifrenatus,1,ON QC,dfo,dfo:23
+24,pugnose minnow,Opsopoeodus emiliae,2,ON,dfo,dfo:24
+25,caribou dolphin and union population,Rangifer tarandus;Rangifer tarandus groenlandicus,3,NT NU,province,prov:NT prov:NU
+26,blue felt lichen,Degelia plumbea,1,NB NL NS,province,prov:NB prov:NL prov:NS
+27,ross's gull,Rhodostethia rosea,2,MB NU,province,prov:MB prov:NU
+28,cliff paintbrush,Castilleja rupicola,2,BC,province,prov:BC
+29,barn owl eastern population,Tyto alba,3,ON,province,prov:ON
+30,barn owl western population,Tyto alba,2,BC,province,prov:BC
+31,northern madtom,Noturus stigmosus,3,ON,dfo,dfo:31
+32,bank swallow,Riparia riparia,2,AB BC MB NB NL NS NT ON PE QC SK YT,province,prov:AB prov:BC prov:MB prov:NB prov:NL prov:NS prov:NT prov:ON prov:PE prov:QC prov:SK prov:YT
+33,barn swallow,Hirundo rustica,2,AB BC MB NB NL NS NT ON PE QC SK YT,province,prov:AB prov:BC prov:MB prov:NB prov:NL prov:NS prov:NT prov:ON prov:PE prov:QC prov:SK prov:YT
+34,boreal felt lichen atlantic population,Erioderma pedicellatum,3,NB NS,province,prov:NB prov:NS
+35,collared pika,Ochotona collaris,1,BC NT YT,province,prov:BC prov:NT prov:YT
+36,blanding's turtle great lakes/st. lawrence population,Emydoidea blandingii,3,ON QC,province,prov:ON prov:QC
+37,blanding's turtle nova scotia population,Emydoidea blandingii,3,NS,province,prov:NS
+38,peary caribou,Rangifer tarandus pearyi,2,NT NU,province,prov:NT prov:NU
+40,dun skipper vestris subspecies,Euphyes vestris vestris,2,BC,province,prov:BC
+41,wandering salamander,Aneides vagrans,1,BC,province,prov:BC
+42,mormon metalmark southern mountain population,Apodemia mormo,3,BC,province,prov:BC
+43,poweshiek skipperling,Oarisma poweshiek,3,MB,province,prov:MB
+44,gold-edged gem,Schinia avemensis,3,AB MB SK,province,prov:AB prov:MB prov:SK
+45,white flower moth,Schinia bimatris,3,MB,province,prov:MB
+46,coastal tailed frog,Ascaphus truei,1,BC,province,prov:BC
+47,eastern tiger salamander prairie population,Ambystoma tigrinum,3,MB,province,prov:MB
+48,dakota skipper,Hesperia dacotae,3,MB SK,province,prov:MB prov:SK
+49,sand-verbena moth,Copablepharon fuscum,3,BC,province,prov:BC
+50,monarch,Danaus plexippus,3,AB BC MB NB NS ON PE QC SK,province,prov:AB prov:BC prov:MB prov:NB prov:NS prov:ON prov:PE prov:QC prov:SK
+51,northern red-legged frog,Rana aurora,1,BC,province,prov:BC
+52,coastal giant salamander,Dicamptodon tenebrosus,2,BC,province,prov:BC
+53,american badger jacksoni subspecies,Taxidea taxus jacksoni,3,ON,province,prov:ON
+54,caribou boreal population,Rangifer tarandus;Rangifer tarandus caribou,2,AB BC MB NL NT ON QC SK YT,province,prov:AB prov:BC prov:MB prov:NL prov:NT prov:ON prov:QC prov:SK prov:YT
+55,rusty cord-moss,Entosthodon rubiginosus,1,BC SK,province,prov:BC prov:SK
+56,magnum mantleslug,Magnipelta mycophaga,1,BC,province,prov:BC
+57,blackstripe topminnow,Fundulus notatus,1,ON,dfo,dfo:57
+58,western waterfan,Peltigera gowardii,1,BC,province,prov:BC
+59,american hart's-tongue fern,Asplenium scolopendrium var. americanum,1,ON,province,prov:ON
+60,gray fox,Urocyon cinereoargenteus,2,ON,province,prov:ON
+61,baikal sedge,Carex sabulosa,1,YT,province,prov:YT
+62,caribou atlantic-gaspÃ©sie population,Rangifer tarandus;Rangifer tarandus caribou,3,QC,province,prov:QC
+63,american badger taxus subspecies,Taxidea taxus taxus,1,AB MB ON SK,province,prov:AB prov:MB prov:ON prov:SK
+64,eastern yellow-bellied racer,Coluber constrictor flaviventris,2,AB SK,province,prov:AB prov:SK
+65,northern rubber boa,Charina bottae,1,BC,province,prov:BC
+66,spiny softshell,Apalone spinifera,3,ON QC,province,prov:ON prov:QC
+67,western tiger salamander southern mountain population,Ambystoma mavortium,3,BC,province,prov:BC
+68,yellow lampmussel,Lampsillis cariosa,1,NB NS,dfo,dfo:68
+69,spotted gar,Lepisosteus oculatus,3,ON,dfo,dfo:69
+70,deepwater sculpin great lakes-upper st. lawrence populations,Myoxocephalus thompsonii,1,ON QC,dfo,dfo:70
+71,mapleleaf great lakes-upper st. lawrence population,Quadrula quadrula,1,ON,dfo,dfo:71
+72,eastern pondmussel,Ligumia nasuta,1,ON,dfo,dfo:72
+73,flooded jellyskin,Leptogium rivulare,1,MB ON QC,province,prov:MB prov:ON prov:QC
+74,north atlantic right whale,Eubalaena glacialis,3,Atlantic_Ocean,dfo,dfo:74
+75,short-tailed albatross,Phoebastria albatrus,2,BC Pacific_Ocean,province,prov:BC
+76,blue ash,Fraxinus quadrangulata,2,ON,province,prov:ON
+77,phantom orchid,Cephalanthera austiniae,3,BC,province,prov:BC
+78,common hoptree,Ptelea trifoliata,1,ON,province,prov:ON
+79,anticosti aster,Symphyotrichum anticostense,1,NB QC,province,prov:NB prov:QC
+80,oregon forestsnail,Allogona townsendiana,3,BC,province,prov:BC
+81,great basin gophersnake,Pituophis catenifer deserticola,2,BC,province,prov:BC
+82,hare-footed locoweed,Oxytropis lagopus,2,AB,province,prov:AB
+83,round pigtoe,Pleurobema sintoxia,3,ON,dfo,dfo:83
+84,rainbow,Villosa iris,1,ON,dfo,dfo:84
+85,warmouth,Lepomis gulosus,3,ON,dfo,dfo:85
+86,shortnose sturgeon,Acipenser brevirostrum,1,NB NS,dfo,dfo:86
+87,mapleleaf saskatchewan-nelson rivers population,Quadrula quadrula,2,MB,dfo,dfo:87
+89,rusty blackbird,Euphagus carolinus,1,AB BC MB NB NL NS NT NU ON PE QC SK YT,province,prov:AB prov:BC prov:MB prov:NB prov:NL prov:NS prov:NT prov:NU prov:ON prov:PE prov:QC prov:SK prov:YT
+90,louisiana waterthrush,Parkesia motacilla,2,ON QC,province,prov:ON prov:QC
+91,western tiger salamander prairie/boreal population,Ambystoma mavortium,1,AB MB SK,province,prov:AB prov:MB prov:SK
+92,haida gwaii slug,Staala gwaii,1,BC,province,prov:BC
+93,dromedary jumping-slug,Hemphillia dromedarius,2,BC,province,prov:BC
+94,round hickorynut,Obovaria subrotunda,3,ON,dfo,dfo:94
+95,kidneyshell,Ptychobranchus fasciolaris,3,ON,dfo,dfo:95
+96,eastern waterfan,Peltigera hydrothyria,2,NB NS QC,province,prov:NB prov:NS prov:QC
+97,enos lake benthic threespine stickleback,Gasterosteus aculeatus,3,BC,dfo,dfo:97
+98,enos lake limnetic threespine stickleback,Gasterosteus aculeatus,3,BC,dfo,dfo:98
+99,northern abalone,Haliotis kamtschatkana,3,BC Pacific_Ocean,dfo,dfo:99
+100,threaded vertigo,Nearctula sp.,1,BC,province,prov:BC
+101,vancouver lamprey,Entosphenus macrostomus,2,BC,dfo,dfo:101
+102,paxton lake benthic threespine stickleback,Gasterosteus aculeatus,3,BC,dfo,dfo:102
+103,paxton lake limnetic threespine stickleback,Gasterosteus aculeatus,3,BC,dfo,dfo:103
+104,bobolink,Dolichonyx oryzivorus,2,AB BC MB NB NL NS ON PE QC SK,province,prov:AB prov:BC prov:MB prov:NB prov:NL prov:NS prov:ON prov:PE prov:QC prov:SK
+105,chestnut-collared longspur,Calcarius ornatus,3,AB MB SK,province,prov:AB prov:MB prov:SK
+106,ferruginous hawk,Buteo regalis,2,AB MB SK,province,prov:AB prov:MB prov:SK
+107,northern bobwhite,Colinus virginianus,3,ON,province,prov:ON
+108,band-tailed pigeon,Patagioenas fasciata,1,BC,province,prov:BC
+109,"grasshopper sparrow, pratensis subspecies",Ammodramus savannarum pratensis,1,ON QC,province,prov:ON prov:QC
+110,pitcher's thistle,Cirsium pitcheri,1,ON,province,prov:ON
+111,lake erie watersnake,Nerodia sipedon insularum,1,ON,province,prov:ON
+112,ermine haidarum subspecies,Mustela erminea haidarum,2,BC,province,prov:BC
+114,red crossbill percna subspecies,Loxia curvirostra percna,2,NL QC,province,prov:NL prov:QC
+115,marbled murrelet,Brachyramphus marmoratus,2,BC,province,prov:BC
+116,western rattlesnake,Crotalus oreganus,2,BC,province,prov:BC
+117,western yellow-bellied racer,Coluber constrictor mormon,2,BC,province,prov:BC
+118,eastern wolf,Canis lupus lycaon;Canis sp. cf. lycaon,2,ON QC,province,prov:ON prov:QC
+119,mccown's longspur,Rhynchophanes mccownii,2,AB SK,province,prov:AB prov:SK
+120,spotted wintergreen,Chimaphila maculata,2,ON QC,province,prov:ON prov:QC
+121,northern goshawk laingi subspecies,Accipiter gentilis laingi,2,BC,ecozone,eco:13:BC
+122,boreal felt lichen boreal population,Erioderma pedicellatum,1,NL,province,prov:NL
+123,coastrange sculpin cultus lake population,Cottus aleuticus,3,BC,dfo,dfo:123
+124,silver hair moss,Fabronia pusilla,3,BC,province,prov:BC
+125,dolly varden western arctic populations,Salvelinus malma malma,1,NT YT,dfo,dfo:125
+126,little brown myotis,Myotis lucifugus,3,AB BC MB NB NL NS NT ON PE QC SK YT,province,prov:AB prov:BC prov:MB prov:NB prov:NL prov:NS prov:NT prov:ON prov:PE prov:QC prov:SK prov:YT
+127,verna's flower moth,Schinia verna,2,AB MB SK,province,prov:AB prov:MB prov:SK
+128,banff springs snail,Physella johnsoni,3,AB,province,prov:AB
+129,hotwater physa,Physella wrighti,3,BC,dfo,dfo:129
+130,vancouver island marmot,Marmota vancouverensis,3,BC,province,prov:BC
+131,long's braya,Braya longii,3,NL,province,prov:NL
+132,island blue,Plebejus saepiolus insulanus,3,BC,province,prov:BC
+133,okanagan efferia,Efferia okanagana,3,BC,province,prov:BC
+134,nahanni aster,Symphyotrichum nahanniense,1,NT,province,prov:NT
+135,green-scaled willow,Salix chlorolepis,2,QC,province,prov:QC
+136,crumpled tarpaper lichen,Collema coniophilum,2,BC,province,prov:BC
+137,victorin's water-hemlock,Cicuta maculata var. victorinii,1,QC,province,prov:QC
+138,macoun's meadowfoam,Limnanthes macounii,2,BC,province,prov:BC
+139,victorin's gentian,Gentianopsis virgata ssp. Victorinii,2,QC,province,prov:QC
+140,vananda creek benthic threespine stickleback,Gasterosteus aculeatus,3,BC,dfo,dfo:140
+141,vananda creek limnetic threespine stickleback,Gasterosteus aculeatus,3,BC,dfo,dfo:141
+142,athabasca thrift,Armeria maritima ssp. Interior;Armeria maritima ssp. interior,1,SK,province,prov:SK
+143,blue racer,Coluber constrictor foxii,3,ON,province,prov:ON
+144,eskimo curlew,Numenius borealis,3,AB MB NB NL NS NT NU ON PE QC SK YT,province,prov:AB prov:MB prov:NB prov:NL prov:NS prov:NT prov:NU prov:ON prov:PE prov:QC prov:SK prov:YT
+145,horned grebe western population,Podiceps auritus,1,AB BC MB NT NU ON SK YT,province,prov:AB prov:BC prov:MB prov:NT prov:NU prov:ON prov:SK prov:YT
+146,olive-sided flycatcher,Contopus cooperi,2,AB BC MB NB NL NS NT NU ON PE QC SK YT,province,prov:AB prov:BC prov:MB prov:NB prov:NL prov:NS prov:NT prov:NU prov:ON prov:PE prov:QC prov:SK prov:YT
+147,canada warbler,Cardellina canadensis,2,AB BC MB NB NS NT ON PE QC SK YT,province,prov:AB prov:BC prov:MB prov:NB prov:NS prov:NT prov:ON prov:PE prov:QC prov:SK prov:YT
+148,short-eared owl,Asio flammeus,1,AB BC MB NB NL NS NT NU ON PE QC SK YT,province,prov:AB prov:BC prov:MB prov:NB prov:NL prov:NS prov:NT prov:NU prov:ON prov:PE prov:QC prov:SK prov:YT
+149,porsild's bryum,Haplodontium macrocarpum,2,AB BC NL NU,province,prov:AB prov:BC prov:NL prov:NU
+150,north pacific right whale,Eubalaena japonica,3,Pacific_Ocean,dfo,dfo:150
+151,leatherback sea turtle atlantic population,Dermochelys coriacea,3,Atlantic_Ocean,dfo,dfo:151
+152,leatherback sea turtle pacific population,Dermochelys coriacea,3,Pacific_Ocean,dfo,dfo:152
+153,sea otter,Enhydra lutris,1,BC Pacific_Ocean,dfo,dfo:153
+154,beluga whale cumberland sound population,Delphinapterus leucas,2,Arctic_Ocean NU,dfo,dfo:154
+155,basking shark pacific population,Cetorhinus maximus,3,BC Pacific_Ocean,dfo,dfo:155
+156,white shark atlantic population,Carcharodon carcharias,3,Atlantic_Ocean,dfo,dfo:156
+157,loggerhead sea turtle,Caretta caretta,3,Atlantic_Ocean,dfo,dfo:157
+158,bluntnose sixgill shark,Hexanchus griseus,1,Pacific_Ocean,dfo,dfo:158
+159,rougheye rockfish type i,Sebastes sp.type 1,1,Pacific_Ocean,dfo,dfo:159
+160,rougheye rockfish type ii,Sebastes sp.type 2,1,Pacific_Ocean,dfo,dfo:160
+161,tope,Galeorhinus galeus,1,Pacific_Ocean,dfo,dfo:161
+162,steller sea lion,Eumetopias jubatus,1,BC Pacific_Ocean,dfo,dfo:162
+163,atlantic wolffish,Anarhichas lupus,1,Arctic_Ocean Atlantic_Ocean,dfo,dfo:163
+164,sowerby's beaked whale,Mesoplodon bidens,1,Atlantic_Ocean,dfo,dfo:164
+165,humpback whale north pacific population,Megaptera novaengliae,1,Pacific_Ocean,dfo,dfo:165
+166,spotted wolffish,Anarhichas minor,2,Arctic_Ocean Atlantic_Ocean,dfo,dfo:166
+167,acadian flycatcher,Empidonax virescens,3,ON,province,prov:ON
+168,southern maidenhair fern,Adiantum capillus-veneris,3,BC,province,prov:BC
+169,water pennywort,Hydrocotyle umbellata,1,NS,province,prov:NS
+170,streaked horned lark,Eremophila alpestris strigata,3,BC,province,prov:BC
+171,dune tachinid fly,Germaria angustata,1,YT,province,prov:YT
+172,eastern wood-pewee,Contopus virens,1,MB NB NS ON PE QC SK,province,prov:MB prov:NB prov:NS prov:ON prov:PE prov:QC prov:SK
+173,alkaline wing-nerved moss,Pterygoneurum kozlovii,2,BC SK,province,prov:BC prov:SK
+174,golden-winged warbler,Vermivora chrysoptera,2,MB ON QC,province,prov:MB prov:ON prov:QC
+175,ivory gull,Pagophila eburnea,3,NL NT NU,province,prov:NL prov:NT prov:NU
+176,yellow-breasted chat virens subspecies,Icteria virens virens,3,ON,province,prov:ON
+177,harbour seal lacs des loups marins subspecies,Phoca vitulina mellonae,3,QC,dfo,dfo:177
+178,ancient murrelet,Synthliboramphus antiquus,1,BC Pacific_Ocean,province,prov:BC
+179,peregrine falcon pealei subspecies,Falco peregrinus pealei,1,BC,ecozone,eco:13:BC
+180,banded cord-moss,Entosthodon fascicularis,1,BC,province,prov:BC
+181,swamp rose-mallow,Hibiscus moscheutos,1,ON,province,prov:ON
+182,least bittern,Ixobrychus exilis,2,MB NB NS ON QC,province,prov:MB prov:NB prov:NS prov:ON prov:QC
+183,yellow-breasted chat auricollis subspecies southern mountain population,Icteria virens auricollis,3,BC,province,prov:BC
+184,small-flowered lipocarpha,Lipocarpha micrantha,3,BC ON,province,prov:BC prov:ON
+185,greenish-white grasshopper,Hypochlora alba,1,AB MB SK,province,prov:AB prov:MB prov:SK
+186,gibson's big sand tiger beetle,Cicindela formosa gibsoni,2,AB SK,province,prov:AB prov:SK
+187,western harvest mouse dychei subspecies,Reithrodontomys megalotis dychei,3,AB,province,prov:AB
+188,sage thrasher,Oreoscoptes montanus,3,AB BC SK,province,prov:AB prov:BC prov:SK
+189,tiny cryptantha,Cryptantha minima,2,AB SK,province,prov:AB prov:SK
+190,swift fox,Vulpes velox,2,AB SK,province,prov:AB prov:SK
+191,dusky dune moth,Copablepharon longipenne,3,AB MB SK,province,prov:AB prov:MB prov:SK
+192,whitebark pine,Pinus albicaulis,3,AB BC,province,prov:AB prov:BC
+193,pale yellow dune moth,Copablepharon grandis,1,AB MB SK,province,prov:AB prov:MB prov:SK
+194,western grebe,Aechmophorus occidentalis,1,AB BC MB SK,province,prov:AB prov:BC prov:MB prov:SK
+195,dwarf woolly-heads prairie population,Psilocarphus brevissimus,1,AB SK,province,prov:AB prov:SK
+196,rocky mountain sculpin eastslope populations,Cottus sp.,2,AB,dfo,dfo:196
+197,mountain sucker milk river populations,Catostomus platyrhynchus,2,AB SK,dfo,dfo:197
+198,great plains toad,Anaxyrus cognatus,1,AB MB SK,province,prov:AB prov:MB prov:SK
+199,weidemeyer's admiral,Limenitis weidemeyerii,1,AB,province,prov:AB
+200,long-billed curlew,Numenius americanus,1,AB BC SK,province,prov:AB prov:BC prov:SK
+201,smooth goosefoot,Chenopodium subglabrum,2,AB MB SK,province,prov:AB prov:MB prov:SK
+202,small-flowered sand-verbena,Tripterocalyx micranthus,3,AB SK,province,prov:AB prov:SK
+203,sprague's pipit,Anthus spragueii,2,AB MB SK,province,prov:AB prov:MB prov:SK
+204,greater sage-grouse urophasianus subspecies,Centrocerus urophasianus urophasianus,3,AB SK,province,prov:AB prov:SK
+205,western blue flag,Iris missouriensis,1,AB,province,prov:AB
+206,western spiderwort,Tradescantia occidentalis,2,AB MB SK,province,prov:AB prov:MB prov:SK
+207,longspine thornyhead,Sebastolobus altivelis,1,Pacific_Ocean,dfo,dfo:207
+208,yelloweye rockfish pacific ocean inside waters population,Sebastes ruberrimus,1,BC Pacific_Ocean,dfo,dfo:208
+209,yelloweye rockfish pacific ocean outside waters population,Sebastes ruberrimus,1,BC Pacific_Ocean,dfo,dfo:209
+210,northern bottlenose whale scotian shelf population,Hyperodon ampullatus,3,Atlantic_Ocean,dfo,dfo:210
+211,western screech-owl kennicottii subspecies,Megascops kennicottii kennicottii,2,BC,province,prov:BC
+212,western screech-owl macfarlanei subspecies,Megascops kennicottii macfarlanei,2,BC,province,prov:BC
+213,furbish's lousewort,Pedicularis furbishiae,3,NB,province,prov:NB
+214,oregon spotted frog,Rana pretiosa,3,BC,province,prov:BC
+215,eastern persius duskywing,Erynnis persius persius,3,ON,province,prov:ON
+216,ottoe skipper,Hesperia ottoe,3,MB,province,prov:MB
+217,taylor's checkerspot,Euphydryas editha taylori,3,BC,province,prov:BC
+218,kirtland's warbler,Setophaga kirtlandii,3,ON,province,prov:ON
+219,rayed bean,Villosa fabalis,3,ON,dfo,dfo:219
+220,poor pocket moss,Fissidens pauperculus,3,BC,province,prov:BC
+221,sharp-tailed snake,Contia tenuis,3,BC,province,prov:BC
+222,bearded owl-clover,Triphysaria versicolor,3,BC,province,prov:BC
+223,cucumber tree,Magnolia acuminata,3,ON,province,prov:ON
+224,deltoid balsamroot,Balsamorhiza deltoidea,3,BC,province,prov:BC
+225,drooping trillium,Trillium flexipes,3,ON,province,prov:ON
+226,dwarf woolly-heads southern mountain population,Psilocarphus brevissimus,3,BC,province,prov:BC
+227,eastern mountain avens,Geum peckii,3,NS,province,prov:NS
+228,eastern prickly pear cactus,Opuntia humifusa,3,ON,province,prov:ON
+229,heart-leaved plantain,Plantago cordata,3,ON,province,prov:ON
+230,hoary mountain-mint,Pycnanthemum incanum,3,ON,province,prov:ON
+231,pink coreopsis,Coreopsis rosea,3,NS,province,prov:NS
+232,pink milkwort,Polygala incarnata,3,ON,province,prov:ON
+233,prairie lupine,Lupinus lepidus,3,BC,province,prov:BC
+234,seaside birds-foot lotus,Lotus formosissimus,3,BC,province,prov:BC
+235,showy goldenrod great lakes plains population,Solidago speciosa,3,ON,province,prov:ON
+236,skinner's agalinis,Agalinis skinneriana,3,ON,province,prov:ON
+237,slender bush-clover,Lespedeza virginica,3,ON,province,prov:ON
+238,water-plantain buttercup,Ranunculus alismifolius,3,BC,province,prov:BC
+239,white prairie gentian,Gentiana alba,3,ON,province,prov:ON
+240,wood-poppy,Stylophorum diphyllum,3,ON,province,prov:ON
+241,small white lady's-slipper,Cypripedium candidum,2,MB ON,province,prov:MB prov:ON
+242,blunt-lobed woodsia,Woodsia obtusa,2,ON QC,province,prov:ON prov:QC
+243,purple twayblade,Liparis liliifolia,2,ON QC,province,prov:ON prov:QC
+244,showy goldenrod boreal population,Solidago speciosa,2,ON,province,prov:ON
+245,tri-colored bat,Perimyotis subflavus,3,NB NS ON QC,province,prov:NB prov:NS prov:ON prov:QC
+246,thread-leaved sundew,Drosera filiformis,3,NS,province,prov:NS
+247,aweme borer,Papaipema aweme,3,MB ON SK,province,prov:MB prov:ON prov:SK
+248,cobblestone tiger beetle,Cicindela marginipennis,3,NB,province,prov:NB
+249,northern barrens tiger beetle,Cicindela patruela,3,ON QC,province,prov:ON prov:QC
+250,rusty-patched bumble bee,Bombus affinis,3,ON QC,province,prov:ON prov:QC
+251,wallis' dark saltflat tiger beetle,Cicindela parowana wallisi,3,BC,province,prov:BC
+252,coastal vesper sparrow,Pooecetes gramineus affinis,3,BC,province,prov:BC
+253,williamson's sapsucker,Sphyrapicus thyroideus,3,BC,province,prov:BC
+254,bent spike-rush great lakes plains population,Eleocharis geniculata,3,ON,province,prov:ON
+255,bent spike-rush southern mountain population,Eleocharis geniculata,3,BC,province,prov:BC
+256,bog bird's-foot trefoil,Lotus pinnatus,3,BC,province,prov:BC
+257,branched phacelia,Phacelia ramosissima,3,BC,province,prov:BC
+258,brook spike-primrose,Epilobium torreyi,3,BC,province,prov:BC
+259,california buttercup,Ranunculus californicus,3,BC,province,prov:BC
+260,coast microseris,Microseris bigelovii,3,BC,province,prov:BC
+261,coastal scouler's catchfly,Silene scouleri ssp. Grandis,3,BC,province,prov:BC
+262,contorted-pod evening-primrose,Camissonia contorta,3,BC,province,prov:BC
+263,dense spike-primrose,Epilobium densiflorum,3,BC,province,prov:BC
+264,dense-flowered lupine,Lupinus densiflorus,3,BC,province,prov:BC
+265,dwarf sandwort,Minuartia pusilla,3,BC,province,prov:BC
+266,eastern flowering dogwood,Cornus florida,3,ON,province,prov:ON
+267,foothill sedge,Carex tumulicola,3,BC,province,prov:BC
+268,forked three-awned grass,Aristida basiramea,3,ON QC,province,prov:ON prov:QC
+269,fragrant popcornflower,Plagiobothrys figuratus,3,BC,province,prov:BC
+270,grand coulee owl-clover,Orthocarpus barbatus,3,BC,province,prov:BC
+271,howell's triteleia,Triteleia howellii,3,BC,province,prov:BC
+272,kellogg's rush,Juncus kelloggii,3,BC,province,prov:BC
+273,lindley's false silverpuffs,Uropappus lindleyi,3,BC,province,prov:BC
+274,muhlenberg's centaury,Centaurium muehlenbergii,3,BC,province,prov:BC
+275,ogden's pondweed,Potamogeton odgenii,3,ON,province,prov:ON
+276,rayless goldfields,Lasthenia glaberrima,3,BC,province,prov:BC
+277,rosy owl-clover,Orthocarpus bracteosus,3,BC,province,prov:BC
+278,rough agalinis,Agalinis aspera,3,MB,province,prov:MB
+279,short-rayed alkali aster,Symphyotrichum frondosum,3,BC,province,prov:BC
+280,slender collomia,Collomia tenella,3,BC,province,prov:BC
+281,small-flowered tonella,Tonella tenella,3,BC,province,prov:BC
+282,spalding's campion,Silene spaldingii,3,BC,province,prov:BC
+283,stoloniferous pussytoes,Antennaria flagellaris,3,BC,province,prov:BC
+284,streambank lupine,Lupinus rivularis,3,BC,province,prov:BC
+285,tall bugbane,Actaea elata,3,BC,province,prov:BC
+286,tweedy's lewisia,Lewisiopsis tweedyi,3,BC,province,prov:BC
+287,victoria's owl-clover,Castilleja victoriae,3,BC,province,prov:BC
+288,virginia mallow,Sida hermaphrodita,3,ON,province,prov:ON
+289,white meconella,Meconella oregana,3,BC,province,prov:BC
+290,prototype quillwort,Isoetes prototypus,1,NB NS,province,prov:NB prov:NS
+291,grass pickerel,Esox americanus vermiculatus,1,ON QC,dfo,dfo:291
+292,rocky mountain sculpin pacific populations,Cottus sp.,1,BC,dfo,dfo:292
+293,western skink,Plestiodon skiltonianus,1,BC,province,prov:BC
+294,eastern lilaeopsis,Lilaeopsis chinensis,1,NS,province,prov:NS
+295,northern saw-whet owl brooksi subspecies,Aegolius acadicus brooksi,2,BC,province,prov:BC
+296,branched bartonia,Bartonia paniculata ssp. paniculata,2,ON,province,prov:ON
+297,eastern baccharis,Baccharis halimifolia,2,NS,province,prov:NS
+298,gray's desert-parsley,Lomatium grayi,2,BC,province,prov:BC
+299,hill's thistle,Cirsium hillii,2,ON,province,prov:ON
+300,lakeside daisy,Tetraneuris herbacea,2,ON,province,prov:ON
+301,lemmon's holly fern,Polystichum lemmonii,2,BC,province,prov:BC
+302,mountain holly fern,Polystichum scopulinum,2,BC NL QC,province,prov:BC prov:NL prov:QC
+303,showy phlox,Phlox speciosa ssp. Occidentalis,2,BC,province,prov:BC
+304,slender popcornflower,Plagiobothrys tenellus,2,BC,province,prov:BC
+305,western chorus frog great lakes/st. lawrence-canadian shield population,Pseudacris triseriata,2,ON QC,province,prov:ON prov:QC
+306,mountain beaver,Aplodontia rufa,1,BC,province,prov:BC
+307,polar bear,Ursus maritimus,1,Arctic_Ocean MB NL NT NU ON QC YT,province,prov:MB prov:NL prov:NT prov:NU prov:ON prov:QC prov:YT
+308,american marten newfoundland population,Martes americana atrata,2,NL,province,prov:NL
+309,columbian carpet moss,Bryoerythrophyllum columbianum,1,BC,province,prov:BC
+310,small-mouthed salamander,Ambystoma texanum,3,ON,province,prov:ON
+311,great basin spadefoot,Spea intermontana,2,BC,province,prov:BC
+312,spring salamander adirondack/appalachian population,Gyrinophilus porphyriticus,2,QC,province,prov:QC
+313,lake chubsucker,Erimyzon sucetta,3,ON,dfo,dfo:313
+314,five-lined skink carolinian population,Plestiodon fasciatus,3,ON,province,prov:ON
+315,butler's gartersnake,Thamnophis butleri,3,ON,province,prov:ON
+316,prairie skink,Plestiodon septentrionalis,1,MB,province,prov:MB
+317,pugnose shiner,Notropis anogenus,2,ON,dfo,dfo:317
+318,american columbo,Frasera caroliniensis,3,ON,province,prov:ON
+319,bashful bulrush,Trichophorum planifolium,3,ON,province,prov:ON
+320,eastern prairie fringed orchid,Platanthera leucophaea,3,ON,province,prov:ON
+321,hill's pondweed,Potamogeton hillii,1,ON,province,prov:ON
+322,new jersey rush,Juncus caesariensis,1,NS,province,prov:NS
+323,columbia sculpin,Cottus hubbsi,1,BC,dfo,dfo:323
+324,river redhorse,Moxostoma carinatum,1,ON QC,dfo,dfo:324
+325,spotted sucker,Minytrema melanops,1,ON,dfo,dfo:325
+326,upper great lakes kiyi,Coregonus kiyi kiyi,1,ON,dfo,dfo:326
+327,cryptic paw lichen,Nephroma occultum,2,BC,province,prov:BC
+328,eastern ribbonsnake great lakes population,Thamnophis sauritus,1,ON QC,province,prov:ON prov:QC
+329,five-lined skink great lakes/st. lawrence population,Plestiodon fasciatus,1,ON,province,prov:ON
+330,northern map turtle,Graptemys geographica,1,ON QC,province,prov:ON prov:QC
+331,nuttall's cottontail nuttallii subspecies,Sylvilagus nuttalli nuttallii,1,BC,province,prov:BC
+332,western harvest mouse megalotis subspecies,Reithrodontomys megalotis megalotis,3,BC,province,prov:BC
+333,tuberous indian-plantain,Arnoglossum platagineum,1,ON,province,prov:ON
+334,warty jumping-slug,Hemphillia glandulosa,1,BC,province,prov:BC
+335,flammulated owl,Otus flammeolus,1,BC,province,prov:BC
+336,great blue heron fannini subspecies,Ardea herodias fannini,1,BC,ecozone,eco:13:BC
+337,woodland vole,Microtus pinetorum,1,ON QC,province,prov:ON prov:QC
+338,lewis's woodpecker,Melanerpes lewis,2,BC,province,prov:BC
+339,red-headed woodpecker,Melanerpes erythrocephalus,3,MB ON QC SK,province,prov:MB prov:ON prov:QC prov:SK
+340,eastern hog-nosed snake,Heterodon platirhinos,2,ON,province,prov:ON
+341,wood turtle,Glyptemys insculpta,2,NB NS ON QC,province,prov:NB prov:NS prov:ON prov:QC
+342,dense blazing star,Liatris spicata,2,ON,province,prov:ON
+343,dwarf hackberry,Celtis tenuifolia,2,ON,province,prov:ON
+344,false rue-anemone,Enemion biternatum,2,ON,province,prov:ON
+345,sweet pepperbush,Clethra alnifolia,2,NS,province,prov:NS
+346,wild hyacinth,Camassia scilloides,2,ON,province,prov:ON
+347,willowleaf aster,Symphyotrichum praealtum,2,ON,province,prov:ON
+348,pallid bat,Antrozous pallidus,2,BC,province,prov:BC
+349,fowler's toad,Anaxyrus fowleri,3,ON,province,prov:ON
+350,behr's hairstreak,Satyrium behrii,3,BC,province,prov:BC
+351,white-headed woodpecker,Picoides albolarvatus,3,BC,province,prov:BC
+352,pacific water shrew,Sorex bendirii,3,BC,province,prov:BC
+353,golden paintbrush,Castilleja levisecta,3,BC,province,prov:BC
+354,nodding pogonia,Triphora trianthophoros,3,ON,province,prov:ON
+355,red mulberry,Morus rubra,3,ON,province,prov:ON
+356,hairy prairie-clover,Dalea villosa,1,MB SK,province,prov:MB prov:SK
+357,climbing prairie rose,Rosa setigera,1,ON,province,prov:ON
+358,crooked-stem aster,Symphyotrichum prenanthoides,1,ON,province,prov:ON
+359,dwarf lake iris,Iris lacustris,1,ON,province,prov:ON
+360,colicroot,Aletris farinosa,3,ON,province,prov:ON
+361,round-leaved greenbrier great lakes plains population,Smilax rotundifolia,2,ON,province,prov:ON
+362,henslow's sparrow,Ammodramus henslowii,3,ON QC,province,prov:ON prov:QC
+363,shortnose cisco,Coregonus reighardi,3,ON,dfo,dfo:363
+364,gray ratsnake carolinian population,Pantherophis spiloides,3,ON,province,prov:ON
+365,massasauga carolinian population,Sistrurus catenatus,3,ON,province,prov:ON
+366,townsend's mole,Scapanus townsendii,3,BC,province,prov:BC
+367,american chestnut,Castanea dentata,3,ON,province,prov:ON
+368,american ginseng,Panax quinquefolius,3,ON QC,province,prov:ON prov:QC
+369,bird's-foot violet,Viola pedata,3,ON,province,prov:ON
+370,bluehearts,Buchnera americana,3,ON,province,prov:ON
+371,virginia goat's-rue,Tephrosia virginiana,3,ON,province,prov:ON
+372,yellow montane violet praemorsa subspecies,Viola praemorsa ssp. praemora,3,BC,province,prov:BC
+373,tubercled spike-rush,Eleocharis tuberculosa,1,NS,province,prov:NS
+374,eastern ribbonsnake atlantic population,Thamnophis sauritus,2,NS,province,prov:NS
+375,gray ratsnake great lakes/st. lawrence population,Pantherophis spiloides,2,ON,province,prov:ON
+376,van brunt's jacob's-ladder,Polemonium vanbruntiae,2,QC,province,prov:QC
+377,white wood aster,Eurybia divaricata,2,ON QC,province,prov:ON prov:QC
+378,rainbow smelt lake utopia small-bodied population,Osmerus mordax,3,NB,dfo,dfo:378
+379,massasauga great lakes/st. lawrence population,Sistrurus catenatus,2,ON,province,prov:ON
+380,white-top aster,Sericocarpus regidus,1,BC,province,prov:BC
+381,northern myotis,Myotis septentrionalis,3,AB BC MB NB NL NS NT ON PE QC SK YT,province,prov:AB prov:BC prov:MB prov:NB prov:NL prov:NS prov:NT prov:ON prov:PE prov:QC prov:SK prov:YT
+382,eastern milksnake,Lampropeltis triangulum,1,ON QC,province,prov:ON prov:QC
+384,northern leopard frog western boreal/prairie populations,Lithobates pipiens,1,AB MB NT SK,province,prov:AB prov:MB prov:NT prov:SK
+385,western silvery minnow,Hybognathus argyritis,2,AB,dfo,dfo:385
+386,bolander's quillwort,Isoetes bolanderi,2,AB,province,prov:AB
+387,baird's sparrow,Ammodramus bairdii,1,AB MB SK,province,prov:AB prov:MB prov:SK
+388,northern leopard frog rocky mountain population,Lithobates pipiens,3,BC,province,prov:BC
+389,salamander mussel,Simpsonaias ambigua,3,ON,dfo,dfo:389
+390,bogbean buckmoth,Hemileuca sp.,3,ON,province,prov:ON
+391,hine's emerald,Somatochlora hineana,3,ON,province,prov:ON
+392,hungerford's crawling water beetle,Brychius hungerfordi,3,ON,province,prov:ON
+393,skillet clubtail,Gomphus ventricosus,3,NB,province,prov:NB
+394,allegheny mountain dusky salamander appalachian population,Desmognathus ochrophaeus,3,QC,province,prov:QC
+395,northern brook lamprey great lakes-upper st. lawrence populations,Ichthyomyzon fossor,1,ON QC,dfo,dfo:395
+396,allegheny mountain dusky salamander carolinian population,Desmognathus ochrophaeus,3,ON,province,prov:ON
+397,spring cisco,Coregonus sp.,3,QC,dfo,dfo:397
+398,mexican mosquito-fern,Azolla mexicana,2,BC,province,prov:BC
+399,olympia oyster,Ostrea lurida,1,BC Pacific_Ocean,dfo,dfo:399
+400,nooksack dace,Rhinichthys cataractae;Rhinichthys cataractae ssp.,3,BC,dfo,dfo:400
+401,northern riffleshell,Epioblasma rangiana;Epioblasma torulosa rangiana,3,ON,dfo,dfo:401
+402,snuffbox,Epioblasma triquetra,3,ON,dfo,dfo:402
+403,wavy-rayed lampmussel,Lampsilis fasciola,1,ON,dfo,dfo:403
+404,rapids clubtail,Gomphus quadricolor,3,ON,province,prov:ON
+405,riverine clubtail great lakes plains population,Stylurus amnicola,3,ON,province,prov:ON
+406,desert nightsnake,Hypsiglena chlorophaea,3,BC,province,prov:BC
+407,brook floater,Alasmidonta varicosa,1,NB NS,dfo,dfo:407
+408,snapping turtle,Chelydra serpentina,1,MB NB NS ON QC SK,province,prov:MB prov:NB prov:NS prov:ON prov:QC prov:SK
+409,king rail,Rallus elegans,3,ON,province,prov:ON
+410,barrow's goldeneye eastern population,Bucephala islandica,1,NB NL NS PE QC,province,prov:NB prov:NL prov:NS prov:PE prov:QC
+411,green sturgeon,Acipenser medirostris,1,BC Pacific_Ocean,dfo,dfo:411
+412,jefferson salamander,Ambystoma jeffersonianum,3,ON,province,prov:ON
+413,plymouth gentian,Sabatia kennedyana,3,NS,province,prov:NS
+414,goldencrest,Lophiola aurea,1,NS,province,prov:NS
+415,redroot,Lachnanthes caroliniana,1,NS,province,prov:NS
+416,eastern sand darter ontario populations,Ammocrypta pellucida,2,ON,dfo,dfo:416
+417,eastern sand darter quebec populations,Ammocrypta pellucida,2,QC,dfo,dfo:417
+418,western brook lamprey morrison creek population,Lampetra richardsoni,3,BC,dfo,dfo:418
+419,queensnake,Regina septemvittata,3,ON,province,prov:ON
+420,eastern foxsnake carolinian population,Pantherophis gloydi,3,ON,province,prov:ON
+421,eastern foxsnake great lakes/st. lawrence population,Pantherophis gloydi,3,ON,province,prov:ON
+422,shorthead sculpin,Cottus confusus,1,BC,dfo,dfo:422
+423,banded killifish newfoundland populations,Fundulus diaphanus,1,NL,dfo,dfo:423
+424,northern wolffish,Anarhichas denticulatus,2,Arctic_Ocean Atlantic_Ocean,dfo,dfo:424
+425,atlantic whitefish,Coregonus huntsmani,3,NS,dfo,dfo:425
+426,large whorled pogonia,Isotria verticillata,3,ON,province,prov:ON
+427,twisted oak moss,Syntrichia laevipila,1,BC,province,prov:BC
+428,salish sucker,Catostomus sp. cf. catostomus,2,BC,dfo,dfo:428
+429,olive clubtail,Stylurus olivaceus,3,BC,province,prov:BC
+430,pygmy snaketail,Ophiogomphus howei,1,NB ON,province,prov:NB prov:ON
+431,northern dusky salamander carolinian population,Desmognathus fuscus,3,ON,province,prov:ON
+432,haller's apple moss,Bartramia halleriana,2,AB BC,province,prov:AB prov:BC
+433,sei whale pacific population,Balaenoptera borealis,3,Pacific_Ocean,dfo,dfo:433
+434,vole ears lichen,Erioderma mollissimum,3,NB NL NS,province,prov:NB prov:NL prov:NS
+435,yellow rail,Coturnicops noveboracensis,1,AB BC MB NB NT ON QC SK,province,prov:AB prov:BC prov:MB prov:NB prov:NT prov:ON prov:QC prov:SK
+436,small whorled pogonia,Isotria medeoloides,3,ON,province,prov:ON
+437,harlequin duck eastern population,Histrionicus histrionicus,1,NB NL NS NU QC,province,prov:NB prov:NL prov:NS prov:NU prov:QC
+438,bicknell's thrush,Catharus bicknelli,2,NB NS QC,province,prov:NB prov:NS prov:QC
+439,pale-bellied frost lichen,Physconia subpallida,3,ON QC,province,prov:ON prov:QC
+440,atlantic salmon inner bay of fundy population,Salmo salar,3,Atlantic_Ocean NB NS,dfo,dfo:440
+441,mountain sucker pacific populations,Catostomus platyrhynchus,1,BC,dfo,dfo:441
+442,rocky mountain ridged mussel,Gonidea angulata,3,BC,dfo,dfo:442
+443,redside dace,Clinostomus elongatus,3,ON,dfo,dfo:443
+444,gulf of st. lawrence aster,Symphyotrichum laurentianum,2,NB PE QC,province,prov:NB prov:PE prov:QC
+445,fernald's braya,Braya fernaldii,3,NL,province,prov:NL
+446,buff-breasted sandpiper,Tryngites subruficollis,1,AB BC MB NT NU ON QC SK YT,province,prov:AB prov:BC prov:MB prov:NT prov:NU prov:ON prov:QC prov:SK prov:YT
+447,chimney swift,Chaetura pelagica,2,MB NB NS ON QC SK,province,prov:MB prov:NB prov:NS prov:ON prov:QC prov:SK
+448,eastern meadowlark,Sturnella magna,2,NB NS ON QC,province,prov:NB prov:NS prov:ON prov:QC
+449,five-spotted bogus yucca moth,Prodoxus quinquepunctellus,3,AB,province,prov:AB
+450,non-pollinating yucca moth,Tegeticula corruptrix,3,AB,province,prov:AB
+451,yucca moth,Tegeticula yuccasella,3,AB,province,prov:AB
+452,mountain plover,Charadrius montanus,3,AB SK,province,prov:AB prov:SK
+453,half-moon hairstreak,Satyrium semiluna,3,AB BC,province,prov:AB prov:BC
+454,piping plover circumcinctus subspecies,Charadrius melodus circumcinctus,3,AB MB ON SK,province,prov:AB prov:MB prov:ON prov:SK
+455,blanchard's cricket frog,Acris blanchardi,3,ON,province,prov:ON
+456,cherry birch,Betula lenta,3,ON,province,prov:ON
+457,pink sand-verbena,Abronia umbellata,3,BC,province,prov:BC
+458,houghton's goldenrod,Solidago houghtonii,1,ON,province,prov:ON
+459,spotted bat,Euderma maculatum,1,BC,province,prov:BC
+460,lyall's mariposa lily,Calochortus lyallii,1,BC,province,prov:BC
+461,buffalograss,Bouteloua dactyloides,1,MB SK,province,prov:MB prov:SK
+462,copper redhorse,Moxostoma hubbsi,3,QC,dfo,dfo:462
+463,wood thrush,Hylocichla mustelina,2,NB NS ON QC,province,prov:NB prov:NS prov:ON prov:QC
+464,hairy braya,Braya pilosa,3,NT,province,prov:NT
+465,red knot rufa subspecies tierra del fuego/patagonia wintering population,Calidris canutus rufa,3,AB MB NB NL NS NT NU ON PE QC SK,province,prov:AB prov:MB prov:NB prov:NL prov:NS prov:NT prov:NU prov:ON prov:PE prov:QC prov:SK
+466,atlantic mud-piddock,Barnea truncata,2,Atlantic_Ocean,dfo,dfo:466
+467,nugget moss,Microbryum vlassovii,3,BC,province,prov:BC
+468,horned grebe magdalen islands population,Podiceps auritus,3,QC,province,prov:QC
+469,red knot islandica subspecies,Calidris canutus islandica,1,NT NU,province,prov:NT prov:NU
+470,red knot roselaari type,Calidris canutus roselaari type,2,BC NT YT,province,prov:BC prov:NT prov:YT
+471,prothonotary warbler,Protonotaria citrea,3,ON,province,prov:ON
+472,cerulean warbler,Setophaga cerulea,3,ON QC,province,prov:ON prov:QC
+473,roseate tern,Sterna dougallii,3,NB NS QC,province,prov:NB prov:NS prov:QC
+474,whooping crane,Grus americana,3,AB MB NT SK,province,prov:AB prov:MB prov:NT prov:SK
+475,soapweed,Yucca glauca,2,AB SK,province,prov:AB prov:SK
+476,seaside centipede lichen,Heterodermia sitchensis,3,BC,province,prov:BC
+477,margined streamside moss,Scouleria marginata,3,BC,province,prov:BC
+478,edwards' beach moth,Anarta edwardsii,3,BC,province,prov:BC
+479,beach pinweed,Lechea maritima,1,NB PE,province,prov:NB prov:PE
+480,savannah sparrow princeps subspecies,Passerculus sandwichensis princeps,1,NS,province,prov:NS
+481,eastern mole,Scalopus aquaticus,1,ON,province,prov:ON
+482,seaside bone lichen,Hypogymnia heterophylla,2,BC,province,prov:BC
+483,piping plover melodus subspecies,Charadrius melodus melodus,3,NB NL NS PE QC,province,prov:NB prov:NL prov:NS prov:PE prov:QC
+484,false hop sedge,Carex lupuliformis,3,ON QC,province,prov:ON prov:QC
+485,mormon metalmark prairie population,Apodemia mormo,1,SK,province,prov:SK
+486,maritime ringlet,Coenonympha nipisiquit,3,NB QC,province,prov:NB prov:QC
+487,beluga whale st. lawrence estuary population,Delphinapterus leucas,3,Atlantic_Ocean QC,dfo,dfo:487
+488,georgia basin bog spider,Gnaphosa snohomish,1,BC,province,prov:BC
+489,batwing vinyl lichen,Leptogium platynum,3,BC,province,prov:BC
+490,frosted glass-whiskers atlantic population,Sclerophora peronella,1,NS,province,prov:NS
+491,bigmouth buffalo saskatchewan-nelson river populations,Ictiobus cyprinellus,1,MB SK,dfo,dfo:491
+492,eastern musk turtle,Sternotherus odoratus,1,ON QC,province,prov:ON prov:QC
+493,misty lake lentic threespine stickleback,Gasterosteus aculeatus,3,BC,dfo,dfo:493
+494,misty lake lotic threespine stickleback,Gasterosteus aculeatus,3,BC,dfo,dfo:494
+495,peacock vinyl lichen,Leptogium polycarpum,1,BC,province,prov:BC
+496,oldgrowth specklebelly lichen,Pseudocyphellaria rainierensis,1,BC,province,prov:BC
+497,speckled dace,Rhinichthys osculus,3,BC,dfo,dfo:497
+498,spotted turtle,Clemmys guttata,3,ON QC,province,prov:ON prov:QC
+499,westslope cutthroat trout pacific populations,Oncorhynchus clarkii lewisi,1,BC,dfo,dfo:499
+500,western painted turtle pacific coast population,Chrysemys picta bellii,2,BC,ecozone,eco:13:BC
+501,western painted turtle intermountain-rocky mountain population,Chrysemys picta bellii,1,BC,ecozone,eco:14:BC
+502,blue-grey taildropper,Prophysaon coeruleum,2,BC,province,prov:BC
+503,pink-footed shearwater,Ardenna creatopus,3,BC Pacific_Ocean,province,prov:BC
+504,bowhead whale bering-chukchi-beaufort population,Balaena mysticetus,1,Arctic_Ocean,dfo,dfo:504
+505,ord's kangaroo rat,Dipodomys ordii,3,AB SK,province,prov:AB prov:SK
+506,common nighthawk,Chordeiles minor,2,AB BC MB NB NL NS NT NU ON PE QC SK YT,province,prov:AB prov:BC prov:MB prov:NB prov:NL prov:NS prov:NT prov:NU prov:ON prov:PE prov:QC prov:SK prov:YT
+507,spotted owl caurina subspecies,Strix occidentalis caurina,3,BC,province,prov:BC
+508,butternut,Juglans cinerea,3,NB ON QC,province,prov:NB prov:ON prov:QC
+509,westslope cutthroat trout saskatchewan-nelson rivers populations,Oncorhynchus clarkii lewisi,2,AB,dfo,dfo:509
+510,harbour porpoise pacific ocean population,Phocoena phocoena vomerina,1,Arctic_Ocean BC Pacific_Ocean,dfo,dfo:510
+511,black-tailed prairie dog,Cynomys ludovicianus,2,SK,province,prov:SK
+516,mackenzie hairgrass,Deschampsia mackenzieana,1,NT SK,province,prov:NT prov:SK
+521,goldenseal,Hydrastis canadensis,1,ON,province,prov:ON
+524,tall woolly-heads,Psilocarphus elatior,3,BC,province,prov:BC
+525,sand-dune short-capsuled willow,Salix brachycarpa var. psammophila,1,SK,province,prov:SK
+527,blanket-leaved willow,Salix silicicola,1,SK,province,prov:SK
+528,turnor's willow,Salix turnorii,1,SK,province,prov:SK
+532,floccose tansy,Tanacetum huronense var. floccosum,1,AB SK,province,prov:AB prov:SK
+827,fascicled ironweed,Vernonia fasciculata,3,MB,province,prov:MB
+828,silver shiner,Notropis photogenis,2,ON,dfo,dfo:828
+829,sable island sweat bee,Lasioglossum sablense,2,NS,province,prov:NS
+831,threehorn wartyback,Obliquaria reflexa,2,ON,dfo,dfo:831
+832,lilliput,Toxolasma parvum,3,ON,dfo,dfo:832
+833,bull trout saskatchewan-nelson rivers populations,Salvelinus confluentus,2,AB,dfo,dfo:833
+1001,black redhorse,Moxostoma duquesnei,2,ON,dfo,dfo:1001
+1003,bull trout south coast british columbia populations,Salvelinus confluentus,1,BC,province,prov:BC
+1004,bull trout western arctic populations,Salvelinus confluentus,1,AB BC NT YT,dfo,dfo:1004
+1005,cutlip minnow,Exoglossum maxillingua,1,ON QC,dfo,dfo:1005
+1006,fawnsfoot,Truncilla donaciformis,3,ON,dfo,dfo:1006
+1007,giant threespine stickleback,Gasterosteus aculeatus,1,BC,dfo,dfo:1007
+1008,hickorynut,Obovaria olivaria,3,ON QC,dfo,dfo:1008
+1009,lake sturgeon southern hudson bay-james bay populations,Acipenser fulvescens,1,MB ON QC,dfo,dfo:1009
+1011,northern sunfish great lakes-upper st. lawrence populations,Lepomis peltastes,1,ON QC,dfo,dfo:1011
+1012,plains minnow,Hybognathus placitus,2,SK,dfo,dfo:1012
+1013,rainbow trout athabasca river populations,Oncorhynchus mykiss,3,AB,dfo,dfo:1013
+1014,silver lamprey great lakes-upper st. lawrence populations,Ichthyomyzon unicuspis,1,ON QC,dfo,dfo:1014
+1017,unarmoured threespine stickleback,Gasterosteus aculeatus,1,BC,dfo,dfo:1017
+1018,black swift,Cypseloides niger,3,AB BC,province,prov:AB prov:BC
+1019,cassin's auklet,Ptychoramphus aleuticus,1,BC Pacific_Ocean,province,prov:BC
+1020,evening grosbeak,Coccothraustes vespertinus,1,AB BC MB NB NL NS NT ON PE QC SK YT,province,prov:AB prov:BC prov:MB prov:NB prov:NL prov:NS prov:NT prov:ON prov:PE prov:QC prov:SK prov:YT
+1021,lark bunting,Calamospiza melanocorys,2,AB MB SK,province,prov:AB prov:MB prov:SK
+1022,red-necked phalarope,Phalaropus lobatus,1,AB Arctic_Ocean Atlantic_Ocean BC MB NB NL NS NT NU ON PE Pacific_Ocean QC SK YT,province,prov:AB prov:BC prov:MB prov:NB prov:NL prov:NS prov:NT prov:NU prov:ON prov:PE prov:QC prov:SK prov:YT
+1023,black-foam lichen,Anzia colpodes,2,NB NS ON QC,province,prov:NB prov:NS prov:ON prov:QC
+1024,broad-banded forestsnail,Allogona profunda,3,ON,province,prov:ON
+1026,griscom's arnica,Arnica griscomii ssp. griscomii,2,NL QC,province,prov:NL prov:QC
+1027,hoptree borer,Prays atomocella,3,ON,province,prov:ON
+1028,mountain crab-eye,Acroscyphus sphaerophoroides,1,BC,province,prov:BC
+1029,prairie rattlesnake,Crotalus viridis,1,AB SK,province,prov:AB prov:SK
+1030,proud globelet,Patera pennsylvanica,3,ON,province,prov:ON
+1031,pygmy slug,Kootenaia burkei,1,BC,province,prov:BC
+1032,sheathed slug,Zacoleus idahoensis,1,BC,province,prov:BC
+1033,spiked saxifrage,Micranthes spicata,1,YT,province,prov:YT
+1034,tall beakrush,Rhynchospora macrostachya,3,NS,province,prov:NS
+1035,tiny tassel,Crossidium seriatum,1,BC,province,prov:BC
+1036,vivid dancer,Argia vivida,1,AB BC,province,prov:AB prov:BC
+1037,wrinkled shingle lichen,Pannaria lurida,2,NB NL NS PE,province,prov:NB prov:NL prov:NS prov:PE
+1038,yukon podistera,Podistera yukonensis,1,YT,province,prov:YT
+1039,audouin's night-stalking tiger beetle,Omus audouini,2,BC,province,prov:BC
+1040,grizzly bear western population,Ursus arctos,1,AB BC MB NT NU SK YT,province,prov:AB prov:BC prov:MB prov:NT prov:NU prov:SK prov:YT
+1041,macropis cuckoo bee,Epeoloides pilosulus,3,NS,province,prov:NS
+1042,roell's brotherella moss,Brotherella roellii,3,BC,province,prov:BC
+1044,wolverine,Gulo gulo,1,AB BC MB NL NT NU ON QC SK YT,province,prov:AB prov:BC prov:MB prov:NL prov:NT prov:NU prov:ON prov:QC prov:SK prov:YT
+1045,yellow-banded bumble bee,Bombus terricola,1,AB BC MB NB NL NS NT ON PE QC SK YT,province,prov:AB prov:BC prov:MB prov:NB prov:NL prov:NS prov:NT prov:ON prov:PE prov:QC prov:SK prov:YT
+1046,gypsy cuckoo bumble bee,Bombus bohemicus,3,AB BC MB NB NL NS NT ON PE QC SK YT,province,prov:AB prov:BC prov:MB prov:NB prov:NL prov:NS prov:NT prov:ON prov:PE prov:QC prov:SK prov:YT
+1501,large-headed woolly yarrow,Achillea millefolium var. megacephala,1,SK,province,prov:SK
+1503,grey whale pacific coast feeding group population,Eschrichtius robustus,3,BC Pacific_Ocean,province,prov:BC
+1504,grey whale western pacific population,Eschrichtius robustus,3,BC Pacific_Ocean,province,prov:BC
+1521,rainbow smelt lake utopia large-bodied population,Osmerus mordax,3,NB,dfo,dfo:1521
+1522,rocky mountain sculpin missouri river populations,Cottus sp.,2,AB,province,prov:AB
