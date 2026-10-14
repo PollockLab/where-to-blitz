@@ -368,6 +368,10 @@ const I18N={
     aria_search:"Search for a start place", aria_search_results:"Search results", aria_time_unit:"Time unit",
     aria_time_budget:"Time budget", aria_max_travel:"Max travel each way", aria_worth_drive:"Worth the drive",
     aria_map_style:"Map style", aria_map_brightness:"Map brightness", aria_data_opacity:"Density opacity", aria_climate_opacity:"Climate layer opacity", aria_top_cells:"Top cells (accessible list)",
+    rank_mask_loading:"Loading Canada's boundary data before ranking cells.",
+    rank_mask_unavailable:"Canada's boundary data could not be loaded. National rankings are unavailable. Reload the page to try again.",
+    rank_layer_unavailable:"This layer has no national priority ranking. Choose Spatial Gap, Species discovery or Conservation to list ranked cells.",
+    rank_no_cells:"No cells are loaded for a national priority ranking.",
     aria_map:"Interactive priority map (screen-reader users: use the Top cells list)", aria_map_view:"Map view",
     aria_map_legend:"Map legend", aria_close:"Close",
     rank_aria:(i,la,lo,sc)=>`Rank ${i}: latitude ${la}, longitude ${lo}, score ${sc} of 100`,
@@ -513,6 +517,10 @@ const I18N={
     aria_search:"Rechercher un lieu de départ", aria_search_results:"Résultats de recherche", aria_time_unit:"Unité de temps",
     aria_time_budget:"Temps disponible", aria_max_travel:"Trajet max (aller)", aria_worth_drive:"Vaut le déplacement",
     aria_map_style:"Style de carte", aria_map_brightness:"Luminosité de la carte", aria_data_opacity:"Opacité des données", aria_climate_opacity:"Opacité de la couche climatique", aria_top_cells:"Meilleures cellules (liste accessible)",
+    rank_mask_loading:"Chargement des limites du Canada avant le classement des cellules.",
+    rank_mask_unavailable:"Les limites du Canada n'ont pas pu être chargées. Le classement national est indisponible. Rechargez la page pour réessayer.",
+    rank_layer_unavailable:"Cette couche n'a pas de classement national des priorités. Choisissez Lacune spatiale, Découverte d'espèces ou Conservation pour afficher les cellules classées.",
+    rank_no_cells:"Aucune cellule n'est chargée pour un classement national des priorités.",
     aria_map:"Carte de priorité interactive (lecteurs d'écran : utilisez la liste des meilleures cellules)", aria_map_view:"Vue de la carte",
     aria_map_legend:"Légende de la carte", aria_close:"Fermer",
     rank_aria:(i,la,lo,sc)=>`Rang ${i} : latitude ${la}, longitude ${lo}, score ${sc} sur 100`,
@@ -763,11 +771,14 @@ function geCat(v,col,row){
 // the style dropdown follow it, never the reverse.
 const OVERLAY_TOGGLE={coverage:'tgCoverage',gettingeven:'tgGettingEven',climate:'tgClimateGap'};
 let overlay='priority';   // 'priority' (the goal grid) | 'coverage' | 'gettingeven' | 'climate'
+let _overlaySeq=0;
 function geActive(){return overlay==='gettingeven';}
 function covOn(){return overlay==='coverage';}
 function climateOn(){return overlay==='climate';}
 function setOverlay(kind){
   overlay=OVERLAY_TOGGLE[kind]?kind:'priority';
+  const seq=++_overlaySeq;
+  renderCellTable();paintPopScore();   // invalidate previous priority evidence before an overlay's async load
   for(const[k,id]of Object.entries(OVERLAY_TOGGLE)){const el=document.getElementById(id);if(el)el.checked=(overlay===k);}
   // the style dropdown's iNat entry is the coverage overlay under another name; keep the two agreed.
   // Read the element rather than the bmSel const: this function is hoisted above that declaration.
@@ -777,13 +788,13 @@ function setOverlay(kind){
   setGridLines();
   {const n=document.getElementById('goalnote');if(n)n.style.display=covOn()?'':'none';}
   {const gib=document.getElementById('geinfobtn');if(gib){gib.style.display=geActive()?'':'none';if(!geActive()){const gi=document.getElementById('geinfo');if(gi)gi.classList.remove('open');}}}
-  const paint=()=>{setCoverage();setClimate();updateLegend();recolour();};
+  const paint=()=>{if(seq!==_overlaySeq)return;setCoverage();setClimate();updateLegend();recolour();};
   // loadGE() had no rejection path: when its fetch failed (offline, a 404, a blocked scheme) paint()
   // never ran, so `overlay` said gettingeven while the map and the legend still showed the previous
   // layer and the checkbox agreed with neither. Fall back the way the taxon dropdown already does on
   // a failed load: put the overlay and the dropdown back where they were. Read #criteria off the DOM
   // rather than the critSel const, for the same reason the basemap select is read that way above.
-  geActive()?loadGE().then(paint,()=>{setOverlay('priority');
+  geActive()?loadGE().then(paint,()=>{if(seq!==_overlaySeq)return;setOverlay('priority');
     const cs=document.getElementById('criteria');if(cs)cs.value=String(window.__activePreset||0);}):paint();
 }
 // The 25 km lattice outline is the shape of the goal grid, so it explains the cells it traces.
@@ -791,17 +802,33 @@ function setOverlay(kind){
 // and just reads as chart junk over the data. Hide it while one of those is up.
 function setGridLines(){if(_mapLoaded&&map.getLayer('cells-line'))map.setLayoutProperty('cells-line','visibility',(covOn()||climateOn())?'none':'visible');}
 function caOnlyActive(){const e=document.getElementById('tgCanadaOnly');return e?e.checked:true;}        // issue #20 removed the toggle; behaviour stays on by default
-// US-side cells (approx, lazy-loaded): hidden when "Canada only" is on -- the cross-border band is a data edge, not a real gap (#5).
+// The shared country mask governs ranking and candidate eligibility as well as rendering.
 let US_CELLS=null;
+let _usLoad=null, _usFailed=false;
 let _lineFilterIds=-1;
-async function loadUS(){if(US_CELLS)return;try{const r=await fetchT(DATA_DIR+'us_cells.json',8000);US_CELLS=new Set((await r.json()).us_cells||[]);}catch(e){US_CELLS=new Set();}}
+function eligibleMarkers(){return caOnlyActive()?(US_CELLS?markers.filter(m=>!US_CELLS.has(gekey(m.r[0],m.r[1]))):[]):markers;}
+async function loadUS(){
+  if(US_CELLS)return true;
+  if(_usLoad)return _usLoad;
+  _usFailed=false;
+  _usLoad=(async()=>{
+    try{
+      const r=await fetchT(DATA_DIR+'us_cells.json',8000);
+      if(!r.ok)throw Error('Canada mask unavailable');
+      const data=await r.json();
+      if(!Array.isArray(data.us_cells)||!data.us_cells.every(k=>typeof k==='string'))throw Error('Invalid Canada mask');
+      US_CELLS=new Set(data.us_cells);return true;
+    }catch(e){_usFailed=true;return false;}finally{_usLoad=null;}
+  })();
+  return _usLoad;
+}
 function applyCanadaMask(){
   if(!caOnlyActive()){
     if(_mapLoaded&&map.getLayer('cells-line'))map.setFilter('cells-line',null);
     _lineFilterIds=-1;
     return;
   }
-  if(!US_CELLS){loadUS().then(recolour);return;}
+  if(!US_CELLS){if(!_usLoad&&!_usFailed)loadUS().then(recolour);return;}
   const hiddenIds=[];
   markers.forEach(m=>{if(US_CELLS.has(gekey(m.r[0],m.r[1]))){setCellState(m.i,'rgba(0,0,0,0)',0);hiddenIds.push(m.i);}});
   // The lattice and the mask are both taxon-invariant, so the (linear-scan) id filter is set once
@@ -1188,10 +1215,25 @@ function buildMarkers(){
 }
 function renderCellTable(){
   const el=document.getElementById('celltable');if(!el)return;   // sr-only region: always populated for screen-reader users (issue #20 removed the visible list)
-  const top=markers.map(m=>({r:m.r,t:m.t||0})).sort((a,b)=>b.t-a.t).slice(0,40);
+  if(overlay!=='priority'){el.innerHTML='<p>'+t('rank_layer_unavailable')+'</p>';return;}
+  if(caOnlyActive()&&!US_CELLS){el.innerHTML='<p>'+t(_usFailed?'rank_mask_unavailable':'rank_mask_loading')+'</p>';return;}
+  const top=eligibleMarkers().filter(m=>Number.isFinite(m.t)).map(m=>({r:m.r,t:m.t})).sort((a,b)=>b.t-a.t).slice(0,40);
+  if(!top.length){el.innerHTML='<p>'+t('rank_no_cells')+'</p>';return;}
   el.innerHTML='<table><caption>'+t('table_caption')+'</caption><thead><tr><th scope="col">'+t('table_rank')+'</th><th scope="col">'+t('table_latlon')+'</th><th scope="col">'+t('table_score')+'</th></tr></thead><tbody>'+
     top.map((o,i)=>`<tr tabindex="0" role="button" data-la="${o.r[0]}" data-lo="${o.r[1]}" aria-label="${t('rank_aria',i+1,o.r[0].toFixed(2),o.r[1].toFixed(2),(o.t*100|0))}"><td>${i+1}</td><td>${o.r[0].toFixed(2)}, ${o.r[1].toFixed(2)}</td><td>${(o.t*100|0)}/100</td></tr>`).join('')+'</tbody></table>';
   el.querySelectorAll('tr[data-la]').forEach(tr=>{const go=()=>{const la=+tr.dataset.la,lo=+tr.dataset.lo;map.jumpTo({center:[lo,la],zoom:8});state.view==='plan'?planTap(la,lo):exploreCell(la,lo);};tr.onclick=go;tr.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}};});
+}
+function priorityPercentiles(values){
+  const ord=values.map((v,i)=>[v,i]).sort((a,b)=>a[0]-b[0]),rank=new Array(values.length).fill(0);
+  // Empty, singleton and constant populations have no relative priority to display.
+  if(ord.length<2||ord[0][0]===ord[ord.length-1][0])return rank;
+  for(let lo=0;lo<ord.length;){
+    let hi=lo+1;while(hi<ord.length&&ord[hi][0]===ord[lo][0])hi++;
+    const pct=(lo+hi-1)/(2*(ord.length-1));
+    for(let k=lo;k<hi;k++)rank[ord[k][1]]=pct;
+    lo=hi;
+  }
+  return rank;
 }
 function recolour(){
   if(geActive()){
@@ -1210,14 +1252,12 @@ function recolour(){
   // popup impact and the accessible Top-cells list, neither of
   // which should change as you pan. Viewport-relative ranking (when on) recolours ONLY the fill so
   // local gaps read at a glance, without redefining what a cell's score means (#1).
-  const vals=markers.map(m=>impact(m.r));
+  const eligible=eligibleMarkers(),vals=eligible.map(m=>impact(m.r));
   // Percentile-rank, not min-max: a few Arctic super-gaps (max discover + rare climate)
   // otherwise dominate the scale and crush every reachable cell to ~0/100. Rank spreads it evenly.
-  const ord=vals.map((v,i)=>[v,i]).sort((a,b)=>a[0]-b[0]);const rank=new Array(vals.length);ord.forEach((p,k)=>rank[p[1]]=k);const n1=Math.max(vals.length-1,1);
-  // If the chosen goal mix has no spatial signal (every cell scores the same), rank would paint
-  // a fake index gradient -- show a flat map instead.
-  const flat=ord.length>0&&(ord[ord.length-1][0]-ord[0][0])<1e-9;   // guard empty markers (recolour runs during init before data loads)
-  markers.forEach((m,i)=>{m.t=flat?0:rank[i]/n1;});   // national score, stable across pan/zoom
+  const rank=priorityPercentiles(vals);
+  markers.forEach(m=>{m.t=null;});   // foreign cells and an unavailable mask have no national rank
+  eligible.forEach((m,i)=>{m.t=rank[i];});   // exact ties share their mean percentile, stable across pan/zoom
   // m.t is the stable national percentile; the baked values grids carry the colour (setGridFill
   // paints them onto the cell polygons). With "Rescale colours to the current view" on, moveend
   // restretches that FILL against the visible cells -- m.t is untouched either way. The interaction
@@ -1648,7 +1688,7 @@ rebuildModes();
 // (same predicate planTrip filters on) so it's instant and needs no routing call.
 function estOneH(km,mode){return (km*ROAD_FACTOR)/MODES[mode].kmh;}
 function greenestForAnyGap(){const [sl,so]=state.start,budget=state.budget,cap=state.maxLeg>0?state.maxLeg:Infinity;
-  const kms=markers.filter(m=>impact(m.r)>0).map(m=>haversine(sl,so,m.r[0],m.r[1]));
+  const kms=eligibleMarkers().filter(m=>impact(m.r)>0).map(m=>haversine(sl,so,m.r[0],m.r[1]));
   for(const mn of Object.keys(MODES))if(kms.some(km=>{const e=estOneH(km,mn);return 2*e<=budget-MIN_FIELD_H&&e<=cap*1.5;}))return mn;
   return 'Drive';}   // nothing greener reaches a gap in budget — driving is the honest fallback
 function greenestForCell(km){const budget=state.budget;
@@ -1688,10 +1728,12 @@ function ipLoc(ok,fail){fetchT('https://ipapi.co/json/',6000).then(r=>r.json()).
 // the trip planner
 document.getElementById('plan').onclick=async()=>{await planTrip();const t=document.getElementById('trips');if(t)t.scrollIntoView({behavior:'smooth',block:'start'});};
 async function planTrip(){
+  if(caOnlyActive()&&!US_CELLS){await loadUS();recolour();}
   planned=true;state.planMode='auto';
   if(!state.modeSet)applyAutoMode(greenestForAnyGap());
   const trips=document.getElementById('trips');const [slat,slon]=state.start,budget=state.budget,M=MODES[state.mode];
-  const all=markers.map(m=>{const km=haversine(slat,slon,m.r[0],m.r[1]);return {m,km,estOne:(km*ROAD_FACTOR)/M.kmh,imp:impact(m.r)};});
+  const all=eligibleMarkers().map(m=>{const km=haversine(slat,slon,m.r[0],m.r[1]);return {m,km,estOne:(km*ROAD_FACTOR)/M.kmh,imp:impact(m.r)};});
+  if(!all.length){trips.textContent=t(_usFailed?'rank_mask_unavailable':'rank_no_cells');return;}
   // Pick candidates BEFORE we know routability, so blend two signals: the highest-impact
   // cells AND the nearest cells. Picking by impact alone can hand back 8 cells that all
   // sit across water/mountains (OSRM can't reach them) and leave nothing to show.
@@ -1722,8 +1764,9 @@ async function planTrip(){
 // Route to a destination the user tapped (vs planTrip, which auto-suggests the best gaps).
 // Snaps to the gap cell under the tap, routes from the (fixed) start, and shows it.
 async function setDest(lat,lon){
+  if(caOnlyActive()&&!US_CELLS){await loadUS();recolour();}
   planned=true;state.planMode='dest';lastDest=[lat,lon];
-  let best=markers[0],bd=1e9;for(const m of markers){const d=Math.abs(m.r[0]-lat)+Math.abs(m.r[1]-lon);if(d<bd){bd=d;best=m;}}
+  let best=null,bd=1e9;for(const m of eligibleMarkers()){const d=Math.abs(m.r[0]-lat)+Math.abs(m.r[1]-lon);if(d<bd){bd=d;best=m;}}
   if(!best)return;
   const [slat,slon]=state.start,budget=state.budget;
   const km=haversine(slat,slon,best.r[0],best.r[1]);
