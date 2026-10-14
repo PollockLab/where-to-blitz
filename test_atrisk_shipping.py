@@ -98,6 +98,51 @@ def test_ambiguous_taxa_keep_polygon_without_infraspecific_bypass(method, name):
     assert kept == {"special": (3, 14)}
 
 
+@pytest.mark.parametrize("method", shipping.METHODS)
+def test_shared_peltigera_key_preserves_western_and_eastern_listing_weights(method):
+    rows = [listing("58", "Peltigera gowardii"), listing("96", "Peltigera hydrothyria")]
+    entries = [
+        entry("58", ("76F7Q",), 1, box(0, 0, 0.2, 0.2)),
+        entry("96", ("76F7Q",), 2, box(0.2, 0.2, 0.4, 0.4)),
+    ]
+    cols = ar.read_columns(
+        io.StringIO(
+            "specieskey\tacceptedtaxonkey\tyi\txi\tn\n76F7Q\tsub\t10\t10\t10\n76F7Q\tsub\t30\t30\t82\n"
+        )
+    )
+    selected, dropped, applied = shipping.apply_policy(
+        policy(method=method, dropped_listing_ids=[]), rows, entries
+    )
+    score, _, kept = ar.score_cells(cols, selected, lambda x, y: (x, y))
+    assert score == {(0, 0): 1, (1, 1): 2}
+    assert kept == {"58": (10, 92), "96": (82, 92)}
+    assert dropped == [] and applied["required_polygon_listing_ids"] == ["58", "96"]
+    assert all(e["infra"] == set() for e in selected)
+
+
+def test_ambiguous_key_safeguard_follows_transitive_alias_overlaps_and_drops_missing_polygon(capsys):
+    rows = [
+        listing("special", "Peltigera gowardii"),
+        listing("bridge"),
+        listing("distant"),
+        listing("independent"),
+    ]
+    entries = [
+        entry("special", ("A",), geom=box(0, 0, 1, 1)),
+        entry("bridge", ("A", "alias"), geom=box(0, 0, 1, 1)),
+        entry("distant", ("alias", "last")),
+        entry("independent", ("B",), geom=box(0, 0, 1, 1)),
+    ]
+    selected, dropped, applied = shipping.apply_policy(policy(dropped_listing_ids=[]), rows, entries)
+    assert [e["id"] for e in selected] == ["special", "bridge", "independent"]
+    assert dropped == [entries[2]]
+    assert applied["required_polygon_listing_ids"] == ["bridge", "special"]
+    assert applied["dropped_listing_ids"] == ["distant"]
+    assert all(e["geom"] is not None and not e["infra"] for e in selected[:2])
+    assert selected[2]["geom"] is None
+    assert "dropped listing distant" in capsys.readouterr().out
+
+
 @pytest.mark.parametrize("geom", [None, Polygon()])
 def test_ambiguous_taxa_without_usable_polygon_drop_and_log(geom, capsys):
     rows = [listing("special", "Lampetra richardsoni")]

@@ -4,6 +4,8 @@ import json
 
 import numpy as np
 
+from atrisk_ranges import key_units
+
 METHODS = ("allowlist", "range_clip")
 POLYGON_REQUIRED_NAMES = frozenset(("Lampetra richardsoni", "Peltigera gowardii"))
 
@@ -47,7 +49,12 @@ def load_policy(path, download_key, listings):
 
 def apply_policy(policy, listings, entries):
     """Select listing entries, retaining polygon safeguards even for species-level allowlist counting."""
-    required = {r["listing_id"] for r in listings if POLYGON_REQUIRED_NAMES.intersection(r["names"])}
+    ambiguous = {r["listing_id"] for r in listings if POLYGON_REQUIRED_NAMES.intersection(r["names"])}
+    units = key_units(entries)
+    risky_units = {units[k] for e in entries if e["id"] in ambiguous for k in e["keys"]}
+    # A shared species key cannot distinguish the ambiguous taxa, including through alias overlaps.
+    # Every listing in those species units needs its own polygon to keep its weight in the right range.
+    required = {e["id"] for e in entries if any(units[k] in risky_units for k in e["keys"])}
     requested = set(policy["dropped_listing_ids"])
     reasons = {
         i: policy.get("dropped_listing_reasons", {}).get(i, f"excluded by selected {policy['method']} policy")
