@@ -1509,22 +1509,28 @@ const COVPM=['All','Amphibia','Aves','Insecta','Mammalia','Plantae','Reptilia','
 // MapLibre overzooms past it; the magma alpha is baked in, so it composites straight over the basemap.
 let _pmProto=null;
 function ensurePM(){if(!_pmProto){_pmProto=new pmtiles.Protocol();maplibregl.addProtocol('pmtiles',_pmProto.tile);}return _pmProto;}
-// Once the painted grid settles, read each overlay's header and the directory under the view's centre
-// tile, so the first toggle goes straight to its tiles instead of one or two directory round trips
-// first (climate_gap keeps its leaf directories at the end of the archive). About 25 KB per archive.
+// Read an overlay archive's header and the directory under the view's centre tile, so the first
+// toggle goes straight to its tiles instead of one or two directory round trips first. ~25 KB each.
+function warmPM(name){
+  const p=ensurePM(),url=PM_BASE+'/'+name+'.pmtiles';if(p.get(url))return;
+  const pm=new pmtiles.PMTiles(url);p.add(pm);
+  pm.getHeader().then(h=>{
+    const z=Math.max(h.minZoom,Math.min(h.maxZoom,Math.round(map.getZoom()))),n=2**z,c=map.getCenter(),lat=c.lat*Math.PI/180;
+    return pm.getZxy(z,Math.floor((c.lng+180)/360*n),Math.floor((1-Math.log(Math.tan(lat)+1/Math.cos(lat))/Math.PI)/2*n));
+  }).catch(()=>{});
+}
+const warmCov=()=>warmPM('density_'+(COVPM.includes(state.taxon)?state.taxon:'All'));
+const warmClimate=()=>warmPM('climate_gap');
+// Warm both once the first painted grid settles, unless the visitor asked to save data or is on 2g.
+// Reaching for the goal or map-style select warms that overlay either way (focus on a select comes
+// seconds before its change; on mobile a tap's pointerdown alone is shorter than one round trip).
 let _pmWarm=false;
 function warmOverlays(){
   if(_pmWarm)return;_pmWarm=true;
-  const p=ensurePM();
-  ['climate_gap','density_'+(COVPM.includes(state.taxon)?state.taxon:'All')].forEach(name=>{
-    const url=PM_BASE+'/'+name+'.pmtiles';if(p.get(url))return;
-    const pm=new pmtiles.PMTiles(url);p.add(pm);
-    pm.getHeader().then(h=>{
-      const z=Math.max(h.minZoom,Math.min(h.maxZoom,Math.round(map.getZoom()))),n=2**z,c=map.getCenter(),lat=c.lat*Math.PI/180;
-      return pm.getZxy(z,Math.floor((c.lng+180)/360*n),Math.floor((1-Math.log(Math.tan(lat)+1/Math.cos(lat))/Math.PI)/2*n));
-    }).catch(()=>{});
-  });
+  const c=navigator.connection;if(c&&(c.saveData||/2g/.test(c.effectiveType||'')))return;
+  warmClimate();warmCov();
 }
+for(const[el,fn]of[[critSel,warmClimate],[bmSel,warmCov]])if(el)['pointerdown','focus'].forEach(ev=>el.addEventListener(ev,()=>{if(_mapLoaded)fn();}));
 function removeCov(){if(map.getLayer('cov'))map.removeLayer('cov');if(map.getSource('cov'))map.removeSource('cov');}
 function setCoverage(){
   if(!_mapLoaded){whenMap(setCoverage);return;}
