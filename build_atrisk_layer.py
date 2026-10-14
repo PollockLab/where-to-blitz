@@ -6,10 +6,12 @@ CAN-SAR at-risk species with a Canadian GBIF record in the cell: Endangered=3, T
 Special Concern=1. This is authoritative status x real occurrences, NOT the range-restriction proxy
 (IUCN validation rho=0.054).
 
-Listings, not species: CAN-SAR lists subspecies and populations, GBIF records carry a species key. A record
-counts for a listing only inside the listing's range (plus a buffer) or when identified to the listed
-infraspecific taxon, and takes the max weight among the listings that accept it (atrisk_ranges.py, which
-also builds the range table cluster_results/ca/atrisk_listings.csv and its polygons).
+CAN-SAR lists subspecies and populations, GBIF records carry a species key. The range-clip candidate counts
+a record for a listing only inside its buffered range or when identified to the listed infraspecific taxon,
+and takes the max weight among the listings that accept it (atrisk_ranges.py, which also builds the range
+table cluster_results/ca/atrisk_listings.csv and its polygons). Production fetches apply the method and
+listing exclusions in atrisk_shipping_policy.json. The allowlist counts retained listings at species level,
+while ambiguous Lampetra richardsoni and Peltigera gowardii always require a polygon.
 
 Occurrences come from ONE citable GBIF SQL download (a DOI), not per-species REST paging, which was
 capped and returned records in GBIF default order. The query counts records per species, accepted taxon
@@ -50,7 +52,8 @@ Usage :
       # add --accept-crosswalk-changes when the printed crosswalk diff is intended
   GBIF_USER=.. GBIF_PWD=.. GBIF_EMAIL=.. .venv/bin/python build_atrisk_layer.py --submit
       # macOS: GBIF_PWD="$(security find-generic-password -a "$GBIF_USER" -s api.gbif.org -w)"
-  .venv/bin/python build_atrisk_layer.py --fetch KEY    # after the GBIF email: poll, read, write layer
+  .venv/bin/python build_atrisk_layer.py --fetch KEY    # apply the committed download-specific shipping policy
+  .venv/bin/python build_atrisk_layer.py --fetch KEY --candidate  # raw range clip for gate/scorer research
 """
 
 import argparse
@@ -69,6 +72,7 @@ from collections import defaultdict
 from datetime import datetime, timezone
 
 import atrisk_ranges
+import atrisk_shipping
 from atrisk_crosswalk import crosswalk_diff, diff_blocks, print_diff, read_crosswalk_rows
 
 RES = 0.25
@@ -81,6 +85,7 @@ STATUS = {v: k for k, v in WT.items()}
 OUT_DIR = "cluster_results/ca"
 CROSSWALK = f"{OUT_DIR}/atrisk_species_keys.csv"
 PROVENANCE = f"{OUT_DIR}/ca_atrisk_provenance.json"
+SHIPPING_POLICY = f"{OUT_DIR}/atrisk_shipping_policy.json"
 OUT_CSV = f"{OUT_DIR}/ca_atrisk_richness.csv"
 GBIF = "https://api.gbif.org/v1"
 GBIF_V2 = "https://api.gbif.org/v2"
@@ -392,9 +397,11 @@ def col_release():
     return {"dataset_key": COL_XR, **{k: d.get(k) for k in keys}}
 
 
-def do_fetch(key):
+def do_fetch(key, candidate=False):
     crosswalk = read_crosswalk()
     keys = {k for ks, _ in crosswalk.values() for k in ks}
+    listings = atrisk_ranges.read_listings()
+    policy = None if candidate else atrisk_shipping.load_policy(SHIPPING_POLICY, key, listings)
     while True:
         status, info = http_json(f"{GBIF}/occurrence/download/{key}")
         if status != 200 or not isinstance(info, dict):
@@ -414,9 +421,13 @@ def do_fetch(key):
         z.open(next(n for n in z.namelist() if not n.endswith("/"))) as f,
     ):
         cols = atrisk_ranges.read_columns(f)
-    listings = atrisk_ranges.read_listings()
     entries = atrisk_ranges.listing_entries(listings, crosswalk, atrisk_ranges.load_range_geoms())
+    shipping = {"applied": False, "method": "range_clip", "mode": "candidate", "dropped_listing_ids": []}
+    dropped = []
+    if policy is not None:
+        entries, dropped, shipping = atrisk_shipping.apply_policy(policy, listings, entries)
     score, nsp, kept = atrisk_ranges.score_cells(cols, entries, atrisk_ranges.transformer(), FINE, RES)
+    kept = atrisk_shipping.with_dropped_totals(cols, kept, dropped)
     print(f"{len(cols['n'])} fine-cell rows; {len(score)} cells host >=1 at-risk listing")
     if not score:
         raise SystemExit("no at-risk cells in the download: refusing to overwrite ca_atrisk_richness.csv")
@@ -429,9 +440,12 @@ def do_fetch(key):
         "sql": (info.get("request") or {}).get("sql") or build_sql(keys),
         "created": info.get("created") or datetime.now(timezone.utc).isoformat(),
         "n_species_matched": len({ks[0] for ks, _ in crosswalk.values()}),
+        "shipping_policy": shipping,
         "taxonomy": col_release(),
         "cansar_source": f"{CANSAR_URL} (CAN-SAR, OSF DOI 10.17605/OSF.IO/E4A58)",
-        "ranges": atrisk_ranges.provenance(listings, entries),
+        "ranges": atrisk_shipping.range_provenance(
+            atrisk_ranges.provenance(listings, entries), listings, entries, shipping["method"]
+        ),
     }
     with open(PROVENANCE, "w") as f:
         json.dump(prov, f, indent=2)
@@ -461,14 +475,21 @@ def main():
     g.add_argument("--submit", action="store_true", help="submit the SQL download (needs GBIF_* env vars)")
     g.add_argument("--fetch", metavar="KEY", help="poll a finished download and build the layer")
     ap.add_argument(
+        "--candidate",
+        action="store_true",
+        help="build the raw range-clip candidate for research, ignoring shipping policy",
+    )
+    ap.add_argument(
         "--accept-crosswalk-changes",
         action="store_true",
         help="proceed when the re-match merges weights, splits a key or loses a name vs the committed crosswalk",
     )
     ap.add_argument("--cansar", default=CANSAR, help=f"CAN-SAR CSV path (default {CANSAR})")
     a = ap.parse_args()
+    if a.candidate and not a.fetch:
+        ap.error("--candidate requires --fetch")
     if a.fetch:
-        return do_fetch(a.fetch)
+        return do_fetch(a.fetch, candidate=a.candidate)
     if a.submit and not all(os.environ.get(k) for k in ("GBIF_USER", "GBIF_PWD", "GBIF_EMAIL")):
         do_submit("")  # fail fast on missing vars before any network work
     sev = load_cansar(a.cansar)
