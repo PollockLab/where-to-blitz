@@ -30,6 +30,7 @@ const activeCellResM=()=>25000,snapToLattice=(lat,lon)=>({lat,lon}),parentMarker
 const caOnlyActive=()=>true,US_CELLS=new Set(),gekey=()=>'',DRAWN5=null;
 const clearRoute=()=>{},syncSharedCellUrl=()=>{},setDestCell=()=>{},latKey=()=>'';
 const t=id=>id,popScoreHtml=()=>'cell facts',contribStr=()=>'components',openHowSection=()=>{};
+const popupActionsHtml=()=>'record actions';
 let _selectionSeq=0,_reselect=false,_sharedCell=null,_popScoreEl=null,_popComponentsEl=null,destMarker;
 let content,popupOptions;
 const maplibregl={Popup:class{constructor(options){popupOptions=options;}setDOMContent(el){content=el;return this;}}},wirePopup=p=>p;
@@ -46,10 +47,10 @@ function fetchProspects(lat,lon,where,opts){refs=opts;}
 
 def test_species_precede_closed_group_and_component_disclosures():
     result = _run(
-        "console.log(JSON.stringify({order:content.children.map(el=>el.id||el.tag),"
+        "console.log(JSON.stringify({order:content.children.map(el=>el.id||el.className||el.tag),"
         "disclosures:created.filter(el=>el.tag==='details').map(el=>({open:el.open,ids:el.children.map(c=>c.id||c.tag)}))}));"
     )
-    assert result["order"][:2] == ["popscore", "popsp"]
+    assert result["order"][:3] == ["popscore", "popsp", "popactions"]
     assert len(result["disclosures"]) == 2
     assert all(not item["open"] for item in result["disclosures"])
     assert result["disclosures"][0]["ids"] == ["summary", "popgaps"]
@@ -89,7 +90,7 @@ function element(name){return {name,isConnected:true,innerHTML:'',dataset:{},ope
   classList:{toggle(k,on){on?nodes.howpanel.classes.add(k):nodes.howpanel.classes.delete(k);}}};}
 for(const id of ['howpanel','howbtn','how-evidence','conservationinfo'])nodes[id]=element(id);
 const document={getElementById:id=>nodes[id],activeElement:null};
-const renderGoalContext=()=>{};
+const renderGoalContext=()=>{},setPlaceFinderOpen=()=>{};
 const fetchT=async(url)=>{calls.push(url);const response=responses.shift();
   if(response.error)throw Error(response.error);
   return {ok:true,json:async()=>response};};

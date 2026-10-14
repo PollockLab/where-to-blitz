@@ -41,7 +41,7 @@ class Element{
   }
   querySelectorAll(){return [];}
 }
-const spEl=new Element(),gapEl=new Element();
+const spEl=new Element(),gapEl=new Element(),actionsEl=new Element();
 const document={getElementById:()=>spEl};
 const state={taxon:'All biodiversity',project:'test'};
 const ICONIC={Aves:'Aves',Fungi:'Fungi'},FILES={Aves:'birds',Fungi:'fungi'},taxonSel={};
@@ -52,7 +52,7 @@ const GT_CACHE={},GT_DENSE={};
 const gtkey=(lat,lon)=>lat.toFixed(3)+','+lon.toFixed(3);
 const gtHead=()=>'<div class="popsec">'+t('pop_groups_hd')+'</div>';
 const groupName=k=>t('group')[k]||k;
-const cellBoundsForRes=()=>({swlat:49,nelat:49.1,swlng:-123,nelng:-122.9});
+let cellBoundsForRes=()=>({swlat:49,nelat:49.1,swlng:-123,nelng:-122.9});
 let surfaceFilter=async()=>'';
 const inatLocale=()=>LANG==='fr'?'&locale=fr':'';
 const HH=0.1;
@@ -81,6 +81,8 @@ const fetchT=async(url)=>{
     script += _function(src, "completeSpeciesCounts") + _function(src, "checkedCandidateAbsences")
     if "function validSpeciesCounts(" in src:
         script += _function(src, "validSpeciesCounts")
+    script += _function(src, "cellRecordsUrl") + _function(src, "popupActionsHtml")
+    script += _function(src, "refreshPopupActions")
     script += _function(src, "fetchProspects")
     script += _function(src, "paintGapTree") + _function(src, "fetchGapTree")
     if "function paintGapStatus(" in src:
@@ -348,7 +350,11 @@ def test_missing_regional_evidence_does_not_invent_nearby_counts_or_rarity(neigh
     ("lang", "badge", "scope"),
     [
         ("en", "no matching record here", "Public research-grade iNaturalist records"),
-        ("fr", "aucune observation retenue ici", "Observations publiques de qualité recherche sur iNaturalist"),
+        (
+            "fr",
+            "aucune observation retenue ici",
+            "Observations publiques de qualité recherche sur iNaturalist",
+        ),
     ],
 )
 def test_popup_absence_is_qualified_by_the_matching_record_scope(lang, badge, scope):
@@ -605,9 +611,7 @@ def test_stale_group_counts_are_not_painted_or_cached(changed):
     result = _run_popup(
         [{"total_results": 0, "results": []}, {"total_results": 0, "results": []}],
         "const originalGet=jget;jget=async(...args)=>{const response=await originalGet(...args);"
-        "if(calls.length===2){"
-        + change
-        + ";gapEl.innerHTML='new selection';}return response;};"
+        "if(calls.length===2){" + change + ";gapEl.innerHTML='new selection';}return response;};"
         "await fetchGapTree(49,-123,gapEl,25000);console.log(JSON.stringify({html:gapEl.innerHTML,cache:GT_CACHE}));",
     )
     assert result["html"] == "new selection"
@@ -648,3 +652,100 @@ def test_a_valid_capped_group_list_has_no_retry_and_remains_cached():
     assert "Partial species lists" in result["first"]
     assert "data-group-retry" not in result["first"]
     assert result["calls"] == 2
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        {"total_results": 0, "results": []},
+        {"total_results": 1, "results": [_species(1, 2)]},
+        {"total_results": 501, "results": [_species(1, 2)]},
+        {"error": "offline"},
+    ],
+)
+def test_recording_actions_survive_empty_capped_and_failed_evidence(response):
+    result = _run_popup(
+        [response, {"total_results": 0, "results": []}],
+        "fetchGapTree=()=>{};await fetchProspects(49,-123,'destination',{toPopup:true,spEl,actionsEl,resM:5000});"
+        "console.log(JSON.stringify({html:actionsEl.innerHTML}));",
+    )
+    assert "View matching records" in result["html"]
+    assert 'href="https://www.inaturalist.org/observations/new"' in result["html"]
+    href = re.search(r'href="([^\"]+)"', result["html"]).group(1).replace("&amp;", "&")
+    assert parse_qs(urlparse(href).query) == {
+        "subview": ["map"],
+        "swlat": ["49"],
+        "nelat": ["49.1"],
+        "swlng": ["-123"],
+        "nelng": ["-122.9"],
+        "quality_grade": ["research"],
+        "geoprivacy": ["open"],
+        "taxon_geoprivacy": ["open"],
+        "threatened": ["false"],
+    }
+
+
+def test_recording_actions_follow_current_group_language_and_cell_scale():
+    result = _run_popup(
+        [],
+        "fetchGapTree=()=>{};jget=async()=>({total_results:0,results:[]});"
+        "cellBoundsForRes=(_lat,_lon,res)=>({swlat:res/1000,nelat:res/1000+1,swlng:-123,nelng:-122});"
+        "state.taxon='Aves';await fetchProspects(49,-123,'destination',{toPopup:true,spEl,actionsEl,resM:5000});"
+        "const first=actionsEl.innerHTML;LANG='fr';state.taxon='Fungi';"
+        "await fetchProspects(50,-124,'destination',{toPopup:true,spEl,actionsEl,resM:25000});"
+        "console.log(JSON.stringify({first,second:actionsEl.innerHTML}));",
+    )
+    first = parse_qs(
+        urlparse(re.search(r'href="([^\"]+)"', result["first"]).group(1).replace("&amp;", "&")).query
+    )
+    second = parse_qs(
+        urlparse(re.search(r'href="([^\"]+)"', result["second"]).group(1).replace("&amp;", "&")).query
+    )
+    assert first["iconic_taxa"] == ["Aves"] and first["swlat"] == ["5"]
+    assert second["iconic_taxa"] == ["Fungi"] and second["swlat"] == ["25"]
+    assert second["locale"] == ["fr"]
+    assert "Voir les observations retenues" in result["second"]
+    assert "Noter une observation" in result["second"]
+
+
+def test_evidence_and_locale_refresh_preserve_the_focused_record_action():
+    result = _run_popup(
+        [],
+        "fetchGapTree=()=>{};jget=async()=>({total_results:0,results:[]});"
+        "const first={href:'',textContent:''},second={href:'https://www.inaturalist.org/observations/new',textContent:''};"
+        "actionsEl.querySelectorAll=()=>[first,second];document.activeElement=first;let replacements=0;"
+        "Object.defineProperty(actionsEl,'innerHTML',{set(){replacements++;document.activeElement=null;}});"
+        "state.taxon='Aves';await fetchProspects(49,-123,'destination',{toPopup:true,spEl,actionsEl,resM:5000});"
+        "const en=first.textContent;LANG='fr';state.taxon='Fungi';"
+        "await fetchProspects(49,-123,'destination',{toPopup:true,spEl,actionsEl,resM:5000});"
+        "console.log(JSON.stringify({replacements,focused:document.activeElement===first,en,fr:first.textContent,href:first.href,log:second.href}));",
+    )
+    assert result["replacements"] == 0 and result["focused"] is True
+    assert result["en"] == "View matching records"
+    assert result["fr"] == "Voir les observations retenues"
+    assert parse_qs(urlparse(result["href"]).query)["iconic_taxa"] == ["Fungi"]
+    assert result["log"] == "https://www.inaturalist.org/observations/new"
+
+
+@pytest.mark.parametrize(
+    ("medium_url", "expected"),
+    [
+        ("https://example.org/medium.jpg", "https://example.org/medium.jpg"),
+        (None, "https://example.org/photo.jpg"),
+        ("", "https://example.org/photo.jpg"),
+        ("javascript:alert(1)", "https://example.org/photo.jpg"),
+        ("data:image/svg+xml,unsafe", "https://example.org/photo.jpg"),
+    ],
+)
+def test_popup_uses_larger_photos_with_a_safe_thumbnail_fallback(medium_url, expected):
+    species = _species(1, 2)
+    species["taxon"]["default_photo"]["medium_url"] = medium_url
+    result = _run_popup(
+        [{"total_results": 1, "results": [species]}, {"total_results": 0, "results": []}],
+        "fetchGapTree=()=>{};await fetchProspects(49,-123,'destination',{toPopup:true,spEl,resM:25000});"
+        "console.log(JSON.stringify({html:spEl.innerHTML}));",
+    )
+    assert f'<img src="{expected}"' in result["html"]
+    assert 'data-fallback="https://example.org/photo.jpg"' in result["html"]
+    assert "this.onerror=null" in result["html"]
+    assert "javascript:" not in result["html"] and "data:image" not in result["html"]
