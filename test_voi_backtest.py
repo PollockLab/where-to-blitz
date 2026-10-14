@@ -7,6 +7,7 @@ about what the statistic measures when there is nothing to measure.
 """
 import numpy as np
 import pandas as pd
+import pytest
 
 import voi_backtest as vb
 
@@ -111,3 +112,42 @@ def test_travel_baseline_is_absent_rather_than_invented():
 
 def test_load_travel_minutes_returns_none_when_the_build_is_missing(tmp_path):
     assert vb.load_travel_minutes(tmp_path / "nope.json") is None
+
+
+class CountingPermutation:
+    def __init__(self, identity=False):
+        self.calls = 0
+        self.identity = identity
+    def permutation(self, values):
+        self.calls += 1
+        return values.copy() if self.identity else np.roll(values, 1)
+
+
+def test_zero_exceedances_have_nonzero_finite_permutation_probability(monkeypatch):
+    monkeypatch.setattr(vb, "N_PERM", 9)
+    rng = CountingPermutation()
+    rho, p, _, _ = vb.perm_test(np.arange(6), np.arange(6), rng)
+    assert rho == 1
+    assert rng.calls == 9
+    assert p == 1 / 10
+
+
+def test_all_exceedances_have_probability_one_and_explicit_count_overrides_runtime(monkeypatch):
+    monkeypatch.setattr(vb, "N_PERM", 9)
+    rng = CountingPermutation(identity=True)
+    _, p, _, _ = vb.perm_test(np.arange(6), np.arange(6), rng, n=4)
+    assert rng.calls == 4
+    assert p == 1
+
+
+@pytest.mark.parametrize("n", [1, 5, 20])
+def test_finite_permutation_probabilities_stay_in_their_valid_range(n):
+    _, p, _, _ = vb.perm_test(np.arange(6), np.array([4, 3, 0, 2, 5, 1]),
+                            np.random.default_rng(7), n=n)
+    assert 1 / (n + 1) <= p <= 1
+
+
+@pytest.mark.parametrize("n", [0, -1, 1.5])
+def test_invalid_permutation_counts_fail_clearly(n):
+    with pytest.raises(ValueError, match="positive integer"):
+        vb.perm_test(np.arange(6), np.arange(6), np.random.default_rng(0), n=n)

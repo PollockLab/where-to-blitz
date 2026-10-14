@@ -54,15 +54,25 @@ def chao1(counts):
     return S_obs + f1 * (f1 - 1) / 2.0      # bias-corrected when f2 == 0
 
 
-def build_cells(df):
-    """Split, grid, compute train-only priority and test-only discovery outcome."""
+def build_cells(df, grid=None):
+    """Split, grid, compute train-only priority and test-only discovery outcome.
+
+    The historical proxy retains its 0.25-degree grid by default. An explicit
+    app inventory supplies projected row/column keys and filters ineligible cells
+    before any training counts or normalization are computed.
+    """
     df = df.dropna(subset=["taxon_id", "observed_on"]).copy()
     df["date"] = pd.to_datetime(df["observed_on"], errors="coerce")
     df = df.dropna(subset=["date"])
     # species-level only (rank species/subspecies); drop coarse IDs that can't be "new species"
     df = df[df["rank"].isin(["species", "subspecies", "variety", "form", "hybrid"])]
-    df["gi"] = np.floor(df.lat / RES).astype(int)
-    df["gj"] = np.floor(df.lon / RES).astype(int)
+    if grid is None:
+        df["gi"] = np.floor(df.lat / RES).astype(int)
+        df["gj"] = np.floor(df.lon / RES).astype(int)
+    else:
+        df["gi"], df["gj"] = grid.locate(df.lat.values, df.lon.values)
+        df = df[(df.gi >= 0) & (df.gj >= 0)].sort_values(
+            ["gi", "gj", "date", "taxon_id"], kind="stable")
     train = df[df.date < SPLIT]
     test = df[df.date >= SPLIT]
     if len(train) == 0 or len(test) == 0:
@@ -104,6 +114,9 @@ def build_cells(df):
         })
     cells = pd.DataFrame(rows)
     cells.attrs["aux"] = aux
+    if grid is not None:
+        cells["clat"], cells["clon"] = grid.centres(cells.gi.values, cells.gj.values)
+        cells.attrs["grid"] = grid.metadata
 
     # --- priority (train-only), matches notebook proxy: scarcity + staleness ---
     cells["scarcity"] = norm(1.0 / cells.n_train)
@@ -226,16 +239,24 @@ def spearman(x, y):
     return float(np.corrcoef(rx, ry)[0, 1])
 
 
-def perm_test(score, outcome, rng, n=N_PERM):
+def perm_test(score, outcome, rng, n=None):
     """Permutation null: shuffle the priority score across cells, recompute
-    Spearman vs the (fixed) outcome. p = P(|rho_null| >= |rho_obs|)."""
+    Spearman vs the fixed outcome, using the nonzero conservative plus-one
+    probability for random permutations with replacement (Phipson & Smyth 2010,
+    https://doi.org/10.2202/1544-6115.1585). Unrestricted permutations assume
+    exchangeability across cells; this function does not establish that assumption.
+    """
+    n = N_PERM if n is None else n
+    if not isinstance(n, (int, np.integer)) or n < 1:
+        raise ValueError("permutation count must be a positive integer")
     obs = spearman(score, outcome)
     score = np.asarray(score, float)
     null = np.array([spearman(rng.permutation(score), outcome) for _ in range(n)])
     null = null[~np.isnan(null)]
     if np.isnan(obs) or null.size == 0:
         return obs, float("nan"), float("nan"), float("nan")
-    p = float((np.abs(null) >= abs(obs)).mean())
+    exceedances = int((np.abs(null) >= abs(obs)).sum())
+    p = float((exceedances + 1) / (null.size + 1))
     return obs, p, float(null.mean()), float(null.std())
 
 
@@ -269,7 +290,7 @@ def analyse(name, df, K=5, travel=None, Ms=DOUBLE_M, double_reps=DOUBLE_REPS):
     out = {"taxon": name, "n_cells": len(cells), "n_revisited": len(rev),
            "n_train": int(df_train_count(df)), "n_test": int(df_test_count(df)),
            "total_new_species": int(cells.new_species.sum()),
-           "perm_p_floor": 1.0 / N_PERM}
+           "perm_p_floor": 1.0 / (N_PERM + 1)}
 
     # (1) raw VOLUME association (all cells): priority vs raw new-species count.
     # Expected NEGATIVE -- high-priority cells are under-visited, so contribute
