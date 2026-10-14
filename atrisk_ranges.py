@@ -357,7 +357,8 @@ def compact(g):
     """Lon/lat geometry simplified to SIMPLIFY_DEG on a 0.001 deg grid: far below BUFFER_M, small to commit."""
     import shapely
 
-    return shapely.set_precision(shapely.make_valid(g).simplify(SIMPLIFY_DEG), 0.001)
+    g = shapely.make_valid(shapely.make_valid(g).simplify(SIMPLIFY_DEG))  # simplify can self-intersect
+    return shapely.set_precision(g, 0.001)
 
 
 def build_inputs(cansar, dfo_gdb, ecozones, admin1):
