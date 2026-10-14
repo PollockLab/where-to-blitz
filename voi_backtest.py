@@ -1,25 +1,19 @@
-"""Self-contained VOI / sampling-priority backtest on public iNaturalist data.
+"""Retrospective sampling-priority associations in sampled iNaturalist records.
 
-Closes north-star bar #4 ("VOI is validated, not asserted") WITHOUT Larocque's
-private rasters: a leakage-free temporal split of iNat project 228908 (BC, 2025
-pilot season). Compute each grid cell's priority from observations up to T, then
-test on observations after T whether high-priority cells actually yielded more
-NEW-to-cell species.
+The historical proxy uses a 0.25-degree grid and an observed_on split; callers
+may supply an explicit projected app inventory. Priority inputs use records dated
+before the split, and outcomes use records dated after it. Cached research-grade
+IDs and record availability were not reconstructed as historical snapshots.
 
-Method grounded in: Di Cecco et al. 2021 (BioScience, effort/observer-bias
-confound -> use rate-per-observation on revisited cells); Chao 1984 / Colwell &
-Coddington 1994 (richness extrapolation); Mondain-Monval et al. 2024 MEE
-(adaptive sampling improves SDMs -- motivation, a simulation study not a
-temporal-split backtest, so this is a novel composite). Lift + Spearman +
-permutation null are standard.
-
-Honest scope: retrospective simulation over *collected* observations, not
-prospective field guidance; "new species" = new to that cell's iNat record, not
-new-to-science; inherits iNat observer bias (controlled, not eliminated).
+Novelty counts taxon IDs absent from the sampled project training history, not
+biological-species discovery or novelty relative to a complete cell inventory.
+Equalized record counts do not establish equal field hours. Observer bias,
+spatial dependence and permutation exchangeability remain limitations.
 """
 import glob
 import json
 import sys
+from collections import Counter
 from pathlib import Path
 
 import numpy as np
@@ -54,21 +48,31 @@ def chao1(counts):
     return S_obs + f1 * (f1 - 1) / 2.0      # bias-corrected when f2 == 0
 
 
-def build_cells(df):
-    """Split, grid, compute train-only priority and test-only discovery outcome."""
+def build_cells(df, grid=None):
+    """Split, grid, compute train-only priority and test-only discovery outcome.
+
+    The historical proxy retains its 0.25-degree grid by default. An explicit
+    app inventory supplies projected row/column keys and filters ineligible cells
+    before any training counts or normalization are computed.
+    """
     df = df.dropna(subset=["taxon_id", "observed_on"]).copy()
     df["date"] = pd.to_datetime(df["observed_on"], errors="coerce")
     df = df.dropna(subset=["date"])
-    # species-level only (rank species/subspecies); drop coarse IDs that can't be "new species"
+    # Retain species and the listed infraspecific/hybrid taxon ID ranks.
     df = df[df["rank"].isin(["species", "subspecies", "variety", "form", "hybrid"])]
-    df["gi"] = np.floor(df.lat / RES).astype(int)
-    df["gj"] = np.floor(df.lon / RES).astype(int)
+    if grid is None:
+        df["gi"] = np.floor(df.lat / RES).astype(int)
+        df["gj"] = np.floor(df.lon / RES).astype(int)
+    else:
+        df["gi"], df["gj"] = grid.locate(df.lat.values, df.lon.values)
+        df = df[(df.gi >= 0) & (df.gj >= 0)].sort_values(
+            ["gi", "gj", "date", "taxon_id"], kind="stable")
     train = df[df.date < SPLIT]
     test = df[df.date >= SPLIT]
     if len(train) == 0 or len(test) == 0:
         return None
 
-    # --- train: priority inputs, computed ONLY on pre-T data (leakage-free) ---
+    # --- train: priority inputs from records dated before the observed_on split ---
     rows = []
     train_sp = {k: set(v) for k, v in train.groupby(["gi", "gj"]).taxon_id}
     last_seen = train.groupby(["gi", "gj"]).date.max()
@@ -104,6 +108,9 @@ def build_cells(df):
         })
     cells = pd.DataFrame(rows)
     cells.attrs["aux"] = aux
+    if grid is not None:
+        cells["clat"], cells["clon"] = grid.centres(cells.gi.values, cells.gj.values)
+        cells.attrs["grid"] = grid.metadata
 
     # --- priority (train-only), matches notebook proxy: scarcity + staleness ---
     cells["scarcity"] = norm(1.0 / cells.n_train)
@@ -135,6 +142,65 @@ def rarefy_new_at_k(cells, aux, rng, K=5, reps=200):
             acc += len(set(samp.tolist()) - seen)
         out.append(acc / reps)
     return np.array(out, dtype=float)
+
+
+def _log_probability_miss(count, total, k):
+    """log(C(total-count, k) / C(total, k)), using the shorter symmetric product."""
+    if count + k > total:
+        return float("-inf")
+    steps, removed = min(count, k), max(count, k)
+    if not steps:
+        return 0.0
+    return float(np.log1p(-removed / (total - np.arange(steps, dtype=float))).sum())
+
+
+def expected_new_at_k(cells, aux, K=5):
+    """Exact expected novel taxon IDs in K uniform test-record draws without replacement.
+
+    A test taxon absent from the full sampled training set contributes its chance
+    of appearing at least once: 1 - C(N-count, K)/C(N, K). Repeated taxon records
+    remain sampling units, matching rarefy_new_at_k's estimand. No simulation seed
+    or draw count is needed. Cells with fewer than K test records remain unavailable.
+    """
+    if isinstance(K, (bool, np.bool_)) or not isinstance(K, (int, np.integer)) or K < 0:
+        raise ValueError("sample budget K must be a non-negative integer")
+    out = []
+    positions = [cells.columns.get_loc("gi"), cells.columns.get_loc("gj")]
+    for gi, gj in cells.to_numpy(copy=False)[:, positions]:
+        seen, pool, _ = aux.get((gi, gj), (set(), [], []))
+        if len(pool) < K:
+            out.append(np.nan); continue
+        frequencies = Counter(count for taxon, count in Counter(pool).items() if taxon not in seen)
+        value = sum(multiplicity * -np.expm1(_log_probability_miss(count, len(pool), K))
+                    for count, multiplicity in sorted(frequencies.items()))
+        out.append(min(float(value), float(K)))
+    return np.asarray(out, dtype=float)
+
+
+def expected_standardized_new_at_k(cells, aux, M=20, K=5):
+    """Exact novelty after independent M-train and K-test record subsamples.
+
+    Each test taxon contributes P(absent from M train draws) times P(present
+    in K test draws). This changes the sampled-history estimand and is reported
+    separately from novelty against the full training record set. Insufficient
+    train or test pools return NaN, matching the paired sensitivity cohort.
+    """
+    if any(isinstance(v, (bool, np.bool_)) or not isinstance(v, (int, np.integer)) or v < 0
+           for v in (M, K)):
+        raise ValueError("sample budgets M and K must be non-negative integers")
+    out = []
+    positions = [cells.columns.get_loc("gi"), cells.columns.get_loc("gj")]
+    for gi, gj in cells.to_numpy(copy=False)[:, positions]:
+        _, test, train = aux.get((gi, gj), (set(), [], []))
+        if len(train) < M or len(test) < K:
+            out.append(np.nan); continue
+        train_counts = Counter(train)
+        frequencies = Counter((train_counts[taxon], count) for taxon, count in Counter(test).items())
+        value = sum(multiplicity * np.exp(_log_probability_miss(a, len(train), M))
+                    * -np.expm1(_log_probability_miss(b, len(test), K))
+                    for (a, b), multiplicity in sorted(frequencies.items()))
+        out.append(min(float(value), float(K)))
+    return np.asarray(out, dtype=float)
 
 
 def double_rarefy_new_at_k(cells, aux, rng, M=20, K=5, reps=DOUBLE_REPS):
@@ -226,16 +292,37 @@ def spearman(x, y):
     return float(np.corrcoef(rx, ry)[0, 1])
 
 
-def perm_test(score, outcome, rng, n=N_PERM):
+def perm_test(score, outcome, rng, n=None):
     """Permutation null: shuffle the priority score across cells, recompute
-    Spearman vs the (fixed) outcome. p = P(|rho_null| >= |rho_obs|)."""
-    obs = spearman(score, outcome)
+    Spearman vs the fixed outcome, using the nonzero conservative plus-one
+    probability for random permutations with replacement (Phipson & Smyth 2010,
+    https://doi.org/10.2202/1544-6115.1585). Unrestricted permutations assume
+    exchangeability across cells; this function does not establish that assumption.
+    """
+    n = N_PERM if n is None else n
+    if not isinstance(n, (int, np.integer)) or n < 1:
+        raise ValueError("permutation count must be a positive integer")
+    score_array = np.asarray(score)
+    score_rank = pd.Series(score).rank().values
+    outcome_rank = pd.Series(outcome).rank().values
+
+    def ranked_correlation(ranks):
+        if np.std(ranks) == 0 or np.std(outcome_rank) == 0:
+            return np.nan
+        return float(np.corrcoef(ranks, outcome_rank)[0, 1])
+
+    obs = ranked_correlation(score_rank)
     score = np.asarray(score, float)
-    null = np.array([spearman(rng.permutation(score), outcome) for _ in range(n)])
+    # Preserve the legacy null's float-coercion ties (for example, large integers).
+    if score_array.dtype != score.dtype:
+        score_rank = pd.Series(score).rank().values
+    score_rank = score_rank.copy()  # NumPy also requires writable input for an empty permutation.
+    null = np.array([ranked_correlation(rng.permutation(score_rank)) for _ in range(n)])
     null = null[~np.isnan(null)]
     if np.isnan(obs) or null.size == 0:
         return obs, float("nan"), float("nan"), float("nan")
-    p = float((np.abs(null) >= abs(obs)).mean())
+    exceedances = int((np.abs(null) >= abs(obs)).sum())
+    p = float((exceedances + 1) / (null.size + 1))
     return obs, p, float(null.mean()), float(null.std())
 
 
@@ -269,7 +356,7 @@ def analyse(name, df, K=5, travel=None, Ms=DOUBLE_M, double_reps=DOUBLE_REPS):
     out = {"taxon": name, "n_cells": len(cells), "n_revisited": len(rev),
            "n_train": int(df_train_count(df)), "n_test": int(df_test_count(df)),
            "total_new_species": int(cells.new_species.sum()),
-           "perm_p_floor": 1.0 / N_PERM}
+           "perm_p_floor": 1.0 / (N_PERM + 1)}
 
     # (1) raw VOLUME association (all cells): priority vs raw new-species count.
     # Expected NEGATIVE -- high-priority cells are under-visited, so contribute

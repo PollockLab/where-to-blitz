@@ -3,7 +3,7 @@
 The binding constraint on iNaturalist is not photos, it's expert IDs: ~75% of
 identifications come from the top ~1% of users (Oxford BioScience 2023). So a
 photo only "counts" (reaches Research Grade) if an identifier verifies it. This
-measures, per 0.25-deg cell, how badly verifiable records pile up unverified —
+measures, per published 25 km cell where app axes are available, how badly verifiable records pile up unverified —
 and, crucially, whether that backlog is a DISTINCT signal from under-sampling
 (if it just mirrors density, it adds nothing new).
 
@@ -38,18 +38,23 @@ REF_DATE = pd.Timestamp("2026-06-14", tz="UTC")     # pull date; fixed for deter
 MIN_CELL = 5                                          # min records to score a cell
 
 
-def grid(df):
+def grid(df, lattice=None):
     df = df.dropna(subset=["lat", "lon"]).copy()
-    df["gi"] = np.floor(df.lat / RES).astype(int)
-    df["gj"] = np.floor(df.lon / RES).astype(int)
+    if lattice is None:
+        df["gi"] = np.floor(df.lat / RES).astype(int)
+        df["gj"] = np.floor(df.lon / RES).astype(int)
+    else:
+        df["gi"], df["gj"] = lattice.locate(df.lat.values, df.lon.values)
+        df = df[(df.gi >= 0) & (df.gj >= 0)]
     return df
 
 
 def analyse(name):
     nid = f"cluster_results/needsid_{name}.csv"
     rg = f"cluster_results/inat_{name}.csv"
-    ni = grid(pd.read_csv(nid))
-    rs = grid(pd.read_csv(rg))
+    lattice = bas.AppGrid(bas.GROUP[name]) if name in bas.GROUP else None
+    ni = grid(pd.read_csv(nid), lattice=lattice)
+    rs = grid(pd.read_csv(rg), lattice=lattice)
     if len(ni) == 0 or len(rs) == 0:
         return None
     # waiting time + engagement on the needs-ID pile
@@ -69,7 +74,7 @@ def analyse(name):
     scored = cells[cells.n_total >= MIN_CELL].copy()
 
     # distinctness: join the app's discover axis + a density proxy, by (gi,gj)
-    app = bas.load_app_axes(bas.GROUP[name]) if name in bas.GROUP else {}
+    app = bas.load_app_axes(bas.GROUP[name], lattice) if lattice is not None else {}
     disc, dens = [], []
     for (gi, gj), row in scored.iterrows():
         a = app.get((gi, gj))
@@ -84,6 +89,7 @@ def analyse(name):
 
     out = {
         "taxon": name,
+        "grid": lattice.metadata if lattice is not None else {"res_deg": RES, "cell_keys": ["lat", "lon"]},
         "n_needsid_obs": len(ni),
         "n_research_obs": len(rs),
         "n_cells_scored": len(scored),

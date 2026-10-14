@@ -23,11 +23,7 @@ Five goals per cell, each scored 0–1; a preset blends them into a 0–100 impa
 (a percentile rank across every cell in the country, so it does not change as you pan or zoom).
 All five are computed from real data, though `env` carries weight 0 in every shipped preset.
 
-**Does the priority actually work?** On a leakage-free backtest of the 2025 BC pilot,
-the highest-ranked cells turn up **1.1× to 3.0× more new species** than the lowest at equal effort
-(Spearman rho 0.40 to 0.67, permutation p < 0.001 on every taxon), and it holds out-of-sample in
-Eastern Canada. Mammals and reptiles are the strong cases at 3.0×; insects are the weak one, 1.3× in
-BC and 1.1× in the East.
+**What has been checked?** In retrospective BC and Eastern Canada project samples, a training-period scarcity proxy is associated with expected new taxon IDs at K = 5 later observations (rho 0.48 to 0.71; 1.2x to 3.2x expected novelty at upper versus lower score-tercile cutoffs). The published Spatial Gap score is tested separately on the viewer's exact 25 km lattice. These comparisons use sampled records and observation dates, with historical availability unknown; they do not establish future trip yield.
 
 [METHODOLOGY.md](METHODOLOGY.md) has the glossary, the per-axis formulas and sources, the
 per-taxon validation numbers, and the scope those numbers hold within.
