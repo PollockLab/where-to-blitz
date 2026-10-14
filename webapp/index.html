@@ -1267,8 +1267,9 @@ rebuildTaxonOptions();
 taxonSel.onchange=()=>{const prev=state.taxon;state.taxon=taxonSel.value;
   const pr=document.getElementById('prospects');if(pr){pr.dataset.idle='0';pr.innerHTML='<div class="hd">'+t('cells_loading',groupName(state.taxon))+'</div>';}
   if(typeof showLoading==='function')showLoading(true);
-  loadGroup(state.taxon).then(()=>{buildMarkers();setCoverage();if(document.getElementById('insights').style.display==='block')renderInsights();})
-    .catch(()=>{state.taxon=prev;taxonSel.value=prev;if(pr){pr.dataset.idle='1';pr.innerHTML='<div class="hd" style="margin-top:10px">'+t('prospects_idle')+'</div>';}})   // load failed: revert dropdown, don't leave a half-switched map
+  setCoverage();   // the density overlay needs only state.taxon, so its tiles load alongside the group's cells
+  loadGroup(state.taxon).then(()=>{buildMarkers();if(document.getElementById('insights').style.display==='block')renderInsights();})
+    .catch(()=>{state.taxon=prev;taxonSel.value=prev;setCoverage();if(pr){pr.dataset.idle='1';pr.innerHTML='<div class="hd" style="margin-top:10px">'+t('prospects_idle')+'</div>';}})   // load failed: revert dropdown, don't leave a half-switched map
     .finally(()=>{if(typeof showLoading==='function')showLoading(false);});};
 
 function applyWeights(arr,name){OBJ.forEach((o,i)=>{state.w[o.key]=arr[i];});markPreset(name);recolour();updateLegendLabels();replan();}
