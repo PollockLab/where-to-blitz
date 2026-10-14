@@ -1445,6 +1445,7 @@ function setGridFill(){
     if(map.getZoom()<TIER_SWITCH_Z)STRETCH=makeStretch(sample25(v));   // above the switch the 5 km tier is the visible one and sets STRETCH itself
     paintGrid25(v);
     updateLegendLabels();
+    map.once('idle',warmOverlays);
   }).catch(()=>{});
   refreshCells5();
   updateOpacityControl();
@@ -1506,8 +1507,24 @@ const COVPM=['All','Amphibia','Aves','Insecta','Mammalia','Plantae','Reptilia','
 // Raster PMTiles now ride the native MapLibre pmtiles:// protocol (registered once) instead of a custom
 // GridLayer that hand-decoded WEBP to canvas. The protocol reads each archive's TileJSON (native z9) and
 // MapLibre overzooms past it; the magma alpha is baked in, so it composites straight over the basemap.
-let _pmReg=false;
-function ensurePM(){if(_pmReg)return;_pmReg=true;maplibregl.addProtocol('pmtiles',new pmtiles.Protocol().tile);}
+let _pmProto=null;
+function ensurePM(){if(!_pmProto){_pmProto=new pmtiles.Protocol();maplibregl.addProtocol('pmtiles',_pmProto.tile);}return _pmProto;}
+// Once the painted grid settles, read each overlay's header and the directory under the view's centre
+// tile, so the first toggle goes straight to its tiles instead of one or two directory round trips
+// first (climate_gap keeps its leaf directories at the end of the archive). About 25 KB per archive.
+let _pmWarm=false;
+function warmOverlays(){
+  if(_pmWarm)return;_pmWarm=true;
+  const p=ensurePM();
+  ['climate_gap','density_'+(COVPM.includes(state.taxon)?state.taxon:'All')].forEach(name=>{
+    const url=PM_BASE+'/'+name+'.pmtiles';if(p.get(url))return;
+    const pm=new pmtiles.PMTiles(url);p.add(pm);
+    pm.getHeader().then(h=>{
+      const z=Math.max(h.minZoom,Math.min(h.maxZoom,Math.round(map.getZoom()))),n=2**z,c=map.getCenter(),lat=c.lat*Math.PI/180;
+      return pm.getZxy(z,Math.floor((c.lng+180)/360*n),Math.floor((1-Math.log(Math.tan(lat)+1/Math.cos(lat))/Math.PI)/2*n));
+    }).catch(()=>{});
+  });
+}
 function removeCov(){if(map.getLayer('cov'))map.removeLayer('cov');if(map.getSource('cov'))map.removeSource('cov');}
 function setCoverage(){
   if(!_mapLoaded){whenMap(setCoverage);return;}
