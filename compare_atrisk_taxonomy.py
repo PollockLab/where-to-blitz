@@ -2,8 +2,8 @@
 
 Reads the committed crosswalk (cluster_results/ca/atrisk_species_keys.csv: name, col_key, backbone_key, ...)
 and two finished GBIF SQL downloads of the at-risk query, one keyed on the GBIF Backbone and one on Catalogue
-of Life XR. Per listed name it sums the Canadian records of its Backbone key and of its COL key, and writes
-every name whose count moves by more than FACTOR in either direction (or from or to zero) to
+of Life XR. Per listed name it sums Canadian records for its Backbone key and unique COL and alias keys,
+and writes every name whose count moves by more than FACTOR in either direction (or from or to zero) to
 cluster_results/ca/atrisk_taxonomy_count_changes.csv, sorted by the size of the change. A row is either a
 real taxonomy change (a split, a lump, a genus move) or a wrong match; the table is for reading, not a stop.
 
@@ -14,12 +14,15 @@ Usage:
 import argparse
 import csv
 import io
+import json
 import math
+import os
 import urllib.request
 import zipfile
 from collections import defaultdict
 
-from build_atrisk_layer import CROSSWALK, GBIF, OUT_DIR, STATUS, gget
+from atrisk_ranges import LISTINGS, read_listings
+from build_atrisk_layer import CROSSWALK, GBIF, OUT_DIR, PROVENANCE, STATUS, gget
 
 FACTOR = 10
 OUT = f"{OUT_DIR}/atrisk_taxonomy_count_changes.csv"
@@ -51,14 +54,17 @@ def download_totals(key):
             return tot
 
 
-def count_changes(rows, bb_totals, col_totals, factor=FACTOR):
+def count_changes(rows, bb_totals, col_totals, factor=FACTOR, selected_names=None):
     """Crosswalk dict rows + per-key totals -> rows whose COL/Backbone record ratio is > factor or < 1/factor
-    (ratio inf when the Backbone count is 0). Names with no key on either side, or 0 on both, are skipped."""
+    (ratio inf when the Backbone count is 0). Names with no key on either side, or 0 on both, are skipped.
+    selected_names, when supplied, restricts in_layer to names retained by the final shipping policy."""
     out = []
     for r in rows:
-        if not (r["col_key"] or r["backbone_key"]):
+        col_keys = {r["col_key"], *r.get("alias_keys", "").split()} - {""}
+        if not (col_keys or r["backbone_key"]):
             continue
-        b, c = bb_totals.get(r["backbone_key"], 0), col_totals.get(r["col_key"], 0)
+        b = bb_totals.get(r["backbone_key"], 0) if r["backbone_key"] else 0
+        c = sum(col_totals.get(key, 0) for key in col_keys)
         if not (b or c):
             continue
         ratio = c / b if b else math.inf
@@ -67,7 +73,8 @@ def count_changes(rows, bb_totals, col_totals, factor=FACTOR):
                 {
                     "name": r["name"],
                     "status": STATUS[int(r["status_weight"])],
-                    "in_layer": bool(r["col_key"]),
+                    "in_layer": bool(r["col_key"])
+                    and (selected_names is None or r["name"] in selected_names),
                     "backbone_key": r["backbone_key"],
                     "backbone_records": b,
                     "col_key": r["col_key"],
@@ -80,6 +87,24 @@ def count_changes(rows, bb_totals, col_totals, factor=FACTOR):
     return sorted(out, key=lambda d: -abs(math.log(d["ratio"])) if d["ratio"] else -math.inf)
 
 
+def selected_listing_names(provenance_path=PROVENANCE, listings_path=LISTINGS):
+    """Final shipping policy -> retained listing names, or None before a policy is recorded."""
+    if not os.path.exists(provenance_path):
+        return None
+    with open(provenance_path) as f:
+        provenance = json.load(f)
+    policy = provenance.get("shipping_policy")
+    if policy is None:
+        return None
+    dropped = set(policy["dropped_listing_ids"])
+    return {
+        name
+        for listing in read_listings(listings_path)
+        if listing["listing_id"] not in dropped
+        for name in listing["names"]
+    }
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("backbone_key", help="GBIF download key of the Backbone-keyed at-risk query")
@@ -87,7 +112,12 @@ def main():
     a = ap.parse_args()
     with open(CROSSWALK) as f:
         rows = list(csv.DictReader(f))
-    changes = count_changes(rows, download_totals(a.backbone_key), download_totals(a.col_key))
+    changes = count_changes(
+        rows,
+        download_totals(a.backbone_key),
+        download_totals(a.col_key),
+        selected_names=selected_listing_names(),
+    )
     for d in changes:
         bk = d["backbone_key"]
         d["backbone_name"] = gget(f"{GBIF}/species/{bk}?", {}).get("canonicalName", "") if bk else ""
