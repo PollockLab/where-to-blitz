@@ -302,9 +302,22 @@ def perm_test(score, outcome, rng, n=None):
     n = N_PERM if n is None else n
     if not isinstance(n, (int, np.integer)) or n < 1:
         raise ValueError("permutation count must be a positive integer")
-    obs = spearman(score, outcome)
+    score_array = np.asarray(score)
+    score_rank = pd.Series(score).rank().values
+    outcome_rank = pd.Series(outcome).rank().values
+
+    def ranked_correlation(ranks):
+        if np.std(ranks) == 0 or np.std(outcome_rank) == 0:
+            return np.nan
+        return float(np.corrcoef(ranks, outcome_rank)[0, 1])
+
+    obs = ranked_correlation(score_rank)
     score = np.asarray(score, float)
-    null = np.array([spearman(rng.permutation(score), outcome) for _ in range(n)])
+    # Preserve the legacy null's float-coercion ties (for example, large integers).
+    if score_array.dtype != score.dtype:
+        score_rank = pd.Series(score).rank().values
+    score_rank = score_rank.copy()  # NumPy also requires writable input for an empty permutation.
+    null = np.array([ranked_correlation(rng.permutation(score_rank)) for _ in range(n)])
     null = null[~np.isnan(null)]
     if np.isnan(obs) or null.size == 0:
         return obs, float("nan"), float("nan"), float("nan")

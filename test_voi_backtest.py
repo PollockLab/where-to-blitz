@@ -151,3 +151,63 @@ def test_finite_permutation_probabilities_stay_in_their_valid_range(n):
 def test_invalid_permutation_counts_fail_clearly(n):
     with pytest.raises(ValueError, match="positive integer"):
         vb.perm_test(np.arange(6), np.arange(6), np.random.default_rng(0), n=n)
+
+
+def _legacy_perm_test(score, outcome, rng, n):
+    """Independent pre-cache algorithm, including float conversion and NaN filtering."""
+
+    def rho(x, y):
+        rx = pd.Series(x).rank().values
+        ry = pd.Series(y).rank().values
+        if np.std(rx) == 0 or np.std(ry) == 0:
+            return np.nan
+        return float(np.corrcoef(rx, ry)[0, 1])
+
+    obs = rho(score, outcome)
+    score = np.asarray(score, float)
+    null = np.array([rho(rng.permutation(score), outcome) for _ in range(n)])
+    null = null[~np.isnan(null)]
+    if np.isnan(obs) or null.size == 0:
+        return obs, float("nan"), float("nan"), float("nan")
+    exceedances = int((np.abs(null) >= abs(obs)).sum())
+    return obs, float((exceedances + 1) / (null.size + 1)), float(null.mean()), float(null.std())
+
+
+@pytest.mark.parametrize(
+    "score,outcome",
+    [
+        ([0.3, 0.1, 0.5, 0.2, 0.4], [4.5, 2.1, 1.0, 3.2, 5.4]),
+        ([1.0, 1.0, 2.0, 3.0, 3.0, 4.0], [4, 2, 2, 1, 3, 3]),
+        ([1.0] * 5, [1, 2, 3, 4, 5]),
+        ([1, 2, 3, 4, 5], [2.0] * 5),
+        ([1.0, np.nan, 2.0, 3.0], [4, 3, 2, 1]),
+        ([1.0, 2.0, 3.0, 4.0], [4, 3, np.nan, 1]),
+        ([np.inf, -np.inf, 2.0, 3.0], [4, 3, 2, 1]),
+        ([2**53, 2**53 + 1, 2**53 + 2, 2**53 + 3], [4, 3, 1, 2]),
+        ([1.0], [2.0]),
+        ([], []),
+    ],
+)
+@pytest.mark.parametrize("seed", [0, 7, 53])
+@pytest.mark.parametrize("n", [None, 1, 31])
+def test_permutation_cache_preserves_legacy_results_and_rng(score, outcome, seed, n, monkeypatch):
+    monkeypatch.setattr(vb, "N_PERM", 19)
+    actual_rng, legacy_rng = np.random.default_rng(seed), np.random.default_rng(seed)
+    actual = vb.perm_test(score, outcome, actual_rng, n=n)
+    expected = _legacy_perm_test(score, outcome, legacy_rng, 19 if n is None else n)
+    assert np.asarray(actual).tobytes() == np.asarray(expected).tobytes()
+    assert actual_rng.random(8).tobytes() == legacy_rng.random(8).tobytes()
+
+
+@pytest.mark.parametrize("size", [73, 144, 228])
+@pytest.mark.parametrize("tied", [False, True])
+def test_permutation_cache_preserves_seeded_cell_rank_boundaries(size, tied):
+    inputs = np.random.default_rng(size)
+    score, outcome = inputs.random(size), inputs.random(size)
+    if tied:
+        score, outcome = np.round(score, 1), np.round(outcome, 1)
+    actual_rng, legacy_rng = np.random.default_rng(13), np.random.default_rng(13)
+    actual = vb.perm_test(score, outcome, actual_rng, n=127)
+    expected = _legacy_perm_test(score, outcome, legacy_rng, 127)
+    assert np.asarray(actual).tobytes() == np.asarray(expected).tobytes()
+    assert actual_rng.random(8).tobytes() == legacy_rng.random(8).tobytes()
