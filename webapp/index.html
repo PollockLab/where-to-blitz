@@ -137,7 +137,11 @@ details.adv>summary::-webkit-details-marker{display:none}
 details.adv>summary::before{content:"▸";font-size:11.5px;display:inline-block;transition:transform .15s}
 details.adv[open]>summary::before{transform:rotate(90deg)}
 details.adv>summary:hover{color:var(--ink)}
-.maplibregl-popup-content{font-size:15px;padding:12px 16px 14px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.25)}.maplibregl-popup-content b{color:#0a2a44}.maplibregl-popup-close-button{font-size:18px;padding:0 5px;color:#667}
+.maplibregl-popup{z-index:1150}
+.maplibregl-popup-content{font-size:15px;padding:12px 16px 14px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.25);max-height:calc(75dvh - 64px);overflow-y:auto;overscroll-behavior:contain}.maplibregl-popup-content b{color:#0a2a44}.maplibregl-popup-close-button{font-size:18px;padding:0 5px;color:#667}
+.maplibregl-popup-content:has(>.popbody){display:grid}
+.maplibregl-popup-content>.popbody{grid-area:1/1;min-width:0}
+.maplibregl-popup-content:has(>.popbody)>.maplibregl-popup-close-button{grid-area:1/1;position:sticky;top:0;align-self:start;justify-self:end;z-index:1;background:#fff}
 /* Issue #44: per-cell coverage + rare species live in the popup. Headings, a scroll-capped group list, and a 4-up species grid (no horizontal scroll). */
 .popsec{font-size:12.5px;font-weight:700;color:#0a2a44;margin:9px 0 5px}
 .popsec:first-child{margin-top:1px;padding-right:22px}
@@ -194,16 +198,18 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
 .infobox ul{margin:5px 0 0;padding-left:15px}
 .infobox li{margin:3px 0}
 @media(max-width:640px){
-  #app{flex-direction:column}
-  #panel{position:static;width:100%;min-width:0;height:auto;max-height:50vh;border-radius:0;border:0;border-bottom:1px solid #0a1119;box-shadow:none}
-  #map{height:50vh;flex:none}
+  #app{flex-direction:column;height:calc(100dvh - var(--bh))}
+  #panel{position:static;width:100%;min-width:0;height:auto;max-height:calc(50% - 56px);flex-shrink:0;border-radius:0;border:0;border-bottom:1px solid #0a1119;box-shadow:none}
+  #panelInner{position:relative}
+  #map{height:auto;min-height:0;flex:1 1 0}
   #viewtoggle{left:50%;top:auto;bottom:12px}
   #insights{left:0;top:0;height:100%;padding:54px 12px 24px}
   .infobtn{width:24px;height:24px;line-height:22px;font-size:13px}
-  /* the panel is stacked, not floating, so left:300px drops the chevron on top of its own
-     content. Park it in the map's free top-right corner, which slides up when the panel goes. */
-  #panelToggle{left:auto;right:8px;top:calc(var(--bh) + 50vh + 8px)}
-  body.panel-collapsed #panelToggle{left:auto;right:8px;top:calc(var(--bh) + 8px)}
+  /* Keep the controls in their own row above the title. The same row floats over the map
+     after collapse, so the language, help and restore controls remain available. */
+  #panelToggle{position:static;flex:none;align-self:center}
+  body.panel-collapsed #panelToggle{left:auto;right:auto;top:auto}
+  .maplibregl-popup-content{max-width:calc(100vw - 24px);max-height:calc(40dvh - 54px)}
 }
 #maplegend{position:fixed;bottom:24px;right:14px;z-index:1050;background:rgba(255,255,255,.93);border-radius:9px;padding:6px 10px;box-shadow:0 2px 10px rgba(0,0,0,.22);font-size:14px;color:#16233a;min-width:188px;max-width:244px;line-height:1.25}
 #maplegend .lt{font-weight:700;font-size:14px}/* retained: reused by the Getting Even categorical legend title (the priority-legend title div was removed for #47) */
@@ -222,7 +228,7 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
 #maplegend .hint{margin-top:3px;color:#46566a;font-size:10.5px}/* #82: two sizes under the .lab labels (12.5px) */
 .maplibregl-ctrl-bottom-left{left:14px;bottom:14px;z-index:1060}
 .maplibregl-ctrl-attrib a{text-decoration:underline}   /* link-in-text-block: colour alone does not separate them from the surrounding text */
-@media(max-width:640px){#maplegend{left:auto;right:8px;bottom:8px;top:auto;min-width:0;max-width:158px;padding:6px 8px}}/* the corner is free now that attribution moved bottom-left: same position at every breakpoint */
+@media(max-width:640px){#maplegend{left:auto;right:8px;bottom:8px;top:auto;min-width:0;max-width:158px;max-height:calc(50dvh - 16px);overflow-y:auto;overscroll-behavior:contain;padding:6px 8px}}/* the corner is free now that attribution moved bottom-left: same position at every breakpoint */
 @media(max-width:640px){.maplibregl-ctrl-bottom-left{left:8px;bottom:8px}
   /* expanded, the attribution runs nearly the full width; keep it clear of the legend's 158px column instead of under it */
   .maplibregl-ctrl-attrib.maplibregl-compact-show{box-sizing:border-box;max-width:calc(100vw - 190px)}}
@@ -235,9 +241,14 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
 #howpanel{position:fixed;right:14px;top:calc(52px + var(--bh));z-index:1200;width:330px;max-width:calc(100vw - 28px);max-height:calc(100vh - 72px - var(--bh));overflow-y:auto;background:var(--panel);color:var(--mut);border:1px solid #2a3a4d;border-radius:10px;box-shadow:0 6px 22px rgba(0,0,0,.45);padding:30px 15px 14px;display:none;font-size:12px;line-height:1.5}
 #howpanel.open{display:block}
 #howpanel .foot{margin-top:10px;font-size:11px;color:#7e91a6}
-#howclose{position:absolute;top:6px;right:8px;background:transparent;border:0;color:var(--mut);font-size:20px;line-height:1;cursor:pointer;padding:2px 6px}
+#howclose{position:sticky;top:0;float:right;margin-top:-24px;background:var(--panel);border:0;color:var(--mut);font-size:20px;line-height:1;cursor:pointer;padding:2px 6px}
 #howclose:hover{color:var(--ink)}
-@media(max-width:640px){#topctrls{right:8px}#howbtn{max-width:none;font-size:12px}#howpanel{left:8px;right:8px;width:auto;top:calc(50vh + 44px);max-height:44vh}}
+@media(max-width:640px){
+  #topctrls{position:relative;inset:auto;order:-1;flex:none;width:100%;padding:8px 12px;background:#fff}
+  #howbtn{flex:1;min-width:0;max-width:none;font-size:12px;justify-content:center}
+  body.panel-collapsed #topctrls{position:fixed;top:calc(8px + var(--bh));left:8px;right:8px;width:auto;padding:0;background:transparent}
+  #howpanel{left:8px;right:8px;width:auto;top:calc(72px + var(--bh));max-height:calc(100dvh - 88px - var(--bh))}
+}
 /* #84: French strings run longer — widen these two elements (desktop only; the mobile rules above already size them) so the How-scored label, legend labels and notice don't wrap to extra lines. */
 @media(min-width:641px){html[lang=fr] #howbtn{max-width:none}html[lang=fr] #maplegend{max-width:320px}}
 </style></head>
@@ -324,12 +335,11 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
 
   <div id="celltable" class="sronly" role="region" tabindex="0" data-i18n-aria="aria_top_cells" aria-label="Top cells (accessible list)"></div>
 </div></div>
-<button id="panelToggle" type="button" data-i18n-aria="hide_panel" data-i18n-title="hide_panel" aria-label="Hide the panel" title="Hide the panel">‹</button>
 <div id="map" role="application" data-i18n-aria="aria_map" aria-label="Interactive priority map (screen-reader users: use the Top cells list)"></div>
 <div id="viewtoggle" role="navigation" data-i18n-aria="aria_map_view" aria-label="Map view"><button id="vexplore" class="on" aria-pressed="true" data-i18n="view_explore">Explore</button><button id="vplan" aria-pressed="false" data-i18n="view_plan">Plan a trip</button><button id="vcompare" aria-pressed="false" data-i18n="view_compare">Compare goals</button></div>
 <div id="loading" role="status" aria-live="polite" data-i18n="loading">Loading the map…</div>
 <div id="maplegend" role="region" data-i18n-aria="aria_map_legend" aria-label="Map legend"><div class="ramp"></div><div class="lab"><span data-i18n="legend_low">well-sampled</span><span data-i18n="legend_high">biggest gaps</span></div><div class="hint" data-i18n-html="legend_hint"></div><div class="hint" id="legendscope"></div></div>
-<div id="topctrls"><button id="langbtn" type="button" data-i18n-aria="aria_language" data-i18n-title="lang_switch" aria-label="Language" title="Switch language">FR</button><button id="howbtn" type="button" aria-expanded="false" aria-controls="howpanel" data-i18n-title="how_scored" title="How impact is scored & data sources"><span data-i18n="how_scored">How impact is scored & data sources</span></button></div>
+<div id="topctrls"><button id="langbtn" type="button" data-i18n-aria="aria_language" data-i18n-title="lang_switch" aria-label="Language" title="Switch language">FR</button><button id="howbtn" type="button" aria-expanded="false" aria-controls="howpanel" data-i18n-title="how_scored" title="How impact is scored & data sources"><span data-i18n="how_scored">How impact is scored & data sources</span></button><button id="panelToggle" type="button" data-i18n-aria="hide_panel" data-i18n-title="hide_panel" aria-label="Hide the panel" title="Hide the panel">‹</button></div>
 <div id="howpanel" role="region" data-i18n-aria="how_scored" aria-label="How impact is scored & data sources">
   <button id="howclose" type="button" data-i18n-aria="aria_close" data-i18n-title="aria_close" aria-label="Close" title="Close">×</button>
   <div class="legend" style="margin-top:2px"><span data-i18n="skip">skip</span><div class="bar"></div><span data-i18n="go_here">go here</span></div>
@@ -1980,7 +1990,7 @@ function exploreCell(lat,lon){
   setDestCell(dest[0],dest[1],resM);
   // Issue #44/#56: the popup holds the per-cell coverage tree and the rarest species, filled async. setDOMContent
   // keeps the same persistent element (the two child containers stay attached) so an in-flight fetch can fill it.
-  const popDiv=document.createElement('div');
+  const popDiv=document.createElement('div');popDiv.className='popbody';
   // #?: the national percentile bottoms out at 0 in well-recorded cells, which reads as a verdict on the
   // outing rather than a fact about the map. Demoted to a muted footer line so the actionable gaps lead.
   const popScore=document.createElement('div'); popScore.className='popscore'; _popScoreEl=popScore; popScore.innerHTML=popScoreHtml(best,resM);
