@@ -1,0 +1,566 @@
+listing_id,common_name,status_weight,range_source,records_kept,records_species
+1,bert's predaceous diving beetle,3,province,0,0
+2,wood bison,1,province,2787,2787
+3,fin whale atlantic population,1,dfo,6313,6313
+4,fin whale pacific population,2,dfo,6313,6313
+5,killer whale northeast pacific transient population,2,dfo,4582,4582
+6,killer whale northeast pacific offshore population,2,dfo,4582,4582
+7,killer whale northeast pacific southern resident population,3,dfo,4582,4582
+8,killer whale northeast pacific northern resident population,2,dfo,4582,4582
+9,rocky mountain tailed frog,2,province,10,10
+10,western prairie fringed orchid,3,province,56,56
+11,burrowing owl,3,province,1532,1532
+12,blue whale pacific population,3,dfo,491,491
+13,spoon-leaved moss,2,province,46,46
+14,carmine shiner,3,dfo,6,6
+15,black-footed albatross,1,none,3256,3256
+16,loggerhead shrike prairie subspecies,2,province,16988,16988
+17,eastern whip-poor-will,2,province,28916,28916
+18,blue whale atlantic population,3,dfo,491,491
+19,rigid apple moss,3,province,13,13
+20,coeur d'alene salamander,1,province,10,10
+21,bear's-foot sanicle,2,province,1355,1355
+22,greater short-horned lizard,3,province,443,443
+23,bridle shiner,1,dfo,36,36
+24,pugnose minnow,2,dfo,0,0
+25,caribou dolphin and union population,3,province,3490,3490
+26,blue felt lichen,1,province,572,572
+27,ross's gull,2,province,812,812
+28,cliff paintbrush,2,province,58,58
+29,barn owl eastern population,3,province,47,47
+30,barn owl western population,2,province,47,47
+31,northern madtom,3,dfo,5,5
+32,bank swallow,2,province,214978,214978
+33,barn swallow,2,province,961438,961438
+34,boreal felt lichen atlantic population,3,province,33,33
+35,collared pika,1,province,233,233
+36,blanding's turtle great lakes/st. lawrence population,3,province,7117,7117
+37,blanding's turtle nova scotia population,3,province,7117,7117
+38,peary caribou,2,province,3490,3490
+40,dun skipper vestris subspecies,2,province,0,9530
+41,wandering salamander,1,province,415,415
+42,mormon metalmark southern mountain population,3,province,347,347
+43,poweshiek skipperling,3,province,70,70
+44,gold-edged gem,3,province,90,90
+45,white flower moth,3,province,3,3
+46,coastal tailed frog,1,province,245,245
+47,eastern tiger salamander prairie population,3,province,37,37
+48,dakota skipper,3,province,84,84
+49,sand-verbena moth,3,province,31,31
+50,monarch,3,province,87847,87847
+51,northern red-legged frog,1,province,2653,2653
+52,coastal giant salamander,2,province,96,96
+53,american badger jacksoni subspecies,3,province,683,683
+54,caribou boreal population,2,province,3490,3490
+55,rusty cord-moss,1,province,23,23
+56,magnum mantleslug,1,province,7,7
+57,blackstripe topminnow,1,dfo,54,54
+58,western waterfan,1,province,10,92
+59,american hart's-tongue fern,1,province,505,505
+60,gray fox,2,province,138,138
+61,baikal sedge,1,province,178,178
+62,caribou atlantic-gaspÃ©sie population,3,province,3490,3490
+63,american badger taxus subspecies,1,province,683,683
+64,eastern yellow-bellied racer,2,province,746,746
+65,northern rubber boa,1,province,444,444
+66,spiny softshell,3,province,461,461
+67,western tiger salamander southern mountain population,3,province,1028,1028
+68,yellow lampmussel,1,dfo,277,277
+69,spotted gar,3,dfo,101,101
+70,deepwater sculpin great lakes-upper st. lawrence populations,1,dfo,662,662
+71,mapleleaf great lakes-upper st. lawrence population,1,dfo,270,270
+72,eastern pondmussel,1,dfo,49,49
+73,flooded jellyskin,1,province,182,182
+74,north atlantic right whale,3,dfo,7107,7107
+75,short-tailed albatross,2,province,133,133
+76,blue ash,2,province,241,241
+77,phantom orchid,3,province,208,208
+78,common hoptree,1,province,664,664
+79,anticosti aster,1,province,142,142
+80,oregon forestsnail,3,province,409,409
+81,great basin gophersnake,2,province,0,1363
+82,hare-footed locoweed,2,province,8,8
+83,round pigtoe,3,dfo,65,65
+84,rainbow,1,dfo,170,170
+85,warmouth,3,dfo,35,35
+86,shortnose sturgeon,1,dfo,21,21
+87,mapleleaf saskatchewan-nelson rivers population,2,dfo,270,270
+89,rusty blackbird,1,province,164646,164646
+90,louisiana waterthrush,2,province,4322,4322
+91,western tiger salamander prairie/boreal population,1,province,1028,1028
+92,haida gwaii slug,1,province,18,18
+93,dromedary jumping-slug,2,province,10,10
+94,round hickorynut,3,dfo,15,15
+95,kidneyshell,3,dfo,65,65
+96,eastern waterfan,2,province,82,92
+97,enos lake benthic threespine stickleback,3,dfo,12461,12461
+98,enos lake limnetic threespine stickleback,3,dfo,12461,12461
+99,northern abalone,3,dfo,8559,8559
+100,threaded vertigo,1,province,,
+101,vancouver lamprey,2,dfo,5,5
+102,paxton lake benthic threespine stickleback,3,dfo,12461,12461
+103,paxton lake limnetic threespine stickleback,3,dfo,12461,12461
+104,bobolink,2,province,203437,203437
+105,chestnut-collared longspur,3,province,10799,10799
+106,ferruginous hawk,2,province,14890,14890
+107,northern bobwhite,3,province,918,918
+108,band-tailed pigeon,1,province,54737,54737
+109,"grasshopper sparrow, pratensis subspecies",1,province,0,32843
+110,pitcher's thistle,1,province,384,384
+111,lake erie watersnake,1,province,0,12067
+112,ermine haidarum subspecies,2,province,0,1723
+114,red crossbill percna subspecies,2,province,0,173928
+115,marbled murrelet,2,province,43869,43869
+116,western rattlesnake,2,province,636,636
+117,western yellow-bellied racer,2,province,746,746
+118,eastern wolf,2,province,,
+119,mccown's longspur,2,province,2916,2916
+120,spotted wintergreen,2,province,212,212
+121,northern goshawk laingi subspecies,2,ecozone,0,49140
+122,boreal felt lichen boreal population,1,province,33,33
+123,coastrange sculpin cultus lake population,3,dfo,45,45
+124,silver hair moss,3,province,0,0
+125,dolly varden western arctic populations,1,dfo,0,1078
+126,little brown myotis,3,province,1244,1244
+127,verna's flower moth,2,province,7,7
+128,banff springs snail,3,province,82,82
+129,hotwater physa,3,dfo,348,348
+130,vancouver island marmot,3,province,152,152
+131,long's braya,3,province,26,26
+132,island blue,3,province,0,1211
+133,okanagan efferia,3,province,12,12
+134,nahanni aster,1,province,18,18
+135,green-scaled willow,2,province,15,15
+136,crumpled tarpaper lichen,2,province,5,5
+137,victorin's water-hemlock,1,province,0,1999
+138,macoun's meadowfoam,2,province,853,853
+139,victorin's gentian,2,province,0,501
+140,vananda creek benthic threespine stickleback,3,dfo,12461,12461
+141,vananda creek limnetic threespine stickleback,3,dfo,12461,12461
+142,athabasca thrift,1,province,0,1744
+143,blue racer,3,province,746,746
+144,eskimo curlew,3,province,0,0
+145,horned grebe western population,1,province,262471,262471
+146,olive-sided flycatcher,2,province,81257,81257
+147,canada warbler,2,province,105156,105156
+148,short-eared owl,1,province,37891,37891
+149,porsild's bryum,2,province,17,17
+150,north pacific right whale,3,dfo,2,2
+151,leatherback sea turtle atlantic population,3,dfo,183,183
+152,leatherback sea turtle pacific population,3,dfo,183,183
+153,sea otter,1,dfo,1226,1226
+154,beluga whale cumberland sound population,2,dfo,1515,1515
+155,basking shark pacific population,3,dfo,704,704
+156,white shark atlantic population,3,dfo,61,61
+157,loggerhead sea turtle,3,dfo,107,107
+158,bluntnose sixgill shark,1,dfo,811,811
+159,rougheye rockfish type i,1,dfo,,
+160,rougheye rockfish type ii,1,dfo,,
+161,tope,1,dfo,31,31
+162,steller sea lion,1,dfo,2616,2616
+163,atlantic wolffish,1,dfo,11724,11724
+164,sowerby's beaked whale,1,dfo,27,27
+165,humpback whale north pacific population,1,dfo,39193,39193
+166,spotted wolffish,2,dfo,1635,1635
+167,acadian flycatcher,3,province,4121,4121
+168,southern maidenhair fern,3,province,17,17
+169,water pennywort,1,province,73,73
+170,streaked horned lark,3,province,0,258006
+171,dune tachinid fly,1,province,3,3
+172,eastern wood-pewee,1,province,347414,347414
+173,alkaline wing-nerved moss,2,province,83,83
+174,golden-winged warbler,2,province,22073,22073
+175,ivory gull,3,province,1091,1091
+176,yellow-breasted chat virens subspecies,3,province,14317,14317
+177,harbour seal lacs des loups marins subspecies,3,dfo,0,18022
+178,ancient murrelet,1,province,10755,10755
+179,peregrine falcon pealei subspecies,1,ecozone,0,195073
+180,banded cord-moss,1,province,42,42
+181,swamp rose-mallow,1,province,791,791
+182,least bittern,2,province,24852,24852
+183,yellow-breasted chat auricollis subspecies southern mountain population,3,province,14317,14317
+184,small-flowered lipocarpha,3,province,31,31
+185,greenish-white grasshopper,1,province,23,23
+186,gibson's big sand tiger beetle,2,province,0,1584
+187,western harvest mouse dychei subspecies,3,province,,
+188,sage thrasher,3,province,1595,1595
+189,tiny cryptantha,2,province,7,7
+190,swift fox,2,province,49,49
+191,dusky dune moth,3,province,139,139
+192,whitebark pine,3,province,1619,1619
+193,pale yellow dune moth,1,province,29,29
+194,western grebe,1,province,84259,84259
+195,dwarf woolly-heads prairie population,1,province,23,23
+196,rocky mountain sculpin eastslope populations,2,dfo,,
+197,mountain sucker milk river populations,2,dfo,9,9
+198,great plains toad,1,province,155,155
+199,weidemeyer's admiral,1,province,20,20
+200,long-billed curlew,1,province,16147,16147
+201,smooth goosefoot,2,province,19,19
+202,small-flowered sand-verbena,3,province,10,10
+203,sprague's pipit,2,province,11277,11277
+204,greater sage-grouse urophasianus subspecies,3,province,13,13
+205,western blue flag,1,province,7,7
+206,western spiderwort,2,province,61,61
+207,longspine thornyhead,1,dfo,7038,7038
+208,yelloweye rockfish pacific ocean inside waters population,1,dfo,46679,46679
+209,yelloweye rockfish pacific ocean outside waters population,1,dfo,46679,46679
+210,northern bottlenose whale scotian shelf population,3,dfo,2441,2441
+211,western screech-owl kennicottii subspecies,2,province,3085,3085
+212,western screech-owl macfarlanei subspecies,2,province,3085,3085
+213,furbish's lousewort,3,province,3,3
+214,oregon spotted frog,3,province,36,36
+215,eastern persius duskywing,3,province,0,2086
+216,ottoe skipper,3,province,0,0
+217,taylor's checkerspot,3,province,0,367
+218,kirtland's warbler,3,province,1414,1414
+219,rayed bean,3,dfo,27,27
+220,poor pocket moss,3,province,7,7
+221,sharp-tailed snake,3,province,81,81
+222,bearded owl-clover,3,province,471,471
+223,cucumber tree,3,province,97,97
+224,deltoid balsamroot,3,province,247,247
+225,drooping trillium,3,province,31,31
+226,dwarf woolly-heads southern mountain population,3,province,23,23
+227,eastern mountain avens,3,province,47,47
+228,eastern prickly pear cactus,3,province,870,870
+229,heart-leaved plantain,3,province,5,5
+230,hoary mountain-mint,3,province,35,35
+231,pink coreopsis,3,province,36,36
+232,pink milkwort,3,province,,
+233,prairie lupine,3,province,123,123
+234,seaside birds-foot lotus,3,province,66,66
+235,showy goldenrod great lakes plains population,3,province,3,3
+236,skinner's agalinis,3,province,1,1
+237,slender bush-clover,3,province,12,12
+238,water-plantain buttercup,3,province,56,56
+239,white prairie gentian,3,province,3,3
+240,wood-poppy,3,province,123,123
+241,small white lady's-slipper,2,province,140,140
+242,blunt-lobed woodsia,2,province,28,28
+243,purple twayblade,2,province,79,79
+244,showy goldenrod boreal population,2,province,3,3
+245,tri-colored bat,3,province,110,110
+246,thread-leaved sundew,3,province,78,78
+247,aweme borer,3,province,9,9
+248,cobblestone tiger beetle,3,province,50,50
+249,northern barrens tiger beetle,3,province,130,130
+250,rusty-patched bumble bee,3,province,7,7
+251,wallis' dark saltflat tiger beetle,3,province,16,16
+252,coastal vesper sparrow,3,province,0,153258
+253,williamson's sapsucker,3,province,1814,1814
+254,bent spike-rush great lakes plains population,3,province,27,27
+255,bent spike-rush southern mountain population,3,province,27,27
+256,bog bird's-foot trefoil,3,province,189,189
+257,branched phacelia,3,province,28,28
+258,brook spike-primrose,3,province,0,0
+259,california buttercup,3,province,40,40
+260,coast microseris,3,province,101,101
+261,coastal scouler's catchfly,3,province,0,21
+262,contorted-pod evening-primrose,3,province,93,93
+263,dense spike-primrose,3,province,92,92
+264,dense-flowered lupine,3,province,362,362
+265,dwarf sandwort,3,province,,
+266,eastern flowering dogwood,3,province,682,682
+267,foothill sedge,3,province,35,35
+268,forked three-awned grass,3,province,69,69
+269,fragrant popcornflower,3,province,14,14
+270,grand coulee owl-clover,3,province,73,73
+271,howell's triteleia,3,province,361,361
+272,kellogg's rush,3,province,15,15
+273,lindley's false silverpuffs,3,province,10,10
+274,muhlenberg's centaury,3,province,34,34
+275,ogden's pondweed,3,province,0,0
+276,rayless goldfields,3,province,0,0
+277,rosy owl-clover,3,province,45,45
+278,rough agalinis,3,province,53,53
+279,short-rayed alkali aster,3,province,31,31
+280,slender collomia,3,province,7,7
+281,small-flowered tonella,3,province,23,23
+282,spalding's campion,3,province,18,18
+283,stoloniferous pussytoes,3,province,30,30
+284,streambank lupine,3,province,37,37
+285,tall bugbane,3,province,31,31
+286,tweedy's lewisia,3,province,11,11
+287,victoria's owl-clover,3,province,252,252
+288,virginia mallow,3,province,30,30
+289,white meconella,3,province,62,62
+290,prototype quillwort,1,province,17,17
+291,grass pickerel,1,dfo,96,96
+292,rocky mountain sculpin pacific populations,1,dfo,,
+293,western skink,1,province,130,130
+294,eastern lilaeopsis,1,province,32,32
+295,northern saw-whet owl brooksi subspecies,2,province,0,44885
+296,branched bartonia,2,province,0,109
+297,eastern baccharis,2,province,49,49
+298,gray's desert-parsley,2,province,5,5
+299,hill's thistle,2,province,512,512
+300,lakeside daisy,2,province,457,457
+301,lemmon's holly fern,2,province,14,14
+302,mountain holly fern,2,province,84,84
+303,showy phlox,2,province,68,68
+304,slender popcornflower,2,province,27,27
+305,western chorus frog great lakes/st. lawrence-canadian shield population,2,province,673,673
+306,mountain beaver,1,province,10,10
+307,polar bear,1,province,1513,1513
+308,american marten newfoundland population,2,province,0,1833
+309,columbian carpet moss,1,province,30,30
+310,small-mouthed salamander,3,province,49,49
+311,great basin spadefoot,2,province,343,343
+312,spring salamander adirondack/appalachian population,2,province,137,137
+313,lake chubsucker,3,dfo,24,24
+314,five-lined skink carolinian population,3,province,2206,2206
+315,butler's gartersnake,3,province,130,130
+316,prairie skink,1,province,131,131
+317,pugnose shiner,2,dfo,31,31
+318,american columbo,3,province,94,94
+319,bashful bulrush,3,province,5,5
+320,eastern prairie fringed orchid,3,province,101,101
+321,hill's pondweed,1,province,32,32
+322,new jersey rush,1,province,8,8
+323,columbia sculpin,1,dfo,23,23
+324,river redhorse,1,dfo,33,33
+325,spotted sucker,1,dfo,9,9
+326,upper great lakes kiyi,1,dfo,,
+327,cryptic paw lichen,2,province,130,130
+328,eastern ribbonsnake great lakes population,1,province,1665,1665
+329,five-lined skink great lakes/st. lawrence population,1,province,2206,2206
+330,northern map turtle,1,province,7268,7268
+331,nuttall's cottontail nuttallii subspecies,1,province,0,1347
+332,western harvest mouse megalotis subspecies,3,province,,
+333,tuberous indian-plantain,1,province,390,390
+334,warty jumping-slug,1,province,9,9
+335,flammulated owl,1,province,978,978
+336,great blue heron fannini subspecies,1,ecozone,0,1594545
+337,woodland vole,1,province,2,2
+338,lewis's woodpecker,2,province,10754,10754
+339,red-headed woodpecker,3,province,52113,52113
+340,eastern hog-nosed snake,2,province,1222,1222
+341,wood turtle,2,province,31,31
+342,dense blazing star,2,province,512,512
+343,dwarf hackberry,2,province,205,205
+344,false rue-anemone,2,province,54,54
+345,sweet pepperbush,2,province,65,65
+346,wild hyacinth,2,province,17,17
+347,willowleaf aster,2,province,93,93
+348,pallid bat,2,province,2,2
+349,fowler's toad,3,province,490,490
+350,behr's hairstreak,3,province,595,595
+351,white-headed woodpecker,3,province,26,26
+352,pacific water shrew,3,province,1,1
+353,golden paintbrush,3,province,345,345
+354,nodding pogonia,3,province,32,32
+355,red mulberry,3,province,130,130
+356,hairy prairie-clover,1,province,135,135
+357,climbing prairie rose,1,province,182,182
+358,crooked-stem aster,1,province,57,57
+359,dwarf lake iris,1,province,516,516
+360,colicroot,3,province,104,104
+361,round-leaved greenbrier great lakes plains population,2,province,186,186
+362,henslow's sparrow,3,province,500,500
+363,shortnose cisco,3,dfo,0,0
+364,gray ratsnake carolinian population,3,province,0,0
+365,massasauga carolinian population,3,province,3144,3144
+366,townsend's mole,3,province,8,8
+367,american chestnut,3,province,580,580
+368,american ginseng,3,province,34,34
+369,bird's-foot violet,3,province,97,97
+370,bluehearts,3,province,67,67
+371,virginia goat's-rue,3,province,65,65
+372,yellow montane violet praemorsa subspecies,3,province,135,135
+373,tubercled spike-rush,1,province,10,10
+374,eastern ribbonsnake atlantic population,2,province,1665,1665
+375,gray ratsnake great lakes/st. lawrence population,2,province,0,0
+376,van brunt's jacob's-ladder,2,province,9,9
+377,white wood aster,2,province,71,71
+378,rainbow smelt lake utopia small-bodied population,3,dfo,8277,8277
+379,massasauga great lakes/st. lawrence population,2,province,3144,3144
+380,white-top aster,1,province,131,131
+381,northern myotis,3,province,56,56
+382,eastern milksnake,1,province,5045,5045
+384,northern leopard frog western boreal/prairie populations,1,province,40289,40289
+385,western silvery minnow,2,dfo,0,0
+386,bolander's quillwort,2,province,18,18
+387,baird's sparrow,1,province,7319,7319
+388,northern leopard frog rocky mountain population,3,province,40289,40289
+389,salamander mussel,3,dfo,11,11
+390,bogbean buckmoth,3,province,,
+391,hine's emerald,3,province,35,35
+392,hungerford's crawling water beetle,3,province,1,1
+393,skillet clubtail,3,province,80,80
+394,allegheny mountain dusky salamander appalachian population,3,province,22,22
+395,northern brook lamprey great lakes-upper st. lawrence populations,1,dfo,26,26
+396,allegheny mountain dusky salamander carolinian population,3,province,22,22
+397,spring cisco,3,dfo,,
+398,mexican mosquito-fern,2,province,32,32
+399,olympia oyster,1,dfo,8301,8301
+400,nooksack dace,3,dfo,1323,1323
+401,northern riffleshell,3,dfo,58,58
+402,snuffbox,3,dfo,55,55
+403,wavy-rayed lampmussel,1,dfo,220,220
+404,rapids clubtail,3,province,120,120
+405,riverine clubtail great lakes plains population,3,province,98,98
+406,desert nightsnake,3,province,3,3
+407,brook floater,1,dfo,83,83
+408,snapping turtle,1,province,23624,23624
+409,king rail,3,province,68,68
+410,barrow's goldeneye eastern population,1,province,183382,183382
+411,green sturgeon,1,dfo,24,24
+412,jefferson salamander,3,province,159,159
+413,plymouth gentian,3,province,98,98
+414,goldencrest,1,province,63,63
+415,redroot,1,province,37,37
+416,eastern sand darter ontario populations,2,dfo,26,26
+417,eastern sand darter quebec populations,2,dfo,26,26
+418,western brook lamprey morrison creek population,3,dfo,8,56
+419,queensnake,3,province,159,159
+420,eastern foxsnake carolinian population,3,province,1756,1756
+421,eastern foxsnake great lakes/st. lawrence population,3,province,1756,1756
+422,shorthead sculpin,1,dfo,9,9
+423,banded killifish newfoundland populations,1,dfo,1861,1861
+424,northern wolffish,2,dfo,1914,1914
+425,atlantic whitefish,3,dfo,3315,3315
+426,large whorled pogonia,3,province,0,0
+427,twisted oak moss,1,province,69,69
+428,salish sucker,2,dfo,,
+429,olive clubtail,3,province,28,28
+430,pygmy snaketail,1,province,25,25
+431,northern dusky salamander carolinian population,3,province,383,383
+432,haller's apple moss,2,province,9,9
+433,sei whale pacific population,3,dfo,311,311
+434,vole ears lichen,3,province,18,18
+435,yellow rail,1,province,7447,7447
+436,small whorled pogonia,3,province,2,2
+437,harlequin duck eastern population,1,province,129523,129523
+438,bicknell's thrush,2,province,3629,3629
+439,pale-bellied frost lichen,3,province,169,169
+440,atlantic salmon inner bay of fundy population,3,dfo,225148,225148
+441,mountain sucker pacific populations,1,dfo,9,9
+442,rocky mountain ridged mussel,3,dfo,50,50
+443,redside dace,3,dfo,15,15
+444,gulf of st. lawrence aster,2,province,60,60
+445,fernald's braya,3,province,44,44
+446,buff-breasted sandpiper,1,province,8537,8537
+447,chimney swift,2,province,206926,206926
+448,eastern meadowlark,2,province,171170,171170
+449,five-spotted bogus yucca moth,3,province,7,7
+450,non-pollinating yucca moth,3,province,1,1
+451,yucca moth,3,province,32,32
+452,mountain plover,3,province,14,14
+453,half-moon hairstreak,3,province,60,60
+454,piping plover circumcinctus subspecies,3,province,17918,17918
+455,blanchard's cricket frog,3,province,0,0
+456,cherry birch,3,province,3,3
+457,pink sand-verbena,3,province,55,55
+458,houghton's goldenrod,1,province,62,62
+459,spotted bat,1,province,19,19
+460,lyall's mariposa lily,1,province,33,33
+461,buffalograss,1,province,22,22
+462,copper redhorse,3,dfo,14,14
+463,wood thrush,2,province,151796,151796
+464,hairy braya,3,province,25,25
+465,red knot rufa subspecies tierra del fuego/patagonia wintering population,3,province,34214,34214
+466,atlantic mud-piddock,2,dfo,16,16
+467,nugget moss,3,province,1,1
+468,horned grebe magdalen islands population,3,province,262471,262471
+469,red knot islandica subspecies,1,province,34214,34214
+470,red knot roselaari type,2,province,,
+471,prothonotary warbler,3,province,20648,20648
+472,cerulean warbler,3,province,10595,10595
+473,roseate tern,3,province,1995,1995
+474,whooping crane,3,province,2155,2155
+475,soapweed,2,province,133,133
+476,seaside centipede lichen,3,province,77,77
+477,margined streamside moss,3,province,0,0
+478,edwards' beach moth,3,province,38,38
+479,beach pinweed,1,province,29,29
+480,savannah sparrow princeps subspecies,1,province,0,826769
+481,eastern mole,1,province,20,20
+482,seaside bone lichen,2,province,17,17
+483,piping plover melodus subspecies,3,province,17918,17918
+484,false hop sedge,3,province,86,86
+485,mormon metalmark prairie population,1,province,347,347
+486,maritime ringlet,3,province,117,117
+487,beluga whale st. lawrence estuary population,3,dfo,1515,1515
+488,georgia basin bog spider,1,province,6,6
+489,batwing vinyl lichen,3,province,60,60
+490,frosted glass-whiskers atlantic population,1,province,40,40
+491,bigmouth buffalo saskatchewan-nelson river populations,1,dfo,42,42
+492,eastern musk turtle,1,province,1339,1339
+493,misty lake lentic threespine stickleback,3,dfo,12461,12461
+494,misty lake lotic threespine stickleback,3,dfo,12461,12461
+495,peacock vinyl lichen,1,province,195,195
+496,oldgrowth specklebelly lichen,1,province,243,243
+497,speckled dace,3,dfo,75,75
+498,spotted turtle,3,province,3,3
+499,westslope cutthroat trout pacific populations,1,dfo,0,662
+500,western painted turtle pacific coast population,2,ecozone,0,48948
+501,western painted turtle intermountain-rocky mountain population,1,ecozone,0,48948
+502,blue-grey taildropper,2,province,59,59
+503,pink-footed shearwater,3,province,2097,2097
+504,bowhead whale bering-chukchi-beaufort population,1,dfo,386,386
+505,ord's kangaroo rat,3,province,68,68
+506,common nighthawk,2,province,110546,110546
+507,spotted owl caurina subspecies,3,province,9,9
+508,butternut,3,province,6018,6018
+509,westslope cutthroat trout saskatchewan-nelson rivers populations,2,dfo,0,662
+510,harbour porpoise pacific ocean population,1,dfo,0,13551
+511,black-tailed prairie dog,2,province,642,642
+516,mackenzie hairgrass,1,province,1459,1459
+521,goldenseal,1,province,140,140
+524,tall woolly-heads,3,province,57,57
+525,sand-dune short-capsuled willow,1,province,0,379
+527,blanket-leaved willow,1,province,11,11
+528,turnor's willow,1,province,5,5
+532,floccose tansy,1,province,0,627
+827,fascicled ironweed,3,province,18,18
+828,silver shiner,2,dfo,55,55
+829,sable island sweat bee,2,province,24,24
+831,threehorn wartyback,2,dfo,25,25
+832,lilliput,3,dfo,49,49
+833,bull trout saskatchewan-nelson rivers populations,2,dfo,372,372
+1001,black redhorse,2,dfo,12,12
+1003,bull trout south coast british columbia populations,1,province,372,372
+1004,bull trout western arctic populations,1,dfo,372,372
+1005,cutlip minnow,1,dfo,22,22
+1006,fawnsfoot,3,dfo,15,15
+1007,giant threespine stickleback,1,dfo,12461,12461
+1008,hickorynut,3,dfo,116,116
+1009,lake sturgeon southern hudson bay-james bay populations,1,dfo,584049,584049
+1011,northern sunfish great lakes-upper st. lawrence populations,1,dfo,242,242
+1012,plains minnow,2,dfo,2,2
+1013,rainbow trout athabasca river populations,3,dfo,40666,40666
+1014,silver lamprey great lakes-upper st. lawrence populations,1,dfo,55,55
+1017,unarmoured threespine stickleback,1,dfo,12461,12461
+1018,black swift,3,province,14591,14591
+1019,cassin's auklet,1,province,4053,4053
+1020,evening grosbeak,1,province,377056,377056
+1021,lark bunting,2,province,5210,5210
+1022,red-necked phalarope,1,province,49320,49320
+1023,black-foam lichen,2,province,60,60
+1024,broad-banded forestsnail,3,province,60,60
+1026,griscom's arnica,2,province,0,209
+1027,hoptree borer,3,province,18,18
+1028,mountain crab-eye,1,province,59,59
+1029,prairie rattlesnake,1,province,929,929
+1030,proud globelet,3,province,3,3
+1031,pygmy slug,1,province,14,14
+1032,sheathed slug,1,province,2,2
+1033,spiked saxifrage,1,province,94,94
+1034,tall beakrush,3,province,4,4
+1035,tiny tassel,1,province,17,17
+1036,vivid dancer,1,province,117,117
+1037,wrinkled shingle lichen,2,province,247,247
+1038,yukon podistera,1,province,98,98
+1039,audouin's night-stalking tiger beetle,2,province,56,56
+1040,grizzly bear western population,1,province,2493,2493
+1041,macropis cuckoo bee,3,province,18,18
+1042,roell's brotherella moss,3,province,82,82
+1044,wolverine,1,province,1459,1459
+1045,yellow-banded bumble bee,1,province,7041,7041
+1046,gypsy cuckoo bumble bee,3,province,48,48
+1501,large-headed woolly yarrow,1,province,0,35224
+1503,grey whale pacific coast feeding group population,3,province,725,725
+1504,grey whale western pacific population,3,province,725,725
+1521,rainbow smelt lake utopia large-bodied population,3,dfo,8277,8277
+1522,rocky mountain sculpin missouri river populations,2,province,,

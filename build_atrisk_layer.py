@@ -3,14 +3,28 @@
 Species at risk: CAN-SAR (COSEWIC/SARA assessments, OSF DOI 10.17605/OSF.IO/E4A58, CC-BY), the
 Canadian authority (IUCN diverges). Per cell, the conservation score is the STATUS-WEIGHTED sum of
 CAN-SAR at-risk species with a Canadian GBIF record in the cell: Endangered=3, Threatened=2,
-Special Concern=1 (a species listed several times keeps its most severe status). This is
-authoritative status x real occurrences, NOT the range-restriction proxy (IUCN validation rho=0.054).
+Special Concern=1. This is authoritative status x real occurrences, NOT the range-restriction proxy
+(IUCN validation rho=0.054).
+
+CAN-SAR lists subspecies and populations, GBIF records carry a species key. The range-clip candidate counts
+a record for a listing only inside its buffered range or when identified to the listed infraspecific taxon,
+and takes the max weight among the listings that accept it (atrisk_ranges.py, which also builds the range
+table cluster_results/ca/atrisk_listings.csv and its polygons). Production fetches apply the method and
+listing exclusions in atrisk_shipping_policy.json. The allowlist counts retained listings at species level,
+while ambiguous Lampetra richardsoni and Peltigera gowardii always require a polygon.
 
 Occurrences come from ONE citable GBIF SQL download (a DOI), not per-species REST paging, which was
-capped and returned records in GBIF default order. The query counts records per species per 0.25 deg
-cell with these filters:
-  - countrycode = 'CA' and specieskey in the matched CAN-SAR species (names matched with GBIF
-    species/match, collapsed to species level; the crosswalk is cluster_results/ca/atrisk_species_keys.csv)
+capped and returned records in GBIF default order. The query counts records per species, accepted taxon
+and 0.01 deg cell (fine enough to clip to a range, then summed to 0.25 deg cells) with these filters:
+  - countrycode = 'CA' and specieskey in the matched CAN-SAR species. Taxonomy is Catalogue of Life XR
+    (GBIF's default for SQL downloads, gbif/occurrence#538): names are matched with the v2 species/match
+    against the COL XR checklist and collapsed to the COL species key; the crosswalk is
+    cluster_results/ca/atrisk_species_keys.csv. Unmatched and HIGHERRANK matches get no key and are listed
+    in the crosswalk (empty col_key), never used; VARIANT matches (spelling variants that resolve to a
+    COL species) are used and printed for review. Accepted species-rank VARIANT alternatives of the
+    matched species with the same genus and authorship (orthographic duplicates in COL, e.g. Zeltnera
+    muhlenbergii / muehlenbergii) are alias keys of the same species, counted once per cell.
+    NAME_OVERRIDES pins names whose bare form is ambiguous between homonyms.
   - hasgeospatialissues = FALSE, decimallatitude not null: usable coordinates only
   - occurrencestatus = 'PRESENT': absence records are not presence
   - year >= 1990: drops historical records of extirpated populations
@@ -19,18 +33,27 @@ cell with these filters:
     large uncertainty, so a 10 km cutoff would drop many of them, and cells here are 0.25 deg anyway.
 
 Honesty: reflects ASSESSED species (CAN-SAR snapshot ~2021); occurrence-based, so absence in a cell
-= "not recorded there", not "absent". Species-level matching applies the most severe status of any
-listed population to every record of that species. Label in-app as COSEWIC at-risk richness.
+= "not recorded there", not "absent". Ranges are coarse (provinces where no finer polygon exists), so a
+listing can still take records of an unlisted population in the same province. Label in-app as COSEWIC
+at-risk richness.
+
+Crosswalk diff gate: when a committed crosswalk exists, a re-match that merges names of different status
+weights under one species key, splits a key, or loses a previously matched name stops (non-zero exit)
+unless --accept-crosswalk-changes is passed. The diff is printed either way.
 
 Provenance: cluster_results/ca/ca_atrisk_provenance.json (doi, download_key, sql, created,
-n_species_matched, cansar_source). Cite the DOI.
+n_species_matched, cansar_source, taxonomy = COL XR dataset title/short name/version/modified/DOI, ranges =
+sources, buffer and listings per range source). Per-listing records kept by the clip:
+cluster_results/ca/atrisk_listing_clip.csv. Cite the DOI.
 
 Output: cluster_results/ca/ca_atrisk_richness.csv (gi,gj,lat,lon,n_species,score_raw,conservation_norm)
 Usage :
   .venv/bin/python build_atrisk_layer.py --validate     # match names, POST the query to GBIF's validator
+      # add --accept-crosswalk-changes when the printed crosswalk diff is intended
   GBIF_USER=.. GBIF_PWD=.. GBIF_EMAIL=.. .venv/bin/python build_atrisk_layer.py --submit
       # macOS: GBIF_PWD="$(security find-generic-password -a "$GBIF_USER" -s api.gbif.org -w)"
-  .venv/bin/python build_atrisk_layer.py --fetch KEY    # after the GBIF email: poll, read, write layer
+  .venv/bin/python build_atrisk_layer.py --fetch KEY    # apply the committed download-specific shipping policy
+  .venv/bin/python build_atrisk_layer.py --fetch KEY --candidate  # raw range clip for gate/scorer research
 """
 
 import argparse
@@ -48,16 +71,40 @@ import zipfile
 from collections import defaultdict
 from datetime import datetime, timezone
 
+import atrisk_ranges
+import atrisk_shipping
+from atrisk_crosswalk import crosswalk_diff, diff_blocks, print_diff, read_crosswalk_rows
+
 RES = 0.25
+FINE = 0.01  # download grid: records are clipped to listing ranges at this resolution
 MIN_YEAR = 1990
 CANSAR = "/tmp/wtb/can-sar.csv"
 CANSAR_URL = "https://osf.io/download/jv5w6/"
 WT = {"Endangered": 3, "Threatened": 2, "Special Concern": 1}
+STATUS = {v: k for k, v in WT.items()}
 OUT_DIR = "cluster_results/ca"
 CROSSWALK = f"{OUT_DIR}/atrisk_species_keys.csv"
 PROVENANCE = f"{OUT_DIR}/ca_atrisk_provenance.json"
+SHIPPING_POLICY = f"{OUT_DIR}/atrisk_shipping_policy.json"
 OUT_CSV = f"{OUT_DIR}/ca_atrisk_richness.csv"
 GBIF = "https://api.gbif.org/v1"
+GBIF_V2 = "https://api.gbif.org/v2"
+COL_XR = "7ddf754f-d193-4cc9-b351-99906754a03b"  # Catalogue of Life XR checklist, GBIF's SQL default
+UNUSABLE = ("NONE", "HIGHERRANK", "NOSPECIES", "ERROR")  # match types that yield no species key
+CW_COLS = [
+    "name",
+    "match_name",
+    "col_key",
+    "alias_keys",
+    "infra_key",
+    "col_matchType",
+    "col_accepted_name",
+    "backbone_key",
+    "status_weight",
+]
+# A bare name that matches several homonyms (HIGHERRANK) is pinned to the authorship of the listed taxon.
+NAME_OVERRIDES = {"Lupinus densiflorus": "Lupinus densiflorus Benth."}  # COSEWIC: the BC lupine, Benth.
+INFRA_RANKS = ("SUBSPECIES", "VARIETY", "FORM", "INFRASPECIFIC_NAME")
 EXCLUDED_BASIS = ("FOSSIL_SPECIMEN", "LIVING_SPECIMEN")
 N_CHECK = 6  # species whose download totals are re-counted through the occurrence search API
 
@@ -92,58 +139,139 @@ def load_cansar(path=CANSAR):
 
 
 def species_match(name):
-    """(speciesKey, matchType) from GBIF species/match; key is None when unusable."""
+    """(col_key, matchType, accepted species name, infra_key) from the v2 species/match against COL XR.
+    col_key is the SPECIES-rank key of the accepted usage (a subspecies or synonym collapses to its
+    species); None for unmatched, HIGHERRANK or rank-less matches. VARIANT (a spelling variant of an
+    accepted name) still resolves to its species. infra_key is the accepted usage's key when that usage is
+    below species rank (the listed subspecies or variety), else "". ERROR = no usable response."""
+    m = gget(f"{GBIF_V2}/species/match?", {"scientificName": name, "checklistKey": COL_XR})
+    if not m.get("diagnostics"):
+        return None, "ERROR", "", ""
+    mt = m["diagnostics"].get("matchType") or "NONE"
+    if mt in UNUSABLE:
+        return None, mt, "", ""
+    acc = m.get("acceptedUsage") or m.get("usage") or {}
+    cands = [acc] + list(m.get("classification") or [])
+    sp = next((c for c in cands if c.get("rank") == "SPECIES" and c.get("key")), None)
+    if sp is None:
+        return None, "NOSPECIES", "", ""
+    infra = str(acc["key"]) if acc.get("rank") in INFRA_RANKS and acc.get("key") else ""
+    return str(sp["key"]), mt, sp.get("canonicalName") or sp.get("name") or "", infra
+
+
+def edits(a, b):
+    """Levenshtein distance."""
+    row = list(range(len(b) + 1))
+    for i, ca in enumerate(a, 1):
+        prev, row[0] = row[0], i
+        for j, cb in enumerate(b, 1):
+            prev, row[j] = row[j], min(row[j] + 1, row[j - 1] + 1, prev + (ca != cb))
+    return row[-1]
+
+
+def variant_aliases(m, key):
+    """Accepted species-rank VARIANT alternatives in a verbose v2 match response that are orthographic
+    duplicates of the matched species, which COL XR keeps as separate accepted keys (Zeltnera muhlenbergii /
+    muehlenbergii): same genus, same authorship, and epithets at most two edits apart. VARIANT alone also
+    returns unrelated near-homonyms (Ulus maritimus for Ursus maritimus, Viola pinnata L. for Viola pedata
+    L.). -> sorted keys other than key."""
+    top = m.get("usage") or {}
+    alts = (m.get("diagnostics") or {}).get("alternatives") or []
+    out = {
+        str(u["key"])
+        for a in alts
+        if (a.get("diagnostics") or {}).get("matchType") == "VARIANT"
+        and (u := a.get("usage") or {}).get("rank") == "SPECIES"
+        and u.get("status", "ACCEPTED") == "ACCEPTED"
+        and u.get("key")
+        and u.get("genericName") == top.get("genericName")
+        and u.get("authorship") == top.get("authorship")
+        and edits(u.get("specificEpithet") or "", top.get("specificEpithet") or "") <= 2
+    }
+    return sorted(out - {key})
+
+
+def species_aliases(acc_name, key):
+    """Alias keys of a matched species: re-match its accepted name verbosely, keep variant_aliases."""
+    m = gget(
+        f"{GBIF_V2}/species/match?",
+        {"scientificName": acc_name, "checklistKey": COL_XR, "verbose": "true"},
+    )
+    return variant_aliases(m, key)
+
+
+def backbone_key(name):
+    """GBIF Backbone speciesKey (v1 species/match), kept in the crosswalk for reference only."""
     m = gget(f"{GBIF}/species/match?", {"name": name})
-    mt = m.get("matchType") or "NONE"
-    if mt in ("NONE", "HIGHERRANK"):
-        return None, mt
-    return m.get("speciesKey"), mt
+    return m.get("speciesKey") if m.get("matchType") not in (None, "NONE", "HIGHERRANK") else None
 
 
-def match_species(sev):
-    """Match names, aggregate max severity per speciesKey, write the crosswalk. -> {speciesKey: weight}."""
-    weights, rows = {}, []
-    matched = unmatched = fuzzy = 0
+def match_species(sev, accept_changes=False):
+    """Match names against COL XR, aggregate max severity per species key, gate on the crosswalk diff,
+    write the crosswalk. -> {col_key: weight}, alias keys included under their species' weight."""
+    old, old_bb = read_crosswalk_rows(CROSSWALK)
+    weights, rows, new = {}, [], {}
     for i, (name, w) in enumerate(sev.items()):
-        key, mt = species_match(name)
-        if key is None:
-            unmatched += 1
-            continue
-        matched += 1
-        fuzzy += mt == "FUZZY"
-        weights[key] = max(weights.get(key, 0), w)
-        rows.append((name, key, mt, w))
+        match_name = NAME_OVERRIDES.get(name, name)
+        key, mt, acc, infra = species_match(match_name)
+        aliases = species_aliases(acc, key) if key else []
+        bb = old_bb.get(name) or (backbone_key(name) if key else "")
+        rows.append((name, match_name, key or "", " ".join(aliases), infra, mt, acc, bb or "", w))
+        new[name] = (key or "", w)
+        for k in [key] + aliases if key else []:
+            weights[k] = max(weights.get(k, 0), w)
         if (i + 1) % 100 == 0:
             print(f"  matched {i + 1}/{len(sev)} names")
-    print(
-        f"CAN-SAR names: {len(sev)}; matched: {matched}; unmatched: {unmatched}; fuzzy: {fuzzy}; "
-        f"distinct speciesKeys: {len(weights)}"
-    )
-    if not weights:
+    errors = [r[0] for r in rows if r[5] == "ERROR"]
+    if errors:
         # gget() swallows every GBIF error, so an outage looks like "nothing matched".
-        raise SystemExit("no CAN-SAR names matched in GBIF species/match (outage?)")
+        raise SystemExit(f"no species/match response for {len(errors)} names (outage?): {errors[:5]}")
+    skipped = [r for r in rows if not r[2]]
+    print(
+        f"CAN-SAR names: {len(sev)}; matched to a COL species: {len(sev) - len(skipped)}; "
+        f"no key: {len(skipped)}; distinct COL keys: {len(weights)}"
+    )
+    for r in skipped:
+        print(f"  no key: {r[0]} ({r[5]})")
+    for r in rows:
+        if r[2] and r[5] != "EXACT":
+            print(f"  used {r[5]}: {r[0]} -> {r[6]} ({r[2]})")
+        if r[3]:
+            print(f"  alias keys: {r[0]} -> {r[6]} ({r[2]}) + {r[3]}")
+        if r[1] != r[0]:
+            print(f"  name override: {r[0]} matched as {r[1]} -> {r[6]} ({r[2]})")
+    if not weights:
+        raise SystemExit("no CAN-SAR names matched in GBIF species/match")
+    if old:
+        d = crosswalk_diff(old, new)
+        print_diff(d)
+        if diff_blocks(d) and not accept_changes:
+            raise SystemExit(
+                "crosswalk changed (see diff above); review it, then re-run with --accept-crosswalk-changes"
+            )
     os.makedirs(OUT_DIR, exist_ok=True)
     with open(CROSSWALK, "w", newline="") as f:
         cw = csv.writer(f)
-        cw.writerow(["name", "speciesKey", "matchType", "status_weight"])
+        cw.writerow(CW_COLS)
         cw.writerows(rows)
     print(f"wrote {CROSSWALK}")
     return weights
 
 
 def build_sql(keys):
-    # Plain taxon columns hold Catalogue of Life keys since GBIF made COL XR the SQL default
-    # (gbif/occurrence#538); backbone speciesKeys from species/match live under gbif_classification.
-    sk = "occurrence.gbif_classification.specieskey"
+    # Plain taxon columns hold Catalogue of Life XR keys (strings like '4RF6J') since GBIF made COL XR
+    # the SQL default (gbif/occurrence#538). acceptedtaxonkey keeps records identified below species rank
+    # apart, so a record of a listed subspecies counts for its listing outside the listing's range.
+    sk = "specieskey"
     in_list = ", ".join(f"'{k}'" for k in sorted(keys))
     basis = ", ".join(f"'{b}'" for b in EXCLUDED_BASIS)
+    yi, xi = f"FLOOR(decimallatitude / {FINE})", f"FLOOR(decimallongitude / {FINE})"
     return (
-        f"SELECT {sk} AS specieskey, FLOOR(decimallatitude / {RES}) AS gi, "
-        f"FLOOR(decimallongitude / {RES}) AS gj, COUNT(*) AS n FROM occurrence WHERE countrycode = 'CA' "
-        f"AND {sk} IN ({in_list}) "
+        f"SELECT {sk} AS specieskey, acceptedtaxonkey AS acceptedtaxonkey, {yi} AS yi, {xi} AS xi, "
+        f"COUNT(*) AS n FROM occurrence WHERE countrycode = 'CA' AND {sk} IN ({in_list}) "
         f"AND hasgeospatialissues = FALSE AND occurrencestatus = 'PRESENT' AND \"year\" >= {MIN_YEAR} "
         f"AND basisofrecord NOT IN ({basis}) AND decimallatitude IS NOT NULL "
-        f"GROUP BY {sk}, FLOOR(decimallatitude / {RES}), FLOOR(decimallongitude / {RES})"
+        f"GROUP BY {sk}, acceptedtaxonkey, {yi}, {xi}"
     )
 
 
@@ -165,25 +293,11 @@ def http_json(url, body=None, auth=None):
         return status, text
 
 
-def aggregate(rows, weights):
-    """rows: dicts with specieskey, gi, gj, n (TSV rows). Each species adds its weight once per cell.
-    Species without a weight are ignored. -> (score, nsp) keyed by (gi, gj)."""
-    score, nsp = defaultdict(float), defaultdict(int)
-    for r in rows:
-        w = weights.get(int(r["specieskey"]))
-        if not w:
-            continue
-        c = (int(float(r["gi"])), int(float(r["gj"])))
-        score[c] += w
-        nsp[c] += 1
-    return score, nsp
-
-
-def species_totals(rows):
-    """TSV rows -> {speciesKey: records in the download}."""
+def species_totals(cols):
+    """Download columns -> {COL speciesKey: records in the download}."""
     tot = defaultdict(int)
-    for r in rows:
-        tot[int(r["specieskey"])] += int(r["n"])
+    for k, n in zip(cols["specieskey"], cols["n"]):
+        tot[k] += int(n)
     return tot
 
 
@@ -195,8 +309,9 @@ def count_mismatches(totals, api_counts, tol=0.05):
 
 
 def search_count(key, basis):
-    """Records of one backbone speciesKey under the SQL filters, counted by the occurrence search API."""
+    """Records of one COL XR speciesKey under the SQL filters, counted by the occurrence search API."""
     params = [
+        ("checklistKey", COL_XR),
         ("speciesKey", key),
         ("country", "CA"),
         ("hasGeospatialIssue", "false"),
@@ -208,7 +323,7 @@ def search_count(key, basis):
     return gget(f"{GBIF}/occurrence/search?", params).get("count")
 
 
-def check_counts(rows, keys, n=N_CHECK, seed=0):
+def check_counts(cols, keys, n=N_CHECK, seed=0):
     """Guard against silent drift between the SQL table and the search index (e.g. a taxonomy switch
     that empties a key filter): re-count a seeded sample of crosswalk keys and refuse on mismatch."""
     basis = [b for b in gget(f"{GBIF}/enumeration/basic/BasisOfRecord", {}) or [] if b not in EXCLUDED_BASIS]
@@ -218,7 +333,7 @@ def check_counts(rows, keys, n=N_CHECK, seed=0):
     api = {k: search_count(k, basis) for k in sample}
     if any(c is None for c in api.values()):
         raise SystemExit(f"occurrence search failed for some of {sample}")
-    bad = count_mismatches(species_totals(rows), api)
+    bad = count_mismatches(species_totals(cols), api)
     print(f"count check: {len(api) - len(bad)}/{len(api)} species match the search API")
     if bad:
         raise SystemExit(f"download vs search API mismatch (download, api): {bad}; not writing the layer")
@@ -261,18 +376,32 @@ def do_submit(sql):
 
 
 def read_crosswalk():
+    """Committed crosswalk -> {name: (species and alias keys, infra key)}; names without a COL species key
+    (unmatched, HIGHERRANK) are left out."""
     if not os.path.exists(CROSSWALK):
         raise SystemExit(f"{CROSSWALK} missing: run --validate or --submit first (it writes the crosswalk)")
-    w = {}
     with open(CROSSWALK) as f:
-        for r in csv.DictReader(f):
-            k = int(r["speciesKey"])
-            w[k] = max(w.get(k, 0), int(r["status_weight"]))
-    return w
+        return {
+            r["name"]: (tuple([r["col_key"]] + r["alias_keys"].split()), r["infra_key"])
+            for r in csv.DictReader(f)
+            if r["col_key"]
+        }
 
 
-def do_fetch(key):
-    weights = read_crosswalk()
+def col_release():
+    """COL XR checklist dataset metadata, recorded so the taxonomy release is traceable."""
+    status, d = http_json(f"{GBIF}/dataset/{COL_XR}")
+    if status != 200 or not isinstance(d, dict):
+        raise SystemExit(f"could not read COL XR dataset metadata: HTTP {status}")
+    keys = ("title", "shortName", "version", "modified", "pubDate", "doi")
+    return {"dataset_key": COL_XR, **{k: d.get(k) for k in keys}}
+
+
+def do_fetch(key, candidate=False):
+    crosswalk = read_crosswalk()
+    keys = {k for ks, _ in crosswalk.values() for k in ks}
+    listings = atrisk_ranges.read_listings()
+    policy = None if candidate else atrisk_shipping.load_policy(SHIPPING_POLICY, key, listings)
     while True:
         status, info = http_json(f"{GBIF}/occurrence/download/{key}")
         if status != 200 or not isinstance(info, dict):
@@ -287,23 +416,36 @@ def do_fetch(key):
     print(f"DOI: {info.get('doi')}")
     with urllib.request.urlopen(info["downloadLink"], timeout=600) as r:
         blob = r.read()
-    with zipfile.ZipFile(io.BytesIO(blob)) as z:
-        member = next(n for n in z.namelist() if not n.endswith("/"))
-        with z.open(member) as f:
-            rows = list(csv.DictReader(io.TextIOWrapper(f, encoding="utf-8"), delimiter="\t"))
-    score, nsp = aggregate(rows, weights)
-    print(f"{len(rows)} species-cell rows; {len(score)} cells host >=1 at-risk species")
+    with (
+        zipfile.ZipFile(io.BytesIO(blob)) as z,
+        z.open(next(n for n in z.namelist() if not n.endswith("/"))) as f,
+    ):
+        cols = atrisk_ranges.read_columns(f)
+    entries = atrisk_ranges.listing_entries(listings, crosswalk, atrisk_ranges.load_range_geoms())
+    shipping = {"applied": False, "method": "range_clip", "mode": "candidate", "dropped_listing_ids": []}
+    dropped = []
+    if policy is not None:
+        entries, dropped, shipping = atrisk_shipping.apply_policy(policy, listings, entries)
+    score, nsp, kept = atrisk_ranges.score_cells(cols, entries, atrisk_ranges.transformer(), FINE, RES)
+    kept = atrisk_shipping.with_dropped_totals(cols, kept, dropped)
+    print(f"{len(cols['n'])} fine-cell rows; {len(score)} cells host >=1 at-risk listing")
     if not score:
         raise SystemExit("no at-risk cells in the download: refusing to overwrite ca_atrisk_richness.csv")
-    check_counts(rows, weights)
+    check_counts(cols, keys)
     write_layer(score, nsp)
+    atrisk_ranges.write_clip_table(listings, entries, kept)
     prov = {
         "doi": info.get("doi"),
         "download_key": key,
-        "sql": (info.get("request") or {}).get("sql") or build_sql(weights),
+        "sql": (info.get("request") or {}).get("sql") or build_sql(keys),
         "created": info.get("created") or datetime.now(timezone.utc).isoformat(),
-        "n_species_matched": len(weights),
+        "n_species_matched": len({ks[0] for ks, _ in crosswalk.values()}),
+        "shipping_policy": shipping,
+        "taxonomy": col_release(),
         "cansar_source": f"{CANSAR_URL} (CAN-SAR, OSF DOI 10.17605/OSF.IO/E4A58)",
+        "ranges": atrisk_shipping.range_provenance(
+            atrisk_ranges.provenance(listings, entries), listings, entries, shipping["method"]
+        ),
     }
     with open(PROVENANCE, "w") as f:
         json.dump(prov, f, indent=2)
@@ -332,15 +474,27 @@ def main():
     g.add_argument("--validate", action="store_true", help="match names, validate the SQL with GBIF")
     g.add_argument("--submit", action="store_true", help="submit the SQL download (needs GBIF_* env vars)")
     g.add_argument("--fetch", metavar="KEY", help="poll a finished download and build the layer")
+    ap.add_argument(
+        "--candidate",
+        action="store_true",
+        help="build the raw range-clip candidate for research, ignoring shipping policy",
+    )
+    ap.add_argument(
+        "--accept-crosswalk-changes",
+        action="store_true",
+        help="proceed when the re-match merges weights, splits a key or loses a name vs the committed crosswalk",
+    )
     ap.add_argument("--cansar", default=CANSAR, help=f"CAN-SAR CSV path (default {CANSAR})")
     a = ap.parse_args()
+    if a.candidate and not a.fetch:
+        ap.error("--candidate requires --fetch")
     if a.fetch:
-        return do_fetch(a.fetch)
+        return do_fetch(a.fetch, candidate=a.candidate)
     if a.submit and not all(os.environ.get(k) for k in ("GBIF_USER", "GBIF_PWD", "GBIF_EMAIL")):
         do_submit("")  # fail fast on missing vars before any network work
     sev = load_cansar(a.cansar)
     print(f"CAN-SAR COSEWIC at-risk species names: {len(sev)}")
-    sql = build_sql(match_species(sev))
+    sql = build_sql(match_species(sev, a.accept_crosswalk_changes))
     (do_validate if a.validate else do_submit)(sql)
 
 

@@ -1,0 +1,2204 @@
+{
+  "purpose": "Reporting-only supplemental diagnostic, never used for ship selection",
+  "ship_rule": "No decision or metric used for ship selection is recalculated or changed",
+  "scorer_commit": "d765666",
+  "geometry_code_commit": "5569d4a2cb00bf20d2c8483542d81a7eca357094",
+  "inputs": {
+    "download": {
+      "path": "GBIF DOI 10.15468/dl.6hqdyd",
+      "sha256": "4b16a59371966b1f717fdaf10f2d0af8e92e15ba385800351a02e0b6681c5c52"
+    },
+    "scorer": {
+      "path": "research/allowlist_compare.py",
+      "sha256": "0ed079d12aaa298c5bc389a5a674c41a9d340e421cd05aa643a0a67624eccacb"
+    },
+    "test_set": {
+      "path": "research/subspecies_test_set.csv",
+      "sha256": "ebd07f668fb78536aeb5b4caab3a348e8aca5cd7cded646607e427da6c51ffef"
+    },
+    "listings": {
+      "path": "cluster_results/ca/atrisk_listings.csv",
+      "sha256": "7b10abf771df7556bc8fd4411ce8e325db1f3ec50be5438d3766af125745dfc3"
+    },
+    "ranges": {
+      "path": "cluster_results/ca/atrisk_ranges.geojson",
+      "sha256": "2feb0fc8f6e7f47e46e60a775a45c64dd6c9d7e32dbc7defd51282a90662658a"
+    },
+    "crosswalk": {
+      "path": "cluster_results/ca/atrisk_species_keys.csv",
+      "sha256": "3ff7323e81c4578eccb769356e56d6b66e80330d6fb2c619ca273ea6d298ecc7"
+    },
+    "geometry_code": {
+      "path": "atrisk_ranges.py",
+      "sha256": "051bc22eca51682060fb4a7031101a9a7dbb9d17ec8d443d72bf422da97591a7"
+    }
+  },
+  "inputs_unchanged_during_audit": true,
+  "totals": {
+    "live": {
+      "original_literal": 3459,
+      "corrected": 3459
+    },
+    "allowlist": {
+      "original_literal": 43,
+      "corrected": 43
+    },
+    "clip": {
+      "original_literal": 473,
+      "corrected": 469
+    },
+    "clip_no_override": {
+      "original_literal": 474,
+      "corrected": 470
+    }
+  },
+  "validation": {
+    "case": "Three false-only cells, two disjoint listing ranges accepting one cell each",
+    "original_literal": {
+      "live": 6,
+      "allowlist": 0,
+      "clip": 4,
+      "clip_no_override": 4
+    },
+    "corrected": {
+      "live": 6,
+      "allowlist": 0,
+      "clip": 2,
+      "clip_no_override": 2
+    },
+    "per_listing": {
+      "live": {
+        "west": 3,
+        "east": 3
+      },
+      "allowlist": {
+        "west": 0,
+        "east": 0
+      },
+      "clip": {
+        "west": 1,
+        "east": 1
+      },
+      "clip_no_override": {
+        "west": 1,
+        "east": 1
+      }
+    },
+    "assertions_passed": true
+  },
+  "species": {
+    "Achillea millefolium": {
+      "listing_ids": [
+        "1501"
+      ],
+      "classes": [
+        "SPILLS"
+      ],
+      "false_only_cells": 316,
+      "original_literal": {
+        "live": 316,
+        "allowlist": 0,
+        "clip": 11,
+        "clip_no_override": 11
+      },
+      "corrected": {
+        "live": 316,
+        "allowlist": 0,
+        "clip": 11,
+        "clip_no_override": 11
+      },
+      "per_listing": {
+        "live": {
+          "1501": 316
+        },
+        "allowlist": {
+          "1501": 0
+        },
+        "clip": {
+          "1501": 11
+        },
+        "clip_no_override": {
+          "1501": 11
+        }
+      },
+      "resolved_true_keys": [
+        "5LY7X"
+      ],
+      "resolved_false_keys": [
+        "5FD8R",
+        "5LY7B",
+        "5LY7Y",
+        "5LY7Z",
+        "5LY82",
+        "7L9DT"
+      ],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Aegolius acadicus": {
+      "listing_ids": [
+        "295"
+      ],
+      "classes": [
+        "SPILLS"
+      ],
+      "false_only_cells": 27,
+      "original_literal": {
+        "live": 27,
+        "allowlist": 0,
+        "clip": 12,
+        "clip_no_override": 12
+      },
+      "corrected": {
+        "live": 27,
+        "allowlist": 0,
+        "clip": 12,
+        "clip_no_override": 12
+      },
+      "per_listing": {
+        "live": {
+          "295": 27
+        },
+        "allowlist": {
+          "295": 0
+        },
+        "clip": {
+          "295": 12
+        },
+        "clip_no_override": {
+          "295": 12
+        }
+      },
+      "resolved_true_keys": [
+        "5FF24"
+      ],
+      "resolved_false_keys": [
+        "5FF23"
+      ],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Ammodramus savannarum": {
+      "listing_ids": [
+        "109"
+      ],
+      "classes": [
+        "SPILLS"
+      ],
+      "false_only_cells": 4,
+      "original_literal": {
+        "live": 4,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "corrected": {
+        "live": 4,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "per_listing": {
+        "live": {
+          "109": 4
+        },
+        "allowlist": {
+          "109": 0
+        },
+        "clip": {
+          "109": 0
+        },
+        "clip_no_override": {
+          "109": 0
+        }
+      },
+      "resolved_true_keys": [
+        "7J8PQ"
+      ],
+      "resolved_false_keys": [
+        "7J923"
+      ],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Ardea herodias": {
+      "listing_ids": [
+        "336"
+      ],
+      "classes": [
+        "SPILLS"
+      ],
+      "false_only_cells": 48,
+      "original_literal": {
+        "live": 48,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 1
+      },
+      "corrected": {
+        "live": 48,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 1
+      },
+      "per_listing": {
+        "live": {
+          "336": 48
+        },
+        "allowlist": {
+          "336": 0
+        },
+        "clip": {
+          "336": 0
+        },
+        "clip_no_override": {
+          "336": 1
+        }
+      },
+      "resolved_true_keys": [
+        "5FRC3"
+      ],
+      "resolved_false_keys": [
+        "5FRC4",
+        "5FRC6"
+      ],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Armeria maritima": {
+      "listing_ids": [
+        "142"
+      ],
+      "classes": [
+        "SPILLS"
+      ],
+      "false_only_cells": 145,
+      "original_literal": {
+        "live": 145,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "corrected": {
+        "live": 145,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "per_listing": {
+        "live": {
+          "142": 145
+        },
+        "allowlist": {
+          "142": 0
+        },
+        "clip": {
+          "142": 0
+        },
+        "clip_no_override": {
+          "142": 0
+        }
+      },
+      "resolved_true_keys": [
+        "5FS6Y"
+      ],
+      "resolved_false_keys": [
+        "5FS6S",
+        "5FS74",
+        "BN2S3"
+      ],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Arnica griscomii": {
+      "listing_ids": [
+        "1026"
+      ],
+      "classes": [
+        "SPILLS"
+      ],
+      "false_only_cells": 76,
+      "original_literal": {
+        "live": 76,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "corrected": {
+        "live": 76,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "per_listing": {
+        "live": {
+          "1026": 76
+        },
+        "allowlist": {
+          "1026": 0
+        },
+        "clip": {
+          "1026": 0
+        },
+        "clip_no_override": {
+          "1026": 0
+        }
+      },
+      "resolved_true_keys": [
+        "5FS9R"
+      ],
+      "resolved_false_keys": [
+        "5FS9Q"
+      ],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Asplenium scolopendrium": {
+      "listing_ids": [
+        "59"
+      ],
+      "classes": [
+        "COVERS"
+      ],
+      "false_only_cells": 5,
+      "original_literal": {
+        "live": 5,
+        "allowlist": 5,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "corrected": {
+        "live": 5,
+        "allowlist": 5,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "per_listing": {
+        "live": {
+          "59": 5
+        },
+        "allowlist": {
+          "59": 5
+        },
+        "clip": {
+          "59": 0
+        },
+        "clip_no_override": {
+          "59": 0
+        }
+      },
+      "resolved_true_keys": [
+        "BK9Y4"
+      ],
+      "resolved_false_keys": [
+        "5FTR2"
+      ],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Astur atricapillus": {
+      "listing_ids": [
+        "121"
+      ],
+      "classes": [
+        "SPILLS"
+      ],
+      "false_only_cells": 0,
+      "original_literal": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "corrected": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "per_listing": {
+        "live": {
+          "121": 0
+        },
+        "allowlist": {
+          "121": 0
+        },
+        "clip": {
+          "121": 0
+        },
+        "clip_no_override": {
+          "121": 0
+        }
+      },
+      "resolved_true_keys": [],
+      "resolved_false_keys": [],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Bartonia paniculata": {
+      "listing_ids": [
+        "296"
+      ],
+      "classes": [
+        "SPILLS"
+      ],
+      "false_only_cells": 16,
+      "original_literal": {
+        "live": 16,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "corrected": {
+        "live": 16,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "per_listing": {
+        "live": {
+          "296": 16
+        },
+        "allowlist": {
+          "296": 0
+        },
+        "clip": {
+          "296": 0
+        },
+        "clip_no_override": {
+          "296": 0
+        }
+      },
+      "resolved_true_keys": [
+        "5FWW5"
+      ],
+      "resolved_false_keys": [
+        "5FWW4"
+      ],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Bos bison": {
+      "listing_ids": [
+        "2"
+      ],
+      "classes": [
+        "UNCLEAR"
+      ],
+      "false_only_cells": 0,
+      "original_literal": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "corrected": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "per_listing": {
+        "live": {
+          "2": 0
+        },
+        "allowlist": {
+          "2": 0
+        },
+        "clip": {
+          "2": 0
+        },
+        "clip_no_override": {
+          "2": 0
+        }
+      },
+      "resolved_true_keys": [],
+      "resolved_false_keys": [],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Calidris canutus": {
+      "listing_ids": [
+        "465",
+        "469"
+      ],
+      "classes": [
+        "COVERS"
+      ],
+      "false_only_cells": 0,
+      "original_literal": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "corrected": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "per_listing": {
+        "live": {
+          "465": 0,
+          "469": 0
+        },
+        "allowlist": {
+          "465": 0,
+          "469": 0
+        },
+        "clip": {
+          "465": 0,
+          "469": 0
+        },
+        "clip_no_override": {
+          "465": 0,
+          "469": 0
+        }
+      },
+      "resolved_true_keys": [
+        "5G4DX",
+        "5G4DY",
+        "7JG7X"
+      ],
+      "resolved_false_keys": [],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Centrocercus urophasianus": {
+      "listing_ids": [
+        "204"
+      ],
+      "classes": [
+        "COVERS"
+      ],
+      "false_only_cells": 0,
+      "original_literal": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "corrected": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "per_listing": {
+        "live": {
+          "204": 0
+        },
+        "allowlist": {
+          "204": 0
+        },
+        "clip": {
+          "204": 0
+        },
+        "clip_no_override": {
+          "204": 0
+        }
+      },
+      "resolved_true_keys": [],
+      "resolved_false_keys": [],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Charadrius melodus": {
+      "listing_ids": [
+        "454",
+        "483"
+      ],
+      "classes": [
+        "COVERS"
+      ],
+      "false_only_cells": 0,
+      "original_literal": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "corrected": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "per_listing": {
+        "live": {
+          "454": 0,
+          "483": 0
+        },
+        "allowlist": {
+          "454": 0,
+          "483": 0
+        },
+        "clip": {
+          "454": 0,
+          "483": 0
+        },
+        "clip_no_override": {
+          "454": 0,
+          "483": 0
+        }
+      },
+      "resolved_true_keys": [],
+      "resolved_false_keys": [],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Chrysemys picta": {
+      "listing_ids": [
+        "500",
+        "501"
+      ],
+      "classes": [
+        "SPILLS"
+      ],
+      "false_only_cells": 571,
+      "original_literal": {
+        "live": 1142,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "corrected": {
+        "live": 1142,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "per_listing": {
+        "live": {
+          "500": 571,
+          "501": 571
+        },
+        "allowlist": {
+          "500": 0,
+          "501": 0
+        },
+        "clip": {
+          "500": 0,
+          "501": 0
+        },
+        "clip_no_override": {
+          "500": 0,
+          "501": 0
+        }
+      },
+      "resolved_true_keys": [
+        "7GQBG"
+      ],
+      "resolved_false_keys": [
+        "7GQBH",
+        "7H2BH"
+      ],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Cicindela formosa": {
+      "listing_ids": [
+        "186"
+      ],
+      "classes": [
+        "SPILLS"
+      ],
+      "false_only_cells": 62,
+      "original_literal": {
+        "live": 62,
+        "allowlist": 0,
+        "clip": 3,
+        "clip_no_override": 3
+      },
+      "corrected": {
+        "live": 62,
+        "allowlist": 0,
+        "clip": 3,
+        "clip_no_override": 3
+      },
+      "per_listing": {
+        "live": {
+          "186": 62
+        },
+        "allowlist": {
+          "186": 0
+        },
+        "clip": {
+          "186": 3
+        },
+        "clip_no_override": {
+          "186": 3
+        }
+      },
+      "resolved_true_keys": [
+        "8LJLH"
+      ],
+      "resolved_false_keys": [
+        "8LJLF",
+        "8LJLG"
+      ],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Cicindela parowana": {
+      "listing_ids": [
+        "251"
+      ],
+      "classes": [
+        "COVERS"
+      ],
+      "false_only_cells": 0,
+      "original_literal": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "corrected": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "per_listing": {
+        "live": {
+          "251": 0
+        },
+        "allowlist": {
+          "251": 0
+        },
+        "clip": {
+          "251": 0
+        },
+        "clip_no_override": {
+          "251": 0
+        }
+      },
+      "resolved_true_keys": [
+        "8LJN3"
+      ],
+      "resolved_false_keys": [],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Cicuta maculata": {
+      "listing_ids": [
+        "137"
+      ],
+      "classes": [
+        "SPILLS"
+      ],
+      "false_only_cells": 60,
+      "original_literal": {
+        "live": 60,
+        "allowlist": 0,
+        "clip": 32,
+        "clip_no_override": 32
+      },
+      "corrected": {
+        "live": 60,
+        "allowlist": 0,
+        "clip": 32,
+        "clip_no_override": 32
+      },
+      "per_listing": {
+        "live": {
+          "137": 60
+        },
+        "allowlist": {
+          "137": 0
+        },
+        "clip": {
+          "137": 32
+        },
+        "clip_no_override": {
+          "137": 32
+        }
+      },
+      "resolved_true_keys": [
+        "7LHG7"
+      ],
+      "resolved_false_keys": [
+        "7LHFV",
+        "CW9KZ"
+      ],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Coluber constrictor": {
+      "listing_ids": [
+        "64",
+        "117",
+        "143"
+      ],
+      "classes": [
+        "COVERS"
+      ],
+      "false_only_cells": 0,
+      "original_literal": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "corrected": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "per_listing": {
+        "live": {
+          "64": 0,
+          "117": 0,
+          "143": 0
+        },
+        "allowlist": {
+          "64": 0,
+          "117": 0,
+          "143": 0
+        },
+        "clip": {
+          "64": 0,
+          "117": 0,
+          "143": 0
+        },
+        "clip_no_override": {
+          "64": 0,
+          "117": 0,
+          "143": 0
+        }
+      },
+      "resolved_true_keys": [
+        "5DWG5",
+        "5DWG6",
+        "5DWG9"
+      ],
+      "resolved_false_keys": [],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Epioblasma rangiana": {
+      "listing_ids": [
+        "401"
+      ],
+      "classes": [
+        "COVERS"
+      ],
+      "false_only_cells": 0,
+      "original_literal": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "corrected": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "per_listing": {
+        "live": {
+          "401": 0
+        },
+        "allowlist": {
+          "401": 0
+        },
+        "clip": {
+          "401": 0
+        },
+        "clip_no_override": {
+          "401": 0
+        }
+      },
+      "resolved_true_keys": [],
+      "resolved_false_keys": [],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Eremophila alpestris": {
+      "listing_ids": [
+        "170"
+      ],
+      "classes": [
+        "SPILLS"
+      ],
+      "false_only_cells": 17,
+      "original_literal": {
+        "live": 17,
+        "allowlist": 0,
+        "clip": 3,
+        "clip_no_override": 3
+      },
+      "corrected": {
+        "live": 17,
+        "allowlist": 0,
+        "clip": 3,
+        "clip_no_override": 3
+      },
+      "per_listing": {
+        "live": {
+          "170": 17
+        },
+        "allowlist": {
+          "170": 0
+        },
+        "clip": {
+          "170": 3
+        },
+        "clip_no_override": {
+          "170": 3
+        }
+      },
+      "resolved_true_keys": [],
+      "resolved_false_keys": [
+        "5H5V6",
+        "7JQCJ",
+        "7JQCK",
+        "7K2CW",
+        "7K2D6"
+      ],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Erynnis persius": {
+      "listing_ids": [
+        "215"
+      ],
+      "classes": [
+        "SPILLS"
+      ],
+      "false_only_cells": 32,
+      "original_literal": {
+        "live": 32,
+        "allowlist": 0,
+        "clip": 4,
+        "clip_no_override": 4
+      },
+      "corrected": {
+        "live": 32,
+        "allowlist": 0,
+        "clip": 4,
+        "clip_no_override": 4
+      },
+      "per_listing": {
+        "live": {
+          "215": 32
+        },
+        "allowlist": {
+          "215": 0
+        },
+        "clip": {
+          "215": 4
+        },
+        "clip_no_override": {
+          "215": 4
+        }
+      },
+      "resolved_true_keys": [],
+      "resolved_false_keys": [
+        "BK5SL",
+        "NPW3Q"
+      ],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Esox americanus": {
+      "listing_ids": [
+        "291"
+      ],
+      "classes": [
+        "COVERS"
+      ],
+      "false_only_cells": 0,
+      "original_literal": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "corrected": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "per_listing": {
+        "live": {
+          "291": 0
+        },
+        "allowlist": {
+          "291": 0
+        },
+        "clip": {
+          "291": 0
+        },
+        "clip_no_override": {
+          "291": 0
+        }
+      },
+      "resolved_true_keys": [],
+      "resolved_false_keys": [],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Euphyes vestris": {
+      "listing_ids": [
+        "40"
+      ],
+      "classes": [
+        "SPILLS"
+      ],
+      "false_only_cells": 0,
+      "original_literal": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "corrected": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "per_listing": {
+        "live": {
+          "40": 0
+        },
+        "allowlist": {
+          "40": 0
+        },
+        "clip": {
+          "40": 0
+        },
+        "clip_no_override": {
+          "40": 0
+        }
+      },
+      "resolved_true_keys": [
+        "NWC78"
+      ],
+      "resolved_false_keys": [],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Falco peregrinus": {
+      "listing_ids": [
+        "179"
+      ],
+      "classes": [
+        "SPILLS"
+      ],
+      "false_only_cells": 24,
+      "original_literal": {
+        "live": 24,
+        "allowlist": 0,
+        "clip": 3,
+        "clip_no_override": 3
+      },
+      "corrected": {
+        "live": 24,
+        "allowlist": 0,
+        "clip": 3,
+        "clip_no_override": 3
+      },
+      "per_listing": {
+        "live": {
+          "179": 24
+        },
+        "allowlist": {
+          "179": 0
+        },
+        "clip": {
+          "179": 3
+        },
+        "clip_no_override": {
+          "179": 3
+        }
+      },
+      "resolved_true_keys": [
+        "5HBSB"
+      ],
+      "resolved_false_keys": [
+        "5HBRX",
+        "5HBSF"
+      ],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Gentianopsis virgata": {
+      "listing_ids": [
+        "139"
+      ],
+      "classes": [
+        "SPILLS"
+      ],
+      "false_only_cells": 0,
+      "original_literal": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "corrected": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "per_listing": {
+        "live": {
+          "139": 0
+        },
+        "allowlist": {
+          "139": 0
+        },
+        "clip": {
+          "139": 0
+        },
+        "clip_no_override": {
+          "139": 0
+        }
+      },
+      "resolved_true_keys": [],
+      "resolved_false_keys": [],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Icteria virens": {
+      "listing_ids": [
+        "176",
+        "183"
+      ],
+      "classes": [
+        "COVERS"
+      ],
+      "false_only_cells": 0,
+      "original_literal": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "corrected": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "per_listing": {
+        "live": {
+          "176": 0,
+          "183": 0
+        },
+        "allowlist": {
+          "176": 0,
+          "183": 0
+        },
+        "clip": {
+          "176": 0,
+          "183": 0
+        },
+        "clip_no_override": {
+          "176": 0,
+          "183": 0
+        }
+      },
+      "resolved_true_keys": [
+        "5J428",
+        "7K7PK"
+      ],
+      "resolved_false_keys": [],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Lanius ludovicianus": {
+      "listing_ids": [
+        "16"
+      ],
+      "classes": [
+        "UNCLEAR"
+      ],
+      "false_only_cells": 4,
+      "original_literal": {
+        "live": 4,
+        "allowlist": 4,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "corrected": {
+        "live": 4,
+        "allowlist": 4,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "per_listing": {
+        "live": {
+          "16": 4
+        },
+        "allowlist": {
+          "16": 4
+        },
+        "clip": {
+          "16": 0
+        },
+        "clip_no_override": {
+          "16": 0
+        }
+      },
+      "resolved_true_keys": [
+        "7K8X6"
+      ],
+      "resolved_false_keys": [
+        "5J9B3"
+      ],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Loxia curvirostra": {
+      "listing_ids": [
+        "114"
+      ],
+      "classes": [
+        "SPILLS"
+      ],
+      "false_only_cells": 18,
+      "original_literal": {
+        "live": 18,
+        "allowlist": 0,
+        "clip": 1,
+        "clip_no_override": 1
+      },
+      "corrected": {
+        "live": 18,
+        "allowlist": 0,
+        "clip": 1,
+        "clip_no_override": 1
+      },
+      "per_listing": {
+        "live": {
+          "114": 18
+        },
+        "allowlist": {
+          "114": 0
+        },
+        "clip": {
+          "114": 1
+        },
+        "clip_no_override": {
+          "114": 1
+        }
+      },
+      "resolved_true_keys": [
+        "7JZ59"
+      ],
+      "resolved_false_keys": [
+        "5JFDX",
+        "5JFDY",
+        "7JZ4X"
+      ],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Martes americana": {
+      "listing_ids": [
+        "308"
+      ],
+      "classes": [
+        "SPILLS"
+      ],
+      "false_only_cells": 0,
+      "original_literal": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "corrected": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "per_listing": {
+        "live": {
+          "308": 0
+        },
+        "allowlist": {
+          "308": 0
+        },
+        "clip": {
+          "308": 0
+        },
+        "clip_no_override": {
+          "308": 0
+        }
+      },
+      "resolved_true_keys": [],
+      "resolved_false_keys": [],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Megascops kennicottii": {
+      "listing_ids": [
+        "211",
+        "212"
+      ],
+      "classes": [
+        "COVERS"
+      ],
+      "false_only_cells": 0,
+      "original_literal": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "corrected": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "per_listing": {
+        "live": {
+          "211": 0,
+          "212": 0
+        },
+        "allowlist": {
+          "211": 0,
+          "212": 0
+        },
+        "clip": {
+          "211": 0,
+          "212": 0
+        },
+        "clip_no_override": {
+          "211": 0,
+          "212": 0
+        }
+      },
+      "resolved_true_keys": [
+        "7KBWH",
+        "7KC8G"
+      ],
+      "resolved_false_keys": [],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Mustela erminea": {
+      "listing_ids": [
+        "112"
+      ],
+      "classes": [
+        "SPILLS"
+      ],
+      "false_only_cells": 598,
+      "original_literal": {
+        "live": 598,
+        "allowlist": 0,
+        "clip": 113,
+        "clip_no_override": 113
+      },
+      "corrected": {
+        "live": 598,
+        "allowlist": 0,
+        "clip": 113,
+        "clip_no_override": 113
+      },
+      "per_listing": {
+        "live": {
+          "112": 598
+        },
+        "allowlist": {
+          "112": 0
+        },
+        "clip": {
+          "112": 113
+        },
+        "clip_no_override": {
+          "112": 113
+        }
+      },
+      "resolved_true_keys": [],
+      "resolved_false_keys": [
+        "5JSBT",
+        "5JSC5",
+        "5JSCV"
+      ],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Nerodia sipedon": {
+      "listing_ids": [
+        "111"
+      ],
+      "classes": [
+        "SPILLS"
+      ],
+      "false_only_cells": 287,
+      "original_literal": {
+        "live": 287,
+        "allowlist": 0,
+        "clip": 269,
+        "clip_no_override": 269
+      },
+      "corrected": {
+        "live": 287,
+        "allowlist": 0,
+        "clip": 269,
+        "clip_no_override": 269
+      },
+      "per_listing": {
+        "live": {
+          "111": 287
+        },
+        "allowlist": {
+          "111": 0
+        },
+        "clip": {
+          "111": 269
+        },
+        "clip_no_override": {
+          "111": 269
+        }
+      },
+      "resolved_true_keys": [
+        "7HJ6D"
+      ],
+      "resolved_false_keys": [
+        "7HJ77"
+      ],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Occidryas editha": {
+      "listing_ids": [
+        "217"
+      ],
+      "classes": [
+        "SPILLS"
+      ],
+      "false_only_cells": 5,
+      "original_literal": {
+        "live": 5,
+        "allowlist": 0,
+        "clip": 1,
+        "clip_no_override": 1
+      },
+      "corrected": {
+        "live": 5,
+        "allowlist": 0,
+        "clip": 1,
+        "clip_no_override": 1
+      },
+      "per_listing": {
+        "live": {
+          "217": 5
+        },
+        "allowlist": {
+          "217": 0
+        },
+        "clip": {
+          "217": 1
+        },
+        "clip_no_override": {
+          "217": 1
+        }
+      },
+      "resolved_true_keys": [
+        "5JXZ3"
+      ],
+      "resolved_false_keys": [
+        "5JXYR"
+      ],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Oncorhynchus clarkii": {
+      "listing_ids": [
+        "499",
+        "509"
+      ],
+      "classes": [
+        "SPILLS"
+      ],
+      "false_only_cells": 0,
+      "original_literal": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "corrected": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "per_listing": {
+        "live": {
+          "499": 0,
+          "509": 0
+        },
+        "allowlist": {
+          "499": 0,
+          "509": 0
+        },
+        "clip": {
+          "499": 0,
+          "509": 0
+        },
+        "clip_no_override": {
+          "499": 0,
+          "509": 0
+        }
+      },
+      "resolved_true_keys": [],
+      "resolved_false_keys": [],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Passerculus sandwichensis": {
+      "listing_ids": [
+        "480"
+      ],
+      "classes": [
+        "SPILLS"
+      ],
+      "false_only_cells": 13,
+      "original_literal": {
+        "live": 13,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "corrected": {
+        "live": 13,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "per_listing": {
+        "live": {
+          "480": 13
+        },
+        "allowlist": {
+          "480": 0
+        },
+        "clip": {
+          "480": 0
+        },
+        "clip_no_override": {
+          "480": 0
+        }
+      },
+      "resolved_true_keys": [
+        "5K8QQ"
+      ],
+      "resolved_false_keys": [
+        "5K8QD",
+        "5K8QH",
+        "5K8QN",
+        "5K8QV",
+        "7KHQF"
+      ],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Phlox speciosa": {
+      "listing_ids": [
+        "303"
+      ],
+      "classes": [
+        "COVERS"
+      ],
+      "false_only_cells": 0,
+      "original_literal": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "corrected": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "per_listing": {
+        "live": {
+          "303": 0
+        },
+        "allowlist": {
+          "303": 0
+        },
+        "clip": {
+          "303": 0
+        },
+        "clip_no_override": {
+          "303": 0
+        }
+      },
+      "resolved_true_keys": [
+        "5KDJB"
+      ],
+      "resolved_false_keys": [],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Phoca vitulina": {
+      "listing_ids": [
+        "177"
+      ],
+      "classes": [
+        "SPILLS"
+      ],
+      "false_only_cells": 317,
+      "original_literal": {
+        "live": 317,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "corrected": {
+        "live": 317,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "per_listing": {
+        "live": {
+          "177": 317
+        },
+        "allowlist": {
+          "177": 0
+        },
+        "clip": {
+          "177": 0
+        },
+        "clip_no_override": {
+          "177": 0
+        }
+      },
+      "resolved_true_keys": [],
+      "resolved_false_keys": [
+        "5KDKF",
+        "5KDKK"
+      ],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Phocoena phocoena": {
+      "listing_ids": [
+        "510"
+      ],
+      "classes": [
+        "SPILLS"
+      ],
+      "false_only_cells": 37,
+      "original_literal": {
+        "live": 37,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "corrected": {
+        "live": 37,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "per_listing": {
+        "live": {
+          "510": 37
+        },
+        "allowlist": {
+          "510": 0
+        },
+        "clip": {
+          "510": 0
+        },
+        "clip_no_override": {
+          "510": 0
+        }
+      },
+      "resolved_true_keys": [
+        "5KDKP"
+      ],
+      "resolved_false_keys": [
+        "5KDKM"
+      ],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Pituophis catenifer": {
+      "listing_ids": [
+        "81"
+      ],
+      "classes": [
+        "SPILLS"
+      ],
+      "false_only_cells": 90,
+      "original_literal": {
+        "live": 90,
+        "allowlist": 0,
+        "clip": 1,
+        "clip_no_override": 1
+      },
+      "corrected": {
+        "live": 90,
+        "allowlist": 0,
+        "clip": 1,
+        "clip_no_override": 1
+      },
+      "per_listing": {
+        "live": {
+          "81": 90
+        },
+        "allowlist": {
+          "81": 0
+        },
+        "clip": {
+          "81": 1
+        },
+        "clip_no_override": {
+          "81": 1
+        }
+      },
+      "resolved_true_keys": [
+        "7HRSC"
+      ],
+      "resolved_false_keys": [
+        "7HRSD",
+        "7HS4P"
+      ],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Plebejus saepiolus": {
+      "listing_ids": [
+        "132"
+      ],
+      "classes": [
+        "SPILLS"
+      ],
+      "false_only_cells": 0,
+      "original_literal": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "corrected": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "per_listing": {
+        "live": {
+          "132": 0
+        },
+        "allowlist": {
+          "132": 0
+        },
+        "clip": {
+          "132": 0
+        },
+        "clip_no_override": {
+          "132": 0
+        }
+      },
+      "resolved_true_keys": [],
+      "resolved_false_keys": [],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Pooecetes gramineus": {
+      "listing_ids": [
+        "252"
+      ],
+      "classes": [
+        "SPILLS"
+      ],
+      "false_only_cells": 15,
+      "original_literal": {
+        "live": 15,
+        "allowlist": 0,
+        "clip": 5,
+        "clip_no_override": 5
+      },
+      "corrected": {
+        "live": 15,
+        "allowlist": 0,
+        "clip": 5,
+        "clip_no_override": 5
+      },
+      "per_listing": {
+        "live": {
+          "252": 15
+        },
+        "allowlist": {
+          "252": 0
+        },
+        "clip": {
+          "252": 5
+        },
+        "clip_no_override": {
+          "252": 5
+        }
+      },
+      "resolved_true_keys": [
+        "7KMWH"
+      ],
+      "resolved_false_keys": [
+        "7KMWF",
+        "7KN8H"
+      ],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Salix brachycarpa": {
+      "listing_ids": [
+        "525"
+      ],
+      "classes": [
+        "SPILLS"
+      ],
+      "false_only_cells": 0,
+      "original_literal": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "corrected": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "per_listing": {
+        "live": {
+          "525": 0
+        },
+        "allowlist": {
+          "525": 0
+        },
+        "clip": {
+          "525": 0
+        },
+        "clip_no_override": {
+          "525": 0
+        }
+      },
+      "resolved_true_keys": [
+        "7MLVC"
+      ],
+      "resolved_false_keys": [],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Salvelinus malma": {
+      "listing_ids": [
+        "125"
+      ],
+      "classes": [
+        "SPILLS"
+      ],
+      "false_only_cells": 0,
+      "original_literal": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "corrected": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "per_listing": {
+        "live": {
+          "125": 0
+        },
+        "allowlist": {
+          "125": 0
+        },
+        "clip": {
+          "125": 0
+        },
+        "clip_no_override": {
+          "125": 0
+        }
+      },
+      "resolved_true_keys": [],
+      "resolved_false_keys": [],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Silene scouleri": {
+      "listing_ids": [
+        "261"
+      ],
+      "classes": [
+        "UNCLEAR"
+      ],
+      "false_only_cells": 2,
+      "original_literal": {
+        "live": 2,
+        "allowlist": 0,
+        "clip": 2,
+        "clip_no_override": 2
+      },
+      "corrected": {
+        "live": 2,
+        "allowlist": 0,
+        "clip": 2,
+        "clip_no_override": 2
+      },
+      "per_listing": {
+        "live": {
+          "261": 2
+        },
+        "allowlist": {
+          "261": 0
+        },
+        "clip": {
+          "261": 2
+        },
+        "clip_no_override": {
+          "261": 2
+        }
+      },
+      "resolved_true_keys": [],
+      "resolved_false_keys": [
+        "5L6ZH"
+      ],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Strix occidentalis": {
+      "listing_ids": [
+        "507"
+      ],
+      "classes": [
+        "COVERS"
+      ],
+      "false_only_cells": 0,
+      "original_literal": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "corrected": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "per_listing": {
+        "live": {
+          "507": 0
+        },
+        "allowlist": {
+          "507": 0
+        },
+        "clip": {
+          "507": 0
+        },
+        "clip_no_override": {
+          "507": 0
+        }
+      },
+      "resolved_true_keys": [
+        "5LBW3"
+      ],
+      "resolved_false_keys": [],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Sylvilagus nuttallii": {
+      "listing_ids": [
+        "331"
+      ],
+      "classes": [
+        "SPILLS"
+      ],
+      "false_only_cells": 1,
+      "original_literal": {
+        "live": 1,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "corrected": {
+        "live": 1,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "per_listing": {
+        "live": {
+          "331": 1
+        },
+        "allowlist": {
+          "331": 0
+        },
+        "clip": {
+          "331": 0
+        },
+        "clip_no_override": {
+          "331": 0
+        }
+      },
+      "resolved_true_keys": [
+        "5LCWT"
+      ],
+      "resolved_false_keys": [
+        "7L4HN"
+      ],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Tanacetum bipinnatum": {
+      "listing_ids": [
+        "532"
+      ],
+      "classes": [
+        "SPILLS"
+      ],
+      "false_only_cells": 64,
+      "original_literal": {
+        "live": 64,
+        "allowlist": 0,
+        "clip": 5,
+        "clip_no_override": 5
+      },
+      "corrected": {
+        "live": 64,
+        "allowlist": 0,
+        "clip": 5,
+        "clip_no_override": 5
+      },
+      "per_listing": {
+        "live": {
+          "532": 64
+        },
+        "allowlist": {
+          "532": 0
+        },
+        "clip": {
+          "532": 5
+        },
+        "clip_no_override": {
+          "532": 5
+        }
+      },
+      "resolved_true_keys": [],
+      "resolved_false_keys": [
+        "7L653"
+      ],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Taxidea taxus": {
+      "listing_ids": [
+        "53",
+        "63"
+      ],
+      "classes": [
+        "UNCLEAR"
+      ],
+      "false_only_cells": 17,
+      "original_literal": {
+        "live": 34,
+        "allowlist": 34,
+        "clip": 8,
+        "clip_no_override": 8
+      },
+      "corrected": {
+        "live": 34,
+        "allowlist": 34,
+        "clip": 4,
+        "clip_no_override": 4
+      },
+      "per_listing": {
+        "live": {
+          "53": 17,
+          "63": 17
+        },
+        "allowlist": {
+          "53": 17,
+          "63": 17
+        },
+        "clip": {
+          "53": 0,
+          "63": 4
+        },
+        "clip_no_override": {
+          "53": 0,
+          "63": 4
+        }
+      },
+      "resolved_true_keys": [
+        "7KTX8"
+      ],
+      "resolved_false_keys": [
+        "5LFD4"
+      ],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    },
+    "Viola praemorsa": {
+      "listing_ids": [
+        "372"
+      ],
+      "classes": [
+        "COVERS"
+      ],
+      "false_only_cells": 0,
+      "original_literal": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "corrected": {
+        "live": 0,
+        "allowlist": 0,
+        "clip": 0,
+        "clip_no_override": 0
+      },
+      "per_listing": {
+        "live": {
+          "372": 0
+        },
+        "allowlist": {
+          "372": 0
+        },
+        "clip": {
+          "372": 0
+        },
+        "clip_no_override": {
+          "372": 0
+        }
+      },
+      "resolved_true_keys": [
+        "9KT98"
+      ],
+      "resolved_false_keys": [],
+      "unresolved_true_epithets": [],
+      "unresolved_false_epithets": []
+    }
+  },
+  "skipped": [],
+  "rebased_scorer_commit": "7cf8f9c6f7caa20c74838dbdae43d14bcfa4c00a",
+  "rebased_geometry_code_commit": "258bfea2fed876ff0456c7330b9dbd72c29c6828"
+}

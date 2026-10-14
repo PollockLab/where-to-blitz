@@ -1,0 +1,2838 @@
+{
+  "schema_version": 1,
+  "purpose": "Consolidated corrected raw range-clip candidate evidence and the unchanged pre-registered ship decision",
+  "candidate_code_commit": "5569d4a2cb00bf20d2c8483542d81a7eca357094",
+  "evidence": {
+    "logs": {
+      "fetch": {
+        "path": "/private/tmp/claude-503/-Users-w-Documents-Github-nosync/f78136ad-2557-4468-a491-1b852e987d8c/scratchpad/fetch-union-first.log",
+        "sha256": "a4426950e1996dac8d2761877413811f31402862ac64d93d2ed14bb2d5e2c747",
+        "bytes": 346
+      },
+      "gate": {
+        "path": "/private/tmp/claude-503/-Users-w-Documents-Github-nosync/f78136ad-2557-4468-a491-1b852e987d8c/scratchpad/gate-union-first.log",
+        "sha256": "35632e8cd585c735d4c62b21919b9e1f1d83c7bc69783bd5d2afc6e6224e9dd8",
+        "bytes": 7137
+      },
+      "scorer": {
+        "path": "/private/tmp/claude-503/-Users-w-Documents-Github-nosync/f78136ad-2557-4468-a491-1b852e987d8c/scratchpad/score-union-first.log",
+        "sha256": "63288bb50ea01c9559735e9318128af42001ab65e38bffc2b9591aed55526e30",
+        "bytes": 4550
+      }
+    },
+    "fixed_registration": {
+      "initial_gate": {
+        "commit": "4db48ce5e0fca475dda48859ee611eebe9a0cd5f",
+        "path": "research/GATE-range-clip.md",
+        "sha256": "d1264a35cc20aed5d83973e04d750fb0951fd649f1b5af50ac6caaa9cbde8e3e",
+        "git_blob_sha1": "8c0e4d4d1f2ddef96d0044a07956b843bbcabc46",
+        "rebased_commit": "595c54523d4e5d93659b846070c8e2a0d26fc626"
+      },
+      "comparison_gate": {
+        "commit": "f07e732e60d41a31e61c3283c52dc3db4ea38050",
+        "path": "research/GATE-range-clip.md",
+        "sha256": "edd59a41a943e11f6121649c8ce616ea927b264f3b17590c2f116cc02fd8c6e5",
+        "git_blob_sha1": "4b672498db550255be4b394a52a15917dbf1eeeb",
+        "rebased_commit": "4d57c9c6bd4ecf372ad0259268ea2ca42cce9d49"
+      },
+      "final_gate": {
+        "commit": "7da9d9b9deb56b9b8df298f08e628a6695749b1e",
+        "path": "research/GATE-range-clip.md",
+        "sha256": "4598182de2b72947007106b42c85bc62fe4ab65d9311d284d0a9b4f5477ebc79",
+        "git_blob_sha1": "cf17c4f8e47e12a75fc36b6353cd762ecfaf4ed9",
+        "rebased_commit": "15a37a8c64974d0b5b69a99c00b3a8bd98123c13"
+      },
+      "test_set": {
+        "commit": "f07e732e60d41a31e61c3283c52dc3db4ea38050",
+        "path": "research/subspecies_test_set.csv",
+        "sha256": "ebd07f668fb78536aeb5b4caab3a348e8aca5cd7cded646607e427da6c51ffef",
+        "git_blob_sha1": "629f0c658a186f38e3b2658a23ba427ab19e83cf",
+        "rebased_commit": "4d57c9c6bd4ecf372ad0259268ea2ca42cce9d49"
+      },
+      "overrides": {
+        "commit": "f07e732e60d41a31e61c3283c52dc3db4ea38050",
+        "path": "cluster_results/ca/atrisk_range_overrides.csv",
+        "sha256": "7faa4d63fbd2f9421da97cdd771d43d00cc944782ed5c5be9f1dafaf4a755ef1",
+        "git_blob_sha1": "59c37724c7bf89227d3d9342d49ce7f18923b59e",
+        "rebased_commit": "4d57c9c6bd4ecf372ad0259268ea2ca42cce9d49"
+      },
+      "scorer": {
+        "commit": "d765666575f362f79f2cc4ff9deba10f25ee5cfb",
+        "path": "research/allowlist_compare.py",
+        "sha256": "0ed079d12aaa298c5bc389a5a674c41a9d340e421cd05aa643a0a67624eccacb",
+        "git_blob_sha1": "a007e9d28bea1c86ea713d15ecd2cdbf434d4873",
+        "rebased_commit": "7cf8f9c6f7caa20c74838dbdae43d14bcfa4c00a"
+      }
+    },
+    "candidate_code": {
+      "atrisk_ranges.py": {
+        "commit": "5569d4a2cb00bf20d2c8483542d81a7eca357094",
+        "path": "atrisk_ranges.py",
+        "sha256": "051bc22eca51682060fb4a7031101a9a7dbb9d17ec8d443d72bf422da97591a7",
+        "git_blob_sha1": "1c5edfc54da749ce8922291b33b09bd32c266a54",
+        "rebased_commit": "258bfea2fed876ff0456c7330b9dbd72c29c6828"
+      },
+      "build_atrisk_layer.py": {
+        "commit": "5569d4a2cb00bf20d2c8483542d81a7eca357094",
+        "path": "build_atrisk_layer.py",
+        "sha256": "db4d71e5ba8b19ab807ad67a3712ee5bb1a74788afa79935d258c3c00e805743",
+        "git_blob_sha1": "a938c9822a9bc4763f5141162d00d37c23238149",
+        "rebased_commit": "258bfea2fed876ff0456c7330b9dbd72c29c6828"
+      },
+      "atrisk_crosswalk.py": {
+        "commit": "5569d4a2cb00bf20d2c8483542d81a7eca357094",
+        "path": "atrisk_crosswalk.py",
+        "sha256": "678baf771632aa6e587ade596dbbc2f59133c35ef0eb7717cf7e27053eeb180d",
+        "git_blob_sha1": "5504b5907b2bb3c27a25cb35e8bb49fef08c391f",
+        "rebased_commit": "258bfea2fed876ff0456c7330b9dbd72c29c6828"
+      },
+      "research/range_clip_gate.py": {
+        "commit": "5569d4a2cb00bf20d2c8483542d81a7eca357094",
+        "path": "research/range_clip_gate.py",
+        "sha256": "d366fd518ba5b0dd9800de2158cd36bf782cad800edbc2137414527347c3fbe8",
+        "git_blob_sha1": "7829487c5e5d0aa3e4ce4495bf90bf2a8a6d6296",
+        "rebased_commit": "258bfea2fed876ff0456c7330b9dbd72c29c6828"
+      },
+      "research/allowlist_compare.py": {
+        "commit": "5569d4a2cb00bf20d2c8483542d81a7eca357094",
+        "path": "research/allowlist_compare.py",
+        "sha256": "0ed079d12aaa298c5bc389a5a674c41a9d340e421cd05aa643a0a67624eccacb",
+        "git_blob_sha1": "a007e9d28bea1c86ea713d15ecd2cdbf434d4873",
+        "rebased_commit": "258bfea2fed876ff0456c7330b9dbd72c29c6828"
+      }
+    },
+    "inputs": {
+      "download": {
+        "path": "/private/tmp/claude-503/-Users-w-Documents-Github-nosync/f78136ad-2557-4468-a491-1b852e987d8c/scratchpad/gbif_dl/0026614-260928105237408.zip",
+        "sha256": "4b16a59371966b1f717fdaf10f2d0af8e92e15ba385800351a02e0b6681c5c52"
+      },
+      "scorer": {
+        "path": "/Users/w/Documents/Github.nosync/where-to-blitz/.claude/worktrees/agent-aea2582c48b34f174/research/allowlist_compare.py",
+        "sha256": "0ed079d12aaa298c5bc389a5a674c41a9d340e421cd05aa643a0a67624eccacb"
+      },
+      "test_set": {
+        "path": "/Users/w/Documents/Github.nosync/where-to-blitz/.claude/worktrees/agent-aea2582c48b34f174/research/subspecies_test_set.csv",
+        "sha256": "ebd07f668fb78536aeb5b4caab3a348e8aca5cd7cded646607e427da6c51ffef"
+      },
+      "listings": {
+        "path": "/Users/w/Documents/Github.nosync/where-to-blitz/.claude/worktrees/agent-aea2582c48b34f174/cluster_results/ca/atrisk_listings.csv",
+        "sha256": "7b10abf771df7556bc8fd4411ce8e325db1f3ec50be5438d3766af125745dfc3"
+      },
+      "ranges": {
+        "path": "/Users/w/Documents/Github.nosync/where-to-blitz/.claude/worktrees/agent-aea2582c48b34f174/cluster_results/ca/atrisk_ranges.geojson",
+        "sha256": "2feb0fc8f6e7f47e46e60a775a45c64dd6c9d7e32dbc7defd51282a90662658a"
+      },
+      "crosswalk": {
+        "path": "/Users/w/Documents/Github.nosync/where-to-blitz/.claude/worktrees/agent-aea2582c48b34f174/cluster_results/ca/atrisk_species_keys.csv",
+        "sha256": "3ff7323e81c4578eccb769356e56d6b66e80330d6fb2c619ca273ea6d298ecc7"
+      },
+      "geometry_code": {
+        "path": "/Users/w/Documents/Github.nosync/where-to-blitz/.claude/worktrees/agent-aea2582c48b34f174/atrisk_ranges.py",
+        "sha256": "051bc22eca51682060fb4a7031101a9a7dbb9d17ec8d443d72bf422da97591a7"
+      },
+      "overrides": {
+        "path": "/Users/w/Documents/Github.nosync/where-to-blitz/.claude/worktrees/agent-aea2582c48b34f174/cluster_results/ca/atrisk_range_overrides.csv",
+        "sha256": "7faa4d63fbd2f9421da97cdd771d43d00cc944782ed5c5be9f1dafaf4a755ef1",
+        "bytes": 770
+      }
+    },
+    "candidate_artifacts": {
+      "ca_atrisk_richness.csv": {
+        "path": "/Users/w/Documents/Github.nosync/where-to-blitz/.claude/worktrees/agent-aea2582c48b34f174/cluster_results/ca/ca_atrisk_richness.csv",
+        "sha256": "2c2d25adafe02e470f84b41d35d7877479acb1441143483a2b66c592da6ba81d",
+        "bytes": 492043
+      },
+      "atrisk_listing_clip.csv": {
+        "path": "/Users/w/Documents/Github.nosync/where-to-blitz/.claude/worktrees/agent-aea2582c48b34f174/cluster_results/ca/atrisk_listing_clip.csv",
+        "sha256": "c43ef00639bd47fda24255f70d0abb9585809d125ce164d740234ed93de0f520",
+        "bytes": 26443,
+        "preserved_path": "/Users/w/Documents/Github.nosync/where-to-blitz/.claude/worktrees/agent-aea2582c48b34f174/research/range_clip_candidate.csv"
+      },
+      "ca_atrisk_provenance.json": {
+        "path": "/Users/w/Documents/Github.nosync/where-to-blitz/.claude/worktrees/agent-aea2582c48b34f174/cluster_results/ca/ca_atrisk_provenance.json",
+        "sha256": "8a30e988e3edde43ea985bfd72283c56d73074ceae47f82369072b8695d5f713",
+        "bytes": 6715
+      }
+    },
+    "baseline": {
+      "path": "/private/tmp/claude-503/-Users-w-Documents-Github-nosync/f78136ad-2557-4468-a491-1b852e987d8c/scratchpad/bb.csv",
+      "sha256": "d70f82e85da892f8e8a44d8d95fc9f7209d332bebad4be252f75f40dd272bff3",
+      "bytes": 572238,
+      "commit": "8161238ef1bd0ed61ac40d8c62abca423e1194d0",
+      "doi": "10.15468/dl.2umbtg",
+      "download_key": "0024656-260928105237408",
+      "byte_identical_to_committed_live_layer": true
+    },
+    "range_source_downloads": {
+      "dfo": {
+        "path": "/private/tmp/claude-503/-Users-w-Documents-Github-nosync/f78136ad-2557-4468-a491-1b852e987d8c/scratchpad/dfo_dl/dfo.gdb.zip",
+        "sha256": "857869c93b42f48aa8f74503c3f74502fafdbddb71c940107b4cfbefc1dd5bde",
+        "bytes": 1507980400
+      },
+      "ecozone": {
+        "path": "/private/tmp/claude-503/-Users-w-Documents-Github-nosync/f78136ad-2557-4468-a491-1b852e987d8c/scratchpad/bnd_dl/ecozone.zip",
+        "sha256": "ccfeaacad154c922eb08e3012043eb05944b838c6f62e26f8ecfdf32336ce4f6",
+        "bytes": 1513120
+      },
+      "province": {
+        "path": "/private/tmp/claude-503/-Users-w-Documents-Github-nosync/f78136ad-2557-4468-a491-1b852e987d8c/scratchpad/bnd_dl/ne_admin1.geojson",
+        "sha256": "22d0e3ad85eb3e27f17cabf8ba2d50e554fbc27a87796ff891d958185da62fb5",
+        "bytes": 40726851
+      }
+    },
+    "supplemental_pair_script": {
+      "path": "/tmp/wtb_pair_audit.py",
+      "sha256": "725103185a4a8f5556264022a591d013c420aaa3c4d747c5d260e18879f66cde",
+      "bytes": 9216
+    },
+    "supplemental_pair_result": {
+      "path": "/tmp/wtb_pair_audit.json",
+      "sha256": "c64202a25f4ca04f4c37d6a123b1954dcd3c20bd50fe1a975fd6ef11634479a9",
+      "bytes": 44609
+    }
+  },
+  "download": {
+    "key": "0026614-260928105237408",
+    "doi": "10.15468/dl.6hqdyd",
+    "created": "2026-10-14T13:58:04.551+00:00",
+    "fine_cell_aggregate_rows": 1091177,
+    "occurrences_summed_from_n": 9114203,
+    "fine_resolution_degrees": 0.01,
+    "output_resolution_degrees": 0.25,
+    "taxonomy": {
+      "dataset_key": "7ddf754f-d193-4cc9-b351-99906754a03b",
+      "title": "Catalogue of Life",
+      "shortName": "COL26.6 XR",
+      "version": null,
+      "modified": "2026-09-21T19:41:58.203+00:00",
+      "pubDate": "2026-06-19T00:00:00.000+00:00",
+      "doi": "10.48580/dgyy9"
+    },
+    "sql": "SELECT specieskey AS specieskey, acceptedtaxonkey AS acceptedtaxonkey, FLOOR(decimallatitude / 0.01) AS yi, FLOOR(decimallongitude / 0.01) AS xi, COUNT(*) AS n FROM occurrence WHERE countrycode = 'CA' AND specieskey IN ('33DLS', '33J4L', '33ZT8', '34HXS', '34XB9', '34Z5J', '353MR', '35HZV', '36PN2', '375NS', '37QR6', '397CP', '397Q9', '39HWP', '39LSJ', '39SVC', '39TWB', '3BBB9', '3BH49', '3BNBR', '3BNBS', '3BZR6', '3CM7W', '3CSK3', '3D389', '3DNCH', '3DR9L', '3DTGL', '3F43C', '3FCKT', '3FNMB', '3FWLG', '3GHJR', '3GL5S', '3GVSV', '3HFDB', '3HLZN', '3HYSW', '3JDYB', '3KTYB', '3L4KL', '3L4RN', '3L4Y3', '3L99B', '3LGK8', '3M4S7', '3M5LV', '3MQNK', '3MQPJ', '3MY4W', '3MY56', '3N6SK', '3NFZ4', '3NR6Z', '3PB9C', '3PBC6', '3PZTR', '3PZWC', '3QCV2', '3QCV3', '3QRSG', '3QTK7', '3QTTQ', '3RNXW', '3S4WF', '3S5XG', '3S5XX', '3SH65', '3TG2G', '3TG2S', '3TPNY', '3V9PD', '3VHQP', '3VX2H', '3W27X', '3W8WP', '3WFH8', '3XH5C', '3Y84L', '3Y9VR', '3YLHX', '3YWY2', '3Z72L', '42569', '42QGC', '436BT', '43KQY', '44GTW', '44QWG', '456FL', '456H3', '456LZ', '476BV', '47ZF6', '47ZJG', '47ZJK', '47ZN9', '483SY', '483T2', '488T3', '48B4L', '48B4S', '48BT4', '49JFF', '49XJD', '4BM9P', '4BZ6N', '4BZM9', '4C9MC', '4CFW9', '4CGYJ', '4CGYK', '4CHG5', '4CJ5B', '4DXYF', '4DZDT', '4F2FM', '4FJYW', '4FRHS', '4GJB3', '4GK65', '4GK9J', '4GK9M', '4GWSX', '4HGZH', '4HGZQ', '4J224', '4JCGM', '4JF2M', '4JF4G', '4JLDV', '4JMY5', '4JMZH', '4KPNN', '4KPVB', '4KXKC', '4LMXT', '4LN8N', '4M3RJ', '4M3W4', '4MQFZ', '4N6GN', '4NH9Z', '4PGHC', '4PGHF', '4PJKF', '4PSYD', '4Q9WW', '4QZKF', '4RB9R', '4RF6J', '4RFL8', '4RFW6', '4S7V3', '4SJLX', '4SS3Y', '4ST96', '4T4PL', '4T4PM', '4TDZC', '4TYTM', '4VQ7Z', '4VYGT', '4W6HZ', '4W6J3', '4W7PQ', '4W7ZM', '4X3BJ', '4X3BV', '4XD5W', '4XD87', '4XG45', '4XRRX', '4XWSR', '4Y7JH', '4Y8SY', '4Z2NZ', '52FT3', '537YX', '53BBF', '53BCC', '53Q6L', '53Q7S', '53Q89', '53Q8J', '53Q94', '53Q96', '53YYH', '53ZQV', '54N6J', '54ZSX', '554D7', '55D7F', '55Q6G', '563KB', '563LG', '57LW4', '58H2C', '58TXQ', '58Y32', '58Y9D', '58ZCZ', '593TL', '59ZVQ', '5B476', '5B4WX', '5BHBM', '5BHDD', '5BSG2', '5C39S', '5CT77', '5CZX8', '5V9DL', '5VR5C', '5W66M', '5W7C4', '5WST5', '5WWQN', '5WZLF', '5XB8C', '5Y2VK', '5Y495', '5YB2W', '5YKRV', '5YWRR', '5Z4SY', '5Z54Y', '5ZJQ4', '5ZM42', '5ZP35', '64RFJ', '64V5F', '64X3G', '65KBF', '65KJV', '66BMD', '66M5T', '66M6Z', '672PX', '67KDZ', '67S8L', '67V95', '68K9V', '68NQ9', '68ZP6', '692W6', '69BHK', '69FQV', '69HC7', '69QR8', '6B3P6', '6B8DR', '6B8FL', '6BVXH', '6BWH4', '6CB8P', '6FG8C', '6FHMK', '6FNQN', '6FSXT', '6FVJM', '6G4NY', '6G7JY', '6GFXQ', '6GPKK', '6H52H', '6H93Y', '6J4C6', '6JLYR', '6JMP6', '6JRG7', '6K3FB', '6KG6R', '6L57F', '6MJ22', '6MQ7Y', '6MTT2', '6N4PT', '6N655', '6N9D3', '6NWKP', '6P5HN', '6PCRM', '6PRHZ', '6PYKZ', '6Q727', '6QB2P', '6SN65', '6STZ9', '6SXDH', '6T3LD', '6TCX2', '6VVTQ', '6W27H', '6W2DX', '6WLJF', '6WMWM', '6XCXT', '6XG2S', '6XPX9', '6Y3YJ', '6Y459', '6YJ2F', '6YT94', '6Z94V', '6ZSB2', '728LS', '72BYZ', '737WZ', '739DW', '73K69', '73R6J', '7437M', '74DMM', '74F4B', '74L9P', '74SZC', '74XDH', '74ZTP', '753XH', '763KT', '767LR', '7696C', '76F7Q', '77C9R', '77QW6', '77S3T', '7827F', '78285', '78P7N', '78Z38', '794GZ', '795P4', '79CC8', '79CKR', '79DHM', '79DJC', '79FQR', '79HMJ', '79JC8', '7B72H', '7CGVG', '7CLV2', '7D979', '7DTJY', '7DY9W', '7F2J9', '7F2KB', '7PX9F', '7PX9H', '7RNV6', '7RSHL', '7S24M', '7SN2G', '7ST8C', '7T7GV', '7TNR6', '7VPRN', '7WW65', '8BYQM', '8M8B', '92YN7', '92YN8', '93QF5', '948RF', '948RG', '948TZ', '97H4', '9C52', '9C5B', '9C6H', '9G7J8', '9G7J9', '9HCHR', '9K523', '9KKH', '9LJZX', '9PL9', '9S2C', '9T3MT', '9WV4R', '9WVS2', 'B3GWZ', 'B3SK2', 'B979G', 'B9QXX', 'BF8R', 'BPHF', 'BWW69', 'C3HS5', 'CC73N', 'CDG4C', 'CPL3G', 'CQ47', 'CQ4L', 'CQ5G', 'CQ5H', 'CR94R', 'CSG8P', 'CTL9', 'CTQ6J', 'D5KD7', 'DGB2', 'DGB7', 'DGB9', 'F4NC', 'F4NM', 'F5QG', 'F6QR', 'FPFG', 'FRHG', 'GCHW', 'GNSK', 'GS9T', 'GT47', 'GTDD', 'H5CV', 'K79D', 'KF7Q', 'KF8M', 'KF8T', 'KF8W', 'KHZR', 'KS3Z', 'KSTB', 'KSV8', 'KVYB5', 'L2BFV', 'L2BG7', 'MFD6', 'MFWL', 'MLPS', 'MRHP', 'MYYR', 'N8JY', 'N8KK', 'N8KX', 'NJ5G', 'NL534', 'NL54C', 'NM26', 'NMHL', 'NYVM', 'P7NKB', 'PCKMR', 'PDPP', 'PGVZ', 'PK44', 'PLPTR', 'PXBC', 'Q93Q', 'Q98M', 'QMF3S', 'QQ77Z', 'RBN5', 'RCDT', 'RNSR', 'RQDX', 'RQH7', 'RQJT', 'S2T7H', 'S4V9', 'S9K2', 'SGCG7', 'SRK8C', 'T72Q', 'TF38', 'TMX5', 'TMX8', 'TNTW', 'TVMH7', 'TWRZ', 'V5B8D', 'V5DNH', 'V5HJ7', 'V898', 'V8BZ', 'V9RSY', 'VB4Z', 'VH3DT', 'VJBQ', 'VYSQ', 'W4BJ', 'W6ZQ', 'X2KZ', 'X4SP', 'XVPT', 'XVRZ', 'XVSB', 'Y2TW', 'YD9T', 'YDV9', 'YGJT', 'YYFF', 'YYHH', 'ZLQF', 'ZPCJ', 'ZPDQ', 'ZTV6') AND hasgeospatialissues = FALSE AND occurrencestatus = 'PRESENT' AND \"year\" >= 1990 AND basisofrecord NOT IN ('FOSSIL_SPECIMEN', 'LIVING_SPECIMEN') AND decimallatitude IS NOT NULL GROUP BY specieskey, acceptedtaxonkey, FLOOR(decimallatitude / 0.01), FLOOR(decimallongitude / 0.01)"
+  },
+  "semantics": {
+    "raw_candidate": "All matched listings are evaluated with fixed ranges plus 10 km, with the whole-taxon infraspecific exception on. No per-species ship-rule drops or allowlist selection have been applied to this candidate.",
+    "comparison": "Methods operate only on test listings. Identified infraspecific taxa are labeled from the frozen test set, and clipping is scored with the infraspecific exception off to avoid leakage.",
+    "selected_production_method": "allowlist",
+    "selected_production_test_listing_rule": "Species classified COVERS and badger, shrike and bison count everywhere; SPILLS and Silene scouleri test listings count nowhere. Matching fixes remain required.",
+    "production_evidence_boundary": "Candidate logs do not verify production. Selected production metrics are proved separately by the embedded independent whole-layer reconstruction report; candidate cell, rank and loss metrics remain distinct.",
+    "sensitivity_status": "No-overrides and without-UNCLEAR values are reported sensitivities and do not replace the fixed 3a ship decision.",
+    "supplemental_metric_status": "Listing-specific pair correction is reporting only. It has no role in ship selection.",
+    "production_layer_verified": true,
+    "selected_production_non_test_listing_rule": "Retained listings count at species level except the connected-key polygon safeguards 58, 96 and 418, which use their individual buffered polygons with the infraspecific exception disabled.",
+    "required_production_polygon_safeguards": [
+      "58",
+      "96",
+      "418"
+    ]
+  },
+  "candidate_gate": {
+    "C1": {
+      "listing_id": "121",
+      "common_name": "northern goshawk laingi subspecies",
+      "outside_fine_rows": 0,
+      "outside_records": 0,
+      "result": "PASS",
+      "species_coarse_cells": 3162,
+      "accepted_coarse_cells": 181,
+      "records_species": 49140,
+      "records_kept": 2498,
+      "outside_cell_centres": []
+    },
+    "C2": [
+      {
+        "listing_id": "336",
+        "common_name": "great blue heron fannini subspecies",
+        "outside_fine_rows": 0,
+        "outside_records": 0,
+        "result": "PASS",
+        "species_coarse_cells": 4208,
+        "accepted_coarse_cells": 300,
+        "records_species": 1594545,
+        "records_kept": 373431,
+        "outside_cell_centres": []
+      },
+      {
+        "listing_id": "179",
+        "common_name": "peregrine falcon pealei subspecies",
+        "outside_fine_rows": 4,
+        "outside_records": 4,
+        "result": "FAIL",
+        "species_coarse_cells": 3304,
+        "accepted_coarse_cells": 205,
+        "records_species": 195073,
+        "records_kept": 36414,
+        "outside_cell_centres": [
+          {
+            "latitude": 50.985,
+            "longitude": -129.075
+          },
+          {
+            "latitude": 54.185,
+            "longitude": -132.085
+          },
+          {
+            "latitude": 50.875,
+            "longitude": -129.165
+          },
+          {
+            "latitude": 54.185,
+            "longitude": -132.195
+          }
+        ]
+      },
+      {
+        "listing_id": "500",
+        "common_name": "western painted turtle pacific coast population",
+        "outside_fine_rows": 0,
+        "outside_records": 0,
+        "result": "PASS",
+        "species_coarse_cells": 1068,
+        "accepted_coarse_cells": 37,
+        "records_species": 48948,
+        "records_kept": 785,
+        "outside_cell_centres": []
+      },
+      {
+        "listing_id": "501",
+        "common_name": "western painted turtle intermountain-rocky mountain population",
+        "outside_fine_rows": 0,
+        "outside_records": 0,
+        "result": "PASS",
+        "species_coarse_cells": 1068,
+        "accepted_coarse_cells": 85,
+        "records_species": 48948,
+        "records_kept": 2065,
+        "outside_cell_centres": []
+      }
+    ],
+    "C3": {
+      "gi": 170,
+      "gj": -322,
+      "score_raw": 161.0,
+      "rank": 2,
+      "result": "PASS",
+      "top_five": [
+        {
+          "gi": 193,
+          "gj": -494,
+          "score_raw": 170.0
+        },
+        {
+          "gi": 170,
+          "gj": -322,
+          "score_raw": 161.0
+        },
+        {
+          "gi": 194,
+          "gj": -494,
+          "score_raw": 143.0
+        },
+        {
+          "gi": 169,
+          "gj": -328,
+          "score_raw": 142.0
+        },
+        {
+          "gi": 173,
+          "gj": -320,
+          "score_raw": 139.0
+        }
+      ]
+    },
+    "C4": [
+      {
+        "species": "piping plover",
+        "records_kept_by_listing": {
+          "454": 8462,
+          "483": 9500
+        },
+        "result": "PASS"
+      },
+      {
+        "species": "spotted owl",
+        "records_kept_by_listing": {
+          "507": 9
+        },
+        "result": "PASS"
+      },
+      {
+        "species": "greater sage-grouse",
+        "records_kept_by_listing": {
+          "204": 13
+        },
+        "result": "PASS"
+      }
+    ],
+    "C5": {
+      "required_hand_review_count": 56,
+      "listings_requiring_hand_review": [
+        {
+          "listing_id": "139",
+          "common_name": "victorin's gentian",
+          "range_source": "province",
+          "range_ids": [
+            "prov:QC"
+          ],
+          "records_kept": 0,
+          "records_species": 501,
+          "kept_fraction": 0.0
+        },
+        {
+          "listing_id": "177",
+          "common_name": "harbour seal lacs des loups marins subspecies",
+          "range_source": "dfo",
+          "range_ids": [
+            "dfo:177"
+          ],
+          "records_kept": 0,
+          "records_species": 18022,
+          "kept_fraction": 0.0
+        },
+        {
+          "listing_id": "433",
+          "common_name": "sei whale pacific population",
+          "range_source": "dfo",
+          "range_ids": [
+            "dfo:433"
+          ],
+          "records_kept": 0,
+          "records_species": 311,
+          "kept_fraction": 0.0
+        },
+        {
+          "listing_id": "450",
+          "common_name": "non-pollinating yucca moth",
+          "range_source": "province",
+          "range_ids": [
+            "prov:AB"
+          ],
+          "records_kept": 0,
+          "records_species": 1,
+          "kept_fraction": 0.0
+        },
+        {
+          "listing_id": "509",
+          "common_name": "westslope cutthroat trout saskatchewan-nelson rivers populations",
+          "range_source": "dfo",
+          "range_ids": [
+            "dfo:509"
+          ],
+          "records_kept": 0,
+          "records_species": 662,
+          "kept_fraction": 0.0
+        },
+        {
+          "listing_id": "1009",
+          "common_name": "lake sturgeon southern hudson bay-james bay populations",
+          "range_source": "dfo",
+          "range_ids": [
+            "dfo:1009"
+          ],
+          "records_kept": 28,
+          "records_species": 584049,
+          "kept_fraction": 4.794118301717835e-05
+        },
+        {
+          "listing_id": "1017",
+          "common_name": "unarmoured threespine stickleback",
+          "range_source": "dfo",
+          "range_ids": [
+            "dfo:1017"
+          ],
+          "records_kept": 5,
+          "records_species": 12461,
+          "kept_fraction": 0.0004012519059465532
+        },
+        {
+          "listing_id": "388",
+          "common_name": "northern leopard frog rocky mountain population",
+          "range_source": "province",
+          "range_ids": [
+            "prov:BC"
+          ],
+          "records_kept": 17,
+          "records_species": 40289,
+          "kept_fraction": 0.00042195140112685845
+        },
+        {
+          "listing_id": "102",
+          "common_name": "paxton lake benthic threespine stickleback",
+          "range_source": "dfo",
+          "range_ids": [
+            "dfo:102"
+          ],
+          "records_kept": 10,
+          "records_species": 12461,
+          "kept_fraction": 0.0008025038118931064
+        },
+        {
+          "listing_id": "103",
+          "common_name": "paxton lake limnetic threespine stickleback",
+          "range_source": "dfo",
+          "range_ids": [
+            "dfo:103"
+          ],
+          "records_kept": 10,
+          "records_species": 12461,
+          "kept_fraction": 0.0008025038118931064
+        },
+        {
+          "listing_id": "140",
+          "common_name": "vananda creek benthic threespine stickleback",
+          "range_source": "dfo",
+          "range_ids": [
+            "dfo:140"
+          ],
+          "records_kept": 10,
+          "records_species": 12461,
+          "kept_fraction": 0.0008025038118931064
+        },
+        {
+          "listing_id": "141",
+          "common_name": "vananda creek limnetic threespine stickleback",
+          "range_source": "dfo",
+          "range_ids": [
+            "dfo:141"
+          ],
+          "records_kept": 10,
+          "records_species": 12461,
+          "kept_fraction": 0.0008025038118931064
+        },
+        {
+          "listing_id": "1013",
+          "common_name": "rainbow trout athabasca river populations",
+          "range_source": "dfo",
+          "range_ids": [
+            "dfo:1013"
+          ],
+          "records_kept": 33,
+          "records_species": 40666,
+          "kept_fraction": 0.0008114887129297201
+        },
+        {
+          "listing_id": "378",
+          "common_name": "rainbow smelt lake utopia small-bodied population",
+          "range_source": "dfo",
+          "range_ids": [
+            "dfo:378"
+          ],
+          "records_kept": 9,
+          "records_species": 8277,
+          "kept_fraction": 0.0010873504893077202
+        },
+        {
+          "listing_id": "1521",
+          "common_name": "rainbow smelt lake utopia large-bodied population",
+          "range_source": "dfo",
+          "range_ids": [
+            "dfo:1521"
+          ],
+          "records_kept": 10,
+          "records_species": 8277,
+          "kept_fraction": 0.0012081672103419112
+        },
+        {
+          "listing_id": "493",
+          "common_name": "misty lake lentic threespine stickleback",
+          "range_source": "dfo",
+          "range_ids": [
+            "dfo:493"
+          ],
+          "records_kept": 17,
+          "records_species": 12461,
+          "kept_fraction": 0.001364256480218281
+        },
+        {
+          "listing_id": "494",
+          "common_name": "misty lake lotic threespine stickleback",
+          "range_source": "dfo",
+          "range_ids": [
+            "dfo:494"
+          ],
+          "records_kept": 17,
+          "records_species": 12461,
+          "kept_fraction": 0.001364256480218281
+        },
+        {
+          "listing_id": "155",
+          "common_name": "basking shark pacific population",
+          "range_source": "dfo",
+          "range_ids": [
+            "dfo:155"
+          ],
+          "records_kept": 1,
+          "records_species": 704,
+          "kept_fraction": 0.0014204545454545455
+        },
+        {
+          "listing_id": "97",
+          "common_name": "enos lake benthic threespine stickleback",
+          "range_source": "dfo",
+          "range_ids": [
+            "dfo:97"
+          ],
+          "records_kept": 24,
+          "records_species": 12461,
+          "kept_fraction": 0.0019260091485434555
+        },
+        {
+          "listing_id": "98",
+          "common_name": "enos lake limnetic threespine stickleback",
+          "range_source": "dfo",
+          "range_ids": [
+            "dfo:98"
+          ],
+          "records_kept": 24,
+          "records_species": 12461,
+          "kept_fraction": 0.0019260091485434555
+        },
+        {
+          "listing_id": "1007",
+          "common_name": "giant threespine stickleback",
+          "range_source": "dfo",
+          "range_ids": [
+            "dfo:1007"
+          ],
+          "records_kept": 24,
+          "records_species": 12461,
+          "kept_fraction": 0.0019260091485434555
+        },
+        {
+          "listing_id": "142",
+          "common_name": "athabasca thrift",
+          "range_source": "province",
+          "range_ids": [
+            "prov:SK"
+          ],
+          "records_kept": 4,
+          "records_species": 1744,
+          "kept_fraction": 0.0022935779816513763
+        },
+        {
+          "listing_id": "423",
+          "common_name": "banded killifish newfoundland populations",
+          "range_source": "dfo",
+          "range_ids": [
+            "dfo:423"
+          ],
+          "records_kept": 5,
+          "records_species": 1861,
+          "kept_fraction": 0.0026867275658248252
+        },
+        {
+          "listing_id": "53",
+          "common_name": "american badger jacksoni subspecies",
+          "range_source": "province",
+          "range_ids": [
+            "prov:ON"
+          ],
+          "records_kept": 4,
+          "records_species": 683,
+          "kept_fraction": 0.005856515373352855
+        },
+        {
+          "listing_id": "215",
+          "common_name": "eastern persius duskywing",
+          "range_source": "province",
+          "range_ids": [
+            "prov:ON"
+          ],
+          "records_kept": 13,
+          "records_species": 2086,
+          "kept_fraction": 0.006232023010546501
+        },
+        {
+          "listing_id": "499",
+          "common_name": "westslope cutthroat trout pacific populations",
+          "range_source": "dfo",
+          "range_ids": [
+            "dfo:499"
+          ],
+          "records_kept": 5,
+          "records_species": 662,
+          "kept_fraction": 0.0075528700906344415
+        },
+        {
+          "listing_id": "37",
+          "common_name": "blanding's turtle nova scotia population",
+          "range_source": "province",
+          "range_ids": [
+            "prov:NS"
+          ],
+          "records_kept": 66,
+          "records_species": 7117,
+          "kept_fraction": 0.00927357032457496
+        },
+        {
+          "listing_id": "525",
+          "common_name": "sand-dune short-capsuled willow",
+          "range_source": "province",
+          "range_ids": [
+            "prov:SK"
+          ],
+          "records_kept": 5,
+          "records_species": 379,
+          "kept_fraction": 0.013192612137203167
+        },
+        {
+          "listing_id": "1026",
+          "common_name": "griscom's arnica",
+          "range_source": "province",
+          "range_ids": [
+            "prov:NL",
+            "prov:QC"
+          ],
+          "records_kept": 3,
+          "records_species": 209,
+          "kept_fraction": 0.014354066985645933
+        },
+        {
+          "listing_id": "500",
+          "common_name": "western painted turtle pacific coast population",
+          "range_source": "ecozone",
+          "range_ids": [
+            "eco:13:BC"
+          ],
+          "records_kept": 785,
+          "records_species": 48948,
+          "kept_fraction": 0.016037427474054098
+        },
+        {
+          "listing_id": "12",
+          "common_name": "blue whale pacific population",
+          "range_source": "dfo",
+          "range_ids": [
+            "dfo:12"
+          ],
+          "records_kept": 8,
+          "records_species": 491,
+          "kept_fraction": 0.016293279022403257
+        },
+        {
+          "listing_id": "40",
+          "common_name": "dun skipper vestris subspecies",
+          "range_source": "province",
+          "range_ids": [
+            "prov:BC"
+          ],
+          "records_kept": 167,
+          "records_species": 9530,
+          "kept_fraction": 0.01752360965372508
+        },
+        {
+          "listing_id": "4",
+          "common_name": "fin whale pacific population",
+          "range_source": "dfo",
+          "range_ids": [
+            "dfo:4"
+          ],
+          "records_kept": 111,
+          "records_species": 6313,
+          "kept_fraction": 0.01758276572152701
+        },
+        {
+          "listing_id": "154",
+          "common_name": "beluga whale cumberland sound population",
+          "range_source": "dfo",
+          "range_ids": [
+            "dfo:154"
+          ],
+          "records_kept": 29,
+          "records_species": 1515,
+          "kept_fraction": 0.01914191419141914
+        },
+        {
+          "listing_id": "29",
+          "common_name": "barn owl eastern population",
+          "range_source": "province",
+          "range_ids": [
+            "prov:ON"
+          ],
+          "records_kept": 1,
+          "records_species": 47,
+          "kept_fraction": 0.02127659574468085
+        },
+        {
+          "listing_id": "75",
+          "common_name": "short-tailed albatross",
+          "range_source": "province",
+          "range_ids": [
+            "prov:BC"
+          ],
+          "records_kept": 3,
+          "records_species": 133,
+          "kept_fraction": 0.022556390977443608
+        },
+        {
+          "listing_id": "431",
+          "common_name": "northern dusky salamander carolinian population",
+          "range_source": "province",
+          "range_ids": [
+            "prov:ON"
+          ],
+          "records_kept": 10,
+          "records_species": 383,
+          "kept_fraction": 0.02610966057441253
+        },
+        {
+          "listing_id": "425",
+          "common_name": "atlantic whitefish",
+          "range_source": "dfo",
+          "range_ids": [
+            "dfo:425"
+          ],
+          "records_kept": 92,
+          "records_species": 3315,
+          "kept_fraction": 0.027752639517345398
+        },
+        {
+          "listing_id": "1501",
+          "common_name": "large-headed woolly yarrow",
+          "range_source": "province",
+          "range_ids": [
+            "prov:SK"
+          ],
+          "records_kept": 990,
+          "records_species": 35224,
+          "kept_fraction": 0.02810583692936634
+        },
+        {
+          "listing_id": "308",
+          "common_name": "american marten newfoundland population",
+          "range_source": "province",
+          "range_ids": [
+            "prov:NL"
+          ],
+          "records_kept": 53,
+          "records_species": 1833,
+          "kept_fraction": 0.028914348063284235
+        },
+        {
+          "listing_id": "510",
+          "common_name": "harbour porpoise pacific ocean population",
+          "range_source": "dfo",
+          "range_ids": [
+            "dfo:510"
+          ],
+          "records_kept": 404,
+          "records_species": 13551,
+          "kept_fraction": 0.02981329791159324
+        },
+        {
+          "listing_id": "170",
+          "common_name": "streaked horned lark",
+          "range_source": "province",
+          "range_ids": [
+            "prov:BC"
+          ],
+          "records_kept": 8127,
+          "records_species": 258006,
+          "kept_fraction": 0.03149926745889631
+        },
+        {
+          "listing_id": "469",
+          "common_name": "red knot islandica subspecies",
+          "range_source": "province",
+          "range_ids": [
+            "prov:NT",
+            "prov:NU"
+          ],
+          "records_kept": 1224,
+          "records_species": 34214,
+          "kept_fraction": 0.035774829017361315
+        },
+        {
+          "listing_id": "129",
+          "common_name": "hotwater physa",
+          "range_source": "dfo",
+          "range_ids": [
+            "dfo:129"
+          ],
+          "records_kept": 13,
+          "records_species": 348,
+          "kept_fraction": 0.03735632183908046
+        },
+        {
+          "listing_id": "331",
+          "common_name": "nuttall's cottontail nuttallii subspecies",
+          "range_source": "province",
+          "range_ids": [
+            "prov:BC"
+          ],
+          "records_kept": 51,
+          "records_species": 1347,
+          "kept_fraction": 0.0378619153674833
+        },
+        {
+          "listing_id": "400",
+          "common_name": "nooksack dace",
+          "range_source": "dfo",
+          "range_ids": [
+            "dfo:400"
+          ],
+          "records_kept": 52,
+          "records_species": 1323,
+          "kept_fraction": 0.039304610733182165
+        },
+        {
+          "listing_id": "501",
+          "common_name": "western painted turtle intermountain-rocky mountain population",
+          "range_source": "ecozone",
+          "range_ids": [
+            "eco:14:BC"
+          ],
+          "records_kept": 2065,
+          "records_species": 48948,
+          "kept_fraction": 0.042187627686524475
+        },
+        {
+          "listing_id": "125",
+          "common_name": "dolly varden western arctic populations",
+          "range_source": "dfo",
+          "range_ids": [
+            "dfo:125"
+          ],
+          "records_kept": 48,
+          "records_species": 1078,
+          "kept_fraction": 0.04452690166975881
+        },
+        {
+          "listing_id": "121",
+          "common_name": "northern goshawk laingi subspecies",
+          "range_source": "ecozone",
+          "range_ids": [
+            "eco:13:BC"
+          ],
+          "records_kept": 2498,
+          "records_species": 49140,
+          "kept_fraction": 0.05083435083435083
+        },
+        {
+          "listing_id": "480",
+          "common_name": "savannah sparrow princeps subspecies",
+          "range_source": "province",
+          "range_ids": [
+            "prov:NS"
+          ],
+          "records_kept": 47756,
+          "records_species": 826769,
+          "kept_fraction": 0.05776220443678948
+        },
+        {
+          "listing_id": "468",
+          "common_name": "horned grebe magdalen islands population",
+          "range_source": "province",
+          "range_ids": [
+            "prov:QC"
+          ],
+          "records_kept": 16463,
+          "records_species": 262471,
+          "kept_fraction": 0.06272311988753043
+        },
+        {
+          "listing_id": "152",
+          "common_name": "leatherback sea turtle pacific population",
+          "range_source": "dfo",
+          "range_ids": [
+            "dfo:152"
+          ],
+          "records_kept": 12,
+          "records_species": 183,
+          "kept_fraction": 0.06557377049180328
+        },
+        {
+          "listing_id": "374",
+          "common_name": "eastern ribbonsnake atlantic population",
+          "range_source": "province",
+          "range_ids": [
+            "prov:NS"
+          ],
+          "records_kept": 121,
+          "records_species": 1665,
+          "kept_fraction": 0.07267267267267268
+        },
+        {
+          "listing_id": "1004",
+          "common_name": "bull trout western arctic populations",
+          "range_source": "dfo",
+          "range_ids": [
+            "dfo:1004"
+          ],
+          "records_kept": 32,
+          "records_species": 372,
+          "kept_fraction": 0.08602150537634409
+        },
+        {
+          "listing_id": "114",
+          "common_name": "red crossbill percna subspecies",
+          "range_source": "province",
+          "range_ids": [
+            "prov:NL",
+            "prov:QC"
+          ],
+          "records_kept": 15092,
+          "records_species": 173928,
+          "kept_fraction": 0.0867715376477623
+        },
+        {
+          "listing_id": "62",
+          "common_name": "caribou atlantic-gasp\u00c3\u00a9sie population",
+          "range_source": "province",
+          "range_ids": [
+            "prov:QC"
+          ],
+          "records_kept": 312,
+          "records_species": 3490,
+          "kept_fraction": 0.08939828080229226
+        }
+      ],
+      "review_completion": "Not established by the gate log, must be verified against the review artifact."
+    },
+    "all_automated_criteria_passed": false,
+    "failure": "C2 pealei accepts four subspecies-identified records outside its buffered range."
+  },
+  "candidate_spatial_comparison": {
+    "live_cells": 13914,
+    "candidate_cells": 11999,
+    "cells_gained": 4,
+    "cells_lost": 1919,
+    "spearman_union_zero_fill_reported": 0.9107,
+    "spearman_intersection_reported": 0.9395,
+    "top100_overlap": 84
+  },
+  "candidate_largest_record_losses": [
+    {
+      "listing_id": "336",
+      "common_name": "great blue heron fannini subspecies",
+      "range_source": "ecozone",
+      "records_kept": 373431,
+      "records_species": 1594545,
+      "record_loss": 1221114
+    },
+    {
+      "listing_id": "480",
+      "common_name": "savannah sparrow princeps subspecies",
+      "range_source": "province",
+      "records_kept": 47756,
+      "records_species": 826769,
+      "record_loss": 779013
+    },
+    {
+      "listing_id": "1009",
+      "common_name": "lake sturgeon southern hudson bay-james bay populations",
+      "range_source": "dfo",
+      "records_kept": 28,
+      "records_species": 584049,
+      "record_loss": 584021
+    },
+    {
+      "listing_id": "170",
+      "common_name": "streaked horned lark",
+      "range_source": "province",
+      "records_kept": 8127,
+      "records_species": 258006,
+      "record_loss": 249879
+    },
+    {
+      "listing_id": "468",
+      "common_name": "horned grebe magdalen islands population",
+      "range_source": "province",
+      "records_kept": 16463,
+      "records_species": 262471,
+      "record_loss": 246008
+    },
+    {
+      "listing_id": "114",
+      "common_name": "red crossbill percna subspecies",
+      "range_source": "province",
+      "records_kept": 15092,
+      "records_species": 173928,
+      "record_loss": 158836
+    },
+    {
+      "listing_id": "179",
+      "common_name": "peregrine falcon pealei subspecies",
+      "range_source": "ecozone",
+      "records_kept": 36414,
+      "records_species": 195073,
+      "record_loss": 158659
+    },
+    {
+      "listing_id": "410",
+      "common_name": "barrow's goldeneye eastern population",
+      "range_source": "province",
+      "records_kept": 59033,
+      "records_species": 183382,
+      "record_loss": 124349
+    },
+    {
+      "listing_id": "252",
+      "common_name": "coastal vesper sparrow",
+      "range_source": "province",
+      "records_kept": 35323,
+      "records_species": 153258,
+      "record_loss": 117935
+    },
+    {
+      "listing_id": "437",
+      "common_name": "harlequin duck eastern population",
+      "range_source": "province",
+      "records_kept": 24955,
+      "records_species": 129523,
+      "record_loss": 104568
+    },
+    {
+      "listing_id": "500",
+      "common_name": "western painted turtle pacific coast population",
+      "range_source": "ecozone",
+      "records_kept": 785,
+      "records_species": 48948,
+      "record_loss": 48163
+    },
+    {
+      "listing_id": "501",
+      "common_name": "western painted turtle intermountain-rocky mountain population",
+      "range_source": "ecozone",
+      "records_kept": 2065,
+      "records_species": 48948,
+      "record_loss": 46883
+    },
+    {
+      "listing_id": "121",
+      "common_name": "northern goshawk laingi subspecies",
+      "range_source": "ecozone",
+      "records_kept": 2498,
+      "records_species": 49140,
+      "record_loss": 46642
+    },
+    {
+      "listing_id": "440",
+      "common_name": "atlantic salmon inner bay of fundy population",
+      "range_source": "dfo",
+      "records_kept": 181231,
+      "records_species": 225148,
+      "record_loss": 43917
+    },
+    {
+      "listing_id": "1013",
+      "common_name": "rainbow trout athabasca river populations",
+      "range_source": "dfo",
+      "records_kept": 33,
+      "records_species": 40666,
+      "record_loss": 40633
+    },
+    {
+      "listing_id": "388",
+      "common_name": "northern leopard frog rocky mountain population",
+      "range_source": "province",
+      "records_kept": 17,
+      "records_species": 40289,
+      "record_loss": 40272
+    },
+    {
+      "listing_id": "295",
+      "common_name": "northern saw-whet owl brooksi subspecies",
+      "range_source": "province",
+      "records_kept": 10112,
+      "records_species": 44885,
+      "record_loss": 34773
+    },
+    {
+      "listing_id": "1501",
+      "common_name": "large-headed woolly yarrow",
+      "range_source": "province",
+      "records_kept": 990,
+      "records_species": 35224,
+      "record_loss": 34234
+    },
+    {
+      "listing_id": "469",
+      "common_name": "red knot islandica subspecies",
+      "range_source": "province",
+      "records_kept": 1224,
+      "records_species": 34214,
+      "record_loss": 32990
+    },
+    {
+      "listing_id": "384",
+      "common_name": "northern leopard frog western boreal/prairie populations",
+      "range_source": "province",
+      "records_kept": 11209,
+      "records_species": 40289,
+      "record_loss": 29080
+    }
+  ],
+  "method_tables": {
+    "Pooled": {
+      "species_with_test_records": 38,
+      "true_records": 6148,
+      "false_records": 48346,
+      "methods": {
+        "live": {
+          "true_records_counted": 6148,
+          "recall_reported": 1.0,
+          "false_records_counted": 48346,
+          "false_share_reported": 1.0,
+          "recall_from_counts": 1.0,
+          "false_share_from_counts": 1.0
+        },
+        "allowlist": {
+          "true_records_counted": 1010,
+          "recall_reported": 0.164,
+          "false_records_counted": 37,
+          "false_share_reported": 0.001,
+          "recall_from_counts": 0.164281067013663,
+          "false_share_from_counts": 0.0007653166756298349
+        },
+        "clip": {
+          "true_records_counted": 4835,
+          "recall_reported": 0.786,
+          "false_records_counted": 7229,
+          "false_share_reported": 0.15,
+          "recall_from_counts": 0.7864346128822381,
+          "false_share_from_counts": 0.14952633103048857
+        },
+        "clip_no_override": {
+          "true_records_counted": 4835,
+          "recall_reported": 0.786,
+          "false_records_counted": 7230,
+          "false_share_reported": 0.15,
+          "recall_from_counts": 0.7864346128822381,
+          "false_share_from_counts": 0.14954701526496506
+        }
+      }
+    },
+    "Pooled without UNCLEAR": {
+      "species_with_test_records": 35,
+      "true_records": 6133,
+      "false_records": 48301,
+      "methods": {
+        "live": {
+          "true_records_counted": 6133,
+          "recall_reported": 1.0,
+          "false_records_counted": 48301,
+          "false_share_reported": 1.0,
+          "recall_from_counts": 1.0,
+          "false_share_from_counts": 1.0
+        },
+        "allowlist": {
+          "true_records_counted": 995,
+          "recall_reported": 0.162,
+          "false_records_counted": 11,
+          "false_share_reported": 0.0,
+          "recall_from_counts": 0.16223707810207078,
+          "false_share_from_counts": 0.0002277385561375541
+        },
+        "clip": {
+          "true_records_counted": 4820,
+          "recall_reported": 0.786,
+          "false_records_counted": 7205,
+          "false_share_reported": 0.149,
+          "recall_from_counts": 0.785912277841187,
+          "false_share_from_counts": 0.14916875427009793
+        },
+        "clip_no_override": {
+          "true_records_counted": 4820,
+          "recall_reported": 0.786,
+          "false_records_counted": 7206,
+          "false_share_reported": 0.149,
+          "recall_from_counts": 0.785912277841187,
+          "false_share_from_counts": 0.14918945777520135
+        }
+      }
+    }
+  },
+  "per_species_test_methods_n_at_least_20": {
+    "Achillea millefolium": {
+      "classes": [
+        "SPILLS"
+      ],
+      "true_records": 3,
+      "false_records": 479,
+      "methods": {
+        "live": {
+          "true_records_counted": 3,
+          "false_records_counted": 479
+        },
+        "allowlist": {
+          "true_records_counted": 0,
+          "false_records_counted": 0
+        },
+        "clip": {
+          "true_records_counted": 3,
+          "false_records_counted": 12
+        },
+        "clip_no_override": {
+          "true_records_counted": 3,
+          "false_records_counted": 12
+        }
+      }
+    },
+    "Aegolius acadicus": {
+      "classes": [
+        "SPILLS"
+      ],
+      "true_records": 72,
+      "false_records": 37,
+      "methods": {
+        "live": {
+          "true_records_counted": 72,
+          "false_records_counted": 37
+        },
+        "allowlist": {
+          "true_records_counted": 0,
+          "false_records_counted": 0
+        },
+        "clip": {
+          "true_records_counted": 72,
+          "false_records_counted": 19
+        },
+        "clip_no_override": {
+          "true_records_counted": 72,
+          "false_records_counted": 19
+        }
+      }
+    },
+    "Ardea herodias": {
+      "classes": [
+        "SPILLS"
+      ],
+      "true_records": 296,
+      "false_records": 57,
+      "methods": {
+        "live": {
+          "true_records_counted": 296,
+          "false_records_counted": 57
+        },
+        "allowlist": {
+          "true_records_counted": 0,
+          "false_records_counted": 0
+        },
+        "clip": {
+          "true_records_counted": 296,
+          "false_records_counted": 0
+        },
+        "clip_no_override": {
+          "true_records_counted": 296,
+          "false_records_counted": 1
+        }
+      }
+    },
+    "Armeria maritima": {
+      "classes": [
+        "SPILLS"
+      ],
+      "true_records": 4,
+      "false_records": 272,
+      "methods": {
+        "live": {
+          "true_records_counted": 4,
+          "false_records_counted": 272
+        },
+        "allowlist": {
+          "true_records_counted": 0,
+          "false_records_counted": 0
+        },
+        "clip": {
+          "true_records_counted": 4,
+          "false_records_counted": 0
+        },
+        "clip_no_override": {
+          "true_records_counted": 4,
+          "false_records_counted": 0
+        }
+      }
+    },
+    "Arnica griscomii": {
+      "classes": [
+        "SPILLS"
+      ],
+      "true_records": 3,
+      "false_records": 142,
+      "methods": {
+        "live": {
+          "true_records_counted": 3,
+          "false_records_counted": 142
+        },
+        "allowlist": {
+          "true_records_counted": 0,
+          "false_records_counted": 0
+        },
+        "clip": {
+          "true_records_counted": 3,
+          "false_records_counted": 0
+        },
+        "clip_no_override": {
+          "true_records_counted": 3,
+          "false_records_counted": 0
+        }
+      }
+    },
+    "Asplenium scolopendrium": {
+      "classes": [
+        "COVERS"
+      ],
+      "true_records": 280,
+      "false_records": 11,
+      "methods": {
+        "live": {
+          "true_records_counted": 280,
+          "false_records_counted": 11
+        },
+        "allowlist": {
+          "true_records_counted": 280,
+          "false_records_counted": 11
+        },
+        "clip": {
+          "true_records_counted": 280,
+          "false_records_counted": 0
+        },
+        "clip_no_override": {
+          "true_records_counted": 280,
+          "false_records_counted": 0
+        }
+      }
+    },
+    "Bartonia paniculata": {
+      "classes": [
+        "SPILLS"
+      ],
+      "true_records": 22,
+      "false_records": 22,
+      "methods": {
+        "live": {
+          "true_records_counted": 22,
+          "false_records_counted": 22
+        },
+        "allowlist": {
+          "true_records_counted": 0,
+          "false_records_counted": 0
+        },
+        "clip": {
+          "true_records_counted": 21,
+          "false_records_counted": 0
+        },
+        "clip_no_override": {
+          "true_records_counted": 21,
+          "false_records_counted": 0
+        }
+      }
+    },
+    "Chrysemys picta": {
+      "classes": [
+        "SPILLS"
+      ],
+      "true_records": 3309,
+      "false_records": 32003,
+      "methods": {
+        "live": {
+          "true_records_counted": 3309,
+          "false_records_counted": 32003
+        },
+        "allowlist": {
+          "true_records_counted": 0,
+          "false_records_counted": 0
+        },
+        "clip": {
+          "true_records_counted": 2007,
+          "false_records_counted": 13
+        },
+        "clip_no_override": {
+          "true_records_counted": 2007,
+          "false_records_counted": 13
+        }
+      }
+    },
+    "Cicindela formosa": {
+      "classes": [
+        "SPILLS"
+      ],
+      "true_records": 142,
+      "false_records": 618,
+      "methods": {
+        "live": {
+          "true_records_counted": 142,
+          "false_records_counted": 618
+        },
+        "allowlist": {
+          "true_records_counted": 0,
+          "false_records_counted": 0
+        },
+        "clip": {
+          "true_records_counted": 142,
+          "false_records_counted": 6
+        },
+        "clip_no_override": {
+          "true_records_counted": 142,
+          "false_records_counted": 6
+        }
+      }
+    },
+    "Cicuta maculata": {
+      "classes": [
+        "SPILLS"
+      ],
+      "true_records": 92,
+      "false_records": 121,
+      "methods": {
+        "live": {
+          "true_records_counted": 92,
+          "false_records_counted": 121
+        },
+        "allowlist": {
+          "true_records_counted": 0,
+          "false_records_counted": 0
+        },
+        "clip": {
+          "true_records_counted": 92,
+          "false_records_counted": 90
+        },
+        "clip_no_override": {
+          "true_records_counted": 92,
+          "false_records_counted": 90
+        }
+      }
+    },
+    "Coluber constrictor": {
+      "classes": [
+        "COVERS"
+      ],
+      "true_records": 558,
+      "false_records": 0,
+      "methods": {
+        "live": {
+          "true_records_counted": 558,
+          "false_records_counted": 0
+        },
+        "allowlist": {
+          "true_records_counted": 558,
+          "false_records_counted": 0
+        },
+        "clip": {
+          "true_records_counted": 558,
+          "false_records_counted": 0
+        },
+        "clip_no_override": {
+          "true_records_counted": 558,
+          "false_records_counted": 0
+        }
+      }
+    },
+    "Eremophila alpestris": {
+      "classes": [
+        "SPILLS"
+      ],
+      "true_records": 0,
+      "false_records": 21,
+      "methods": {
+        "live": {
+          "true_records_counted": 0,
+          "false_records_counted": 21
+        },
+        "allowlist": {
+          "true_records_counted": 0,
+          "false_records_counted": 0
+        },
+        "clip": {
+          "true_records_counted": 0,
+          "false_records_counted": 3
+        },
+        "clip_no_override": {
+          "true_records_counted": 0,
+          "false_records_counted": 3
+        }
+      }
+    },
+    "Erynnis persius": {
+      "classes": [
+        "SPILLS"
+      ],
+      "true_records": 0,
+      "false_records": 52,
+      "methods": {
+        "live": {
+          "true_records_counted": 0,
+          "false_records_counted": 52
+        },
+        "allowlist": {
+          "true_records_counted": 0,
+          "false_records_counted": 0
+        },
+        "clip": {
+          "true_records_counted": 0,
+          "false_records_counted": 4
+        },
+        "clip_no_override": {
+          "true_records_counted": 0,
+          "false_records_counted": 4
+        }
+      }
+    },
+    "Falco peregrinus": {
+      "classes": [
+        "SPILLS"
+      ],
+      "true_records": 18,
+      "false_records": 31,
+      "methods": {
+        "live": {
+          "true_records_counted": 18,
+          "false_records_counted": 31
+        },
+        "allowlist": {
+          "true_records_counted": 0,
+          "false_records_counted": 0
+        },
+        "clip": {
+          "true_records_counted": 14,
+          "false_records_counted": 10
+        },
+        "clip_no_override": {
+          "true_records_counted": 14,
+          "false_records_counted": 10
+        }
+      }
+    },
+    "Loxia curvirostra": {
+      "classes": [
+        "SPILLS"
+      ],
+      "true_records": 6,
+      "false_records": 24,
+      "methods": {
+        "live": {
+          "true_records_counted": 6,
+          "false_records_counted": 24
+        },
+        "allowlist": {
+          "true_records_counted": 0,
+          "false_records_counted": 0
+        },
+        "clip": {
+          "true_records_counted": 6,
+          "false_records_counted": 1
+        },
+        "clip_no_override": {
+          "true_records_counted": 6,
+          "false_records_counted": 1
+        }
+      }
+    },
+    "Megascops kennicottii": {
+      "classes": [
+        "COVERS"
+      ],
+      "true_records": 97,
+      "false_records": 0,
+      "methods": {
+        "live": {
+          "true_records_counted": 97,
+          "false_records_counted": 0
+        },
+        "allowlist": {
+          "true_records_counted": 97,
+          "false_records_counted": 0
+        },
+        "clip": {
+          "true_records_counted": 97,
+          "false_records_counted": 0
+        },
+        "clip_no_override": {
+          "true_records_counted": 97,
+          "false_records_counted": 0
+        }
+      }
+    },
+    "Mustela erminea": {
+      "classes": [
+        "SPILLS"
+      ],
+      "true_records": 0,
+      "false_records": 1310,
+      "methods": {
+        "live": {
+          "true_records_counted": 0,
+          "false_records_counted": 1310
+        },
+        "allowlist": {
+          "true_records_counted": 0,
+          "false_records_counted": 0
+        },
+        "clip": {
+          "true_records_counted": 0,
+          "false_records_counted": 184
+        },
+        "clip_no_override": {
+          "true_records_counted": 0,
+          "false_records_counted": 184
+        }
+      }
+    },
+    "Nerodia sipedon": {
+      "classes": [
+        "SPILLS"
+      ],
+      "true_records": 204,
+      "false_records": 6989,
+      "methods": {
+        "live": {
+          "true_records_counted": 204,
+          "false_records_counted": 6989
+        },
+        "allowlist": {
+          "true_records_counted": 0,
+          "false_records_counted": 0
+        },
+        "clip": {
+          "true_records_counted": 204,
+          "false_records_counted": 6847
+        },
+        "clip_no_override": {
+          "true_records_counted": 204,
+          "false_records_counted": 6847
+        }
+      }
+    },
+    "Occidryas editha": {
+      "classes": [
+        "SPILLS"
+      ],
+      "true_records": 117,
+      "false_records": 9,
+      "methods": {
+        "live": {
+          "true_records_counted": 117,
+          "false_records_counted": 9
+        },
+        "allowlist": {
+          "true_records_counted": 0,
+          "false_records_counted": 0
+        },
+        "clip": {
+          "true_records_counted": 117,
+          "false_records_counted": 1
+        },
+        "clip_no_override": {
+          "true_records_counted": 117,
+          "false_records_counted": 1
+        }
+      }
+    },
+    "Passerculus sandwichensis": {
+      "classes": [
+        "SPILLS"
+      ],
+      "true_records": 103,
+      "false_records": 44,
+      "methods": {
+        "live": {
+          "true_records_counted": 103,
+          "false_records_counted": 44
+        },
+        "allowlist": {
+          "true_records_counted": 0,
+          "false_records_counted": 0
+        },
+        "clip": {
+          "true_records_counted": 102,
+          "false_records_counted": 1
+        },
+        "clip_no_override": {
+          "true_records_counted": 102,
+          "false_records_counted": 1
+        }
+      }
+    },
+    "Phoca vitulina": {
+      "classes": [
+        "SPILLS"
+      ],
+      "true_records": 0,
+      "false_records": 5350,
+      "methods": {
+        "live": {
+          "true_records_counted": 0,
+          "false_records_counted": 5350
+        },
+        "allowlist": {
+          "true_records_counted": 0,
+          "false_records_counted": 0
+        },
+        "clip": {
+          "true_records_counted": 0,
+          "false_records_counted": 0
+        },
+        "clip_no_override": {
+          "true_records_counted": 0,
+          "false_records_counted": 0
+        }
+      }
+    },
+    "Phocoena phocoena": {
+      "classes": [
+        "SPILLS"
+      ],
+      "true_records": 94,
+      "false_records": 96,
+      "methods": {
+        "live": {
+          "true_records_counted": 94,
+          "false_records_counted": 96
+        },
+        "allowlist": {
+          "true_records_counted": 0,
+          "false_records_counted": 0
+        },
+        "clip": {
+          "true_records_counted": 94,
+          "false_records_counted": 0
+        },
+        "clip_no_override": {
+          "true_records_counted": 94,
+          "false_records_counted": 0
+        }
+      }
+    },
+    "Pituophis catenifer": {
+      "classes": [
+        "SPILLS"
+      ],
+      "true_records": 636,
+      "false_records": 457,
+      "methods": {
+        "live": {
+          "true_records_counted": 636,
+          "false_records_counted": 457
+        },
+        "allowlist": {
+          "true_records_counted": 0,
+          "false_records_counted": 0
+        },
+        "clip": {
+          "true_records_counted": 636,
+          "false_records_counted": 1
+        },
+        "clip_no_override": {
+          "true_records_counted": 636,
+          "false_records_counted": 1
+        }
+      }
+    },
+    "Pooecetes gramineus": {
+      "classes": [
+        "SPILLS"
+      ],
+      "true_records": 3,
+      "false_records": 21,
+      "methods": {
+        "live": {
+          "true_records_counted": 3,
+          "false_records_counted": 21
+        },
+        "allowlist": {
+          "true_records_counted": 0,
+          "false_records_counted": 0
+        },
+        "clip": {
+          "true_records_counted": 3,
+          "false_records_counted": 6
+        },
+        "clip_no_override": {
+          "true_records_counted": 3,
+          "false_records_counted": 6
+        }
+      }
+    },
+    "Tanacetum bipinnatum": {
+      "classes": [
+        "SPILLS"
+      ],
+      "true_records": 0,
+      "false_records": 120,
+      "methods": {
+        "live": {
+          "true_records_counted": 0,
+          "false_records_counted": 120
+        },
+        "allowlist": {
+          "true_records_counted": 0,
+          "false_records_counted": 0
+        },
+        "clip": {
+          "true_records_counted": 0,
+          "false_records_counted": 7
+        },
+        "clip_no_override": {
+          "true_records_counted": 0,
+          "false_records_counted": 7
+        }
+      }
+    },
+    "Taxidea taxus": {
+      "classes": [
+        "UNCLEAR"
+      ],
+      "true_records": 8,
+      "false_records": 21,
+      "methods": {
+        "live": {
+          "true_records_counted": 8,
+          "false_records_counted": 21
+        },
+        "allowlist": {
+          "true_records_counted": 8,
+          "false_records_counted": 21
+        },
+        "clip": {
+          "true_records_counted": 8,
+          "false_records_counted": 5
+        },
+        "clip_no_override": {
+          "true_records_counted": 8,
+          "false_records_counted": 5
+        }
+      }
+    }
+  },
+  "incremental_sensitivities": {
+    "3a clip": {
+      "incremental_true_records": 3830,
+      "incremental_false_records": 7224,
+      "true_share_reported": 0.346,
+      "true_share_from_counts": 0.3464809118870997,
+      "bootstrap_ci95_reported": [
+        0.086,
+        0.97
+      ],
+      "species_with_incremental_test_records": 26
+    },
+    "3b clip without overrides": {
+      "incremental_true_records": 3830,
+      "incremental_false_records": 7225,
+      "true_share_reported": 0.346,
+      "true_share_from_counts": 0.3464495703301673,
+      "bootstrap_ci95_reported": [
+        0.084,
+        0.972
+      ],
+      "species_with_incremental_test_records": 26
+    },
+    "3a clip without UNCLEAR": {
+      "incremental_true_records": 3830,
+      "incremental_false_records": 7205,
+      "true_share_reported": 0.347,
+      "true_share_from_counts": 0.3470774807430902,
+      "bootstrap_ci95_reported": [
+        0.085,
+        0.973
+      ],
+      "species_with_incremental_test_records": 25
+    }
+  },
+  "per_species_incremental_n_at_least_20": {
+    "Aegolius acadicus": {
+      "classes": [
+        "SPILLS"
+      ],
+      "incremental_true_records": 72,
+      "incremental_total_records": 91,
+      "true_share_reported": 0.791,
+      "flagged": false
+    },
+    "Ardea herodias": {
+      "classes": [
+        "SPILLS"
+      ],
+      "incremental_true_records": 296,
+      "incremental_total_records": 296,
+      "true_share_reported": 1.0,
+      "flagged": false
+    },
+    "Bartonia paniculata": {
+      "classes": [
+        "SPILLS"
+      ],
+      "incremental_true_records": 21,
+      "incremental_total_records": 21,
+      "true_share_reported": 1.0,
+      "flagged": false
+    },
+    "Chrysemys picta": {
+      "classes": [
+        "SPILLS"
+      ],
+      "incremental_true_records": 2007,
+      "incremental_total_records": 2020,
+      "true_share_reported": 0.994,
+      "flagged": false
+    },
+    "Cicindela formosa": {
+      "classes": [
+        "SPILLS"
+      ],
+      "incremental_true_records": 142,
+      "incremental_total_records": 148,
+      "true_share_reported": 0.959,
+      "flagged": false
+    },
+    "Cicuta maculata": {
+      "classes": [
+        "SPILLS"
+      ],
+      "incremental_true_records": 92,
+      "incremental_total_records": 182,
+      "true_share_reported": 0.505,
+      "flagged": false
+    },
+    "Falco peregrinus": {
+      "classes": [
+        "SPILLS"
+      ],
+      "incremental_true_records": 14,
+      "incremental_total_records": 24,
+      "true_share_reported": 0.583,
+      "flagged": false
+    },
+    "Mustela erminea": {
+      "classes": [
+        "SPILLS"
+      ],
+      "incremental_true_records": 0,
+      "incremental_total_records": 184,
+      "true_share_reported": 0.0,
+      "flagged": true
+    },
+    "Nerodia sipedon": {
+      "classes": [
+        "SPILLS"
+      ],
+      "incremental_true_records": 204,
+      "incremental_total_records": 7051,
+      "true_share_reported": 0.029,
+      "flagged": true
+    },
+    "Occidryas editha": {
+      "classes": [
+        "SPILLS"
+      ],
+      "incremental_true_records": 117,
+      "incremental_total_records": 118,
+      "true_share_reported": 0.992,
+      "flagged": false
+    },
+    "Passerculus sandwichensis": {
+      "classes": [
+        "SPILLS"
+      ],
+      "incremental_true_records": 102,
+      "incremental_total_records": 103,
+      "true_share_reported": 0.99,
+      "flagged": false
+    },
+    "Phocoena phocoena": {
+      "classes": [
+        "SPILLS"
+      ],
+      "incremental_true_records": 94,
+      "incremental_total_records": 94,
+      "true_share_reported": 1.0,
+      "flagged": false
+    },
+    "Pituophis catenifer": {
+      "classes": [
+        "SPILLS"
+      ],
+      "incremental_true_records": 636,
+      "incremental_total_records": 637,
+      "true_share_reported": 0.998,
+      "flagged": false
+    }
+  },
+  "ship_decision": {
+    "selected_method": "allowlist",
+    "literal_scorer_output": "Ship rule: allowlist ships",
+    "decision_basis": "3a clip CI95 lower bound 0.086 is not above 0.5",
+    "minimum_species_required": 5,
+    "incremental_species_observed": 26,
+    "too_thin": false,
+    "bootstrap_resamples": 2000,
+    "bootstrap_seed": 0,
+    "bootstrap_unit": "species with incremental test records",
+    "flagged_species": [
+      "Mustela erminea",
+      "Nerodia sipedon"
+    ],
+    "flagged_species_review_required": true,
+    "per_species_drops_if_clipping_shipped": {
+      "Mustela erminea": [
+        "112"
+      ],
+      "Nerodia sipedon": [
+        "111"
+      ]
+    },
+    "C2_candidate_failure_retained": true
+  },
+  "false_only_listing_cell_pairs": {
+    "definition": "A distinct listing and 0.25 degree cell pair counts when the listing weights that cell, and the cell has false test evidence but no true test evidence for the pooled test species.",
+    "literal_scorer_counts": {
+      "live": 3459,
+      "allowlist": 43,
+      "clip": 473,
+      "clip_no_override": 474
+    },
+    "corrected_listing_specific_counts": {
+      "live": 3459,
+      "allowlist": 43,
+      "clip": 469,
+      "clip_no_override": 470
+    },
+    "difference_species": {
+      "Taxidea taxus": {
+        "listing_ids": [
+          "53",
+          "63"
+        ],
+        "classes": [
+          "UNCLEAR"
+        ],
+        "false_only_cells": 17,
+        "original_literal": {
+          "live": 34,
+          "allowlist": 34,
+          "clip": 8,
+          "clip_no_override": 8
+        },
+        "corrected": {
+          "live": 34,
+          "allowlist": 34,
+          "clip": 4,
+          "clip_no_override": 4
+        },
+        "per_listing": {
+          "live": {
+            "53": 17,
+            "63": 17
+          },
+          "allowlist": {
+            "53": 17,
+            "63": 17
+          },
+          "clip": {
+            "53": 0,
+            "63": 4
+          },
+          "clip_no_override": {
+            "53": 0,
+            "63": 4
+          }
+        },
+        "resolved_true_keys": [
+          "7KTX8"
+        ],
+        "resolved_false_keys": [
+          "5LFD4"
+        ],
+        "unresolved_true_epithets": [],
+        "unresolved_false_epithets": []
+      }
+    },
+    "synthetic_disjoint_range_validation": {
+      "case": "Three false-only cells, two disjoint listing ranges accepting one cell each",
+      "original_literal": {
+        "live": 6,
+        "allowlist": 0,
+        "clip": 4,
+        "clip_no_override": 4
+      },
+      "corrected": {
+        "live": 6,
+        "allowlist": 0,
+        "clip": 2,
+        "clip_no_override": 2
+      },
+      "per_listing": {
+        "live": {
+          "west": 3,
+          "east": 3
+        },
+        "allowlist": {
+          "west": 0,
+          "east": 0
+        },
+        "clip": {
+          "west": 1,
+          "east": 1
+        },
+        "clip_no_override": {
+          "west": 1,
+          "east": 1
+        }
+      },
+      "assertions_passed": true
+    },
+    "reporting_only": true
+  },
+  "validation": {
+    "terminal_ship_line_present": true,
+    "pooled_tables_complete": true,
+    "parsed_gate_c5_count_matches_56": true,
+    "parsed_largest_losses_count_matches_20": true,
+    "pair_literal_counts_equal_frozen_scorer_log": true,
+    "fixed_files_match_registered_git_blobs": true,
+    "candidate_layer_matches_logged_count_rank_score": true,
+    "candidate_clip_table_matches_logged_acceptance_and_losses": true,
+    "supplemental_input_hashes_match_current_input_files": true,
+    "ship_rule_not_modified": true,
+    "range_source_download_hashes_match_registered_provenance": true,
+    "post_rebase_checks_passed": true
+  },
+  "raw_logs": {
+    "fetch": "status: SUCCEEDED\nDOI: 10.15468/dl.6hqdyd\n1091177 fine-cell rows; 11999 cells host >=1 at-risk listing\ncount check: 6/6 species match the search API\ncells with at-risk score: 11999; max score=170.0\nwrote cluster_results/ca/ca_atrisk_richness.csv\nwrote cluster_results/ca/atrisk_listing_clip.csv\nwrote cluster_results/ca/ca_atrisk_provenance.json\n",
+    "gate": "C1/C2: accepted fine cells outside the listing's buffered range (subspecies-identified records)\n  121 northern goshawk laingi subspecies: outside=0 rows (0 records) PASS; 0.25 deg cells 3162 -> 181, records 49140 -> 2498\n  336 great blue heron fannini subspecies: outside=0 rows (0 records) PASS; 0.25 deg cells 4208 -> 300, records 1594545 -> 373431\n  179 peregrine falcon pealei subspecies: outside=4 rows (4 records) FAIL; 0.25 deg cells 3304 -> 205, records 195073 -> 36414\n    outside: 50.985,-129.075\n    outside: 54.185,-132.085\n    outside: 50.875,-129.165\n    outside: 54.185,-132.195\n  500 western painted turtle pacific coast population: outside=0 rows (0 records) PASS; 0.25 deg cells 1068 -> 37, records 48948 -> 785\n  501 western painted turtle intermountain-rocky mountain population: outside=0 rows (0 records) PASS; 0.25 deg cells 1068 -> 85, records 48948 -> 2065\nC3: Long Point (170, -322) score 161.0 rank 2 PASS\n  top 5: [((193, -494), 170.0), ((170, -322), 161.0), ((194, -494), 143.0), ((169, -328), 142.0), ((173, -320), 139.0)]\nC4: piping plover records kept {'454': '8462', '483': '9500'} PASS\nC4: spotted owl records kept {'507': '9'} PASS\nC4: greater sage-grouse records kept {'204': '13'} PASS\nC5: listings losing >90% of records: 56 (hand review)\n  139 victorin's gentian [province: prov:QC] kept 0/501\n  177 harbour seal lacs des loups marins subspecies [dfo: dfo:177] kept 0/18022\n  433 sei whale pacific population [dfo: dfo:433] kept 0/311\n  450 non-pollinating yucca moth [province: prov:AB] kept 0/1\n  509 westslope cutthroat trout saskatchewan-nelson rivers populations [dfo: dfo:509] kept 0/662\n  1009 lake sturgeon southern hudson bay-james bay populations [dfo: dfo:1009] kept 28/584049\n  1017 unarmoured threespine stickleback [dfo: dfo:1017] kept 5/12461\n  388 northern leopard frog rocky mountain population [province: prov:BC] kept 17/40289\n  102 paxton lake benthic threespine stickleback [dfo: dfo:102] kept 10/12461\n  103 paxton lake limnetic threespine stickleback [dfo: dfo:103] kept 10/12461\n  140 vananda creek benthic threespine stickleback [dfo: dfo:140] kept 10/12461\n  141 vananda creek limnetic threespine stickleback [dfo: dfo:141] kept 10/12461\n  1013 rainbow trout athabasca river populations [dfo: dfo:1013] kept 33/40666\n  378 rainbow smelt lake utopia small-bodied population [dfo: dfo:378] kept 9/8277\n  1521 rainbow smelt lake utopia large-bodied population [dfo: dfo:1521] kept 10/8277\n  493 misty lake lentic threespine stickleback [dfo: dfo:493] kept 17/12461\n  494 misty lake lotic threespine stickleback [dfo: dfo:494] kept 17/12461\n  155 basking shark pacific population [dfo: dfo:155] kept 1/704\n  97 enos lake benthic threespine stickleback [dfo: dfo:97] kept 24/12461\n  98 enos lake limnetic threespine stickleback [dfo: dfo:98] kept 24/12461\n  1007 giant threespine stickleback [dfo: dfo:1007] kept 24/12461\n  142 athabasca thrift [province: prov:SK] kept 4/1744\n  423 banded killifish newfoundland populations [dfo: dfo:423] kept 5/1861\n  53 american badger jacksoni subspecies [province: prov:ON] kept 4/683\n  215 eastern persius duskywing [province: prov:ON] kept 13/2086\n  499 westslope cutthroat trout pacific populations [dfo: dfo:499] kept 5/662\n  37 blanding's turtle nova scotia population [province: prov:NS] kept 66/7117\n  525 sand-dune short-capsuled willow [province: prov:SK] kept 5/379\n  1026 griscom's arnica [province: prov:NL prov:QC] kept 3/209\n  500 western painted turtle pacific coast population [ecozone: eco:13:BC] kept 785/48948\n  12 blue whale pacific population [dfo: dfo:12] kept 8/491\n  40 dun skipper vestris subspecies [province: prov:BC] kept 167/9530\n  4 fin whale pacific population [dfo: dfo:4] kept 111/6313\n  154 beluga whale cumberland sound population [dfo: dfo:154] kept 29/1515\n  29 barn owl eastern population [province: prov:ON] kept 1/47\n  75 short-tailed albatross [province: prov:BC] kept 3/133\n  431 northern dusky salamander carolinian population [province: prov:ON] kept 10/383\n  425 atlantic whitefish [dfo: dfo:425] kept 92/3315\n  1501 large-headed woolly yarrow [province: prov:SK] kept 990/35224\n  308 american marten newfoundland population [province: prov:NL] kept 53/1833\n  510 harbour porpoise pacific ocean population [dfo: dfo:510] kept 404/13551\n  170 streaked horned lark [province: prov:BC] kept 8127/258006\n  469 red knot islandica subspecies [province: prov:NT prov:NU] kept 1224/34214\n  129 hotwater physa [dfo: dfo:129] kept 13/348\n  331 nuttall's cottontail nuttallii subspecies [province: prov:BC] kept 51/1347\n  400 nooksack dace [dfo: dfo:400] kept 52/1323\n  501 western painted turtle intermountain-rocky mountain population [ecozone: eco:14:BC] kept 2065/48948\n  125 dolly varden western arctic populations [dfo: dfo:125] kept 48/1078\n  121 northern goshawk laingi subspecies [ecozone: eco:13:BC] kept 2498/49140\n  480 savannah sparrow princeps subspecies [province: prov:NS] kept 47756/826769\n  468 horned grebe magdalen islands population [province: prov:QC] kept 16463/262471\n  152 leatherback sea turtle pacific population [dfo: dfo:152] kept 12/183\n  374 eastern ribbonsnake atlantic population [province: prov:NS] kept 121/1665\n  1004 bull trout western arctic populations [dfo: dfo:1004] kept 32/372\n  114 red crossbill percna subspecies [province: prov:NL prov:QC] kept 15092/173928\n  62 caribou atlantic-gasp\u00c3\u00a9sie population [province: prov:QC] kept 312/3490\nReported: cells live 13914 new 11999 gained 4 lost 1919; Spearman union(0) 0.9107 intersection 0.9395\n  live top ((170, -322), 213.0), new top ((193, -494), 170.0)\n  top-100 overlap 84\n  20 listings with the largest record losses:\n    336 great blue heron fannini subspecies [ecozone] kept 373431/1594545\n    480 savannah sparrow princeps subspecies [province] kept 47756/826769\n    1009 lake sturgeon southern hudson bay-james bay populations [dfo] kept 28/584049\n    170 streaked horned lark [province] kept 8127/258006\n    468 horned grebe magdalen islands population [province] kept 16463/262471\n    114 red crossbill percna subspecies [province] kept 15092/173928\n    179 peregrine falcon pealei subspecies [ecozone] kept 36414/195073\n    410 barrow's goldeneye eastern population [province] kept 59033/183382\n    252 coastal vesper sparrow [province] kept 35323/153258\n    437 harlequin duck eastern population [province] kept 24955/129523\n    500 western painted turtle pacific coast population [ecozone] kept 785/48948\n    501 western painted turtle intermountain-rocky mountain population [ecozone] kept 2065/48948\n    121 northern goshawk laingi subspecies [ecozone] kept 2498/49140\n    440 atlantic salmon inner bay of fundy population [dfo] kept 181231/225148\n    1013 rainbow trout athabasca river populations [dfo] kept 33/40666\n    388 northern leopard frog rocky mountain population [province] kept 17/40289\n    295 northern saw-whet owl brooksi subspecies [province] kept 10112/44885\n    1501 large-headed woolly yarrow [province] kept 990/35224\n    469 red knot islandica subspecies [province] kept 1224/34214\n    384 northern leopard frog western boreal/prairie populations [province] kept 11209/40289\n",
+    "scorer": "Pooled: 38 species, true 6148, false 48346\n  live              true kept   6148 recall 1.000   false counted  48346 share 1.000\n  allowlist         true kept   1010 recall 0.164   false counted     37 share 0.001\n  clip              true kept   4835 recall 0.786   false counted   7229 share 0.150\n  clip_no_override  true kept   4835 recall 0.786   false counted   7230 share 0.150\nPooled without UNCLEAR: 35 species, true 6133, false 48301\n  live              true kept   6133 recall 1.000   false counted  48301 share 1.000\n  allowlist         true kept    995 recall 0.162   false counted     11 share 0.000\n  clip              true kept   4820 recall 0.786   false counted   7205 share 0.149\n  clip_no_override  true kept   4820 recall 0.786   false counted   7206 share 0.149\nPer species with n >= 20 (true, false; then kept true/false per method)\n  Achillea millefolium [SPILLS] 3, 479: live 3/479  allowlist 0/0  clip 3/12  clip_no_override 3/12\n  Aegolius acadicus [SPILLS] 72, 37: live 72/37  allowlist 0/0  clip 72/19  clip_no_override 72/19\n  Ardea herodias [SPILLS] 296, 57: live 296/57  allowlist 0/0  clip 296/0  clip_no_override 296/1\n  Armeria maritima [SPILLS] 4, 272: live 4/272  allowlist 0/0  clip 4/0  clip_no_override 4/0\n  Arnica griscomii [SPILLS] 3, 142: live 3/142  allowlist 0/0  clip 3/0  clip_no_override 3/0\n  Asplenium scolopendrium [COVERS] 280, 11: live 280/11  allowlist 280/11  clip 280/0  clip_no_override 280/0\n  Bartonia paniculata [SPILLS] 22, 22: live 22/22  allowlist 0/0  clip 21/0  clip_no_override 21/0\n  Chrysemys picta [SPILLS] 3309, 32003: live 3309/32003  allowlist 0/0  clip 2007/13  clip_no_override 2007/13\n  Cicindela formosa [SPILLS] 142, 618: live 142/618  allowlist 0/0  clip 142/6  clip_no_override 142/6\n  Cicuta maculata [SPILLS] 92, 121: live 92/121  allowlist 0/0  clip 92/90  clip_no_override 92/90\n  Coluber constrictor [COVERS] 558, 0: live 558/0  allowlist 558/0  clip 558/0  clip_no_override 558/0\n  Eremophila alpestris [SPILLS] 0, 21: live 0/21  allowlist 0/0  clip 0/3  clip_no_override 0/3\n  Erynnis persius [SPILLS] 0, 52: live 0/52  allowlist 0/0  clip 0/4  clip_no_override 0/4\n  Falco peregrinus [SPILLS] 18, 31: live 18/31  allowlist 0/0  clip 14/10  clip_no_override 14/10\n  Loxia curvirostra [SPILLS] 6, 24: live 6/24  allowlist 0/0  clip 6/1  clip_no_override 6/1\n  Megascops kennicottii [COVERS] 97, 0: live 97/0  allowlist 97/0  clip 97/0  clip_no_override 97/0\n  Mustela erminea [SPILLS] 0, 1310: live 0/1310  allowlist 0/0  clip 0/184  clip_no_override 0/184\n  Nerodia sipedon [SPILLS] 204, 6989: live 204/6989  allowlist 0/0  clip 204/6847  clip_no_override 204/6847\n  Occidryas editha [SPILLS] 117, 9: live 117/9  allowlist 0/0  clip 117/1  clip_no_override 117/1\n  Passerculus sandwichensis [SPILLS] 103, 44: live 103/44  allowlist 0/0  clip 102/1  clip_no_override 102/1\n  Phoca vitulina [SPILLS] 0, 5350: live 0/5350  allowlist 0/0  clip 0/0  clip_no_override 0/0\n  Phocoena phocoena [SPILLS] 94, 96: live 94/96  allowlist 0/0  clip 94/0  clip_no_override 94/0\n  Pituophis catenifer [SPILLS] 636, 457: live 636/457  allowlist 0/0  clip 636/1  clip_no_override 636/1\n  Pooecetes gramineus [SPILLS] 3, 21: live 3/21  allowlist 0/0  clip 3/6  clip_no_override 3/6\n  Tanacetum bipinnatum [SPILLS] 0, 120: live 0/120  allowlist 0/0  clip 0/7  clip_no_override 0/7\n  Taxidea taxus [UNCLEAR] 8, 21: live 8/21  allowlist 8/21  clip 8/5  clip_no_override 8/5\n(listing, cell) pairs weighted with only unlisted-subspecies evidence: live 3459, allowlist 43, clip 473, clip_no_override 474\n3a clip: incremental true 3830 false 7224 share 0.346 CI95 [0.086, 0.970] over 26 species\n3b clip without overrides: incremental true 3830 false 7225 share 0.346 CI95 [0.084, 0.972] over 26 species\n3a clip without UNCLEAR: incremental true 3830 false 7205 share 0.347 CI95 [0.085, 0.973] over 25 species\nPer species incremental true share (3a), n >= 20; FLAG = below 0.5\n  Aegolius acadicus [SPILLS] 72/91 = 0.791\n  Ardea herodias [SPILLS] 296/296 = 1.000\n  Bartonia paniculata [SPILLS] 21/21 = 1.000\n  Chrysemys picta [SPILLS] 2007/2020 = 0.994\n  Cicindela formosa [SPILLS] 142/148 = 0.959\n  Cicuta maculata [SPILLS] 92/182 = 0.505\n  Falco peregrinus [SPILLS] 14/24 = 0.583\n  Mustela erminea [SPILLS] 0/184 = 0.000  FLAG\n  Nerodia sipedon [SPILLS] 204/7051 = 0.029  FLAG\n  Occidryas editha [SPILLS] 117/118 = 0.992\n  Passerculus sandwichensis [SPILLS] 102/103 = 0.990\n  Phocoena phocoena [SPILLS] 94/94 = 1.000\n  Pituophis catenifer [SPILLS] 636/637 = 0.998\nShip rule: allowlist ships\n"
+  },
+  "raw_candidate_provenance": {
+    "doi": "10.15468/dl.6hqdyd",
+    "download_key": "0026614-260928105237408",
+    "sql": "SELECT specieskey AS specieskey, acceptedtaxonkey AS acceptedtaxonkey, FLOOR(decimallatitude / 0.01) AS yi, FLOOR(decimallongitude / 0.01) AS xi, COUNT(*) AS n FROM occurrence WHERE countrycode = 'CA' AND specieskey IN ('33DLS', '33J4L', '33ZT8', '34HXS', '34XB9', '34Z5J', '353MR', '35HZV', '36PN2', '375NS', '37QR6', '397CP', '397Q9', '39HWP', '39LSJ', '39SVC', '39TWB', '3BBB9', '3BH49', '3BNBR', '3BNBS', '3BZR6', '3CM7W', '3CSK3', '3D389', '3DNCH', '3DR9L', '3DTGL', '3F43C', '3FCKT', '3FNMB', '3FWLG', '3GHJR', '3GL5S', '3GVSV', '3HFDB', '3HLZN', '3HYSW', '3JDYB', '3KTYB', '3L4KL', '3L4RN', '3L4Y3', '3L99B', '3LGK8', '3M4S7', '3M5LV', '3MQNK', '3MQPJ', '3MY4W', '3MY56', '3N6SK', '3NFZ4', '3NR6Z', '3PB9C', '3PBC6', '3PZTR', '3PZWC', '3QCV2', '3QCV3', '3QRSG', '3QTK7', '3QTTQ', '3RNXW', '3S4WF', '3S5XG', '3S5XX', '3SH65', '3TG2G', '3TG2S', '3TPNY', '3V9PD', '3VHQP', '3VX2H', '3W27X', '3W8WP', '3WFH8', '3XH5C', '3Y84L', '3Y9VR', '3YLHX', '3YWY2', '3Z72L', '42569', '42QGC', '436BT', '43KQY', '44GTW', '44QWG', '456FL', '456H3', '456LZ', '476BV', '47ZF6', '47ZJG', '47ZJK', '47ZN9', '483SY', '483T2', '488T3', '48B4L', '48B4S', '48BT4', '49JFF', '49XJD', '4BM9P', '4BZ6N', '4BZM9', '4C9MC', '4CFW9', '4CGYJ', '4CGYK', '4CHG5', '4CJ5B', '4DXYF', '4DZDT', '4F2FM', '4FJYW', '4FRHS', '4GJB3', '4GK65', '4GK9J', '4GK9M', '4GWSX', '4HGZH', '4HGZQ', '4J224', '4JCGM', '4JF2M', '4JF4G', '4JLDV', '4JMY5', '4JMZH', '4KPNN', '4KPVB', '4KXKC', '4LMXT', '4LN8N', '4M3RJ', '4M3W4', '4MQFZ', '4N6GN', '4NH9Z', '4PGHC', '4PGHF', '4PJKF', '4PSYD', '4Q9WW', '4QZKF', '4RB9R', '4RF6J', '4RFL8', '4RFW6', '4S7V3', '4SJLX', '4SS3Y', '4ST96', '4T4PL', '4T4PM', '4TDZC', '4TYTM', '4VQ7Z', '4VYGT', '4W6HZ', '4W6J3', '4W7PQ', '4W7ZM', '4X3BJ', '4X3BV', '4XD5W', '4XD87', '4XG45', '4XRRX', '4XWSR', '4Y7JH', '4Y8SY', '4Z2NZ', '52FT3', '537YX', '53BBF', '53BCC', '53Q6L', '53Q7S', '53Q89', '53Q8J', '53Q94', '53Q96', '53YYH', '53ZQV', '54N6J', '54ZSX', '554D7', '55D7F', '55Q6G', '563KB', '563LG', '57LW4', '58H2C', '58TXQ', '58Y32', '58Y9D', '58ZCZ', '593TL', '59ZVQ', '5B476', '5B4WX', '5BHBM', '5BHDD', '5BSG2', '5C39S', '5CT77', '5CZX8', '5V9DL', '5VR5C', '5W66M', '5W7C4', '5WST5', '5WWQN', '5WZLF', '5XB8C', '5Y2VK', '5Y495', '5YB2W', '5YKRV', '5YWRR', '5Z4SY', '5Z54Y', '5ZJQ4', '5ZM42', '5ZP35', '64RFJ', '64V5F', '64X3G', '65KBF', '65KJV', '66BMD', '66M5T', '66M6Z', '672PX', '67KDZ', '67S8L', '67V95', '68K9V', '68NQ9', '68ZP6', '692W6', '69BHK', '69FQV', '69HC7', '69QR8', '6B3P6', '6B8DR', '6B8FL', '6BVXH', '6BWH4', '6CB8P', '6FG8C', '6FHMK', '6FNQN', '6FSXT', '6FVJM', '6G4NY', '6G7JY', '6GFXQ', '6GPKK', '6H52H', '6H93Y', '6J4C6', '6JLYR', '6JMP6', '6JRG7', '6K3FB', '6KG6R', '6L57F', '6MJ22', '6MQ7Y', '6MTT2', '6N4PT', '6N655', '6N9D3', '6NWKP', '6P5HN', '6PCRM', '6PRHZ', '6PYKZ', '6Q727', '6QB2P', '6SN65', '6STZ9', '6SXDH', '6T3LD', '6TCX2', '6VVTQ', '6W27H', '6W2DX', '6WLJF', '6WMWM', '6XCXT', '6XG2S', '6XPX9', '6Y3YJ', '6Y459', '6YJ2F', '6YT94', '6Z94V', '6ZSB2', '728LS', '72BYZ', '737WZ', '739DW', '73K69', '73R6J', '7437M', '74DMM', '74F4B', '74L9P', '74SZC', '74XDH', '74ZTP', '753XH', '763KT', '767LR', '7696C', '76F7Q', '77C9R', '77QW6', '77S3T', '7827F', '78285', '78P7N', '78Z38', '794GZ', '795P4', '79CC8', '79CKR', '79DHM', '79DJC', '79FQR', '79HMJ', '79JC8', '7B72H', '7CGVG', '7CLV2', '7D979', '7DTJY', '7DY9W', '7F2J9', '7F2KB', '7PX9F', '7PX9H', '7RNV6', '7RSHL', '7S24M', '7SN2G', '7ST8C', '7T7GV', '7TNR6', '7VPRN', '7WW65', '8BYQM', '8M8B', '92YN7', '92YN8', '93QF5', '948RF', '948RG', '948TZ', '97H4', '9C52', '9C5B', '9C6H', '9G7J8', '9G7J9', '9HCHR', '9K523', '9KKH', '9LJZX', '9PL9', '9S2C', '9T3MT', '9WV4R', '9WVS2', 'B3GWZ', 'B3SK2', 'B979G', 'B9QXX', 'BF8R', 'BPHF', 'BWW69', 'C3HS5', 'CC73N', 'CDG4C', 'CPL3G', 'CQ47', 'CQ4L', 'CQ5G', 'CQ5H', 'CR94R', 'CSG8P', 'CTL9', 'CTQ6J', 'D5KD7', 'DGB2', 'DGB7', 'DGB9', 'F4NC', 'F4NM', 'F5QG', 'F6QR', 'FPFG', 'FRHG', 'GCHW', 'GNSK', 'GS9T', 'GT47', 'GTDD', 'H5CV', 'K79D', 'KF7Q', 'KF8M', 'KF8T', 'KF8W', 'KHZR', 'KS3Z', 'KSTB', 'KSV8', 'KVYB5', 'L2BFV', 'L2BG7', 'MFD6', 'MFWL', 'MLPS', 'MRHP', 'MYYR', 'N8JY', 'N8KK', 'N8KX', 'NJ5G', 'NL534', 'NL54C', 'NM26', 'NMHL', 'NYVM', 'P7NKB', 'PCKMR', 'PDPP', 'PGVZ', 'PK44', 'PLPTR', 'PXBC', 'Q93Q', 'Q98M', 'QMF3S', 'QQ77Z', 'RBN5', 'RCDT', 'RNSR', 'RQDX', 'RQH7', 'RQJT', 'S2T7H', 'S4V9', 'S9K2', 'SGCG7', 'SRK8C', 'T72Q', 'TF38', 'TMX5', 'TMX8', 'TNTW', 'TVMH7', 'TWRZ', 'V5B8D', 'V5DNH', 'V5HJ7', 'V898', 'V8BZ', 'V9RSY', 'VB4Z', 'VH3DT', 'VJBQ', 'VYSQ', 'W4BJ', 'W6ZQ', 'X2KZ', 'X4SP', 'XVPT', 'XVRZ', 'XVSB', 'Y2TW', 'YD9T', 'YDV9', 'YGJT', 'YYFF', 'YYHH', 'ZLQF', 'ZPCJ', 'ZPDQ', 'ZTV6') AND hasgeospatialissues = FALSE AND occurrencestatus = 'PRESENT' AND \"year\" >= 1990 AND basisofrecord NOT IN ('FOSSIL_SPECIMEN', 'LIVING_SPECIMEN') AND decimallatitude IS NOT NULL GROUP BY specieskey, acceptedtaxonkey, FLOOR(decimallatitude / 0.01), FLOOR(decimallongitude / 0.01)",
+    "created": "2026-10-14T13:58:04.551+00:00",
+    "n_species_matched": 496,
+    "taxonomy": {
+      "dataset_key": "7ddf754f-d193-4cc9-b351-99906754a03b",
+      "title": "Catalogue of Life",
+      "shortName": "COL26.6 XR",
+      "version": null,
+      "modified": "2026-09-21T19:41:58.203+00:00",
+      "pubDate": "2026-06-19T00:00:00.000+00:00",
+      "doi": "10.48580/dgyy9"
+    },
+    "cansar_source": "https://osf.io/download/jv5w6/ (CAN-SAR, OSF DOI 10.17605/OSF.IO/E4A58)",
+    "ranges": {
+      "sources": {
+        "dfo": {
+          "title": "Fisheries and Oceans Canada Species at Risk Distribution (Range), Open Government Licence - Canada",
+          "url": "https://open.canada.ca/data/en/dataset/e0fabad5-9379-4077-87b9-5705f28c490b",
+          "file": "Distribution_SAR_EN_2026.gdb.zip",
+          "sha256": "857869c93b42f48aa8f74503c3f74502fafdbddb71c940107b4cfbefc1dd5bde"
+        },
+        "ecozone": {
+          "title": "Ecological Framework of Canada, ecozones (AAFC), Open Government Licence - Canada",
+          "url": "https://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip",
+          "sha256": "ccfeaacad154c922eb08e3012043eb05944b838c6f62e26f8ecfdf32336ce4f6"
+        },
+        "province": {
+          "title": "Natural Earth 10m admin-1 states and provinces v5.1.2, public domain",
+          "url": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/geojson/ne_10m_admin_1_states_provinces.geojson",
+          "sha256": "22d0e3ad85eb3e27f17cabf8ba2d50e554fbc27a87796ff891d958185da62fb5"
+        }
+      },
+      "buffer_m": 10000,
+      "listings_in_layer_by_source": {
+        "province": 426,
+        "dfo": 117,
+        "none": 1,
+        "ecozone": 5
+      },
+      "listings_without_range": [
+        "black-footed albatross"
+      ]
+    }
+  },
+  "selected_production_comparison": {
+    "live_cells": 13914,
+    "selected_cells": 12805,
+    "maximum_score": 188.0,
+    "top_cell": [
+      170,
+      -322
+    ],
+    "top_cell_centre": [
+      42.625,
+      -80.375
+    ],
+    "long_point_score": 188.0,
+    "long_point_rank": 1,
+    "gained": 4,
+    "lost": 1113,
+    "spearman_union_zero": 0.9458922915284028,
+    "spearman_shared": 0.9649477647839911
+  },
+  "selected_production_independent_audit": {
+    "purpose": "Independent whole-layer selected-production verification",
+    "implementation": "No imports or calls to atrisk_shipping or atrisk_ranges scoring/selection functions; independent key graph, Shapely predicates and pandas max/sum aggregation",
+    "status": "PASS",
+    "script_sha256": "19083994eb1d447af4b94040d84d5a556948968acb8a84d021dbc88e62658d48",
+    "input_output_hashes": {
+      "download": {
+        "path": "GBIF DOI 10.15468/dl.6hqdyd",
+        "sha256": "4b16a59371966b1f717fdaf10f2d0af8e92e15ba385800351a02e0b6681c5c52"
+      },
+      "crosswalk": {
+        "path": "cluster_results/ca/atrisk_species_keys.csv",
+        "sha256": "3ff7323e81c4578eccb769356e56d6b66e80330d6fb2c619ca273ea6d298ecc7"
+      },
+      "listings": {
+        "path": "cluster_results/ca/atrisk_listings.csv",
+        "sha256": "7b10abf771df7556bc8fd4411ce8e325db1f3ec50be5438d3766af125745dfc3"
+      },
+      "ranges": {
+        "path": "cluster_results/ca/atrisk_ranges.geojson",
+        "sha256": "2feb0fc8f6e7f47e46e60a775a45c64dd6c9d7e32dbc7defd51282a90662658a"
+      },
+      "policy": {
+        "path": "cluster_results/ca/atrisk_shipping_policy.json",
+        "sha256": "6c604e10376f6d05c0bd96ad1df286bc3f27497fddc26fc6897c6d23aa430326"
+      },
+      "test_set": {
+        "path": "research/subspecies_test_set.csv",
+        "sha256": "ebd07f668fb78536aeb5b4caab3a348e8aca5cd7cded646607e427da6c51ffef"
+      },
+      "production_layer": {
+        "path": "cluster_results/ca/ca_atrisk_richness.csv",
+        "sha256": "d74ad7110afe75d1696c3df29b4c247d34455c1d7856123425fddc98dbd1409d"
+      },
+      "production_listing_audit": {
+        "path": "cluster_results/ca/atrisk_listing_clip.csv",
+        "sha256": "12a5f109e8111473b3491001893aee88ec2910f2a2c32e4a26149d072ed8a1eb"
+      },
+      "production_provenance": {
+        "path": "cluster_results/ca/ca_atrisk_provenance.json",
+        "sha256": "257eb64d2782c851493171d73932225e6ab5e7d7d8210ff108cc1fc4f3dce385"
+      }
+    },
+    "inputs_and_outputs_stable_during_audit": true,
+    "cells_checked": 12805,
+    "maximum_score": 188,
+    "score_raw_n_species_normalization_and_centres_match_all_cells": true,
+    "listing_audit_matches_all_matched_and_unmatched_listings": true,
+    "drop_count": 35,
+    "dropped_listing_ids": [
+      "40",
+      "81",
+      "109",
+      "111",
+      "112",
+      "114",
+      "121",
+      "125",
+      "132",
+      "137",
+      "139",
+      "142",
+      "170",
+      "177",
+      "179",
+      "186",
+      "215",
+      "217",
+      "252",
+      "261",
+      "295",
+      "296",
+      "308",
+      "331",
+      "336",
+      "480",
+      "499",
+      "500",
+      "501",
+      "509",
+      "510",
+      "525",
+      "532",
+      "1026",
+      "1501"
+    ],
+    "dropped_rows_keep_zero_with_full_species_totals": true,
+    "polygon_guarded_ids": [
+      "58",
+      "96",
+      "418"
+    ],
+    "flagships": {
+      "piping_plover": {
+        "454": 17918,
+        "483": 17918
+      },
+      "spotted_owl": {
+        "507": 9
+      },
+      "greater_sage_grouse": {
+        "204": 13
+      }
+    },
+    "stats": {
+      "fine_rows": 1091177,
+      "occurrence_count": 9114203,
+      "matched_listing_count": 549,
+      "retained_listing_count": 514,
+      "species_level_listing_count": 511,
+      "western_waterfan_listing_records": 10,
+      "eastern_waterfan_listing_records": 82,
+      "western_waterfan_only_cells": 3,
+      "eastern_waterfan_only_cells": 30,
+      "western_waterfan_unit_weight": [
+        1
+      ],
+      "eastern_waterfan_unit_weight": [
+        2
+      ]
+    },
+    "synthetic_validation": {
+      "alias_keys_deduplicated": true,
+      "per_unit_max_weight": true,
+      "zero_weight_rows_omitted": true,
+      "two_units_score": 5,
+      "two_units_n_species": 2
+    },
+    "long_point": {
+      "gi": 170,
+      "gj": -322,
+      "score_raw": 188,
+      "rank": 1
+    }
+  },
+  "reproducible_production_audit_script": "research/allowlist_production_audit.py",
+  "production_audit_script_sha256": "19083994eb1d447af4b94040d84d5a556948968acb8a84d021dbc88e62658d48",
+  "hand_review": {
+    "path": "research/range_clip_reviews.csv",
+    "raw_candidate_large_loss_ids": [
+      "4",
+      "12",
+      "29",
+      "37",
+      "40",
+      "53",
+      "62",
+      "75",
+      "97",
+      "98",
+      "102",
+      "103",
+      "114",
+      "121",
+      "125",
+      "129",
+      "139",
+      "140",
+      "141",
+      "142",
+      "152",
+      "154",
+      "155",
+      "170",
+      "177",
+      "215",
+      "308",
+      "331",
+      "374",
+      "378",
+      "388",
+      "400",
+      "423",
+      "425",
+      "431",
+      "433",
+      "450",
+      "468",
+      "469",
+      "480",
+      "493",
+      "494",
+      "499",
+      "500",
+      "501",
+      "509",
+      "510",
+      "525",
+      "1004",
+      "1007",
+      "1009",
+      "1013",
+      "1017",
+      "1026",
+      "1501",
+      "1521"
+    ],
+    "flagged_ids": [
+      "111",
+      "112"
+    ],
+    "selected_production_large_loss_ids": [
+      "40",
+      "81",
+      "109",
+      "111",
+      "112",
+      "114",
+      "121",
+      "125",
+      "132",
+      "137",
+      "139",
+      "142",
+      "170",
+      "177",
+      "179",
+      "186",
+      "215",
+      "217",
+      "252",
+      "261",
+      "295",
+      "296",
+      "308",
+      "331",
+      "336",
+      "480",
+      "499",
+      "500",
+      "501",
+      "509",
+      "510",
+      "525",
+      "532",
+      "1026",
+      "1501"
+    ],
+    "all_raw_candidate_and_selected_production_large_losses_reviewed": true,
+    "additional_selected_policy_review_ids": [
+      "81",
+      "109",
+      "132",
+      "137",
+      "179",
+      "186",
+      "217",
+      "252",
+      "261",
+      "295",
+      "296",
+      "336",
+      "532"
+    ],
+    "boundary": "Geographic consistency is reviewed; no claim every excluded record is taxonomically false or any zero count implies biological absence"
+  },
+  "rebased_commit_equivalents": {
+    "98be5d2809dcdbfd92ef2849b11af01738d9b227": "5d1ee53ebf6b059deae9d34d1c2ff54e037014a1",
+    "d47387258047d04c424d6e38e26b560abb0c4cbc": "623373e8c60dc8a2d0e62a8c9f57cf18eb4a8281",
+    "4db48ce5e0fca475dda48859ee611eebe9a0cd5f": "595c54523d4e5d93659b846070c8e2a0d26fc626",
+    "f07e732e60d41a31e61c3283c52dc3db4ea38050": "4d57c9c6bd4ecf372ad0259268ea2ca42cce9d49",
+    "7da9d9b9deb56b9b8df298f08e628a6695749b1e": "15a37a8c64974d0b5b69a99c00b3a8bd98123c13",
+    "d765666575f362f79f2cc4ff9deba10f25ee5cfb": "7cf8f9c6f7caa20c74838dbdae43d14bcfa4c00a",
+    "b0d2244f27dc6dacef2f3251b2af3f4314f7fe0f": "db403a9fd33921ca34d2763fd55850d7562b882f",
+    "a6833459fab96d0db5d6214c9e83d2e563174181": "46a580517de60d1a4537dd14d50a4aab3a97da3c",
+    "7aaa084393dcb6cc94f361c85a957afac9da2b7b": "3d2baa0c79b91271259c05812f5f8e7e957cf066",
+    "bf4c168181c4bb0d116c3ad14fd021a5fd43b3eb": "f9ea09fd04f3e5e15bcbd1d10958f9a9e3582a7a",
+    "5569d4a2cb00bf20d2c8483542d81a7eca357094": "258bfea2fed876ff0456c7330b9dbd72c29c6828",
+    "bbc77d8464a54bff3733829c3ed95e5a5f804bdf": "caa5ba5a3defd2b0f715db8beb832663c9489bd2",
+    "4b69deac39fa5c8040ee42c7856a1283947b8ff8": "da484566852c7e5cf175c96aa14e573098455d27",
+    "39d4b8efd7ac88349b588e567e4b6d96fc753d60": "d661d48d5d27b44666dd1a6482bcaedae7acee45",
+    "a0182a99ad0d17cac0348b2b97152de02ccadcab": "e81e23ac990a105e2c3184de6273042f4fcf0e24",
+    "215983e496dcdbcf5f458166aa11ac159f2da521": "55a35d57bb9e02e0f69c26f3bacf8178846c8e2d",
+    "b7b5ec499386801d1d6e98a99b77f1e889bd3973": "594ca0527443a057e62b66150e14a7fcd9371a74",
+    "f512952c66a24c2b062312296f4809dddcc082bd": "384245b16bdb6c99b165f8e25470c81b0a8aae88",
+    "ff0636cac7ee6d8277e0245b6a8fdb3ee6acb8a4": "19c22a63b9bfb4a76172c698da2955f90ae93b6a"
+  },
+  "rebased_equivalent_candidate_code_commit": "258bfea2fed876ff0456c7330b9dbd72c29c6828",
+  "original_production_verification": {
+    "report_path": "/tmp/wtb_production_audit.json",
+    "report_sha256": "c489dd6ca0d6c31f31394bfd37fff59c4a5292e1734badc325b18af8398640b9",
+    "independent_reconstruction": {
+      "purpose": "Independent whole-layer selected-production verification",
+      "implementation": "No imports or calls to atrisk_shipping or atrisk_ranges scoring/selection functions; independent key graph, Shapely predicates and pandas max/sum aggregation",
+      "status": "PASS",
+      "script_sha256": "78babfcacf3fdd29159cb1928984b6a2cf344318ffedd03bdb355bc33e0a091f",
+      "input_output_hashes": {
+        "download": {
+          "path": "/private/tmp/claude-503/-Users-w-Documents-Github-nosync/f78136ad-2557-4468-a491-1b852e987d8c/scratchpad/gbif_dl/0026614-260928105237408.zip",
+          "sha256": "4b16a59371966b1f717fdaf10f2d0af8e92e15ba385800351a02e0b6681c5c52"
+        },
+        "crosswalk": {
+          "path": "/Users/w/Documents/Github.nosync/where-to-blitz/.claude/worktrees/agent-aea2582c48b34f174/cluster_results/ca/atrisk_species_keys.csv",
+          "sha256": "3ff7323e81c4578eccb769356e56d6b66e80330d6fb2c619ca273ea6d298ecc7"
+        },
+        "listings": {
+          "path": "/Users/w/Documents/Github.nosync/where-to-blitz/.claude/worktrees/agent-aea2582c48b34f174/cluster_results/ca/atrisk_listings.csv",
+          "sha256": "7b10abf771df7556bc8fd4411ce8e325db1f3ec50be5438d3766af125745dfc3"
+        },
+        "ranges": {
+          "path": "/Users/w/Documents/Github.nosync/where-to-blitz/.claude/worktrees/agent-aea2582c48b34f174/cluster_results/ca/atrisk_ranges.geojson",
+          "sha256": "2feb0fc8f6e7f47e46e60a775a45c64dd6c9d7e32dbc7defd51282a90662658a"
+        },
+        "policy": {
+          "path": "/Users/w/Documents/Github.nosync/where-to-blitz/.claude/worktrees/agent-aea2582c48b34f174/cluster_results/ca/atrisk_shipping_policy.json",
+          "sha256": "72db718593e2777b24eee243ed025887e19f4338f52663faf19ffb443abf99a1"
+        },
+        "test_set": {
+          "path": "/Users/w/Documents/Github.nosync/where-to-blitz/.claude/worktrees/agent-aea2582c48b34f174/research/subspecies_test_set.csv",
+          "sha256": "ebd07f668fb78536aeb5b4caab3a348e8aca5cd7cded646607e427da6c51ffef"
+        },
+        "production_layer": {
+          "path": "/Users/w/Documents/Github.nosync/where-to-blitz/.claude/worktrees/agent-aea2582c48b34f174/cluster_results/ca/ca_atrisk_richness.csv",
+          "sha256": "d74ad7110afe75d1696c3df29b4c247d34455c1d7856123425fddc98dbd1409d"
+        },
+        "production_listing_audit": {
+          "path": "/Users/w/Documents/Github.nosync/where-to-blitz/.claude/worktrees/agent-aea2582c48b34f174/cluster_results/ca/atrisk_listing_clip.csv",
+          "sha256": "12a5f109e8111473b3491001893aee88ec2910f2a2c32e4a26149d072ed8a1eb"
+        },
+        "production_provenance": {
+          "path": "/Users/w/Documents/Github.nosync/where-to-blitz/.claude/worktrees/agent-aea2582c48b34f174/cluster_results/ca/ca_atrisk_provenance.json",
+          "sha256": "9766acb4509af104666ebefd682a732ebcd9bdc68783a0ddbcc897359b6c400d"
+        }
+      },
+      "inputs_and_outputs_stable_during_audit": true,
+      "cells_checked": 12805,
+      "maximum_score": 188,
+      "score_raw_n_species_normalization_and_centres_match_all_cells": true,
+      "listing_audit_matches_all_matched_and_unmatched_listings": true,
+      "drop_count": 35,
+      "dropped_listing_ids": [
+        "40",
+        "81",
+        "109",
+        "111",
+        "112",
+        "114",
+        "121",
+        "125",
+        "132",
+        "137",
+        "139",
+        "142",
+        "170",
+        "177",
+        "179",
+        "186",
+        "215",
+        "217",
+        "252",
+        "261",
+        "295",
+        "296",
+        "308",
+        "331",
+        "336",
+        "480",
+        "499",
+        "500",
+        "501",
+        "509",
+        "510",
+        "525",
+        "532",
+        "1026",
+        "1501"
+      ],
+      "dropped_rows_keep_zero_with_full_species_totals": true,
+      "polygon_guarded_ids": [
+        "58",
+        "96",
+        "418"
+      ],
+      "flagships": {
+        "piping_plover": {
+          "454": 17918,
+          "483": 17918
+        },
+        "spotted_owl": {
+          "507": 9
+        },
+        "greater_sage_grouse": {
+          "204": 13
+        }
+      },
+      "stats": {
+        "fine_rows": 1091177,
+        "occurrence_count": 9114203,
+        "matched_listing_count": 549,
+        "retained_listing_count": 514,
+        "species_level_listing_count": 511,
+        "western_waterfan_listing_records": 10,
+        "eastern_waterfan_listing_records": 82,
+        "western_waterfan_only_cells": 3,
+        "eastern_waterfan_only_cells": 30,
+        "western_waterfan_unit_weight": [
+          1
+        ],
+        "eastern_waterfan_unit_weight": [
+          2
+        ]
+      },
+      "synthetic_validation": {
+        "alias_keys_deduplicated": true,
+        "per_unit_max_weight": true,
+        "zero_weight_rows_omitted": true,
+        "two_units_score": 5,
+        "two_units_n_species": 2
+      },
+      "long_point": {
+        "gi": 170,
+        "gj": -322,
+        "score_raw": 188,
+        "rank": 1
+      }
+    }
+  },
+  "rebased_shipping_policy": {
+    "download_key": "0026614-260928105237408",
+    "doi": "10.15468/dl.6hqdyd",
+    "method": "allowlist",
+    "gate_commit": "15a37a8c64974d0b5b69a99c00b3a8bd98123c13",
+    "scorer_commit": "7cf8f9c6f7caa20c74838dbdae43d14bcfa4c00a",
+    "geometry_code_commit": "258bfea2fed876ff0456c7330b9dbd72c29c6828",
+    "shipping_code_commit": "caa5ba5a3defd2b0f715db8beb832663c9489bd2",
+    "gate_sha256": "4598182de2b72947007106b42c85bc62fe4ab65d9311d284d0a9b4f5477ebc79",
+    "scorer_sha256": "0ed079d12aaa298c5bc389a5a674c41a9d340e421cd05aa643a0a67624eccacb",
+    "dropped_listing_ids": [
+      "40",
+      "81",
+      "109",
+      "111",
+      "112",
+      "114",
+      "121",
+      "125",
+      "132",
+      "137",
+      "139",
+      "142",
+      "170",
+      "177",
+      "179",
+      "186",
+      "215",
+      "217",
+      "252",
+      "261",
+      "295",
+      "296",
+      "308",
+      "331",
+      "336",
+      "480",
+      "499",
+      "500",
+      "501",
+      "509",
+      "510",
+      "525",
+      "532",
+      "1026",
+      "1501"
+    ],
+    "dropped_listing_reasons": {
+      "40": "Frozen allowlist excludes Euphyes vestris: no COVERS test name and not one of the retained UNCLEAR species",
+      "81": "Frozen allowlist excludes Pituophis catenifer: no COVERS test name and not one of the retained UNCLEAR species",
+      "109": "Frozen allowlist excludes Ammodramus savannarum: no COVERS test name and not one of the retained UNCLEAR species",
+      "111": "Frozen allowlist excludes Nerodia sipedon: no COVERS test name and not one of the retained UNCLEAR species",
+      "112": "Frozen allowlist excludes Mustela erminea: no COVERS test name and not one of the retained UNCLEAR species",
+      "114": "Frozen allowlist excludes Loxia curvirostra: no COVERS test name and not one of the retained UNCLEAR species",
+      "121": "Frozen allowlist excludes Astur atricapillus: no COVERS test name and not one of the retained UNCLEAR species",
+      "125": "Frozen allowlist excludes Salvelinus malma: no COVERS test name and not one of the retained UNCLEAR species",
+      "132": "Frozen allowlist excludes Plebejus saepiolus: no COVERS test name and not one of the retained UNCLEAR species",
+      "137": "Frozen allowlist excludes Cicuta maculata: no COVERS test name and not one of the retained UNCLEAR species",
+      "139": "Frozen allowlist excludes Gentianopsis virgata: no COVERS test name and not one of the retained UNCLEAR species",
+      "142": "Frozen allowlist excludes Armeria maritima: no COVERS test name and not one of the retained UNCLEAR species",
+      "170": "Frozen allowlist excludes Eremophila alpestris: no COVERS test name and not one of the retained UNCLEAR species",
+      "177": "Frozen allowlist excludes Phoca vitulina: no COVERS test name and not one of the retained UNCLEAR species",
+      "179": "Frozen allowlist excludes Falco peregrinus: no COVERS test name and not one of the retained UNCLEAR species",
+      "186": "Frozen allowlist excludes Cicindela formosa: no COVERS test name and not one of the retained UNCLEAR species",
+      "215": "Frozen allowlist excludes Erynnis persius: no COVERS test name and not one of the retained UNCLEAR species",
+      "217": "Frozen allowlist excludes Occidryas editha: no COVERS test name and not one of the retained UNCLEAR species",
+      "252": "Frozen allowlist excludes Pooecetes gramineus: no COVERS test name and not one of the retained UNCLEAR species",
+      "261": "Frozen allowlist excludes Silene scouleri: no COVERS test name and not one of the retained UNCLEAR species",
+      "295": "Frozen allowlist excludes Aegolius acadicus: no COVERS test name and not one of the retained UNCLEAR species",
+      "296": "Frozen allowlist excludes Bartonia paniculata: no COVERS test name and not one of the retained UNCLEAR species",
+      "308": "Frozen allowlist excludes Martes americana: no COVERS test name and not one of the retained UNCLEAR species",
+      "331": "Frozen allowlist excludes Sylvilagus nuttallii: no COVERS test name and not one of the retained UNCLEAR species",
+      "336": "Frozen allowlist excludes Ardea herodias: no COVERS test name and not one of the retained UNCLEAR species",
+      "480": "Frozen allowlist excludes Passerculus sandwichensis: no COVERS test name and not one of the retained UNCLEAR species",
+      "499": "Frozen allowlist excludes Oncorhynchus clarkii: no COVERS test name and not one of the retained UNCLEAR species",
+      "500": "Frozen allowlist excludes Chrysemys picta: no COVERS test name and not one of the retained UNCLEAR species",
+      "501": "Frozen allowlist excludes Chrysemys picta: no COVERS test name and not one of the retained UNCLEAR species",
+      "509": "Frozen allowlist excludes Oncorhynchus clarkii: no COVERS test name and not one of the retained UNCLEAR species",
+      "510": "Frozen allowlist excludes Phocoena phocoena: no COVERS test name and not one of the retained UNCLEAR species",
+      "525": "Frozen allowlist excludes Salix brachycarpa: no COVERS test name and not one of the retained UNCLEAR species",
+      "532": "Frozen allowlist excludes Tanacetum bipinnatum: no COVERS test name and not one of the retained UNCLEAR species",
+      "1026": "Frozen allowlist excludes Arnica griscomii: no COVERS test name and not one of the retained UNCLEAR species",
+      "1501": "Frozen allowlist excludes Achillea millefolium: no COVERS test name and not one of the retained UNCLEAR species"
+    },
+    "selection": {
+      "incremental_true": 3830,
+      "incremental_false": 7224,
+      "incremental_true_share": 0.3464809118870997,
+      "ci95_reported": [
+        0.086,
+        0.97
+      ],
+      "incremental_species": 26,
+      "requirement": "95% species-bootstrap CI lower bound strictly greater than 0.5",
+      "decision": "allowlist ships",
+      "record_cohort": "Resolved listed and unlisted infraspecific records in the frozen test set only"
+    },
+    "polygon_safeguards": [
+      "58",
+      "96",
+      "418"
+    ],
+    "audit_results": "research/range_clip_results.json",
+    "shared_key_safeguard_commit": "d661d48d5d27b44666dd1a6482bcaedae7acee45",
+    "original_commit_references": {
+      "gate_commit": "7da9d9b9deb56b9b8df298f08e628a6695749b1e",
+      "scorer_commit": "d765666575f362f79f2cc4ff9deba10f25ee5cfb",
+      "geometry_code_commit": "5569d4a2cb00bf20d2c8483542d81a7eca357094",
+      "shipping_code_commit": "bbc77d8464a54bff3733829c3ed95e5a5f804bdf",
+      "shared_key_safeguard_commit": "39d4b8efd7ac88349b588e567e4b6d96fc753d60"
+    },
+    "rebase_note": "Reachable references updated after rebase onto origin/main; original registration and scored code references are retained, and frozen file bytes and selection are unchanged"
+  },
+  "production_verification": {
+    "status": "PASS",
+    "artifact": "research/allowlist_production_audit.json",
+    "script": "research/allowlist_production_audit.py",
+    "source_head_before_metadata_commit": "19c22a63b9bfb4a76172c698da2955f90ae93b6a",
+    "checks": "Full configured pytest, ruff and pre-commit passed after rebase; every selected cell and listing audit matched the independent reconstruction",
+    "input_output_hashes": {
+      "download": {
+        "path": "GBIF DOI 10.15468/dl.6hqdyd",
+        "sha256": "4b16a59371966b1f717fdaf10f2d0af8e92e15ba385800351a02e0b6681c5c52"
+      },
+      "crosswalk": {
+        "path": "cluster_results/ca/atrisk_species_keys.csv",
+        "sha256": "3ff7323e81c4578eccb769356e56d6b66e80330d6fb2c619ca273ea6d298ecc7"
+      },
+      "listings": {
+        "path": "cluster_results/ca/atrisk_listings.csv",
+        "sha256": "7b10abf771df7556bc8fd4411ce8e325db1f3ec50be5438d3766af125745dfc3"
+      },
+      "ranges": {
+        "path": "cluster_results/ca/atrisk_ranges.geojson",
+        "sha256": "2feb0fc8f6e7f47e46e60a775a45c64dd6c9d7e32dbc7defd51282a90662658a"
+      },
+      "policy": {
+        "path": "cluster_results/ca/atrisk_shipping_policy.json",
+        "sha256": "6c604e10376f6d05c0bd96ad1df286bc3f27497fddc26fc6897c6d23aa430326"
+      },
+      "test_set": {
+        "path": "research/subspecies_test_set.csv",
+        "sha256": "ebd07f668fb78536aeb5b4caab3a348e8aca5cd7cded646607e427da6c51ffef"
+      },
+      "production_layer": {
+        "path": "cluster_results/ca/ca_atrisk_richness.csv",
+        "sha256": "d74ad7110afe75d1696c3df29b4c247d34455c1d7856123425fddc98dbd1409d"
+      },
+      "production_listing_audit": {
+        "path": "cluster_results/ca/atrisk_listing_clip.csv",
+        "sha256": "12a5f109e8111473b3491001893aee88ec2910f2a2c32e4a26149d072ed8a1eb"
+      },
+      "production_provenance": {
+        "path": "cluster_results/ca/ca_atrisk_provenance.json",
+        "sha256": "257eb64d2782c851493171d73932225e6ab5e7d7d8210ff108cc1fc4f3dce385"
+      }
+    }
+  },
+  "rebase_onto": "8161238ef1bd0ed61ac40d8c62abca423e1194d0"
+}
