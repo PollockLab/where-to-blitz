@@ -6,7 +6,11 @@ start point + flexible time budget (minutes / hours / days); real driving routes
 option. Answers "from here, with this much time, where do I maximise my impact?"."""
 
 import json
+import math
 import os
+import re
+from datetime import date
+from pathlib import Path
 
 # Canada-wide: fetch per-group at runtime (national grid fetched per-group at runtime is too big to inline).
 # Inject only the group->filename map; the browser fetches each group's JSON on demand.
@@ -74,8 +78,68 @@ with open("webapp/index.html") as _fh:
 CARTO_API_KEY = os.environ.get("CARTO_API_KEY", "")
 
 
+def load_plant_pilot(path):
+    """Missing pilot artifacts disable the feature; malformed artifacts fail the build."""
+    path = Path(path)
+    if not path.exists():
+        return None
+    pilot = json.loads(path.read_text())
+
+    def number(value):
+        return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+
+    def vector(value, length, positive=False):
+        return isinstance(value, list) and len(value) == length and all(
+            number(v) and (not positive or v > 0) for v in value
+        )
+
+    def iso_date(value):
+        try:
+            return isinstance(value, str) and date.fromisoformat(value).isoformat() == value
+        except ValueError:
+            return False
+
+    valid = isinstance(pilot, dict) and type(pilot.get("schema_version")) is int and pilot["schema_version"] == 1 and pilot.get("method") == "bc-plants-habitat-season-v1"
+    if valid:
+        gate, scaler, names = pilot.get("release_gate"), pilot.get("scaler"), pilot.get("feature_names")
+        features = ["bio1", "bio4", "bio12"] + [f"cover_{v}" for v in (10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 100)]
+        valid = (isinstance(gate, dict) and isinstance(gate.get("passed"), bool)
+                 and iso_date(pilot.get("training_before")) and iso_date(pilot.get("valid_until"))
+                 and pilot["training_before"] < pilot["valid_until"]
+                 and names == features
+                 and (scaler is None and not gate["passed"] or isinstance(scaler, dict)
+                      and vector(scaler.get("mean"), 14) and vector(scaler.get("scale"), 14, True))
+                 and isinstance(pilot.get("species"), list) and isinstance(pilot.get("cells"), dict))
+    if valid:
+        ids = set()
+        for model in pilot["species"]:
+            if not isinstance(model, dict):
+                valid = False
+                break
+            taxon = model.get("id")
+            if (not isinstance(taxon, int) or isinstance(taxon, bool) or taxon <= 0 or taxon in ids
+                or not vector(model.get("mean"), 14) or not vector(model.get("variance"), 14, True)
+                or not vector(model.get("months"), 12) or any(v < 0 for v in model["months"])
+                or not number(model.get("rarity")) or not 0 <= model["rarity"] <= 1
+                or not isinstance(model.get("support_cells"), int) or isinstance(model["support_cells"], bool)
+                or model["support_cells"] < 3):
+                valid = False
+                break
+            ids.add(taxon)
+        valid = valid and all(re.fullmatch(r"\d+,\d+", key) and vector(raw, 14)
+                              for key, raw in pilot["cells"].items())
+        valid = valid and (pilot["release_gate"]["passed"] or not pilot["species"] and not pilot["cells"])
+    if not valid:
+        raise ValueError("Malformed BC plant pilot artifact")
+    return pilot
+
+
+BC_PLANT_PILOT = load_plant_pilot("webapp/bc_plant_pilot.json")
+
+
 out = (
     HTML.replace("__FILES__", json.dumps(FILES, separators=(",", ":")))
+    .replace("__BC_PLANT_PILOT__", json.dumps(BC_PLANT_PILOT, separators=(",", ":"), allow_nan=False).replace("<", "\\u003c"))
     .replace("__OBJ__", json.dumps(OBJ))
     .replace("__PRESETS__", json.dumps(PRESETS))
     .replace("__DEFAULT__", json.dumps(DEFAULT))

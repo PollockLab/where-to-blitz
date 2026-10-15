@@ -19,7 +19,7 @@ def _function(src, name):
     return match.group(0)
 
 
-def _run_popup(responses, action, lang="en", *, actual_cache=False):
+def _run_popup(responses, action, lang="en", *, actual_cache=False, plant_pilot=None):
     src = TEMPLATE.read_text()
     i18n = src[src.index("const I18N=") : src.index("let LANG=")]
     # t() is one line; include its declaration independently of the multiline renderer functions.
@@ -30,6 +30,7 @@ def _run_popup(responses, action, lang="en", *, actual_cache=False):
         + ";\n"
         + src[src.index("function t(") : src.index("// indexed-name helpers")]
     )
+    script += "\nconst BC_PLANT_PILOT=" + json.dumps(plant_pilot) + ";\n"
     script += r"""
 const input=JSON.parse(require('node:fs').readFileSync(0,'utf8')), calls=[],callOptions=[];
 class Element{
@@ -44,7 +45,7 @@ class Element{
 const spEl=new Element(),gapEl=new Element(),actionsEl=new Element();
 const document={getElementById:()=>spEl};
 const state={taxon:'All biodiversity',project:'test'};
-const ICONIC={Aves:'Aves',Fungi:'Fungi'},FILES={Aves:'birds',Fungi:'fungi'},taxonSel={};
+const ICONIC={Aves:'Aves',Fungi:'Fungi',Plantae:'Plantae'},FILES={Aves:'birds',Fungi:'fungi'},taxonSel={};
 const DOMESTIC=new Set(['Felis catus']);
 const WHERE_LBL={right_here:'right_here',around_start:'prospects_where_start'};
 let prospectSeq=0,_lastProspect=null,gapSeq=0;
@@ -54,6 +55,7 @@ const gtHead=()=>'<div class="popsec">'+t('pop_groups_hd')+'</div>';
 const groupName=k=>t('group')[k]||k;
 let cellBoundsForRes=()=>({swlat:49,nelat:49.1,swlng:-123,nelng:-122.9});
 let surfaceFilter=async()=>'';
+let snapToLattice=()=>({row:1,col:2});
 const inatLocale=()=>LANG==='fr'?'&locale=fr':'';
 const HH=0.1;
 let jget=async (url,ms,tries)=>{
@@ -89,6 +91,8 @@ const fetchT=async(url)=>{
         script += _function(src, "prospectSupportRows") + _function(src, "wireProspectSupport")
         start = src.index("function haversine(")
         script += src[start : src.index("\n", start)] + "\n"
+    for helper in ("validPlantPilotArtifact", "scorePlantPilot", "plantPilotForCell", "completePlantRegionalRows"):
+        script += _function(src, helper)
     script += _function(src, "fetchProspects")
     script += _function(src, "paintGapTree") + _function(src, "fetchGapTree")
     if "function paintGapStatus(" in src:
