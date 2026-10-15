@@ -1148,6 +1148,39 @@ function checkedCandidateAbsences(candidates,j){
   }
   return candidates.filter(r=>!present.has(r.taxon.id));
 }
+// The first 500 count-descending results are the COMMONEST species. Sorting that page
+// backwards makes its cutoff look like regional rarity. Find the final page with >=3
+// records instead, using logarithmic probes rather than downloading every species page.
+async function rareRegionalRows(first,url,current,eligible){
+  if(first&&Array.isArray(first.results)&&first.results.length<500)return first.results;
+  if(!validSpeciesCounts(first)||first.results.some((r,i)=>i&&r.count>first.results[i-1].count))return [];
+  if(completeSpeciesCounts(first)||first.results.at(-1).count<3)return first.results;
+  if(first.results.length!==500)return [];
+  const pages=Math.ceil(first.total_results/500),cache=new Map([[1,first.results]]);
+  let probes=0;
+  const load=async page=>{
+    if(!current())return [];
+    if(cache.has(page))return cache.get(page);
+    if(++probes>12)throw Error('Regional page search exceeded its request budget');
+    const j=await jget(url+'&page='+page,9000,1);
+    if(!current())return [];
+    if(!j||(j.page!==undefined&&j.page!==page)||!validSpeciesCounts({...j,page:1})||
+      j.total_results!==first.total_results||j.results.length!==Math.min(500,first.total_results-(page-1)*500)||
+      j.results.some((r,i)=>i&&r.count>j.results[i-1].count))throw Error('Invalid regional species page');
+    cache.set(page,j.results);return j.results;
+  };
+  let lo=2,hi=pages,boundary=1;
+  while(lo<=hi){
+    const page=Math.floor((lo+hi)/2),rows=await load(page);
+    if(!current())return [];
+    if(rows[0].count>=3){boundary=page;lo=page+1;}else hi=page-1;
+  }
+  let rows=cache.get(boundary);
+  // A page can contain just one qualifying row before the one/two-record tail.
+  // Walk back within the same request budget if photo/presence filters remove the tail.
+  while(boundary>1&&current()&&rows.filter(r=>r.count>=3&&eligible(r)).length<8)rows=rows.concat(await load(--boundary));
+  return current()?rows:[];
+}
 async function fetchProspects(lat,lon,whereKey,opts){
   const myseq=++prospectSeq,taxon=state.taxon,lang=LANG;
   const current=()=>myseq===prospectSeq&&taxon===state.taxon&&lang===LANG;
@@ -1192,16 +1225,20 @@ async function fetchProspects(lat,lon,whereKey,opts){
     recorded.forEach(r=>{have.add(r.taxon.id);if(Array.isArray(r.taxon.ancestor_ids))r.taxon.ancestor_ids.forEach(id=>{if(Number.isInteger(id)&&id>0)have.add(id);});});
     const cell=recorded.filter(r=>r.count>=2 && r.taxon.default_photo && !DOMESTIC.has(r.taxon.name));
     const mx=(await mxP);if(!current())return;
-    const k=await jget(q({lat:lat,lng:lon,radius:40})+mx).catch(()=>null);
+    const regionalUrl=q({lat:lat,lng:lon,radius:40})+mx;
+    const k=await jget(regionalUrl).catch(()=>null);
     if(!current())return;
     const regionalRows=k&&Array.isArray(k.results)?k.results:[];
     const reg={};regionalRows.forEach(r=>{if(r&&r.taxon&&Number.isInteger(r.taxon.id)&&r.taxon.id>0&&Number.isInteger(r.count)&&r.count>0)reg[r.taxon.id]=r.count;});
     // Keep the rarest-first species candidates bounded and unique. A filtered local request can
     // verify these candidates even when the unfiltered local list has more than one page.
     const candidateIds=new Set();
-    const candidates=regionalRows.filter(r=>r&&r.taxon&&Number.isInteger(r.taxon.id)&&r.taxon.id>0&&
+    const eligible=r=>r&&r.taxon&&Number.isInteger(r.taxon.id)&&r.taxon.id>0&&
       r.taxon.rank==='species'&&r.taxon.default_photo&&Number.isInteger(r.count)&&r.count>=3&&!have.has(r.taxon.id)&&
-      !DOMESTIC.has(r.taxon.name)&&(r.taxon.observations_count||0)>40).sort((a,b)=>a.count-b.count)
+      !DOMESTIC.has(r.taxon.name)&&(r.taxon.observations_count||0)>40;
+    const rareRows=await rareRegionalRows(k,regionalUrl,current,eligible).catch(()=>[]);
+    if(!current())return;
+    const candidates=rareRows.filter(eligible).sort((a,b)=>a.count-b.count)
       .filter(r=>{if(candidateIds.has(r.taxon.id))return false;candidateIds.add(r.taxon.id);return true;}).slice(0,8);
     let absent=complete?candidates:[];
     if(!complete&&candidates.length){

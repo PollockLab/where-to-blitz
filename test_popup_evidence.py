@@ -83,6 +83,8 @@ const fetchT=async(url)=>{
         script += _function(src, "validSpeciesCounts")
     script += _function(src, "cellRecordsUrl") + _function(src, "popupActionsHtml")
     script += _function(src, "refreshPopupActions")
+    if "function rareRegionalRows(" in src:
+        script += _function(src, "rareRegionalRows")
     script += _function(src, "fetchProspects")
     script += _function(src, "paintGapTree") + _function(src, "fetchGapTree")
     if "function paintGapStatus(" in src:
@@ -749,3 +751,145 @@ def test_popup_uses_larger_photos_with_a_safe_thumbnail_fallback(medium_url, exp
     assert 'data-fallback="https://example.org/photo.jpg"' in result["html"]
     assert "this.onerror=null" in result["html"]
     assert "javascript:" not in result["html"] and "data:image" not in result["html"]
+
+
+def _paginated_prospects(pages, *, local=None, check=None, lang="en", failed_page=None, stale_page=None):
+    return _run_popup(
+        [local or {"total_results": 0, "results": []}, *pages],
+        "const local=input.responses.shift(),pages=input.responses;fetchGapTree=async()=>{};"
+        "jget=async url=>{calls.push(url);const p=new URL(url).searchParams;"
+        + "if(p.has('taxon_id'))return " + json.dumps(check or {"total_results": 0, "results": []}) + ";"
+        + "if(!p.has('radius'))return local;const page=Number(p.get('page')||1);"
+        + (f"if(page==={failed_page})throw Error('429');" if failed_page else "")
+        + (f"if(page==={stale_page}){{prospectSeq++;spEl.innerHTML='new selection';}}" if stale_page else "")
+        + "return pages[page-1];};"
+        "surfaceFilter=async()=> '&without_taxon_id=marine';"
+        "await fetchProspects(49,-123,'right_here',{toPopup:true,spEl,gapsEl:gapEl});"
+        "console.log(JSON.stringify({html:spEl.innerHTML,calls}));",
+        lang,
+    )
+
+
+@pytest.mark.parametrize("lang", ["en", "fr"])
+def test_regional_rarity_is_not_the_bottom_of_the_most_common_500(lang):
+    rows = [_species(i, 2000 - i) for i in range(1, 501)]
+    rows += [_species(i, 4) for i in range(501, 1000)] + [_species(1000, 3)]
+    rows += [_species(i, 1) for i in range(1001, 2501)]
+    pages = [{"total_results": len(rows), "results": rows[i : i + 500]} for i in range(0, len(rows), 500)]
+    result = _paginated_prospects(pages, lang=lang)
+    html = result["html"]
+    assert 'taxa/1000"' in html
+    assert ("3 within 40 km" if lang == "en" else "3 dans 40 km") in html
+    assert 'taxa/500"' not in html
+    assert len(re.findall(r'href="https://www.inaturalist.org/taxa/', html)) == 4
+    assert len(result["calls"]) <= 6  # local + first page + logarithmic probes + adjacent page
+    for call in result["calls"][1:]:
+        params = parse_qs(urlparse(call).query)
+        assert params['radius'] == ['40'] and params['order_by'] == ['count']
+        assert params['without_taxon_id'] == ['marine']
+        assert params['quality_grade'] == ['research'] and params['threatened'] == ['false']
+        assert params['geoprivacy'] == ['open'] and params['taxon_geoprivacy'] == ['open']
+        if lang == "fr":
+            assert params['locale'] == ["fr"]
+
+
+@pytest.mark.parametrize("boundary", [1, 2, 3])
+def test_rarest_qualifying_page_can_be_first_middle_or_last(boundary):
+    rows = [_species(i, 100) for i in range(1, (boundary - 1) * 500 + 1)]
+    rare_id = len(rows) + 1
+    rows += [_species(rare_id + i, 3 if i < 8 else 1) for i in range(500)]
+    rows += [_species(i, 1) for i in range(len(rows) + 1, 1501)]
+    pages = [{"total_results": 1500, "results": rows[i : i + 500]} for i in range(0, 1500, 500)]
+    result = _paginated_prospects(pages)
+    for taxon_id in range(rare_id, rare_id + 4):
+        assert f'taxa/{taxon_id}"' in result["html"]
+    assert result["html"].count("3 within 40 km") == 4
+    if boundary == 1:
+        assert len(result["calls"]) == 2
+
+
+def _three_species_pages():
+    rows = [_species(i, 100) for i in range(1, 501)]
+    rows += [_species(i, 3) for i in range(501, 1001)]
+    rows += [_species(i, 1) for i in range(1001, 1501)]
+    return [{"total_results": len(rows), "results": rows[i : i + 500]} for i in range(0, len(rows), 500)]
+
+
+@pytest.mark.parametrize("failure", ["request", "total", "page", "short", "order", "invalid"])
+def test_failed_or_inconsistent_page_search_keeps_local_evidence_without_cutoff_suggestions(failure):
+    pages = _three_species_pages()
+    if failure == "total":
+        pages[1]["total_results"] += 1
+    elif failure == "page":
+        pages[1]["page"] = 1
+    elif failure == "short":
+        pages[1]["results"].pop()
+    elif failure == "order":
+        pages[1]["results"][1]["count"] = 4
+    elif failure == "invalid":
+        pages[1]["results"][1] = None
+    result = _paginated_prospects(
+        pages, local={"total_results": 1, "results": [_species(1, 2)]},
+        failed_page=2 if failure == "request" else None,
+    )
+    assert 'taxa/1"' in result["html"] and "2 here" in result["html"]
+    assert "no matching record here" not in result["html"]
+    assert 'taxa/500"' not in result["html"]
+
+
+def test_stale_page_search_stops_before_requesting_or_painting_more_species():
+    result = _paginated_prospects(_three_species_pages(), stale_page=2)
+    assert result["html"] == "new selection"
+    assert len(result["calls"]) == 3
+
+
+def test_rare_page_candidates_still_get_the_capped_local_presence_check():
+    result = _paginated_prospects(
+        _three_species_pages(),
+        local={"total_results": 501, "results": [_species(501, 1)]},
+        check={"total_results": 1, "results": [_species(502, 1)]},
+    )
+    params = parse_qs(urlparse(result["calls"][-1]).query)
+    assert params["taxon_id"] == ["502,503,504,505,506,507,508,509"]
+    assert "radius" not in params and "swlat" in params
+    assert 'taxa/501"' not in result["html"]
+    assert 'taxa/502"' not in result["html"]
+    assert 'taxa/503"' in result["html"]
+    assert "checked separately" in result["html"]
+
+
+def test_ineligible_rare_pages_do_not_hide_eligible_species_on_an_earlier_page():
+    pages = _three_species_pages()
+    for row in pages[1]["results"]:
+        row["taxon"]["observations_count"] = 20
+    for row in pages[0]["results"]:
+        row["count"] = 101
+    pages[0]["results"][-1]["count"] = 100
+    result = _paginated_prospects(pages)
+    assert 'taxa/500"' in result["html"]
+    assert "100 within 40 km" in result["html"]
+    assert 'taxa/501"' not in result["html"]
+
+
+def test_partial_final_page_keeps_its_rare_candidate_and_fills_from_preceding_page():
+    rows = [_species(i, 10) for i in range(1, 501)] + [_species(501, 3)]
+    result = _paginated_prospects(
+        [{"total_results": 501, "results": rows[:500]}, {"total_results": 501, "results": rows[500:]}]
+    )
+    assert 'taxa/501"' in result["html"] and "3 within 40 km" in result["html"]
+    assert len(re.findall(r'href="https://www.inaturalist.org/taxa/', result["html"])) == 4
+    assert len(result["calls"]) == 3
+
+
+def test_regional_page_search_has_a_finite_request_budget():
+    first = {"total_results": 500 * 8192, "results": [_species(i, 3) for i in range(1, 501)]}
+    result = _run_popup(
+        [first],
+        "const first=input.responses[0];fetchGapTree=async()=>{};"
+        "jget=async url=>{calls.push(url);return new URL(url).searchParams.has('radius')?first:"
+        "{total_results:0,results:[]};};"
+        "await fetchProspects(49,-123,'right_here',{toPopup:true,spEl,gapsEl:gapEl});"
+        "console.log(JSON.stringify({html:spEl.innerHTML,calls}));",
+    )
+    assert len(result["calls"]) == 14  # local + initial region + at most twelve probes
+    assert "no matching record here" not in result["html"]
