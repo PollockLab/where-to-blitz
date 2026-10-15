@@ -85,6 +85,10 @@ const fetchT=async(url)=>{
     script += _function(src, "refreshPopupActions")
     if "function rareRegionalRows(" in src:
         script += _function(src, "rareRegionalRows")
+    if "function wireProspectSupport(" in src:
+        script += _function(src, "prospectSupportRows") + _function(src, "wireProspectSupport")
+        start = src.index("function haversine(")
+        script += src[start : src.index("\n", start)] + "\n"
     script += _function(src, "fetchProspects")
     script += _function(src, "paintGapTree") + _function(src, "fetchGapTree")
     if "function paintGapStatus(" in src:
@@ -395,8 +399,9 @@ def test_popup_gap_status_appears_once_and_keeps_existing_species_counts(
         lang,
     )
     html = result["html"]
-    assert html.count(status) == 3
-    assert html.count(qualified) == 3
+    cards = "".join(re.findall(r'<a href="https://www.inaturalist.org/taxa/.*?</a>', html))
+    assert cards.count(status) == 3
+    assert cards.count(qualified) == 3
     assert local_count in html and nearby_count in html
     assert html.index('taxa/2"') < html.index('taxa/3"') < html.index('taxa/4"') < html.index('taxa/1"')
 

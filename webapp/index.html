@@ -570,6 +570,11 @@ const I18N={
     prospects_hd:(where,n,nearby)=>`<b style="color:var(--ink)">${where}</b> · ${n} species recorded on iNaturalist. Worth looking for${nearby?' (nearby)':''}:`,
     rare:"rare nearby", gap:"gap",
     here_count:n=>`${n} here`, near_count:n=>`${n} within 40 km`, new_here:"no matching record", not_here_tag:"no matching record here",
+    support_heading:"Why these species?", support_loading:"Checking recording support…",
+    support_why:"Species with no matching local record need at least three nearby records and are ordered by fewer nearby records first, so counts can tie. Already recorded species favour lower local-to-nearby recording shares. Support describes records, not your chance of finding the species.",
+    support_counts:(n,d)=>`${n} observer${n===1?'':'s'} · ${d} date${d===1?'':'s'}`,
+    support_nearest:n=>`Nearest record: ~${n} km from cell centre`,
+    support_unavailable:"Detailed support is unavailable for some records. Counts and suggestions are unchanged.",
     inat_caveat:"Public research-grade iNaturalist records. Threatened species and species with protected locations are excluded. Other records or unrecorded species may exist.",
     explore_all:"Explore all on iNaturalist →", log_sighting:"Log a sighting", for_challenge:"for this challenge",
     join:"join →",
@@ -757,6 +762,11 @@ const I18N={
     prospects_hd:(where,n,nearby)=>`<b style="color:var(--ink)">${where}</b> · ${n} espèces observées sur iNaturalist. À surveiller${nearby?' (à proximité)':''} :`,
     rare:"rare à proximité", gap:"lacune",
     here_count:n=>`${n} ici`, near_count:n=>`${n} dans 40 km`, new_here:"aucune obs. retenue", not_here_tag:"aucune observation retenue ici",
+    support_heading:"Pourquoi ces espèces ?", support_loading:"Vérification des observations…",
+    support_why:"Les espèces sans observation locale retenue nécessitent au moins trois observations voisines et sont classées des moins aux plus observées, donc les nombres peuvent être égaux. Les espèces déjà observées ici sont classées par leur faible part locale d'observations. Ces détails décrivent les données, pas vos chances de trouver l'espèce.",
+    support_counts:(n,d)=>`${n} observateur${n===1?'':'s'} · ${d} date${d===1?'':'s'}`,
+    support_nearest:n=>`Observation la plus proche : ~${n} km du centre de la cellule`,
+    support_unavailable:"Les détails ne sont pas disponibles pour certaines observations. Les nombres et les suggestions restent inchangés.",
     inat_caveat:"Observations publiques de qualité recherche sur iNaturalist. Les espèces menacées et celles dont les localisations sont protégées sont exclues. D'autres observations ou des espèces non documentées peuvent exister.",
     explore_all:"Tout explorer sur iNaturalist →", log_sighting:"Noter une observation", for_challenge:"pour ce défi",
     join:"se joindre →",
@@ -1148,6 +1158,60 @@ function checkedCandidateAbsences(candidates,j){
   }
   return candidates.filter(r=>!present.has(r.taxon.id));
 }
+// Counts alone do not say whether records come from several people, dates or places.
+// Require a complete, matching public-record response before showing support totals.
+function prospectSupportRows(j,selected,lat,lon){
+  if(!j||j.page!==undefined&&j.page!==1||!Array.isArray(j.results)||!Number.isInteger(j.total_results)||
+    j.total_results!==j.results.length||j.results.length>200)throw Error('Incomplete record support');
+  const groups=new Map(selected.map(r=>[r.taxon.id,{records:0,observers:new Set(),dates:new Set(),nearest:Infinity}])),ids=new Set();
+  for(const row of j.results){
+    const tx=row&&row.taxon,ancestors=tx&&Array.isArray(tx.ancestor_ids)?tx.ancestor_ids:[];
+    const matches=selected.filter(r=>tx&&(r.taxon.id===tx.id||ancestors.includes(r.taxon.id)));
+    const date=row&&row.observed_on,xy=row&&row.geojson&&row.geojson.coordinates;
+    if(!row||!Number.isInteger(row.id)||row.id<=0||ids.has(row.id)||matches.length!==1||
+      !row.user||!Number.isInteger(row.user.id)||row.user.id<=0||
+      typeof date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(date)||!Number.isFinite(Date.parse(date))||
+      new Date(date).toISOString().slice(0,10)!==date||
+      !Array.isArray(xy)||xy.length!==2||!xy.every(Number.isFinite)||Math.abs(xy[0])>180||Math.abs(xy[1])>90||
+      row.geoprivacy&&row.geoprivacy!=='open'||row.taxon_geoprivacy&&row.taxon_geoprivacy!=='open')throw Error('Invalid record support');
+    ids.add(row.id);
+    const g=groups.get(matches[0].taxon.id);g.records++;g.observers.add(row.user.id);g.dates.add(date);
+    g.nearest=Math.min(g.nearest,haversine(lat,lon,xy[1],xy[0]));
+  }
+  return selected.map(r=>{
+    const g=groups.get(r.taxon.id);if(g.records!==r._near)throw Error('Record counts changed');
+    return {id:r.taxon.id,name:r.taxon.preferred_common_name||r.taxon.name,observers:g.observers.size,dates:g.dates.size,nearest:g.nearest};
+  });
+}
+function wireProspectSupport(pr,selected,regionalUrl,current,lat,lon){
+  const details=pr.querySelector('[data-prospect-support]');if(!details)return;
+  const el=details.querySelector('[data-support-body]');
+  // One optional request, at most 200 records. Exact requested taxa refine any marine clade filter.
+  const candidates=selected.filter(r=>r.taxon.rank==='species'&&Number.isInteger(r._near)&&r._near>0&&r._near<=50);
+  let pending=false,done=false;
+  const load=async()=>{
+    if(!current()||pending||done)return;
+    if(!candidates.length){el.textContent=t('support_unavailable');done=true;return;}
+    pending=true;el.textContent=t('support_loading');
+    const url=new URL(regionalUrl.replace('/observations/species_counts','/observations'));
+    url.searchParams.set('taxon_id',candidates.map(r=>r.taxon.id).join(','));
+    url.searchParams.set('per_page','200');url.searchParams.set('page','1');url.searchParams.set('order_by','observed_on');
+    try{
+      const j=await jget(url.toString(),9000,1);if(!current())return;
+      const rows=prospectSupportRows(j,candidates,lat,lon),locale=LANG==='fr'?'fr-CA':'en-CA';
+      el.innerHTML=rows.map(r=>'<p><b>'+esc(r.name)+'</b><br>'+t('support_counts',r.observers,r.dates)+'<br>'+
+        t('support_nearest',r.nearest.toLocaleString(locale,{maximumFractionDigits:1}))+'</p>').join('')+
+        (candidates.length<selected.length?'<p>'+t('support_unavailable')+'</p>':'');
+      done=true;
+    }catch(e){
+      if(!current())return;
+      _jc.delete(url.toString());   // rejected HTTP-success JSON must not make Retry reuse invalid evidence
+      el.innerHTML=t('support_unavailable')+' <button type="button" class="popretry" data-support-retry>'+t('retry')+'</button>';
+      const retry=el.querySelector('[data-support-retry]');if(retry)retry.onclick=()=>load();
+    }finally{pending=false;}
+  };
+  details.ontoggle=()=>details.open?load():undefined;
+}
 // The first 500 count-descending results are the COMMONEST species. Sorting that page
 // backwards makes its cutoff look like regional rarity. Find the final page with >=3
 // records instead, using logarithmic probes rather than downloading every species page.
@@ -1265,7 +1329,9 @@ async function fetchProspects(lat,lon,whereKey,opts){
       const pbadge=r=>r._here?(r._near!==null&&r._near<=3?`<span class="bdg rare">${L_rare}</span>`:''):`<span class="bdg new">${L_notHere}</span>`;
       const pcount=r=>(r._here?'<span>'+T_here(r.count)+'</span>':'')+(r._near===null?'':'<span>'+T_near(r._near)+'</span>');
       pr.innerHTML='<div class="popsec">'+t('pop_rare_hd')+'</div><div class="popgrid">'+res.slice(0,4).map(r=>{const tx=r.taxon;
-        return `<a href="https://www.inaturalist.org/taxa/${tx.id}" target="_blank" rel="noopener" title="${esc(tx.name)}"><img src="${safeImg(tx.default_photo.medium_url)||safeImg(tx.default_photo.square_url)}" data-fallback="${safeImg(tx.default_photo.square_url)}" onerror="this.onerror=null;if(this.dataset.fallback)this.src=this.dataset.fallback" loading="lazy" alt=""><div class="popsptext"><div class="nm">${esc(tx.preferred_common_name||tx.name)}</div>${pbadge(r)}<div class="ct">${pcount(r)}</div></div></a>`;}).join('')+'</div>'+cap+caveat;
+        return `<a href="https://www.inaturalist.org/taxa/${tx.id}" target="_blank" rel="noopener" title="${esc(tx.name)}"><img src="${safeImg(tx.default_photo.medium_url)||safeImg(tx.default_photo.square_url)}" data-fallback="${safeImg(tx.default_photo.square_url)}" onerror="this.onerror=null;if(this.dataset.fallback)this.src=this.dataset.fallback" loading="lazy" alt=""><div class="popsptext"><div class="nm">${esc(tx.preferred_common_name||tx.name)}</div>${pbadge(r)}<div class="ct">${pcount(r)}</div></div></a>`;}).join('')+'</div>'+cap+caveat+
+        '<details class="popdetails" data-prospect-support><summary>'+t('support_heading')+'</summary><p>'+t('support_why')+'</p><div data-support-body aria-live="polite"></div></details>';
+      wireProspectSupport(pr,res.slice(0,4),regionalUrl,current,lat,lon);
       return;
     }
     res=res.slice(0,6);

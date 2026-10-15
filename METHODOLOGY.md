@@ -232,6 +232,8 @@ Caveats: counts are iNaturalist research-grade records, a sampling proxy, not a 
 regional scarcity keep iNaturalist's own order; and the metric measures recording-gap value, not
 ecological importance — that awaits the SDM/VOI score.
 
+The optional “Why these species?” disclosure explains why missing-local candidates can tie at the three-record minimum. On opening it, a bounded public-record query can show distinct observers, observation dates and the approximate distance from the cell centre to the nearest record. These are recording-support summaries, not independent surveys or encounter probabilities. Details require a complete response whose counts match the displayed regional totals; missing, changed or incomplete evidence leaves the suggestions unchanged. The optional query covers at most four species with at most 50 nearby records each, so it does not add a request to the initial popup load or paginate an unbounded record set.
+
 ---
 
 ## The Getting Even layer (#59)
