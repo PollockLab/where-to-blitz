@@ -414,6 +414,7 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
 
 <script>
 const FILES=__FILES__, OBJ=__OBJ__, PRESETS=__PRESETS__, DEFAULT=__DEFAULT__;
+const BC_PLANT_PILOT=__BC_PLANT_PILOT__;
 const PLAN_ENABLED=__PLAN_ENABLED__||/[?&]plan=1/.test(location.search);   // issue #17: hidden by default; ?plan=1 is a no-clutter escape hatch for the team (no rebuild)
 const COMPARE_ENABLED=__COMPARE_ENABLED__||/[?&]compare=1/.test(location.search);   // issue #71: stashed; ?compare=1 re-enables
 
@@ -477,7 +478,7 @@ const I18N={
     gaptree_sparse:"Too few nearby records to rank groups here yet — every sighting helps fill the map.",
     gaptree_err:"Couldn’t read what's recorded just now — tap the cell again.",
     gaptree_partial:"Partial species lists cannot reliably compare groups here.",
-    pop_groups_hd:"Under-sampled groups", pop_groups_cap:"Each bar compares the group's coverage here against this cell's average across groups. A short bar means the group lags the rest.", pop_rare_hd:"Top species to record here",
+    pop_groups_hd:"Under-sampled groups", pop_groups_cap:"Each bar compares the group's coverage here against this cell's average across groups. A short bar means the group lags the rest.", pop_rare_hd:"Species suggestions from recorded observations", pop_plant_pilot_hd:"Plant recording suggestions this month",
     gt_dense:"Dense area: the nearby sample is capped, so these shares are approximate.",
     gt_caveat:"Public research-grade iNaturalist records, excluding threatened species and species with protected locations. Counts reflect recording effort.",
     gt_gap:"gap", gt_partial:"partial", gt_ok:"well recorded",
@@ -516,7 +517,7 @@ const I18N={
     pop_groups_summary:"Compare groups", pop_components:"Score components", pop_help:"Scoring and evidence explained",
     group_status_loading:"Loading group evidence…", group_status_partial:"Incomplete lists, comparison unavailable", group_status_error:"Group evidence unavailable", group_status_sparse:"Too few nearby records",
     inat_scope:"Public research-grade iNaturalist records only. Threatened species and protected locations excluded.",
-    evidence_method:"Species evidence is fetched live for the selected cell's bounding box and a 40 km radius around its centre. Suggestions put verified gaps in matching records first, then smaller local-to-nearby recording shares, then fewer nearby records. Up to four candidates are shown. A complete local list can establish that a nearby candidate has no matching filtered record here. An incomplete local list needs a separate bounded check of up to eight candidates. If that check cannot establish a gap, only species already recorded locally are suggested. These labels describe filtered records, not biological absence. Failed nearby queries leave local cards without nearby counts or rarity labels.",
+    evidence_method:"Species evidence is fetched live for the selected cell's bounding box and a 40 km radius around its centre. The nearby-count method puts verified gaps in matching records first, then smaller local-to-nearby recording shares, then fewer nearby records. Up to four candidates are shown. An available BC plant pilot instead uses habitat and current-month seasonal recording indices, checks up to 32 candidates, and leaves fewer cards when evidence is weak. A complete local list can establish that a nearby candidate has no matching filtered record here. For the nearby-count method, an incomplete local list needs a separate bounded check of up to eight candidates. If that check cannot establish a gap, only species already recorded locally are suggested. These labels describe filtered records, not biological absence. Failed nearby queries leave local cards without nearby counts or rarity labels.",
     source_expl:`<p><a href="https://www.inaturalist.org" target="_blank" rel="noopener">iNaturalist</a> supplies the live popup records and historical research-grade records. Recording-density rasters are supplied by <a href="https://object-arbutus.cloud.computecanada.ca/bq-io/io/inat_canada_heatmaps/" target="_blank" rel="noopener">Biodiversité Québec</a>.</p><p>Climate inputs use <a href="https://chelsa-climate.org" target="_blank" rel="noopener">CHELSA</a>. Tree-cover loss uses <a href="https://glad.earthengine.app/view/global-forest-change" target="_blank" rel="noopener">Hansen Global Forest Change</a>, cumulative 2001–2023. Conservation combines <a href="https://doi.org/10.17605/OSF.IO/E4A58" target="_blank" rel="noopener">CAN-SAR assessments</a> with the GBIF occurrence download and taxonomy identified below.</p>`,
     grid_limits:"The drawn cells form a Lambert azimuthal equal-area grid at 25 km and 5 km. Conservation and older-recording inputs originate on 0.25-degree source grids and are joined to it. The live popup uses the drawn cell's latitude/longitude bounding box, which includes some area outside its curved boundary. Its record filters and dates differ from the offline scoring inputs.",
     method_limits:"Recording gaps use observation density, with climate distinctiveness ordering zero-density cells. Older recording gaps use recent versus all-time records where the source CSV has a value, and inverse density as a fallback where it does not. Conservation reflects assessed, recorded species, with coarse ranges and uncertain locations. Sparse recording is not evidence that species are absent.",
@@ -570,6 +571,16 @@ const I18N={
     prospects_hd:(where,n,nearby)=>`<b style="color:var(--ink)">${where}</b> · ${n} species recorded on iNaturalist. Worth looking for${nearby?' (nearby)':''}:`,
     rare:"rare nearby", gap:"gap",
     here_count:n=>`${n} here`, near_count:n=>`${n} within 40 km`, new_here:"no matching record", not_here_tag:"no matching record here",
+    prospect_method_existing:"Nearby-count method: ranking uses local and nearby recording counts; counts can tie.",
+    prospect_method_pilot:"BC plant pilot: habitat and seasonal recording indices, with a rarity bonus. Indices are not probabilities of finding a species.",
+    pilot_none:"No plant suggestions meet the pilot's evidence checks here this month.",
+    pilot_basis:(h,s)=>`Habitat index ${h} · Seasonal recording index ${s}`,
+    pilot_support_why:"Suggestions match this cell's habitat and this month's recorded season, with rarity used within similar matches. Each has nearby records and no matching filtered local record. These are recording indices, not a predicted chance of finding a species.",
+    support_heading:"Why these species?", support_loading:"Checking recording support…",
+    support_why:"Species with no matching local record need at least three nearby records and are ordered by fewer nearby records first, so counts can tie. Already recorded species favour lower local-to-nearby recording shares. Support describes records, not your chance of finding the species.",
+    support_counts:(n,d)=>`${n} observer${n===1?'':'s'} · ${d} date${d===1?'':'s'}`,
+    support_nearest:n=>`Nearest record: ~${n} km from cell centre`,
+    support_unavailable:"Detailed support is unavailable for some records. Counts and suggestions are unchanged.",
     inat_caveat:"Public research-grade iNaturalist records. Threatened species and species with protected locations are excluded. Other records or unrecorded species may exist.",
     explore_all:"Explore all on iNaturalist →", log_sighting:"Log a sighting", for_challenge:"for this challenge",
     join:"join →",
@@ -664,7 +675,7 @@ const I18N={
     gaptree_sparse:"Trop peu d’observations à proximité pour classer les groupes ici — chaque observation aide à combler la carte.",
     gaptree_err:"Impossible de lire ce qui est déjà enregistré pour l’instant — touchez la cellule à nouveau.",
     gaptree_partial:"Des listes d'espèces partielles ne permettent pas de comparer les groupes ici de façon fiable.",
-    pop_groups_hd:"Groupes sous-échantillonnés", pop_groups_cap:"Chaque barre compare la couverture du groupe ici à la moyenne de la cellule, tous groupes confondus. Une barre courte signale un retard.", pop_rare_hd:"Espèces à noter en priorité ici",
+    pop_groups_hd:"Groupes sous-échantillonnés", pop_groups_cap:"Chaque barre compare la couverture du groupe ici à la moyenne de la cellule, tous groupes confondus. Une barre courte signale un retard.", pop_rare_hd:"Suggestions d’espèces selon les observations", pop_plant_pilot_hd:"Suggestions de plantes à observer ce mois-ci",
     gt_dense:"Zone dense&nbsp;: l'échantillon voisin est plafonné, ces parts sont approximatives.",
     gt_caveat:"Observations publiques de qualité recherche sur iNaturalist, sans les espèces menacées ni celles dont les localisations sont protégées. Les nombres reflètent l'effort d'observation.",
     gt_gap:"lacune", gt_partial:"partielle", gt_ok:"bien documenté",
@@ -703,7 +714,7 @@ const I18N={
     pop_groups_summary:"Comparer les groupes", pop_components:"Composantes du score", pop_help:"Comprendre les scores et les observations",
     group_status_loading:"Chargement des observations par groupe…", group_status_partial:"Listes incomplètes, comparaison indisponible", group_status_error:"Observations par groupe indisponibles", group_status_sparse:"Trop peu d'observations à proximité",
     inat_scope:"Observations publiques de qualité recherche sur iNaturalist seulement. Espèces menacées et localisations protégées exclues.",
-    evidence_method:"Les observations sont récupérées en direct dans la boîte englobante de la cellule sélectionnée et dans un rayon de 40 km autour de son centre. Les suggestions privilégient les lacunes vérifiées dans les observations retenues, puis une faible part d'observations locales par rapport aux voisines, puis un faible nombre d'observations voisines. Jusqu'à quatre candidates sont affichées. Une liste locale complète peut établir qu'une candidate voisine n'a aucune observation correspondant aux filtres ici. Une liste locale incomplète nécessite une vérification distincte et limitée à huit candidates. Si cette vérification ne peut pas établir de lacune, seules les espèces déjà observées localement sont suggérées. Ces étiquettes décrivent les observations filtrées, pas une absence biologique. Un échec de la requête voisine laisse les fiches locales sans nombre voisin ni étiquette de rareté.",
+    evidence_method:"Les observations sont récupérées en direct dans la boîte englobante de la cellule sélectionnée et dans un rayon de 40 km autour de son centre. La méthode des nombres d'observations privilégie les lacunes vérifiées dans les observations retenues, puis une faible part d'observations locales par rapport aux voisines, puis un faible nombre d'observations voisines. Jusqu'à quatre candidates sont affichées. Un projet pilote de plantes en C.-B., lorsqu'il est disponible, utilise plutôt des indices d'habitat et de saison des observations du mois courant, vérifie jusqu'à 32 candidates et affiche moins de fiches lorsque les données sont insuffisantes. Une liste locale complète peut établir qu'une candidate voisine n'a aucune observation correspondant aux filtres ici. Pour la méthode des nombres d'observations, une liste locale incomplète nécessite une vérification distincte et limitée à huit candidates. Si cette vérification ne peut pas établir de lacune, seules les espèces déjà observées localement sont suggérées. Ces étiquettes décrivent les observations filtrées, pas une absence biologique. Un échec de la requête voisine laisse les fiches locales sans nombre voisin ni étiquette de rareté.",
     source_expl:`<p><a href="https://www.inaturalist.org" target="_blank" rel="noopener">iNaturalist</a> fournit les observations en direct et les observations historiques de qualité recherche. Les rasters de densité sont fournis par <a href="https://object-arbutus.cloud.computecanada.ca/bq-io/io/inat_canada_heatmaps/" target="_blank" rel="noopener">Biodiversité Québec</a>.</p><p>Les données climatiques viennent de <a href="https://chelsa-climate.org" target="_blank" rel="noopener">CHELSA</a>. La perte de couvert arboré utilise <a href="https://glad.earthengine.app/view/global-forest-change" target="_blank" rel="noopener">Hansen Global Forest Change</a>, cumulée de 2001 à 2023. Conservation combine les <a href="https://doi.org/10.17605/OSF.IO/E4A58" target="_blank" rel="noopener">évaluations CAN-SAR</a> avec le téléchargement d'occurrences GBIF et la taxonomie indiqués ci-dessous.</p>`,
     grid_limits:"Les cellules dessinées forment une grille équivalente azimutale de Lambert de 25 km et de 5 km. Les données de conservation et d'observations anciennes proviennent de grilles sources de 0,25 degré, puis sont jointes à cette grille. La fenêtre utilise la boîte englobante en latitude et longitude de la cellule, qui inclut une partie de la zone extérieure à sa limite courbe. Ses filtres et dates diffèrent des données de calcul hors ligne.",
     method_limits:"La lacune d'observation utilise la densité, avec la singularité climatique pour ordonner les cellules sans observations. La lacune historique utilise les observations récentes et historiques si le CSV source contient une valeur, sinon l'inverse de la densité. Conservation représente les espèces évaluées et observées, avec des aires grossières et des positions incertaines. Peu d'observations ne prouve pas l'absence d'espèces.",
@@ -757,6 +768,16 @@ const I18N={
     prospects_hd:(where,n,nearby)=>`<b style="color:var(--ink)">${where}</b> · ${n} espèces observées sur iNaturalist. À surveiller${nearby?' (à proximité)':''} :`,
     rare:"rare à proximité", gap:"lacune",
     here_count:n=>`${n} ici`, near_count:n=>`${n} dans 40 km`, new_here:"aucune obs. retenue", not_here_tag:"aucune observation retenue ici",
+    prospect_method_existing:"Méthode fondée sur les nombres d'observations locales et voisines; les nombres peuvent être égaux.",
+    prospect_method_pilot:"Projet pilote de plantes en C.-B. : indices d'habitat et de saison des observations, avec un bonus de rareté. Ces indices ne sont pas des probabilités de trouver une espèce.",
+    pilot_none:"Aucune suggestion de plante ne satisfait aux critères du projet pilote ici ce mois-ci.",
+    pilot_basis:(h,s)=>`Indice d'habitat ${h} · Indice saisonnier des observations ${s}`,
+    pilot_support_why:"Les suggestions correspondent à l'habitat de cette cellule et à la saison des observations de ce mois-ci; la rareté départage les correspondances similaires. Chacune a des observations voisines et aucune observation locale correspondant aux filtres. Ces indices ne prédisent pas les chances de trouver une espèce.",
+    support_heading:"Pourquoi ces espèces ?", support_loading:"Vérification des observations…",
+    support_why:"Les espèces sans observation locale retenue nécessitent au moins trois observations voisines et sont classées des moins aux plus observées, donc les nombres peuvent être égaux. Les espèces déjà observées ici sont classées par leur faible part locale d'observations. Ces détails décrivent les données, pas vos chances de trouver l'espèce.",
+    support_counts:(n,d)=>`${n} observateur${n===1?'':'s'} · ${d} date${d===1?'':'s'}`,
+    support_nearest:n=>`Observation la plus proche : ~${n} km du centre de la cellule`,
+    support_unavailable:"Les détails ne sont pas disponibles pour certaines observations. Les nombres et les suggestions restent inchangés.",
     inat_caveat:"Observations publiques de qualité recherche sur iNaturalist. Les espèces menacées et celles dont les localisations sont protégées sont exclues. D'autres observations ou des espèces non documentées peuvent exister.",
     explore_all:"Tout explorer sur iNaturalist →", log_sighting:"Noter une observation", for_challenge:"pour ce défi",
     join:"se joindre →",
@@ -1148,6 +1169,60 @@ function checkedCandidateAbsences(candidates,j){
   }
   return candidates.filter(r=>!present.has(r.taxon.id));
 }
+// Counts alone do not say whether records come from several people, dates or places.
+// Require a complete, matching public-record response before showing support totals.
+function prospectSupportRows(j,selected,lat,lon){
+  if(!j||j.page!==undefined&&j.page!==1||!Array.isArray(j.results)||!Number.isInteger(j.total_results)||
+    j.total_results!==j.results.length||j.results.length>200)throw Error('Incomplete record support');
+  const groups=new Map(selected.map(r=>[r.taxon.id,{records:0,observers:new Set(),dates:new Set(),nearest:Infinity}])),ids=new Set();
+  for(const row of j.results){
+    const tx=row&&row.taxon,ancestors=tx&&Array.isArray(tx.ancestor_ids)?tx.ancestor_ids:[];
+    const matches=selected.filter(r=>tx&&(r.taxon.id===tx.id||ancestors.includes(r.taxon.id)));
+    const date=row&&row.observed_on,xy=row&&row.geojson&&row.geojson.coordinates;
+    if(!row||!Number.isInteger(row.id)||row.id<=0||ids.has(row.id)||matches.length!==1||
+      !row.user||!Number.isInteger(row.user.id)||row.user.id<=0||
+      typeof date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(date)||!Number.isFinite(Date.parse(date))||
+      new Date(date).toISOString().slice(0,10)!==date||
+      !Array.isArray(xy)||xy.length!==2||!xy.every(Number.isFinite)||Math.abs(xy[0])>180||Math.abs(xy[1])>90||
+      row.geoprivacy&&row.geoprivacy!=='open'||row.taxon_geoprivacy&&row.taxon_geoprivacy!=='open')throw Error('Invalid record support');
+    ids.add(row.id);
+    const g=groups.get(matches[0].taxon.id);g.records++;g.observers.add(row.user.id);g.dates.add(date);
+    g.nearest=Math.min(g.nearest,haversine(lat,lon,xy[1],xy[0]));
+  }
+  return selected.map(r=>{
+    const g=groups.get(r.taxon.id);if(g.records!==r._near)throw Error('Record counts changed');
+    return {id:r.taxon.id,name:r.taxon.preferred_common_name||r.taxon.name,observers:g.observers.size,dates:g.dates.size,nearest:g.nearest};
+  });
+}
+function wireProspectSupport(pr,selected,regionalUrl,current,lat,lon){
+  const details=pr.querySelector('[data-prospect-support]');if(!details)return;
+  const el=details.querySelector('[data-support-body]');
+  // One optional request, at most 200 records. Exact requested taxa refine any marine clade filter.
+  const candidates=selected.filter(r=>r.taxon.rank==='species'&&Number.isInteger(r._near)&&r._near>0&&r._near<=50);
+  let pending=false,done=false;
+  const load=async()=>{
+    if(!current()||pending||done)return;
+    if(!candidates.length){el.textContent=t('support_unavailable');done=true;return;}
+    pending=true;el.textContent=t('support_loading');
+    const url=new URL(regionalUrl.replace('/observations/species_counts','/observations'));
+    url.searchParams.set('taxon_id',candidates.map(r=>r.taxon.id).join(','));
+    url.searchParams.set('per_page','200');url.searchParams.set('page','1');url.searchParams.set('order_by','observed_on');
+    try{
+      const j=await jget(url.toString(),9000,1);if(!current())return;
+      const rows=prospectSupportRows(j,candidates,lat,lon),locale=LANG==='fr'?'fr-CA':'en-CA';
+      el.innerHTML=rows.map(r=>'<p><b>'+esc(r.name)+'</b><br>'+t('support_counts',r.observers,r.dates)+'<br>'+
+        t('support_nearest',r.nearest.toLocaleString(locale,{maximumFractionDigits:1}))+'</p>').join('')+
+        (candidates.length<selected.length?'<p>'+t('support_unavailable')+'</p>':'');
+      done=true;
+    }catch(e){
+      if(!current())return;
+      _jc.delete(url.toString());   // rejected HTTP-success JSON must not make Retry reuse invalid evidence
+      el.innerHTML=t('support_unavailable')+' <button type="button" class="popretry" data-support-retry>'+t('retry')+'</button>';
+      const retry=el.querySelector('[data-support-retry]');if(retry)retry.onclick=()=>load();
+    }finally{pending=false;}
+  };
+  details.ontoggle=()=>details.open?load():undefined;
+}
 // The first 500 count-descending results are the COMMONEST species. Sorting that page
 // backwards makes its cutoff look like regional rarity. Find the final page with >=3
 // records instead, using logarithmic probes rather than downloading every species page.
@@ -1180,6 +1255,62 @@ async function rareRegionalRows(first,url,current,eligible){
   // Walk back within the same request budget if photo/presence filters remove the tail.
   while(boundary>1&&current()&&rows.filter(r=>r.count>=3&&eligible(r)).length<8)rows=rows.concat(await load(--boundary));
   return current()?rows:[];
+}
+function validPlantPilotArtifact(p){
+  const features=['bio1','bio4','bio12',...[10,20,30,40,50,60,70,80,90,95,100].map(v=>'cover_'+v)];
+  const vector=(v,n,positive=false)=>Array.isArray(v)&&v.length===n&&v.every(x=>Number.isFinite(x)&&(!positive||x>0));
+  const date=s=>typeof s==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(s)&&Number.isFinite(Date.parse(s))&&new Date(s).toISOString().slice(0,10)===s;
+  if(!p||p.schema_version!==1||p.method!=='bc-plants-habitat-season-v1'||
+    !p.release_gate||typeof p.release_gate.passed!=='boolean'||!date(p.training_before)||!date(p.valid_until)||p.training_before>=p.valid_until||
+    !Array.isArray(p.feature_names)||p.feature_names.length!==14||p.feature_names.some((s,i)=>s!==features[i])||
+    !(p.scaler===null&&!p.release_gate.passed)&&(!p.scaler||!vector(p.scaler.mean,14)||!vector(p.scaler.scale,14,true))||!Array.isArray(p.species)||
+    !p.cells||typeof p.cells!=='object'||Array.isArray(p.cells))return false;
+  if(!p.release_gate.passed&&(p.species.length||Object.keys(p.cells).length))return false;
+  const ids=new Set();
+  for(const s of p.species){
+    if(!s||!Number.isInteger(s.id)||s.id<=0||ids.has(s.id)||!vector(s.mean,14)||!vector(s.variance,14,true)||
+      !vector(s.months,12)||s.months.some(x=>x<0)||!Number.isFinite(s.rarity)||s.rarity<0||s.rarity>1||
+      !Number.isInteger(s.support_cells)||s.support_cells<3)return false;
+    ids.add(s.id);
+  }
+  return Object.entries(p.cells).every(([key,raw])=>/^\d+,\d+$/.test(key)&&vector(raw,14));
+}
+function scorePlantPilot(p,raw,month){
+  if(!Number.isInteger(month)||month<1||month>12)return [];
+  const z=raw.map((v,i)=>(v-p.scaler.mean[i])/p.scaler.scale[i]);
+  return p.species.map(s=>{
+    const d2=z.reduce((sum,v,i)=>sum+(v-s.mean[i])**2/s.variance[i],0)/14;
+    const habitat=Math.exp(-0.5*d2),season=s.months[month-1],plausibility=habitat*Math.min(season,1);
+    return {id:s.id,habitat,season,tier:Math.floor(plausibility*5),score:plausibility*(1+0.25*s.rarity),support:s.support_cells};
+  }).filter(s=>s.habitat>=0.2&&s.season>=0.5&&s.support>=3)
+    .sort((a,b)=>b.tier-a.tier||b.score-a.score||a.id-b.id);
+}
+function plantPilotForCell(lat,lon,resM,taxon,now=new Date()){
+  if(taxon!=='Plantae'||resM!==25000||!BC_PLANT_PILOT||!BC_PLANT_PILOT.release_gate||BC_PLANT_PILOT.release_gate.passed!==true)return null;
+  const p=BC_PLANT_PILOT,today=now.toISOString().slice(0,10);
+  if(!validPlantPilotArtifact(p)||p.training_before>today||p.valid_until<today)return null;
+  const cell=snapToLattice(lat,lon,25000);if(!cell)return null;
+  const raw=p.cells[cell.row+','+cell.col];if(!raw)return null;
+  return {scores:scorePlantPilot(p,raw,now.getMonth()+1)};
+}
+async function completePlantRegionalRows(first,url,current){
+  const reject=(key,message)=>{_jc.delete(key);throw Error(message);};
+  if(!validSpeciesCounts(first)||first.page!==1||first.results.length!==Math.min(500,first.total_results))reject(url,'Incomplete plant candidate pool');
+  if(Math.ceil(first.total_results/500)>12)throw Error('Incomplete plant candidate pool');
+  const rows=[],ids=new Set(),total=first.total_results,pages=Math.ceil(total/500);
+  for(let page=1;page<=Math.max(1,pages);page++){
+    if(!current())return [];
+    const pageUrl=page===1?url:url+'&page='+page;
+    const j=page===1?first:await jget(pageUrl,9000,1);
+    if(!current())return [];
+    if(!j||j.page!==page||j.total_results!==total||!validSpeciesCounts({...j,page:1})||j.results.length!==Math.min(500,total-(page-1)*500))reject(pageUrl,'Changed plant candidate pool');
+    for(const row of j.results){
+      if(ids.has(row.taxon.id)||rows.length&&row.count>rows.at(-1).count||typeof row.taxon.name!=='string'||typeof row.taxon.rank!=='string')reject(pageUrl,'Invalid plant candidate pool');
+      ids.add(row.taxon.id);rows.push(row);
+    }
+  }
+  if(rows.length!==total)reject(url,'Incomplete plant candidate pool');
+  return rows;
 }
 async function fetchProspects(lat,lon,whereKey,opts){
   const myseq=++prospectSeq,taxon=state.taxon,lang=LANG;
@@ -1236,36 +1367,52 @@ async function fetchProspects(lat,lon,whereKey,opts){
     const eligible=r=>r&&r.taxon&&Number.isInteger(r.taxon.id)&&r.taxon.id>0&&
       r.taxon.rank==='species'&&r.taxon.default_photo&&Number.isInteger(r.count)&&r.count>=3&&!have.has(r.taxon.id)&&
       !DOMESTIC.has(r.taxon.name)&&(r.taxon.observations_count||0)>40;
-    const rareRows=await rareRegionalRows(k,regionalUrl,current,eligible).catch(()=>[]);
+    let pilot=toPopup?plantPilotForCell(lat,lon,resM,taxon):null,pilotRows=[];
+    if(pilot){
+      try{
+        const fullRows=await completePlantRegionalRows(k,regionalUrl,current);if(!current())return;
+        const byId=new Map(fullRows.filter(r=>eligible(r)&&r.taxon.threatened!==true&&
+          [r.geoprivacy,r.taxon_geoprivacy,r.taxon.geoprivacy].every(v=>!v||v==='open')).map(r=>[r.taxon.id,r]));
+        pilotRows=pilot.scores.filter(s=>byId.has(s.id)).map(s=>({...byId.get(s.id),_pilot:s}));
+      }catch(e){pilot=null;}
+    }
+    // A complete leaf-taxon page cannot rule out parent species when ancestry is unresolved.
+    const localComplete=complete&&(!pilot||recorded.every(r=>r.taxon.rank==='species'||
+      Array.isArray(r.taxon.ancestor_ids)&&r.taxon.ancestor_ids.length>0&&r.taxon.ancestor_ids.every(id=>Number.isInteger(id)&&id>0)));
+    const method=note(t(pilot?'prospect_method_pilot':'prospect_method_existing'));
+    const rareRows=pilot?pilotRows:await rareRegionalRows(k,regionalUrl,current,eligible).catch(()=>[]);
     if(!current())return;
-    const candidates=rareRows.filter(eligible).sort((a,b)=>a.count-b.count)
-      .filter(r=>{if(candidateIds.has(r.taxon.id))return false;candidateIds.add(r.taxon.id);return true;}).slice(0,8);
-    let absent=complete?candidates:[];
-    if(!complete&&candidates.length){
+    const ordered=pilot?rareRows:rareRows.filter(eligible).sort((a,b)=>a.count-b.count);
+    const candidates=ordered.filter(r=>{if(candidateIds.has(r.taxon.id))return false;candidateIds.add(r.taxon.id);return true;}).slice(0,pilot?(localComplete?4:32):8);
+    let absent=localComplete?candidates:[];
+    if(!localComplete&&candidates.length){
       if(!current())return;
       const check=await jget(q(box)+'&taxon_id='+candidates.map(r=>r.taxon.id).join(',')+'&page=1',9000,1).catch(()=>null);
       if(!current())return;
       absent=checkedCandidateAbsences(candidates,check);
     }
     const nearbyOnly=absent
-      .map(r=>({count:0,taxon:r.taxon,_here:false,reg:r.count,_near:r.count}));
-    const cap=complete?'':note(t(nearbyOnly.length?'prospects_checked_cap':'prospects_capped'));
-    let res=cell.map(r=>({count:r.count,taxon:r.taxon,_here:true,reg:Math.max(r.count,reg[r.taxon.id]||0),_near:reg[r.taxon.id]||null})).concat(nearbyOnly);
+      .map(r=>({count:0,taxon:r.taxon,_here:false,reg:r.count,_near:r.count,_pilot:r._pilot}));
+    const cap=localComplete?'':note(t(pilot||nearbyOnly.length?'prospects_checked_cap':'prospects_capped'));
+    let res=(pilot?[]:cell).map(r=>({count:r.count,taxon:r.taxon,_here:true,reg:Math.max(r.count,reg[r.taxon.id]||0),_near:reg[r.taxon.id]||null})).concat(nearbyOnly);
     const nearby=nearbyOnly.length>0;
     res=res.filter(r=>(r.taxon.observations_count||0)>40);                         // drop unverifiable global one-offs (data quality, not the ranking signal)
-    if(!res.length){pr.innerHTML=msg(t(complete&&total===0?'prospects_none':'prospects_filtered'))+cap+caveat;return;}
+    if(!res.length){pr.innerHTML=msg(t(pilot?'pilot_none':complete&&total===0?'prospects_none':'prospects_filtered'))+method+cap+caveat;return;}
     // lexicographic priority: (1) new-to-cell before already-here; (2) bigger local gap first
     // (lower local/regional share); (3) tie-break by regional scarcity (fewer nearby records).
     const share=r=>r._here?(r.count/Math.max(1,r.reg)):0;
-    res.sort((a,b)=>((a._here?1:0)-(b._here?1:0))||(share(a)-share(b))||(a.reg-b.reg));
+    if(!pilot)res.sort((a,b)=>((a._here?1:0)-(b._here?1:0))||(share(a)-share(b))||(a.reg-b.reg));
     const badge=r=>r._here?(r._near!==null&&r._near<=3?`<span class="rare">${L_rare}</span>`:''):`<span class="first">${L_new}</span>`;
     const ctline=r=>`${r._here?T_here(r.count):L_notHere}${r._near===null?'':' · '+T_near(r._near)}`;
     if(toPopup){
       // Keep all four candidates in their existing order; two columns leave names and counts readable.
       const pbadge=r=>r._here?(r._near!==null&&r._near<=3?`<span class="bdg rare">${L_rare}</span>`:''):`<span class="bdg new">${L_notHere}</span>`;
       const pcount=r=>(r._here?'<span>'+T_here(r.count)+'</span>':'')+(r._near===null?'':'<span>'+T_near(r._near)+'</span>');
-      pr.innerHTML='<div class="popsec">'+t('pop_rare_hd')+'</div><div class="popgrid">'+res.slice(0,4).map(r=>{const tx=r.taxon;
-        return `<a href="https://www.inaturalist.org/taxa/${tx.id}" target="_blank" rel="noopener" title="${esc(tx.name)}"><img src="${safeImg(tx.default_photo.medium_url)||safeImg(tx.default_photo.square_url)}" data-fallback="${safeImg(tx.default_photo.square_url)}" onerror="this.onerror=null;if(this.dataset.fallback)this.src=this.dataset.fallback" loading="lazy" alt=""><div class="popsptext"><div class="nm">${esc(tx.preferred_common_name||tx.name)}</div>${pbadge(r)}<div class="ct">${pcount(r)}</div></div></a>`;}).join('')+'</div>'+cap+caveat;
+      const basis=r=>r._pilot?'<div class="ct">'+t('pilot_basis',r._pilot.habitat.toLocaleString(LANG==='fr'?'fr-CA':'en-CA',{maximumFractionDigits:2}),r._pilot.season.toLocaleString(LANG==='fr'?'fr-CA':'en-CA',{maximumFractionDigits:2}))+'</div>':'';
+      pr.innerHTML='<div class="popsec">'+t(pilot?'pop_plant_pilot_hd':'pop_rare_hd')+'</div>'+method+'<div class="popgrid">'+res.slice(0,4).map(r=>{const tx=r.taxon;
+        return `<a href="https://www.inaturalist.org/taxa/${tx.id}" target="_blank" rel="noopener" title="${esc(tx.name)}"><img src="${safeImg(tx.default_photo.medium_url)||safeImg(tx.default_photo.square_url)}" data-fallback="${safeImg(tx.default_photo.square_url)}" onerror="this.onerror=null;if(this.dataset.fallback)this.src=this.dataset.fallback" loading="lazy" alt=""><div class="popsptext"><div class="nm">${esc(tx.preferred_common_name||tx.name)}</div>${pbadge(r)}<div class="ct">${pcount(r)}</div>${basis(r)}</div></a>`;}).join('')+'</div>'+cap+caveat+
+        '<details class="popdetails" data-prospect-support><summary>'+t('support_heading')+'</summary><p>'+t(pilot?'pilot_support_why':'support_why')+'</p><div data-support-body aria-live="polite"></div></details>';
+      wireProspectSupport(pr,res.slice(0,4),regionalUrl,current,lat,lon);
       return;
     }
     res=res.slice(0,6);

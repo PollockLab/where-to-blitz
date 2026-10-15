@@ -1,0 +1,1072 @@
+{
+  "status": "exploratory, earlier 2025 results already inspected; not a confirmatory test",
+  "methods": {
+    "split": "observed_on < 2025-07-01; outcomes 2025-07-01 through 2025-09-30 inclusive",
+    "targets": "published Canada-eligible 25km cells with >=1 valid pre-split species record in this slice",
+    "pool": "all training species with >=3 WGS84 geodesic 40km-centre records and zero full sampled training records in geographic bbox of LAEA25km corners; no top-500 cutoff",
+    "local_geometry": "viewer geographic bounding rectangles, not projected square membership; outcomes use same bbox and can overlap across neighboring cells",
+    "taxonomy": "species rank and Latin binomial; subspecies/variety/form collapsed only when named parent appears among training species rows and parent ID matches ancestry; domestic list excluded; unique observation IDs",
+    "metadata": "candidate taxa: all training-row threatened flags explicitly false and minimum cached global obs_count >40; future-row metadata unused",
+    "arms_fixed_before_execution": {
+      "rarest": "nearby count ascending, taxon ID ascending",
+      "frequency": "nearby count descending, taxon ID ascending, reference only",
+      "replicated_rare": ">=2 distinct LAEA5km cells AND >=3 distinct dates first, then nearby count ascending and taxon ID ascending; no change to eligible pool"
+    },
+    "cards": 4,
+    "outcome_budget": 5,
+    "attainable_diagnostic_only": "full shared candidate-pool expected yield plus outcome-informed top4 oracle for total and Q1 taxa; future counts used only in this labeled diagnostic, never arm ranking; all-target candidate coverage remains train-defined",
+    "primary": "expected distinct suggested Q1 train-incidence taxa first documented in this cell in five held-out records, preference proxy",
+    "rarity": "per-slice incidence across occupied published training 25km cells; lower quartile Q1 is rare preference proxy; ties kept together at empirical25/50/75 percentile cutoffs; all quartiles reported",
+    "outcome": "exact hypergeometric expectation, uniform five records without replacement, only cells with >=5 held-out records; all-target coverage separate",
+    "spatial": "paired block bootstrap at50/100/200km LAEA blocks,1000 resamples each with seed20261015;100km primary diagnostic; same physical cell shares block; no independence claim"
+  },
+  "limitations": [
+    "Training means observation date only. Later cached identifications, threat flags, global counts and record availability cannot reconstruct historical API state.",
+    "Project/province/season samples, not complete local or nearby iNaturalist inventories; sampled absence is not biological absence.",
+    "Supported infraspecific parents are collapsed with ancestry plus training species-name lookup; unresolved parents are discarded and raw species_counts aggregation cannot be reconstructed exactly. Counts are a taxonomy proxy.",
+    "Local geographic bounding rectangles overlap neighboring LAEA cells. Incidence rarity and target selection use projected membership; local absence and outcomes use viewer bounding rectangles.",
+    "Photo availability, geoprivacy, taxon geoprivacy, observer IDs, effort and historical research grade are unavailable; not an exact live-popup replay.",
+    "Future records reflect existing observer choices, not visits induced by suggestions or equal field effort. Five-record expectation is a retrospective documentation proxy.",
+    "Replicate cells/dates do not establish independent observers, occupancy or findability. No model is trained or calibrated.",
+    "Source coverage differs: vertebrates June-Sept2025, plants Apr-Sept2025. Unvisited cells and cells without sampled training records lack outcome validation.",
+    "Rarity uses sampled train incidence, not conservation status, true regional rarity or the same nearby-count quantity used for ordering.",
+    "Exploratory fixed-arm comparison on previously inspected2025 outcomes, spatial resampling does not supply independent ecological validation or establish global state of the art."
+  ],
+  "grid": {
+    "res_m": 25000,
+    "crs": "PROJCS[\"WGS_1984_Lambert_Azimuthal_Equal_Area\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Lambert_Azimuthal_Equal_Area\"],PARAMETER[\"latitude_of_center\",45],PARAMETER[\"longitude_of_center\",-100],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
+    "lattice": {
+      "x0": -2150000,
+      "y1": 4300000,
+      "ncol": 220,
+      "nrow": 181,
+      "cell_km2": 625.0
+    },
+    "cell_keys": [
+      "row",
+      "col"
+    ],
+    "n_inventory_cells": 23214,
+    "n_eligible_cells": 18301,
+    "inventory_sha256": "3f140450642413fd4111043aa1e52caea01d6c8da46f180438072d618bda8300",
+    "source_sha256": {
+      "index": "35e16b5b606d06bef8fc0e7c37488f5a0346399e72a32365d1b73060f8299494",
+      "group": "b3709ef244b8db16c5f857279be555ce0d4dc2f1ddc28af88f62aac21a6462b2",
+      "canada_mask": "df02332e6c9a379c75ed60aace2879330abc0927d01953f1d263bcba8e6fc6fa"
+    }
+  },
+  "source_sha256": {
+    "research/popup_ranking_eval.py": "074b3036c7a417f32e00e9c98a87a629b40d254c6fd131d70f203e2f59296b67",
+    "backtest_appscore.py": "41101740fc21d9ed7560d1e212bd7504021984794137f46f9fa24a961a6e1e78",
+    "voi_backtest.py": "a56a790738e6cd19233d8b64ca23a21cff4f0075360b883b779599a1f3268d91",
+    "grid_lattice.py": "457ebb75f3feac7e6def2c795e0d5120ff24a33167f8b9691d43e1a390188c68"
+  },
+  "versions": {
+    "python": "3.11.13",
+    "numpy": "2.4.6",
+    "pandas": "3.0.3"
+  },
+  "inputs": {
+    "inat_on_Amphibia.csv": {
+      "sha256": "0fd986835b0040b31fa8d243b711280f295c9896ea311b101fedbdca9a288326",
+      "bytes": 2622161
+    },
+    "inat_on_Reptilia.csv": {
+      "sha256": "7a85f857ab7f3bc55af1f53eac2c27fdec901db7f148018f26e4e80518e2ffa8",
+      "bytes": 2945284
+    },
+    "inat_on_Mammalia.csv": {
+      "sha256": "e699746afce71dd478b9ef87d1842e286cc5acba44dbc7d2d014d4d1b34392b4",
+      "bytes": 2872871
+    },
+    "inat_on_Aves.csv": {
+      "sha256": "b567da65a2d7126fd489d1f7310176ba9b42cf73e5a60bd992b293392db62d92",
+      "bytes": 3772655
+    },
+    "inat_bcall_Amphibia.csv": {
+      "sha256": "c6625fd3b5fb3e404de18e6b213b9cdd87a768579c8fdd398683a8a04cc92d09",
+      "bytes": 680474
+    },
+    "inat_bcall_Reptilia.csv": {
+      "sha256": "439fb3e5cdbf4a95b33412da0958c2357dc6e2e15f2ef09c44df7cca4105ef48",
+      "bytes": 477091
+    },
+    "inat_bcall_Mammalia.csv": {
+      "sha256": "c2bcc8172fec7b1611dabad4b8c1bc06ca10d17f38e8e06b9623bcc480207544",
+      "bytes": 2898032
+    },
+    "inat_bcall_Aves.csv": {
+      "sha256": "3c099890fde630747a4e8110ba37e957231323608e29c889e962ed8ce410924b",
+      "bytes": 5713551
+    },
+    "inat_bcall_Plantae.csv": {
+      "sha256": "b6b4c38b5259e1f87cb5c1a0b72e4a236b99be7721495b7a146bafd410860670",
+      "bytes": 38887392
+    }
+  },
+  "slices": {
+    "ON_vertebrates": {
+      "target_cells": 636,
+      "future_5_record_cells": 484,
+      "arms": {
+        "rarest": {
+          "all_targets": {
+            "cells": 636,
+            "cells_with_cards": 468,
+            "mean_cards": 2.419811320754717,
+            "card_count_distribution": {
+              "0": 168,
+              "1": 73,
+              "2": 40,
+              "3": 34,
+              "4": 321
+            },
+            "share_all_four_count_three": 0.29874213836477986,
+            "expected_yield_at_5": {
+              "total": null,
+              "q1": null,
+              "q2": null,
+              "q3": null,
+              "q4": null,
+              "unknown_quartile": null
+            }
+          },
+          "future_5_record_revisits": {
+            "cells": 484,
+            "cells_with_cards": 409,
+            "mean_cards": 2.8863636363636362,
+            "card_count_distribution": {
+              "0": 75,
+              "1": 48,
+              "2": 34,
+              "3": 27,
+              "4": 300
+            },
+            "share_all_four_count_three": 0.371900826446281,
+            "expected_yield_at_5": {
+              "total": 0.12016714408252094,
+              "q1": 0.0,
+              "q2": 0.0008099422839382502,
+              "q3": 0.009409938875893758,
+              "q4": 0.10994726292268892,
+              "unknown_quartile": 0.0
+            }
+          }
+        },
+        "frequency": {
+          "all_targets": {
+            "cells": 636,
+            "cells_with_cards": 468,
+            "mean_cards": 2.419811320754717,
+            "card_count_distribution": {
+              "0": 168,
+              "1": 73,
+              "2": 40,
+              "3": 34,
+              "4": 321
+            },
+            "share_all_four_count_three": 0.012578616352201259,
+            "expected_yield_at_5": {
+              "total": null,
+              "q1": null,
+              "q2": null,
+              "q3": null,
+              "q4": null,
+              "unknown_quartile": null
+            }
+          },
+          "future_5_record_revisits": {
+            "cells": 484,
+            "cells_with_cards": 409,
+            "mean_cards": 2.8863636363636362,
+            "card_count_distribution": {
+              "0": 75,
+              "1": 48,
+              "2": 34,
+              "3": 27,
+              "4": 300
+            },
+            "share_all_four_count_three": 0.010330578512396695,
+            "expected_yield_at_5": {
+              "total": 0.21746027224508307,
+              "q1": 0.0,
+              "q2": 0.0005622072794540022,
+              "q3": 0.0067371706768355475,
+              "q4": 0.21016089428879353,
+              "unknown_quartile": 0.0
+            }
+          }
+        },
+        "replicated_rare": {
+          "all_targets": {
+            "cells": 636,
+            "cells_with_cards": 468,
+            "mean_cards": 2.419811320754717,
+            "card_count_distribution": {
+              "0": 168,
+              "1": 73,
+              "2": 40,
+              "3": 34,
+              "4": 321
+            },
+            "share_all_four_count_three": 0.1509433962264151,
+            "expected_yield_at_5": {
+              "total": null,
+              "q1": null,
+              "q2": null,
+              "q3": null,
+              "q4": null,
+              "unknown_quartile": null
+            }
+          },
+          "future_5_record_revisits": {
+            "cells": 484,
+            "cells_with_cards": 409,
+            "mean_cards": 2.8863636363636362,
+            "card_count_distribution": {
+              "0": 75,
+              "1": 48,
+              "2": 34,
+              "3": 27,
+              "4": 300
+            },
+            "share_all_four_count_three": 0.18801652892561985,
+            "expected_yield_at_5": {
+              "total": 0.146018539044717,
+              "q1": 0.0,
+              "q2": 0.0002674093583184492,
+              "q3": 0.00927791217661163,
+              "q4": 0.13647321750978691,
+              "unknown_quartile": 0.0
+            }
+          }
+        }
+      },
+      "attainable_pool_diagnostic_only": {
+        "all_targets": {
+          "cells": 636,
+          "cells_with_q1_candidates": 20,
+          "mean_candidates": 7.270440251572327,
+          "mean_q1_candidates": 0.031446540880503145
+        },
+        "future_5_record_revisits": {
+          "cells": 484,
+          "cells_with_q1_candidates": 20,
+          "cells_with_heldout_q1_pool_documentation": 0,
+          "expected_yield_at_5": {
+            "full_pool_total": 0.4185462293878539,
+            "full_pool_q1": 0.0,
+            "outcome_informed_oracle_top4_total": 0.35123322234979765,
+            "outcome_informed_oracle_top4_q1": 0.0
+          }
+        }
+      },
+      "paired_spatial_block_diagnostics": {
+        "50": {
+          "frequency": {
+            "q1": {
+              "cells": 484,
+              "blocks": 182,
+              "mean_difference": 0.0,
+              "bootstrap_95_percentile": [
+                0.0,
+                0.0
+              ],
+              "fraction_blocks_positive": 0.0
+            },
+            "total": {
+              "cells": 484,
+              "blocks": 182,
+              "mean_difference": 0.09729312816256212,
+              "bootstrap_95_percentile": [
+                0.07781905072625203,
+                0.11764887459933668
+              ],
+              "fraction_blocks_positive": 0.47802197802197804
+            }
+          },
+          "replicated_rare": {
+            "q1": {
+              "cells": 484,
+              "blocks": 182,
+              "mean_difference": 0.0,
+              "bootstrap_95_percentile": [
+                0.0,
+                0.0
+              ],
+              "fraction_blocks_positive": 0.0
+            },
+            "total": {
+              "cells": 484,
+              "blocks": 182,
+              "mean_difference": 0.025851394962196062,
+              "bootstrap_95_percentile": [
+                0.01631103290517297,
+                0.036698468913885146
+              ],
+              "fraction_blocks_positive": 0.3516483516483517
+            }
+          }
+        },
+        "100": {
+          "frequency": {
+            "q1": {
+              "cells": 484,
+              "blocks": 69,
+              "mean_difference": 0.0,
+              "bootstrap_95_percentile": [
+                0.0,
+                0.0
+              ],
+              "fraction_blocks_positive": 0.0
+            },
+            "total": {
+              "cells": 484,
+              "blocks": 69,
+              "mean_difference": 0.09729312816256212,
+              "bootstrap_95_percentile": [
+                0.07832404337444555,
+                0.11454646942532677
+              ],
+              "fraction_blocks_positive": 0.5072463768115942
+            }
+          },
+          "replicated_rare": {
+            "q1": {
+              "cells": 484,
+              "blocks": 69,
+              "mean_difference": 0.0,
+              "bootstrap_95_percentile": [
+                0.0,
+                0.0
+              ],
+              "fraction_blocks_positive": 0.0
+            },
+            "total": {
+              "cells": 484,
+              "blocks": 69,
+              "mean_difference": 0.025851394962196062,
+              "bootstrap_95_percentile": [
+                0.015951368042924942,
+                0.037807818267639876
+              ],
+              "fraction_blocks_positive": 0.4057971014492754
+            }
+          }
+        },
+        "200": {
+          "frequency": {
+            "q1": {
+              "cells": 484,
+              "blocks": 28,
+              "mean_difference": 0.0,
+              "bootstrap_95_percentile": [
+                0.0,
+                0.0
+              ],
+              "fraction_blocks_positive": 0.0
+            },
+            "total": {
+              "cells": 484,
+              "blocks": 28,
+              "mean_difference": 0.09729312816256212,
+              "bootstrap_95_percentile": [
+                0.06678567989012826,
+                0.11766586886896872
+              ],
+              "fraction_blocks_positive": 0.5714285714285714
+            }
+          },
+          "replicated_rare": {
+            "q1": {
+              "cells": 484,
+              "blocks": 28,
+              "mean_difference": 0.0,
+              "bootstrap_95_percentile": [
+                0.0,
+                0.0
+              ],
+              "fraction_blocks_positive": 0.0
+            },
+            "total": {
+              "cells": 484,
+              "blocks": 28,
+              "mean_difference": 0.025851394962196066,
+              "bootstrap_95_percentile": [
+                0.01776774928631806,
+                0.034102726603015304
+              ],
+              "fraction_blocks_positive": 0.5357142857142857
+            }
+          }
+        }
+      },
+      "data": {
+        "raw_records": 83855,
+        "valid_unique_species_records": 83591,
+        "normalized_infraspecific_records": 7945,
+        "unresolved_or_excluded_records": 264,
+        "training_records": 24070,
+        "future_published_cell_records": 59502,
+        "training_eligible_taxa": 234,
+        "training_incidence_taxa": 354,
+        "incidence_quartile_cutoffs": [
+          3.0,
+          11.0,
+          29.0
+        ],
+        "taxa_per_incidence_quartile": {
+          "1": 90,
+          "2": 93,
+          "3": 83,
+          "4": 88
+        },
+        "min_observed_on": "2025-06-01",
+        "max_observed_on": "2025-09-30",
+        "ranking_audit_sha256": "79c578643c763b4438cf67e0c4536759e19912366dff0b5cc23bb36adae65bab"
+      }
+    },
+    "BC_vertebrates": {
+      "target_cells": 726,
+      "future_5_record_cells": 533,
+      "arms": {
+        "rarest": {
+          "all_targets": {
+            "cells": 726,
+            "cells_with_cards": 397,
+            "mean_cards": 1.743801652892562,
+            "card_count_distribution": {
+              "0": 329,
+              "1": 67,
+              "2": 39,
+              "3": 43,
+              "4": 248
+            },
+            "share_all_four_count_three": 0.19972451790633608,
+            "expected_yield_at_5": {
+              "total": null,
+              "q1": null,
+              "q2": null,
+              "q3": null,
+              "q4": null,
+              "unknown_quartile": null
+            }
+          },
+          "future_5_record_revisits": {
+            "cells": 533,
+            "cells_with_cards": 345,
+            "mean_cards": 2.1350844277673544,
+            "card_count_distribution": {
+              "0": 188,
+              "1": 47,
+              "2": 34,
+              "3": 33,
+              "4": 231
+            },
+            "share_all_four_count_three": 0.2607879924953096,
+            "expected_yield_at_5": {
+              "total": 0.09274729250855597,
+              "q1": 0.0003173976216338219,
+              "q2": 0.001265045655659068,
+              "q3": 0.015413995338349086,
+              "q4": 0.07575085389291399,
+              "unknown_quartile": 0.0
+            }
+          }
+        },
+        "frequency": {
+          "all_targets": {
+            "cells": 726,
+            "cells_with_cards": 397,
+            "mean_cards": 1.743801652892562,
+            "card_count_distribution": {
+              "0": 329,
+              "1": 67,
+              "2": 39,
+              "3": 43,
+              "4": 248
+            },
+            "share_all_four_count_three": 0.0027548209366391185,
+            "expected_yield_at_5": {
+              "total": null,
+              "q1": null,
+              "q2": null,
+              "q3": null,
+              "q4": null,
+              "unknown_quartile": null
+            }
+          },
+          "future_5_record_revisits": {
+            "cells": 533,
+            "cells_with_cards": 345,
+            "mean_cards": 2.1350844277673544,
+            "card_count_distribution": {
+              "0": 188,
+              "1": 47,
+              "2": 34,
+              "3": 33,
+              "4": 231
+            },
+            "share_all_four_count_three": 0.001876172607879925,
+            "expected_yield_at_5": {
+              "total": 0.11928935538708947,
+              "q1": 0.0003173976216338219,
+              "q2": 0.000909794523340051,
+              "q3": 0.015613742158793603,
+              "q4": 0.10244842108332199,
+              "unknown_quartile": 0.0
+            }
+          }
+        },
+        "replicated_rare": {
+          "all_targets": {
+            "cells": 726,
+            "cells_with_cards": 397,
+            "mean_cards": 1.743801652892562,
+            "card_count_distribution": {
+              "0": 329,
+              "1": 67,
+              "2": 39,
+              "3": 43,
+              "4": 248
+            },
+            "share_all_four_count_three": 0.08402203856749312,
+            "expected_yield_at_5": {
+              "total": null,
+              "q1": null,
+              "q2": null,
+              "q3": null,
+              "q4": null,
+              "unknown_quartile": null
+            }
+          },
+          "future_5_record_revisits": {
+            "cells": 533,
+            "cells_with_cards": 345,
+            "mean_cards": 2.1350844277673544,
+            "card_count_distribution": {
+              "0": 188,
+              "1": 47,
+              "2": 34,
+              "3": 33,
+              "4": 231
+            },
+            "share_all_four_count_three": 0.1125703564727955,
+            "expected_yield_at_5": {
+              "total": 0.10320215320239375,
+              "q1": 0.0003581839826746898,
+              "q2": 0.0012792400315031498,
+              "q3": 0.01595647322367816,
+              "q4": 0.08560825596453775,
+              "unknown_quartile": 0.0
+            }
+          }
+        }
+      },
+      "attainable_pool_diagnostic_only": {
+        "all_targets": {
+          "cells": 726,
+          "cells_with_q1_candidates": 26,
+          "mean_candidates": 5.465564738292011,
+          "mean_q1_candidates": 0.048209366391184574
+        },
+        "future_5_record_revisits": {
+          "cells": 533,
+          "cells_with_q1_candidates": 26,
+          "cells_with_heldout_q1_pool_documentation": 4,
+          "expected_yield_at_5": {
+            "full_pool_total": 0.2588820403179619,
+            "full_pool_q1": 0.0006865115582359648,
+            "outcome_informed_oracle_top4_total": 0.2252836392814601,
+            "outcome_informed_oracle_top4_q1": 0.0006865115582359648
+          }
+        }
+      },
+      "paired_spatial_block_diagnostics": {
+        "50": {
+          "frequency": {
+            "q1": {
+              "cells": 533,
+              "blocks": 234,
+              "mean_difference": 0.0,
+              "bootstrap_95_percentile": [
+                0.0,
+                0.0
+              ],
+              "fraction_blocks_positive": 0.0
+            },
+            "total": {
+              "cells": 533,
+              "blocks": 234,
+              "mean_difference": 0.026542062878533505,
+              "bootstrap_95_percentile": [
+                0.012731266013140185,
+                0.04035231035448958
+              ],
+              "fraction_blocks_positive": 0.2222222222222222
+            }
+          },
+          "replicated_rare": {
+            "q1": {
+              "cells": 533,
+              "blocks": 234,
+              "mean_difference": 4.078636104086793e-05,
+              "bootstrap_95_percentile": [
+                0.0,
+                0.00015367458244628312
+              ],
+              "fraction_blocks_positive": 0.004273504273504274
+            },
+            "total": {
+              "cells": 533,
+              "blocks": 234,
+              "mean_difference": 0.010454860693837784,
+              "bootstrap_95_percentile": [
+                0.0004300234115368883,
+                0.020210348998985064
+              ],
+              "fraction_blocks_positive": 0.17094017094017094
+            }
+          }
+        },
+        "100": {
+          "frequency": {
+            "q1": {
+              "cells": 533,
+              "blocks": 96,
+              "mean_difference": 0.0,
+              "bootstrap_95_percentile": [
+                0.0,
+                0.0
+              ],
+              "fraction_blocks_positive": 0.0
+            },
+            "total": {
+              "cells": 533,
+              "blocks": 96,
+              "mean_difference": 0.026542062878533505,
+              "bootstrap_95_percentile": [
+                0.00896411102311913,
+                0.041117908807528664
+              ],
+              "fraction_blocks_positive": 0.2604166666666667
+            }
+          },
+          "replicated_rare": {
+            "q1": {
+              "cells": 533,
+              "blocks": 96,
+              "mean_difference": 4.078636104086793e-05,
+              "bootstrap_95_percentile": [
+                0.0,
+                0.00012518939403075358
+              ],
+              "fraction_blocks_positive": 0.010416666666666666
+            },
+            "total": {
+              "cells": 533,
+              "blocks": 96,
+              "mean_difference": 0.010454860693837784,
+              "bootstrap_95_percentile": [
+                0.000744269736234249,
+                0.020716242509138526
+              ],
+              "fraction_blocks_positive": 0.19791666666666666
+            }
+          }
+        },
+        "200": {
+          "frequency": {
+            "q1": {
+              "cells": 533,
+              "blocks": 39,
+              "mean_difference": 0.0,
+              "bootstrap_95_percentile": [
+                0.0,
+                0.0
+              ],
+              "fraction_blocks_positive": 0.0
+            },
+            "total": {
+              "cells": 533,
+              "blocks": 39,
+              "mean_difference": 0.026542062878533498,
+              "bootstrap_95_percentile": [
+                0.009190203223620103,
+                0.04212615870584099
+              ],
+              "fraction_blocks_positive": 0.358974358974359
+            }
+          },
+          "replicated_rare": {
+            "q1": {
+              "cells": 533,
+              "blocks": 39,
+              "mean_difference": 4.078636104086793e-05,
+              "bootstrap_95_percentile": [
+                0.0,
+                0.00012408068502235217
+              ],
+              "fraction_blocks_positive": 0.02564102564102564
+            },
+            "total": {
+              "cells": 533,
+              "blocks": 39,
+              "mean_difference": 0.010454860693837782,
+              "bootstrap_95_percentile": [
+                0.00204743757681275,
+                0.01882796482701955
+              ],
+              "fraction_blocks_positive": 0.2564102564102564
+            }
+          }
+        }
+      },
+      "data": {
+        "raw_records": 67641,
+        "valid_unique_species_records": 66603,
+        "normalized_infraspecific_records": 4687,
+        "unresolved_or_excluded_records": 1038,
+        "training_records": 19206,
+        "future_published_cell_records": 47286,
+        "training_eligible_taxa": 276,
+        "training_incidence_taxa": 396,
+        "incidence_quartile_cutoffs": [
+          3.0,
+          10.0,
+          24.0
+        ],
+        "taxa_per_incidence_quartile": {
+          "1": 108,
+          "2": 93,
+          "3": 104,
+          "4": 91
+        },
+        "min_observed_on": "2025-06-01",
+        "max_observed_on": "2025-09-30",
+        "ranking_audit_sha256": "375992ef891c843d4a62ad15a9c8aa9f89aef46fa8e1f72396d466203b1dee5e"
+      }
+    },
+    "BC_plants": {
+      "target_cells": 915,
+      "future_5_record_cells": 765,
+      "arms": {
+        "rarest": {
+          "all_targets": {
+            "cells": 915,
+            "cells_with_cards": 642,
+            "mean_cards": 2.459016393442623,
+            "card_count_distribution": {
+              "0": 273,
+              "1": 63,
+              "2": 48,
+              "3": 33,
+              "4": 498
+            },
+            "share_all_four_count_three": 0.4568306010928962,
+            "expected_yield_at_5": {
+              "total": null,
+              "q1": null,
+              "q2": null,
+              "q3": null,
+              "q4": null,
+              "unknown_quartile": null
+            }
+          },
+          "future_5_record_revisits": {
+            "cells": 765,
+            "cells_with_cards": 583,
+            "mean_cards": 2.7411764705882353,
+            "card_count_distribution": {
+              "0": 182,
+              "1": 43,
+              "2": 38,
+              "3": 30,
+              "4": 472
+            },
+            "share_all_four_count_three": 0.5281045751633987,
+            "expected_yield_at_5": {
+              "total": 0.062474438836325245,
+              "q1": 2.5565236748147853e-05,
+              "q2": 0.00021282772924228983,
+              "q3": 0.0018198297738615,
+              "q4": 0.06041621609647331,
+              "unknown_quartile": 0.0
+            }
+          }
+        },
+        "frequency": {
+          "all_targets": {
+            "cells": 915,
+            "cells_with_cards": 642,
+            "mean_cards": 2.459016393442623,
+            "card_count_distribution": {
+              "0": 273,
+              "1": 63,
+              "2": 48,
+              "3": 33,
+              "4": 498
+            },
+            "share_all_four_count_three": 0.006557377049180328,
+            "expected_yield_at_5": {
+              "total": null,
+              "q1": null,
+              "q2": null,
+              "q3": null,
+              "q4": null,
+              "unknown_quartile": null
+            }
+          },
+          "future_5_record_revisits": {
+            "cells": 765,
+            "cells_with_cards": 583,
+            "mean_cards": 2.7411764705882353,
+            "card_count_distribution": {
+              "0": 182,
+              "1": 43,
+              "2": 38,
+              "3": 30,
+              "4": 472
+            },
+            "share_all_four_count_three": 0.006535947712418301,
+            "expected_yield_at_5": {
+              "total": 0.08888493929938042,
+              "q1": 0.0,
+              "q2": 0.0002505266278973712,
+              "q3": 0.001709734304521287,
+              "q4": 0.08692467836696176,
+              "unknown_quartile": 0.0
+            }
+          }
+        },
+        "replicated_rare": {
+          "all_targets": {
+            "cells": 915,
+            "cells_with_cards": 642,
+            "mean_cards": 2.459016393442623,
+            "card_count_distribution": {
+              "0": 273,
+              "1": 63,
+              "2": 48,
+              "3": 33,
+              "4": 498
+            },
+            "share_all_four_count_three": 0.32349726775956283,
+            "expected_yield_at_5": {
+              "total": null,
+              "q1": null,
+              "q2": null,
+              "q3": null,
+              "q4": null,
+              "unknown_quartile": null
+            }
+          },
+          "future_5_record_revisits": {
+            "cells": 765,
+            "cells_with_cards": 583,
+            "mean_cards": 2.7411764705882353,
+            "card_count_distribution": {
+              "0": 182,
+              "1": 43,
+              "2": 38,
+              "3": 30,
+              "4": 472
+            },
+            "share_all_four_count_three": 0.38169934640522873,
+            "expected_yield_at_5": {
+              "total": 0.0686838894813239,
+              "q1": 1.5927737613837665e-06,
+              "q2": 0.0003379160305529764,
+              "q3": 0.0015554059316561458,
+              "q4": 0.06678897474535339,
+              "unknown_quartile": 0.0
+            }
+          }
+        }
+      },
+      "attainable_pool_diagnostic_only": {
+        "all_targets": {
+          "cells": 915,
+          "cells_with_q1_candidates": 73,
+          "mean_candidates": 17.887431693989072,
+          "mean_q1_candidates": 0.1628415300546448
+        },
+        "future_5_record_revisits": {
+          "cells": 765,
+          "cells_with_q1_candidates": 71,
+          "cells_with_heldout_q1_pool_documentation": 18,
+          "expected_yield_at_5": {
+            "full_pool_total": 0.3676418591420516,
+            "full_pool_q1": 0.0009896312530172874,
+            "outcome_informed_oracle_top4_total": 0.2395547007290251,
+            "outcome_informed_oracle_top4_q1": 0.0009896312530172874
+          }
+        }
+      },
+      "paired_spatial_block_diagnostics": {
+        "50": {
+          "frequency": {
+            "q1": {
+              "cells": 765,
+              "blocks": 311,
+              "mean_difference": -2.5565236748147853e-05,
+              "bootstrap_95_percentile": [
+                -6.491052328722098e-05,
+                0.0
+              ],
+              "fraction_blocks_positive": 0.0
+            },
+            "total": {
+              "cells": 765,
+              "blocks": 311,
+              "mean_difference": 0.026410500463055174,
+              "bootstrap_95_percentile": [
+                0.01700524528365459,
+                0.036758104885538434
+              ],
+              "fraction_blocks_positive": 0.3247588424437299
+            }
+          },
+          "replicated_rare": {
+            "q1": {
+              "cells": 765,
+              "blocks": 311,
+              "mean_difference": -2.3972462986764087e-05,
+              "bootstrap_95_percentile": [
+                -6.106250859400137e-05,
+                0.0
+              ],
+              "fraction_blocks_positive": 0.0
+            },
+            "total": {
+              "cells": 765,
+              "blocks": 311,
+              "mean_difference": 0.006209450644998645,
+              "bootstrap_95_percentile": [
+                -0.0008254956309374557,
+                0.013072252009718446
+              ],
+              "fraction_blocks_positive": 0.2379421221864952
+            }
+          }
+        },
+        "100": {
+          "frequency": {
+            "q1": {
+              "cells": 765,
+              "blocks": 116,
+              "mean_difference": -2.5565236748147853e-05,
+              "bootstrap_95_percentile": [
+                -9.209029497543669e-05,
+                0.0
+              ],
+              "fraction_blocks_positive": 0.0
+            },
+            "total": {
+              "cells": 765,
+              "blocks": 116,
+              "mean_difference": 0.02641050046305517,
+              "bootstrap_95_percentile": [
+                0.015274924899355445,
+                0.03864694945009188
+              ],
+              "fraction_blocks_positive": 0.3793103448275862
+            }
+          },
+          "replicated_rare": {
+            "q1": {
+              "cells": 765,
+              "blocks": 116,
+              "mean_difference": -2.3972462986764087e-05,
+              "bootstrap_95_percentile": [
+                -8.635285522629792e-05,
+                0.0
+              ],
+              "fraction_blocks_positive": 0.0
+            },
+            "total": {
+              "cells": 765,
+              "blocks": 116,
+              "mean_difference": 0.006209450644998645,
+              "bootstrap_95_percentile": [
+                -0.001052428777887811,
+                0.013411159411548341
+              ],
+              "fraction_blocks_positive": 0.28448275862068967
+            }
+          }
+        },
+        "200": {
+          "frequency": {
+            "q1": {
+              "cells": 765,
+              "blocks": 41,
+              "mean_difference": -2.5565236748147853e-05,
+              "bootstrap_95_percentile": [
+                -9.283946662948353e-05,
+                0.0
+              ],
+              "fraction_blocks_positive": 0.0
+            },
+            "total": {
+              "cells": 765,
+              "blocks": 41,
+              "mean_difference": 0.02641050046305517,
+              "bootstrap_95_percentile": [
+                0.015741682777523698,
+                0.03649242899103105
+              ],
+              "fraction_blocks_positive": 0.5121951219512195
+            }
+          },
+          "replicated_rare": {
+            "q1": {
+              "cells": 765,
+              "blocks": 41,
+              "mean_difference": -2.3972462986764087e-05,
+              "bootstrap_95_percentile": [
+                -8.705535174234022e-05,
+                0.0
+              ],
+              "fraction_blocks_positive": 0.0
+            },
+            "total": {
+              "cells": 765,
+              "blocks": 41,
+              "mean_difference": 0.006209450644998645,
+              "bootstrap_95_percentile": [
+                0.0011651254826805287,
+                0.01130260471573219
+              ],
+              "fraction_blocks_positive": 0.3902439024390244
+            }
+          }
+        }
+      },
+      "data": {
+        "raw_records": 244636,
+        "valid_unique_species_records": 244055,
+        "normalized_infraspecific_records": 3130,
+        "unresolved_or_excluded_records": 581,
+        "training_records": 80720,
+        "future_published_cell_records": 163208,
+        "training_eligible_taxa": 1728,
+        "training_incidence_taxa": 2106,
+        "incidence_quartile_cutoffs": [
+          1.0,
+          4.0,
+          12.0
+        ],
+        "taxa_per_incidence_quartile": {
+          "1": 553,
+          "2": 595,
+          "3": 435,
+          "4": 523
+        },
+        "min_observed_on": "2025-04-05",
+        "max_observed_on": "2025-09-30",
+        "ranking_audit_sha256": "1254ba6cfcae9c5aab94c4458e9d20380912b467a7d2dcea23fe63f7459e3f6f"
+      }
+    }
+  }
+}

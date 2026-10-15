@@ -213,11 +213,7 @@ These are frozen retrospective sampled-record benchmarks on the committed 25 km 
 
 ## Which species to record in a cell
 
-Tapping a cell suggests *what to record there*. The axes above rank **where** to go; this ranks
-**which species** add the most once you are there. It is an **intermediate, interpretable metric** —
-the intended end state is a model-based score (the lab's SDM predictions in the cell plus a
-value-of-information score for how much an observation would improve those models), which is future
-work, not v1.
+Tapping a cell suggests species from recorded observations. The default nearby-count method prioritizes recording gaps; its ordering has not been shown to maximize field success. A separate BC plant pilot tests seasonal and environmental ranking before any replacement is enabled.
 
 Earlier the suggestions were sorted by a species' **global iNaturalist observation count** ("globally
 rarest first"). That conflates *photographic popularity* with *recording value*: a species can have
@@ -231,6 +227,20 @@ value computed from records actually around the cell:
 Caveats: counts are iNaturalist research-grade records, a sampling proxy, not a census; species tied on
 regional scarcity keep iNaturalist's own order; and the metric measures recording-gap value, not
 ecological importance — that awaits the SDM/VOI score.
+
+The optional “Why these species?” disclosure explains why missing-local candidates can tie at the three-record minimum. On opening it, a bounded public-record query can show distinct observers, observation dates and the approximate distance from the cell centre to the nearest record. These are recording-support summaries, not independent surveys or encounter probabilities. Details require a complete response whose counts match the displayed regional totals; missing, changed or incomplete evidence leaves the suggestions unchanged. The optional query covers at most four species with at most 50 nearby records each, so it does not add a request to the initial popup load or paginate an unbounded record set.
+
+The **BC plants pilot** uses CHELSA v2.1 BIO1/BIO4/BIO12 climate and [ESA WorldCover 2021 v200](https://doi.org/10.5281/zenodo.7254221) land-cover composition, sampled at 225 fixed equal-area locations per 25 km cell using categorical overviews. At least 80% of samples must be valid for each input. WorldCover attribution: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, CC-BY-4.0. Environmental profiles count each occupied species-cell once, standardize from training cells only, and shrink diagonal variance halfway toward the background. Profiles require three occupied training cells. Seasonal indices use complete prior-year iNaturalist monthly species-count pages for the actual BC province, normalize against overall plant recording seasonality, and add 30 background-proportional pseudo-records. These are broad habitat and seasonal recording indices, without calibrated occurrence or encounter probabilities.
+
+The combined order excludes environmental similarity below 0.2 and seasonal indices below 0.5. It sorts by `floor(environmental_similarity × min(seasonal_index, 1) × 5)`, then by the same unbinned similarity with a maximum 25% training-incidence rarity bonus, then taxon ID. An enabled pilot shows up to four verified missing-local candidates for the current month, without filling weak slots. It applies only to 25 km BC plant cells included in the model artifact. Complete 40 km candidate enumeration is bounded to twelve pages; incomplete local lists or unresolved infraspecific ancestry require candidate-specific verification. Expired, missing, malformed or failed-gate artifacts retain the labelled nearby-count method.
+
+`evaluate_plant_pilot.py` compares rarest-first, common-nearby, a seasonal baseline and the combined model on identical pre-forecast candidate pools at July, August and September 2025 origins. Environmental fitting withholds each target's 100 km block and a 40 km buffer; the fixed prior-year provincial seasonal summaries include those regions. Outcomes are exact expected distinct suggested taxa in five following-month records, reported overall and for the lowest quartile of training-cell incidence. Repeated cell-months stay together in paired spatial resampling. The historical cache cannot establish API availability, identification, privacy or research-grade state at each forecast date, and recorded observations are not equal field effort. Results remain exploratory. The public artifact stays disabled unless both outcomes improve against every baseline with sufficient contributing blocks and historical feature provenance is verified. The present data cannot support the rare objective because its Q1 taxa fall below the environmental model's minimum cell support.
+
+Reproduce the dated pilot with the original observation cache supplied explicitly; its checksum is recorded in the result. The acquired aggregate seasonal and habitat inputs are committed. Each command refuses existing outputs.
+
+```bash
+python evaluate_plant_pilot.py --observations /path/to/inat_bcall_Plantae.csv --habitat research/data/bc_plant_habitat.json --season research/data/bc_plant_season.json --boundary research/data/bc_boundary.geojson --output /tmp/bc-plant-evaluation.json --artifact /tmp/bc-plant-pilot.json
+```
 
 ---
 
@@ -338,7 +348,7 @@ without the rasters. Both gates on this layer are therefore off in a gated build
 shipping the gate before the rasters are hosted, and it goes away with them.
 
 The tap panel is a *different* calculation — a live iNaturalist query about the species in the cell
-versus its ~50 km neighbourhood (see "Which species to record in a cell" above). The colours come
+versus its 40 km neighbourhood (see "Which species to record in a cell" above). The colours come
 from this offline layer; the ranking in the panel does not.
 
 ## Honesty notes

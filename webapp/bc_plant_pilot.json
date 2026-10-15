@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "method": "bc-plants-habitat-season-v1",
+  "release_gate": {
+    "passed": false,
+    "reasons": [
+      "historical_availability_unverified",
+      "rarest_q1_improvement_unestablished",
+      "frequency_total_improvement_unestablished",
+      "frequency_q1_improvement_unestablished",
+      "seasonal_total_improvement_unestablished",
+      "seasonal_q1_improvement_unestablished"
+    ],
+    "interpretation": "blocked exploratory diagnostics are not a prospective field-effectiveness test"
+  },
+  "training_before": "2025-07-01",
+  "valid_until": "2026-07-01",
+  "season_through": "2024-12-31",
+  "feature_names": [
+    "bio1",
+    "bio4",
+    "bio12",
+    "cover_10",
+    "cover_20",
+    "cover_30",
+    "cover_40",
+    "cover_50",
+    "cover_60",
+    "cover_70",
+    "cover_80",
+    "cover_90",
+    "cover_95",
+    "cover_100"
+  ],
+  "scaler": null,
+  "species": [],
+  "cells": {}
+}
