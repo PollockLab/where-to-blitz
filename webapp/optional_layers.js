@@ -171,9 +171,29 @@ function installOptionalLayers(){
     const popup=wirePopup(new maplibregl.Popup({focusAfterOpen:false,maxWidth:'320px'}).setLngLat([row.longitude,row.latitude]).setDOMContent(sightingBody));
     popup.on('close',()=>{if(selectedSighting===row){selectedSighting=null;sightingBody=null;}});popup.addTo(map);
   }
+  let coverageSnapshot=null,coverageLanguage=null;
+  function renderCoverage(){
+    const snapshot=cache.challenge,coverage=snapshot?.coverage,container=node('recentChallengeCoverage');
+    container.hidden=!coverage;
+    if(!coverage)return;
+    node('recentChallengeCoverageCounts').textContent=t('recent_challenge_coverage',fmt(coverage.unique_targets),fmt(coverage.resolved_rows),fmt(coverage.source_rows));
+    const details=node('recentChallengeOmissions');details.hidden=!coverage.omitted_rows;
+    node('recentChallengeOmissionsSummary').textContent=t('recent_challenge_omissions',fmt(coverage.omitted_rows));
+    if(coverageSnapshot===snapshot&&coverageLanguage===LANG)return;
+    const reasons=new Set(['blank_scientific_name','inactive_source_taxon','no_unique_exact_match','incomplete_search','broader_than_species','rank_mismatch','missing_species_ancestry']);
+    const list=node('recentChallengeOmissionList');list.replaceChildren();
+    for(const entry of coverage.omissions){
+      const item=document.createElement('li'),name=document.createElement('b'),common=document.createElement('p'),reason=document.createElement('p');
+      name.textContent=entry.raw_scientific_name||t('recent_challenge_unnamed');
+      common.textContent=entry.common_name?t('recent_challenge_common')+': '+entry.common_name:'';
+      reason.textContent=reasons.has(entry.reason_code)?t('challenge_omit_'+entry.reason_code):entry.reason;
+      item.append(name);if(entry.common_name)item.append(common);item.append(reason);list.append(item);
+    }
+    coverageSnapshot=snapshot;coverageLanguage=LANG;
+  }
   function renderChallenge(){
     const panel=node('recentChallengePanel');panel.hidden=!descriptors.challenge;
-    const status=node('recentChallengeStatus'),list=node('recentChallengeList');
+    const status=node('recentChallengeStatus'),list=node('recentChallengeList');renderCoverage();
     if(!recentOn){status.textContent=t('recent_challenge_hint');list.replaceChildren();}
     else if(!cache.challenge)status.textContent=t(recentError?'optional_error':'optional_loading');
     if(!_mapLoaded)return;

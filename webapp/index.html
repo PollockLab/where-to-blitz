@@ -297,7 +297,7 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
 @media(min-width:641px){html[lang=fr] #howbtn{max-width:none}html[lang=fr] #maplegend{max-width:320px}}
 .optional-cell{display:block;width:100%;text-align:left;margin:4px 0;padding:7px 8px;border:1px solid #d4dde6;border-radius:7px;background:#f4f7fa;color:var(--ink);font:inherit;font-size:12.5px;cursor:pointer;white-space:normal;overflow-wrap:anywhere}
 .optional-cell:hover,.optional-cell:focus-visible{border-color:var(--acc);outline:2px solid var(--acc);outline-offset:-2px}
-#discoveryCells,#recentChallengeList{max-height:260px;overflow-y:auto}
+#discoveryCells,#recentChallengeList,#recentChallengeOmissionList{max-height:260px;overflow-y:auto}
 #discoveryEvidence summary,#recentChallengePanel summary{font-size:13px;cursor:pointer;margin:8px 0 5px}
 .optional-status{font-size:11.5px;line-height:1.45;color:var(--mut);overflow-wrap:anywhere}
 </style></head>
@@ -320,6 +320,10 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
     <label class="toggle"><input type="checkbox" id="recentChallenge"> <span data-i18n="recent_challenge">Recent Conservation Challenge sightings</span></label>
     <p id="recentChallengeStatus" class="optional-status" role="status"></p>
     <details><summary data-i18n="recent_challenge_list">Sightings in this view</summary><div id="recentChallengeList"></div></details>
+    <div id="recentChallengeCoverage" hidden>
+      <p id="recentChallengeCoverageCounts" class="optional-status"></p>
+      <details id="recentChallengeOmissions"><summary id="recentChallengeOmissionsSummary"></summary><ul id="recentChallengeOmissionList"></ul></details>
+    </div>
   </div>
 
   <div id="tripui">
@@ -444,8 +448,18 @@ const I18N={
     discovery_supplied_unit:"supplied discovery points per 10,000 research-grade observations",
     discovery_supplied_counts:(n,exposure)=>`Supplied discovery points: ${n}. Research-grade observations: ${exposure}.`,
     recent_challenge:"Recent Conservation Challenge sightings", recent_challenge_list:"Sightings in this view",
-    recent_challenge_hint:"Orange dots show public sightings for all listed species from the last published two-week window, independent of the selected species group and cumulative Conservation goal. Turn on to load.",
+    recent_challenge_hint:"Orange dots show public sightings for verified list targets from the last published two-week window, independent of the selected species group and cumulative Conservation goal. Turn on to load.",
     recent_challenge_status:(start,end,refresh,n)=>`${n} sightings shown. Window: ${start} to ${end}. Refreshed: ${refresh}. Orange dots, species diversity before recency.`,
+    recent_challenge_coverage:(targets,resolved,total)=>`${targets} verified targets from ${resolved} of ${total} source entries.`,
+    recent_challenge_omissions:n=>`${n} omitted source entries, names and reasons`,
+    recent_challenge_unnamed:"Scientific name missing", recent_challenge_common:"Common name",
+    challenge_omit_blank_scientific_name:"The source entry has no scientific name.",
+    challenge_omit_inactive_source_taxon:"The source marks this taxon as inactive.",
+    challenge_omit_no_unique_exact_match:"No unique exact taxon match was verified.",
+    challenge_omit_incomplete_search:"The taxon lookup was incomplete.",
+    challenge_omit_broader_than_species:"The entry is broader than a species.",
+    challenge_omit_rank_mismatch:"The matched taxon's rank does not match the source entry.",
+    challenge_omit_missing_species_ancestry:"The species ancestor could not be verified.",
     recent_challenge_empty:"No eligible sightings in this view.", optional_loading:"Loading published snapshot…", optional_error:"Published data could not be verified. Toggle the layer to retry.",
     optional_stale:"The published snapshot is over 36 hours old.", sighting_date:date=>`Observed: ${date}`, view_sighting:"View sighting on iNaturalist",
     title_full:`Where to<br><a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc);text-decoration:underline">Blitz the Gap</a>`,
@@ -653,8 +667,18 @@ const I18N={
     discovery_supplied_unit:"points de découverte fournis pour 10 000 observations de niveau recherche",
     discovery_supplied_counts:(n,exposure)=>`Points de découverte fournis : ${n}. Observations de niveau recherche : ${exposure}.`,
     recent_challenge:"Observations récentes du Défi conservation", recent_challenge_list:"Observations dans cette vue",
-    recent_challenge_hint:"Les points orange montrent toutes les espèces de la liste durant la dernière période publiée de deux semaines, indépendamment du groupe choisi et de l'objectif Conservation cumulatif. Activez pour charger.",
+    recent_challenge_hint:"Les points orange montrent les observations publiques des taxons vérifiés de la liste durant la dernière période publiée de deux semaines, indépendamment du groupe choisi et de l'objectif Conservation cumulatif. Activez pour charger.",
     recent_challenge_status:(start,end,refresh,n)=>`${n} observations affichées. Période : ${start} au ${end}. Mise à jour : ${refresh}. Points orange, diversité des espèces avant la récence.`,
+    recent_challenge_coverage:(targets,resolved,total)=>`${targets} taxons vérifiés pour ${resolved} des ${total} entrées de la source.`,
+    recent_challenge_omissions:n=>`${n} entrées omises, noms et raisons`,
+    recent_challenge_unnamed:"Nom scientifique manquant", recent_challenge_common:"Nom commun",
+    challenge_omit_blank_scientific_name:"L'entrée de la source ne contient aucun nom scientifique.",
+    challenge_omit_inactive_source_taxon:"La source indique que ce taxon est inactif.",
+    challenge_omit_no_unique_exact_match:"Aucune correspondance taxonomique exacte et unique n'a été vérifiée.",
+    challenge_omit_incomplete_search:"La recherche taxonomique était incomplète.",
+    challenge_omit_broader_than_species:"L'entrée désigne un groupe plus large qu'une espèce.",
+    challenge_omit_rank_mismatch:"Le rang du taxon trouvé ne correspond pas à celui de l'entrée source.",
+    challenge_omit_missing_species_ancestry:"L'espèce ancêtre n'a pas pu être vérifiée.",
     recent_challenge_empty:"Aucune observation admissible dans cette vue.", optional_loading:"Chargement des données publiées…", optional_error:"Impossible de vérifier les données publiées. Désactivez puis réactivez pour réessayer.",
     optional_stale:"Les données publiées datent de plus de 36 heures.", sighting_date:date=>`Observé le : ${date}`, view_sighting:"Voir l'observation sur iNaturalist",
     title_full:`Où aller pour<br><a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc);text-decoration:underline">Blitz the Gap</a>`,

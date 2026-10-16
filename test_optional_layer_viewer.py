@@ -238,7 +238,7 @@ def test_measured_rate_shared_link_cannot_label_another_taxon_group():
     assert result["params"]["g"] == "Fungi" and result["params"]["goal"] == "0"
 
 
-def sighting_lifecycle(action, discovery_product=None, snapshot=None):
+def sighting_lifecycle(action, discovery_product=None, snapshot=None, start_recent=True):
     """Replay real popup wiring, list reconciliation and synchronous map move events."""
     from test_shared_context import _function
 
@@ -314,7 +314,8 @@ OptionalData.fetchPinned=async(_descriptor,kind)=>kind==='discovery'?input.disco
         )
     ]
     script += (
-        "\n(async()=>{installOptionalLayers();await optionalLayers.toggleRecent(true);"
+        "\n(async()=>{installOptionalLayers();"
+        + ("await optionalLayers.toggleRecent(true);" if start_recent else "")
         + action
         + "})().catch(e=>{console.error(e);process.exit(1);});"
     )
@@ -480,3 +481,109 @@ def test_unknown_discovery_scope_is_escaped_and_missing_scope_adds_no_disclosure
         scope["filters"]["discovery_points"] = '<img src=x onerror="alert(1)">'
     result = sighting_lifecycle("console.log(JSON.stringify(optionalLayers.discoveryLegend()));", product)
     assert "&lt;img" in result and "<img" not in result
+
+
+def coverage_snapshot(omissions=39):
+    snapshot = challenge.acquire(CONFIG, FixtureAPI([observation()]), AS_OF)
+    codes = [
+        "blank_scientific_name",
+        "inactive_source_taxon",
+        "no_unique_exact_match",
+        "incomplete_search",
+        "broader_than_species",
+        "rank_mismatch",
+        "missing_species_ancestry",
+        "future_reason_code",
+    ]
+    snapshot["coverage"] = {
+        "source_rows": 369,
+        "resolved_rows": 330,
+        "unique_targets": 324,
+        "omitted_rows": omissions,
+        "omissions": [
+            {
+                "csv_row": index + 2,
+                "raw_scientific_name": f'<img src=x onerror="fail()"> taxon {index}' if index else "",
+                "common_name": f"Common <name> {index}",
+                "reason_code": codes[index % len(codes)],
+                "reason": f"Original detail <unsafe> {index}",
+            }
+            for index in range(omissions)
+        ],
+    }
+    return snapshot
+
+
+@pytest.mark.parametrize("language", ["en", "fr"])
+def test_approved_subset_discloses_every_omitted_source_entry_as_text_in_both_languages(language):
+    result = sighting_lifecycle(
+        "LANG=" + json.dumps(language) + ";optionalLayers.refresh();"
+        "const list=nodes.recentChallengeOmissionList;console.log(JSON.stringify({"
+        "hidden:nodes.recentChallengeCoverage.hidden,counts:nodes.recentChallengeCoverageCounts.textContent,"
+        "summary:nodes.recentChallengeOmissionsSummary.textContent,open:!!nodes.recentChallengeOmissions.open,"
+        "rows:list.children.map(li=>li.children.map(child=>({tag:child.tag,text:child.textContent,html:child.innerHTML??null})))"
+        "}));",
+        snapshot=coverage_snapshot(),
+    )
+    assert not result["hidden"] and not result["open"]
+    assert all(str(count) in result["counts"] for count in (324, 330, 369))
+    assert "39" in result["summary"] and len(result["rows"]) == 39
+    assert (
+        "verified targets" in result["counts"] if language == "en" else "taxons vérifiés" in result["counts"]
+    )
+    assert result["rows"][0][0]["text"] == (
+        "Scientific name missing" if language == "en" else "Nom scientifique manquant"
+    )
+    for index, row in enumerate(result["rows"]):
+        assert len(row) == 3
+        assert f"Common <name> {index}" in row[1]["text"]
+        if index:
+            assert row[0]["text"] == f'<img src=x onerror="fail()"> taxon {index}'
+        assert all(child["html"] is None for child in row)
+        if index % 8 == 7:
+            assert row[2]["text"] == f"Original detail <unsafe> {index}"
+        else:
+            assert row[2]["text"] != f"Original detail <unsafe> {index}"
+    assert (
+        "no scientific name" in result["rows"][0][2]["text"]
+        if language == "en"
+        else "aucun nom scientifique" in result["rows"][0][2]["text"]
+    )
+
+
+def test_omissions_disclosure_keeps_native_open_state_and_focus_during_pan_and_translation():
+    result = sighting_lifecycle(
+        "const details=nodes.recentChallengeOmissions,summary=nodes.recentChallengeOmissionsSummary,"
+        "first=nodes.recentChallengeOmissionList.children[0];details.open=true;summary.focus();"
+        "handlers.moveend();const stable=nodes.recentChallengeOmissionList.children[0]===first;"
+        "LANG='fr';optionalLayers.refresh();console.log(JSON.stringify({stable,open:details.open,"
+        "focused:document.activeElement===summary,summary:summary.textContent,"
+        "reason:nodes.recentChallengeOmissionList.children[0].children[2].textContent}));",
+        snapshot=coverage_snapshot(),
+    )
+    assert result["stable"] and result["open"] and result["focused"]
+    assert "entrées omises" in result["summary"] and "aucun nom scientifique" in result["reason"]
+
+
+def test_older_snapshot_adds_no_coverage_warning_and_complete_subset_hides_omissions():
+    older = sighting_lifecycle(
+        "console.log(JSON.stringify({hidden:nodes.recentChallengeCoverage.hidden,"
+        "rows:nodes.recentChallengeOmissionList?.children.length||0}));"
+    )
+    assert older == {"hidden": True, "rows": 0}
+    complete = sighting_lifecycle(
+        "console.log(JSON.stringify({coverageHidden:nodes.recentChallengeCoverage.hidden,"
+        "omissionsHidden:nodes.recentChallengeOmissions.hidden}));",
+        snapshot=coverage_snapshot(0),
+    )
+    assert complete == {"coverageHidden": False, "omissionsHidden": True}
+
+
+def test_subset_coverage_is_only_exposed_after_the_pinned_snapshot_is_loaded():
+    result = sighting_lifecycle(
+        "const before=nodes.recentChallengeCoverage.hidden;await optionalLayers.toggleRecent(true);"
+        "console.log(JSON.stringify({before,after:nodes.recentChallengeCoverage.hidden}));",
+        snapshot=coverage_snapshot(),
+        start_recent=False,
+    )
+    assert result == {"before": True, "after": False}
