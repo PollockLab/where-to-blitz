@@ -80,6 +80,8 @@ function installOptionalLayers(){
   const catalog=descriptors.challenge?.catalog||null;
   const catalogTaxa=catalog?[...catalog.taxa].sort((a,b)=>a.name.localeCompare(b.name,'en')||a.id-b.id):[];
   let catalogPage=0,catalogQuery='',catalogRendered='';
+  let sightingPopup=null,sightingPosition=null,selectedSightings=[],recentPositions=new Map();
+  const recentImages=new Set();
   const rateLimits={};
   let discoveryLegendRes=null,discoveryPage=0,discoveryListView='',discoveryListRows=[],discoveryListRes=25000;
   const historical=typeof HISTORICAL_DISCOVERY_POINTS==='undefined'?null:HISTORICAL_DISCOVERY_POINTS;
@@ -132,16 +134,16 @@ function installOptionalLayers(){
     }
     return nearest&&distance<=Math.SQRT2*res/1000? t('discovery_near_place',nearest.place_name):null;
   }
-  function ensureSource(id,type,paint){
+  function ensureSource(id,type,paint,layout={}){
     if(map.getSource(id))return;
     map.addSource(id,{type:'geojson',data:{type:'FeatureCollection',features:[]}});
-    map.addLayer({id,type,source:id,paint},id==='measured-discovery'&&map.getLayer('recent-challenge')?'recent-challenge':undefined);
+    map.addLayer({id,type,source:id,paint,layout},id==='measured-discovery'&&map.getLayer('recent-challenge')?'recent-challenge':undefined);
     map.on('mouseenter',id,()=>{map.getCanvas().style.cursor='pointer';});
     map.on('mouseleave',id,()=>{map.getCanvas().style.cursor='';});
     map.on('click',id,e=>{
       if(id==='measured-discovery'){if(!hitRecent(e.point)&&!hitHistorical(e.point))exploreCell(e.lngLat.lat,e.lngLat.lng);return;}
-      const feature=e.features&&e.features[0],row=feature&&cache.challenge.observations.find(r=>r.id===feature.properties.id);
-      if(row)openSighting(row);
+      const group=recentPositions.get(e.features?.[0]?.properties.key);
+      if(group)openSighting(group.points[0],group.points.length>1?group:null);
     });
   }
   function visibleDiscovery(){
@@ -232,10 +234,22 @@ function installOptionalLayers(){
   }
   function paintSighting(){
     if(!selectedSighting||!sightingBody)return;
-    const row=selectedSighting;if(sightingBody.paintLanguage===LANG)return;
+    const row=selectedSighting,selection=selectedSightings.map(r=>r.id).join(',')+':'+row.id;
+    if(sightingBody.paintLanguage===LANG&&sightingBody.paintSelection===selection)return;
     const focusTargets={};
     const focusedAction=sightingBody.contains(document.activeElement)?document.activeElement.dataset?.sightingAction:null;
-    sightingBody.replaceChildren();sightingBody.paintLanguage=LANG;
+    sightingBody.replaceChildren();sightingBody.paintLanguage=LANG;sightingBody.paintSelection=selection;
+    if(selectedSightings.length>1){
+      const index=selectedSightings.indexOf(row),status=document.createElement('p'),navigation=document.createElement('div');
+      status.className='optional-status';status.setAttribute('role','status');status.setAttribute('aria-live','polite');status.textContent=t('sighting_position_progress',fmt(index+1),fmt(selectedSightings.length));
+      navigation.className='optional-pagination';
+      for(const [key,delta]of [['previous',-1],['next',1]]){
+        const button=document.createElement('button'),destination=index+delta;button.type='button';button.dataset.sightingAction=key;button.textContent=t('sighting_'+key);button.setAttribute('aria-disabled',String(destination<0||destination>=selectedSightings.length));
+        button.onclick=()=>{if(destination<0||destination>=selectedSightings.length)return;selectedSighting=selectedSightings[destination];paintSighting();};
+        focusTargets[key]=button;navigation.append(button);
+      }
+      sightingBody.append(status,navigation);
+    }
     const name=document.createElement('b'),scientific=document.createElement('p'),date=document.createElement('p'),place=document.createElement('p'),links=document.createElement('div'),view=document.createElement('a'),record=document.createElement('a');
     name.textContent=row.common_name||row.identified_name||row.name;
     scientific.textContent=row.common_name?(row.identified_name||row.name):'';
@@ -250,12 +264,21 @@ function installOptionalLayers(){
     sightingBody.append(date);if(place.textContent)sightingBody.append(place);
     view.href='https://www.inaturalist.org/observations/'+row.id;view.textContent=t('view_sighting');record.href='https://www.inaturalist.org/observations/new';record.textContent=t('record_sighting');
     for(const [index,link] of [view,record].entries()){link.target='_blank';link.rel='noopener';link.dataset.sightingAction=String(index);focusTargets[String(index)]=link;}links.className='sighting-actions';links.append(view,record);sightingBody.append(links);
-    if(focusedAction!==null&&focusedAction!==undefined)focusTargets[focusedAction]?.focus({preventScroll:true});
+    if(focusedAction!==null&&focusedAction!==undefined)(focusTargets[focusedAction]||view).focus({preventScroll:true});
   }
-  function openSighting(row){
-    closePopup();selectedSighting=row;sightingBody=document.createElement('div');sightingBody.className='popbody';paintSighting();
+  function openSighting(row,group=null){
+    closePopup();selectedSighting=row;selectedSightings=group?group.points:[row];sightingPosition=group?.key||null;sightingBody=document.createElement('div');sightingBody.className='popbody';paintSighting();
     const popup=wirePopup(new maplibregl.Popup({focusAfterOpen:false,maxWidth:'320px'}).setLngLat([row.longitude,row.latitude]).setDOMContent(sightingBody));
-    popup.on('close',()=>{if(selectedSighting===row){selectedSighting=null;sightingBody=null;}});popup.addTo(map);
+    sightingPopup=popup;popup.on('close',()=>{if(sightingPopup===popup){sightingPopup=null;selectedSighting=null;sightingBody=null;selectedSightings=[];sightingPosition=null;}});popup.addTo(map);
+  }
+  function ensureRecentImages(groups){
+    for(const count of new Set(groups.map(group=>group.points.length))){
+      if(recentImages.has(count))continue;
+      const canvas=document.createElement('canvas'),size=count===1?32:64;canvas.width=size;canvas.height=size;const ctx=canvas.getContext('2d');
+      ctx.beginPath();ctx.arc(size/2,size/2,count===1?12:28,0,Math.PI*2);ctx.fillStyle='#d96c14';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=count===1?4:3;ctx.stroke();
+      if(count>1){ctx.fillStyle='#fff';ctx.font='bold 25px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(String(count),32,33);}
+      map.addImage('recent-count-'+count,ctx.getImageData(0,0,size,size));recentImages.add(count);
+    }
   }
   let coverageSnapshot=null,coverageLanguage=null;
   function renderCoverage(){
@@ -313,12 +336,14 @@ function installOptionalLayers(){
     else if(!cache.challenge)status.textContent=t(recentError?'optional_error':'optional_loading');
     if(!_mapLoaded)return;
     if(!recentOn||!cache.challenge){if(map.getLayer('recent-challenge'))map.setLayoutProperty('recent-challenge','visibility','none');return;}
-    ensureSource('recent-challenge','circle',{'circle-radius':6,'circle-color':'#d96c14','circle-stroke-width':2,'circle-stroke-color':'#fff'});
-    map.setLayoutProperty('recent-challenge','visibility','visible');
     const snapshot=cache.challenge,view=bounds(),national=OptionalData.viewportWidthKm(view)>500,rows=OptionalData.selectChallenge(snapshot,view,national),matching=OptionalData.matchingChallenge(snapshot,view).length;
-    const features=rows.map(row=>({type:'Feature',properties:{id:row.id},geometry:{type:'Point',coordinates:[row.longitude,row.latitude]}}));
+    // Reuse exact-coordinate grouping only after viewport filtering and the observation cap.
+    const groups=OptionalData.historicalGroups(rows);recentPositions=new Map(groups.map(group=>[group.key,group]));ensureRecentImages(groups);
+    ensureSource('recent-challenge','symbol',{}, {'icon-image':['concat','recent-count-',['to-string',['get','count']]],'icon-size':0.5,'icon-allow-overlap':true,'icon-ignore-placement':true});
+    map.setLayoutProperty('recent-challenge','visibility','visible');
+    const features=groups.map(group=>({type:'Feature',properties:{id:group.points[0].id,key:group.key,count:group.points.length},geometry:{type:'Point',coordinates:[group.longitude,group.latitude]}}));
     map.getSource('recent-challenge').setData({type:'FeatureCollection',features});
-    status.textContent=t('recent_challenge_all_groups')+' · '+t('recent_challenge_shown',fmt(rows.length),fmt(matching),national?500:150)+' · '+t(...OptionalData.relativeRefresh(snapshot.as_of))+(OptionalData.stale(snapshot.as_of)?' '+t('optional_stale'):'');
+    status.textContent=t('recent_challenge_all_groups')+' · '+t('recent_challenge_shown',fmt(rows.length),fmt(matching),national?500:150)+' · '+t('recent_challenge_positions',fmt(groups.length))+' · '+t(...OptionalData.relativeRefresh(snapshot.as_of))+(OptionalData.stale(snapshot.as_of)?' '+t('optional_stale'):'');
     status.title=t('recent_exact_refresh')+': '+snapshot.as_of+' UTC. '+snapshot.window.start+' – '+snapshot.window.end;
     const metadata=node('recentChallengeMeta');if(metadata)metadata.textContent=status.title;
     const freshness=node('recentChallengeFreshness');if(freshness){freshness.textContent=t(...OptionalData.relativeRefresh(snapshot.as_of));freshness.title=status.title;freshness.dateTime=snapshot.as_of;}
@@ -327,6 +352,11 @@ function installOptionalLayers(){
       button.onclick=()=>{openSighting(row);map.jumpTo({center:[row.longitude,row.latitude],zoom:Math.max(7,map.getZoom())});};
     });
     if(!rows.length)list.textContent=t('recent_challenge_empty');
+    if(sightingPosition){
+      const group=recentPositions.get(sightingPosition);
+      if(!group)sightingPopup.remove();
+      else{selectedSightings=group.points;selectedSighting=selectedSightings.find(row=>row.id===selectedSighting.id)||selectedSightings[0];}
+    }
     paintSighting();
   }
   async function toggleRecent(enabled){
