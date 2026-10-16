@@ -37,6 +37,11 @@ const OptionalData={
     }
     return result;
   },
+  historicalGroups(points){
+    const groups=new Map();
+    for(const point of points){const key=point.longitude+','+point.latitude;if(!groups.has(key))groups.set(key,{key,longitude:point.longitude,latitude:point.latitude,points:[]});groups.get(key).points.push(point);}
+    return [...groups.values()];
+  },
   availableCells(product,res){return product.tiers[String(res)].cells.filter(r=>r[4]!==null&&r[5]===r[6]&&r[3]>0);},
   async fetchPinned(descriptor,kind,fetcher=fetch,subtle=crypto.subtle,href=location.href){
     const url=new URL(descriptor.path,href);
@@ -74,6 +79,9 @@ function installOptionalLayers(){
   let recentOn=false,recentError=false,discoveryError=false,selectedSighting=null,sightingBody=null;
   const rateLimits={};
   let discoveryLegendRes=null,discoveryPage=0,discoveryListView='',discoveryListRows=[],discoveryListRes=25000;
+  const historical=typeof HISTORICAL_DISCOVERY_POINTS==='undefined'?null:HISTORICAL_DISCOVERY_POINTS;
+  const historicalGroups=historical?OptionalData.historicalGroups(historical.points):[];
+  let historicalOn=true,historicalPage=0,historicalView='',historicalPopup=null,historicalSelected=null,historicalBody=null,historicalLanguage=null;
   let placeContext=null;
   const node=id=>document.getElementById(id);
   const fmt=value=>Number(value).toLocaleString(LANG==='fr'?'fr-CA':'en-CA',{maximumFractionDigits:2});
@@ -128,7 +136,7 @@ function installOptionalLayers(){
     map.on('mouseenter',id,()=>{map.getCanvas().style.cursor='pointer';});
     map.on('mouseleave',id,()=>{map.getCanvas().style.cursor='';});
     map.on('click',id,e=>{
-      if(id==='measured-discovery'){if(!hitRecent(e.point))exploreCell(e.lngLat.lat,e.lngLat.lng);return;}
+      if(id==='measured-discovery'){if(!hitRecent(e.point)&&!hitHistorical(e.point))exploreCell(e.lngLat.lat,e.lngLat.lng);return;}
       const feature=e.features&&e.features[0],row=feature&&cache.challenge.observations.find(r=>r.id===feature.properties.id);
       if(row)openSighting(row);
     });
@@ -292,13 +300,68 @@ function installOptionalLayers(){
   async function toggleRecent(enabled){
     recentOn=!!enabled&&!!descriptors.challenge;recentError=false;if(!recentOn&&selectedSighting)closePopup();node('recentChallenge').checked=recentOn;renderChallenge();syncSharedCellUrl(true);if(isDiscovery())updateLegend();
     if(recentOn)try{await load('challenge');}catch(e){recentError=true;}
-    renderChallenge();renderDiscovery();
+    renderChallenge();renderDiscovery();renderHistorical();
+  }
+  function historicalVisible(){return !!historical&&historicalOn&&isDiscovery()&&supports(state.taxon)&&activeCellResM()===5000&&!!cache.discovery;}
+  function hitHistorical(point){return historicalVisible()&&_mapLoaded&&!!map.getLayer('historical-discovery')&&map.queryRenderedFeatures(point,{layers:['historical-discovery']}).length>0;}
+  function paintHistoricalPopup(){
+    if(!historicalSelected||!historicalBody||historicalLanguage===LANG)return;
+    historicalLanguage=LANG;
+    const group=historicalSelected;historicalBody.replaceChildren();
+    const title=document.createElement('b'),list=document.createElement('ul'),detail=document.createElement('div');
+    title.textContent=t('historical_location_count',group.points.length);
+    for(const point of group.points){const item=document.createElement('li');item.textContent=point.scientific_name+' · '+point.observed_year;list.append(item);}
+    const note=document.createElement('p');note.textContent=t('historical_supplied_names');
+    detail.innerHTML=discoveryPopup(group.latitude,group.longitude,5000);historicalBody.append(title,note,list,detail);
+  }
+  function openHistorical(group){
+    closePopup();historicalLanguage=null;historicalSelected=group;historicalBody=document.createElement('div');historicalBody.className='popbody';paintHistoricalPopup();
+    const popup=wirePopup(new maplibregl.Popup({focusAfterOpen:false,maxWidth:'340px'}).setLngLat([group.longitude,group.latitude]).setDOMContent(historicalBody));historicalPopup=popup;
+    popup.on('close',()=>{if(historicalPopup===popup){historicalPopup=null;historicalSelected=null;historicalBody=null;}});popup.addTo(map);
+  }
+  function renderHistorical(){
+    node('historicalPointsPanel').hidden=!historical||!isDiscovery();
+    node('historicalPointsToggle').checked=historicalOn;
+    const visible=historicalVisible();
+    node('historicalPointsHint').textContent=t(!historicalOn?'historical_hidden':activeCellResM()!==5000?'historical_zoom':!cache.discovery?'discovery_loading':'historical_local');
+    if(!visible){
+      const returnFocus=historicalPopup?.getElement()?.contains(document.activeElement)||!!document.activeElement?.dataset.historicalPoint;
+      if(historicalPopup)historicalPopup.remove();
+      if(_mapLoaded&&map.getLayer('historical-discovery'))map.setLayoutProperty('historical-discovery','visibility','none');
+      node('historicalPointsList').replaceChildren();node('historicalPointsStatus').textContent='';
+      for(const id of ['historicalPointsPrevious','historicalPointsNext'])node(id).setAttribute('aria-disabled','true');
+      if(returnFocus&&!focusPopupTarget(node('historicalPointsToggle')))focusPopupTarget(map.getCanvas());
+      return;
+    }
+    if(!_mapLoaded)return;
+    if(!map.getSource('historical-discovery')){
+      for(const count of new Set(historicalGroups.map(g=>g.points.length))){
+        const canvas=document.createElement('canvas');canvas.width=64;canvas.height=64;const ctx=canvas.getContext('2d');
+        ctx.beginPath();ctx.moveTo(32,2);ctx.lineTo(62,32);ctx.lineTo(32,62);ctx.lineTo(2,32);ctx.closePath();ctx.fillStyle='#006d77';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.stroke();ctx.fillStyle='#fff';ctx.font='bold 25px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(String(count),32,33);
+        map.addImage('historical-count-'+count,ctx.getImageData(0,0,64,64));
+      }
+      map.addSource('historical-discovery',{type:'geojson',data:{type:'FeatureCollection',features:historicalGroups.map(g=>({type:'Feature',properties:{key:g.key,count:g.points.length},geometry:{type:'Point',coordinates:[g.longitude,g.latitude]}}))}});
+      map.addLayer({id:'historical-discovery',type:'symbol',source:'historical-discovery',layout:{'icon-image':['concat','historical-count-',['to-string',['get','count']]],'icon-size':0.55,'icon-allow-overlap':true}},map.getLayer('recent-challenge')?'recent-challenge':undefined);
+      map.on('click','historical-discovery',e=>{if(hitRecent(e.point))return;const key=e.features?.[0]?.properties.key,group=historicalGroups.find(g=>g.key===key);if(group)openHistorical(group);});
+      map.on('mouseenter','historical-discovery',()=>{map.getCanvas().style.cursor='pointer';});map.on('mouseleave','historical-discovery',()=>{map.getCanvas().style.cursor='';});
+    }
+    map.setLayoutProperty('historical-discovery','visibility','visible');
+    const view=bounds(),key=view.join(',');if(key!==historicalView){historicalPage=0;historicalView=key;}
+    const [west,south,east,north]=view,groups=historicalGroups.filter(g=>g.latitude>=south&&g.latitude<=north&&(west<=east?g.longitude>=west&&g.longitude<=east:g.longitude>=west||g.longitude<=east));
+    historicalPage=Math.min(historicalPage,Math.max(0,Math.ceil(groups.length/30)-1));const start=historicalPage*30,rows=groups.slice(start,start+30);
+    node('historicalPointsStatus').textContent=t('historical_points_scope',rows.length?start+1:0,start+rows.length,groups.length);
+    node('historicalPointsPrevious').setAttribute('aria-disabled',String(!historicalPage));node('historicalPointsNext').setAttribute('aria-disabled',String(start+30>=groups.length));
+    const list=node('historicalPointsList'),focused=document.activeElement;
+    renderButtons(list,rows,'historicalPoint',g=>g.key,(button,g)=>{button.textContent=g.points[0].scientific_name+' · '+g.points[0].observed_year+'\n'+t('historical_location_count',g.points.length);button.onclick=()=>openHistorical(g);});
+    if(!rows.length)list.textContent=t('historical_empty');
+    if(focused?.dataset.historicalPoint&&!focused.isConnected&&document.activeElement===document.body)node('historicalPointsToggle').focus({preventScroll:true});
+    if(historicalSelected)paintHistoricalPopup();
   }
   async function prepareDiscovery(){
     discoveryError=false;
     try{await load('discovery');}catch(e){discoveryError=true;throw e;}
   }
-  function refresh(){renderDiscovery();renderChallenge();}
+  function refresh(){renderDiscovery();renderChallenge();renderHistorical();}
   function appendCriteria(select){if(!descriptors.discovery)return;const option=document.createElement('option');option.value='discovery';option.textContent=t('discovery_rate');select.appendChild(option);}
   function hitRecent(point){return recentOn&&_mapLoaded&&!!map.getLayer('recent-challenge')&&map.queryRenderedFeatures(point,{layers:['recent-challenge']}).length>0;}
   globalThis.optionalLayers={setPlaceContext(context){placeContext=context&&Number.isFinite(context.lat)&&Number.isFinite(context.lon)&&typeof context.name==='string'?{latitude:context.lat,longitude:context.lon,place_name:context.name}:null;renderDiscovery();},isDiscovery,supports,load:prepareDiscovery,refresh,appendCriteria,discoveryCell,discoveryPopup,discoveryLegend,hitRecent,toggleRecent,
@@ -310,5 +373,7 @@ function installOptionalLayers(){
     if(!cache.discovery||node(id).getAttribute('aria-disabled')==='true')return;
     discoveryPage+=delta;renderDiscoveryList();node('discoveryCells').scrollTop=0;
   };
+  node('historicalPointsToggle').onchange=e=>{historicalOn=e.target.checked;renderHistorical();};
+  for(const [id,delta]of [['historicalPointsPrevious',-1],['historicalPointsNext',1]])node(id).onclick=()=>{if(!historicalVisible()||node(id).getAttribute('aria-disabled')==='true')return;historicalPage+=delta;renderHistorical();node('historicalPointsList').scrollTop=0;};
   map.on('moveend',refresh);whenMap(refresh);
 }
