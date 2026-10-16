@@ -470,6 +470,7 @@ const COMPARE_ENABLED=__COMPARE_ENABLED__||/[?&]compare=1/.test(location.search)
 const I18N={
   en:{
     discovery_rate:"Measured discovery rate", discovery_cells:"Measured cells in this view",
+    discovery_loading:"Loading historical discovery evidence…",
     map_display:"Map display", priority_map:"Recording priorities", historical_map:"Historical discovery evidence",
     historical_scope:(period,group)=>`${period} · ${group}. Switch to recording priorities to choose a goal or species group.`,
     map_filters:"Map controls", close_filters:"Done", source_details:"Source and limits", challenge_list_details:"About the target list", snapshot_details:"Snapshot details",
@@ -703,6 +704,7 @@ const I18N={
   },
   fr:{
     discovery_rate:"Taux de découverte mesuré", discovery_cells:"Cellules mesurées dans cette vue",
+    discovery_loading:"Chargement des données historiques de découverte…",
     map_display:"Affichage de la carte", priority_map:"Priorités d'observation", historical_map:"Découvertes historiques",
     historical_scope:(period,group)=>`${period} · ${group}. Passez aux priorités d'observation pour choisir un objectif ou un groupe.`,
     map_filters:"Réglages", close_filters:"Terminé", source_details:"Source et limites", challenge_list_details:"À propos de la liste", snapshot_details:"Détails des observations publiées",
@@ -1114,13 +1116,14 @@ function geCat(v,col,row){
 // the style dropdown follow it, never the reverse.
 const OVERLAY_TOGGLE={coverage:'tgCoverage',gettingeven:'tgGettingEven',climate:'tgClimateGap'};
 let overlay='priority';   // 'priority' (the goal grid) | 'coverage' | 'gettingeven' | 'climate'
-let _overlaySeq=0,_overlayReady=Promise.resolve();
+let _overlaySeq=0,_overlayReady=Promise.resolve(),_discoveryLoading=false;
 function geActive(){return overlay==='gettingeven';}
 function covOn(){return overlay==='coverage';}
 function climateOn(){return overlay==='climate';}
 function setOverlay(kind){
   const seq=++_overlaySeq;
   overlay=kind==='discovery'&&globalThis.optionalLayers&&globalThis.optionalLayers.supports(state.taxon)?kind:OVERLAY_TOGGLE[kind]?kind:'priority';
+  _discoveryLoading=overlay==='discovery';
   if(overlay==='priority'){const cs=document.getElementById('criteria');if(cs&&(cs.value==='ge'||cs.value==='climate'||cs.value==='discovery'))cs.value=String(window.__activePreset||0);}
   renderCellTable();paintPopScore();   // invalidate previous priority evidence before an overlay's async load
   for(const[k,id]of Object.entries(OVERLAY_TOGGLE)){const el=document.getElementById(id);if(el)el.checked=(overlay===k);}
@@ -1140,7 +1143,11 @@ function setOverlay(kind){
   // a failed load: put the overlay and the dropdown back where they were. Read #criteria off the DOM
   // rather than the critSel const, for the same reason the basemap select is read that way above.
   syncSharedCellUrl();
-  if(overlay==='discovery')return _overlayReady=globalThis.optionalLayers.load().then(paint,()=>{if(seq!==_overlaySeq)return;setOverlay('priority');const blurb=document.getElementById('challengeBlurb');if(blurb)blurb.textContent=t('optional_error');});
+  if(overlay==='discovery'){
+    // Remove the preceding goal/raster before its colours can be read as discovery evidence.
+    paint();
+    return _overlayReady=globalThis.optionalLayers.load().then(()=>{if(seq!==_overlaySeq)return;_discoveryLoading=false;paint();},()=>{if(seq!==_overlaySeq)return;setOverlay('priority');const blurb=document.getElementById('challengeBlurb');if(blurb)blurb.textContent=t('optional_error');});
+  }
   return _overlayReady=geActive()?loadGE().then(paint,()=>{if(seq!==_overlaySeq)return;setOverlay('priority');
     const cs=document.getElementById('criteria');if(cs)cs.value=String(window.__activePreset||0);syncSharedCellUrl();}):Promise.resolve(paint());
 }
@@ -1913,7 +1920,7 @@ function updateLegendLabels(){const ml=document.getElementById('maplegend');if(!
 function updateLegend(){
   const ml=document.getElementById('maplegend');if(!ml)return;
   if(GE_PRIORITY_LEGEND===null)GE_PRIORITY_LEGEND=ml.innerHTML;   // capture the as-built priority legend once
-  if(globalThis.optionalLayers&&globalThis.optionalLayers.isDiscovery()){ml.innerHTML=globalThis.optionalLayers.discoveryLegend();return;}
+  if(globalThis.optionalLayers&&globalThis.optionalLayers.isDiscovery()){ml.innerHTML=_discoveryLoading?'<div class="hint" role="status">'+t('discovery_loading')+'</div>':globalThis.optionalLayers.discoveryLegend();return;}
   if(geActive()){
     const sw=(c,lab)=>`<div style="display:flex;align-items:center;gap:6px;margin:2px 0"><span style="width:13px;height:13px;border-radius:3px;background:${c};border:1px solid #ccc;flex:none"></span><span>${lab}</span></div>`;
     ml.innerHTML='<div class="lt">'+t('getting_even')+'</div>'+
