@@ -421,7 +421,7 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
   <label class="toggle" style="display:none"><input type="checkbox" id="tgGettingEven"> <span data-i18n="getting_even">Getting Even — which group to record</span></label><span class="infobtn" id="geinfobtn" style="display:none" data-i18n-title="ge_info_btn" title="How is the recommended group worked out?" role="button" tabindex="0" data-i18n-aria="ge_info_btn" aria-label="How is the recommended group worked out?" aria-expanded="false" onclick="const b=document.getElementById('geinfo').classList.toggle('open');this.setAttribute('aria-expanded',b)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">i</span><!-- driven by the "Getting Even" criterion (#20) -->
   <div class="infobox" id="geinfo" data-i18n-html="ge_method"></div>
   <label class="toggle" style="display:none"><input type="checkbox" id="tgClimateGap"> <span data-i18n="climate_gap">Climate Gap — under-sampled climates</span></label><!-- driven by the "Climate Gap" criterion -->
-  <div id="opacityRow" style="display:none"><!-- #46: only shown while a data overlay (density style) is active; basemap brightness is otherwise locked at 100% -->
+  <div id="opacityRow" style="display:none"><!-- Active density, climate or Getting Even cells; basemap brightness stays at 100%. -->
   <div style="display:flex;justify-content:space-between;margin:9px 0 0"><span id="bople" style="font-size:12.5px" data-i18n="data_opacity">Density opacity</span><span class="v" id="bopv" style="color:var(--acc)">80%</span></div>
   <input type="range" id="baseop" min="0.1" max="1" step="0.05" value="1" data-i18n-aria="aria_data_opacity" aria-label="Density opacity">
   </div>
@@ -523,7 +523,7 @@ const I18N={
     aria_language:"Language", lang_switch:"Switch language", aria_about_data:"About the data", aria_lifegroup:"Species group", aria_criteria:"Goal",
     aria_search:"Search for a start place", aria_search_results:"Search results", aria_time_unit:"Time unit",
     aria_time_budget:"Time budget", aria_max_travel:"Max travel each way", aria_worth_drive:"Worth the drive",
-    aria_map_style:"Map style", aria_map_brightness:"Map brightness", aria_data_opacity:"Density opacity", aria_climate_opacity:"Climate layer opacity", aria_top_cells:"Top cells (accessible list)",
+    aria_map_style:"Map style", aria_map_brightness:"Map brightness", aria_data_opacity:"Density opacity", aria_climate_opacity:"Climate layer opacity", aria_ge_opacity:"Getting Even cell opacity", aria_top_cells:"Top cells (accessible list)",
     rank_mask_loading:"Loading Canada's boundary data before ranking cells.",
     rank_mask_unavailable:"Canada's boundary data could not be loaded. National rankings are unavailable. Reload the page to try again.",
     rank_layer_unavailable:"This layer has no national priority ranking. Choose Spatial Gap, Species discovery or Conservation to list ranked cells.",
@@ -588,6 +588,7 @@ const I18N={
     map_brightness:"Map brightness",
     data_opacity:"Density opacity",
     climate_opacity:"Climate layer opacity",
+    ge_opacity:"Getting Even cell opacity",
     how_scored:"About this map",
     how_intro:"Choose a goal, compare places, then tap a cell for species worth recording. Scores guide recording effort; they do not predict what a visit will find.",
     how_goals:"Current goal and scoring", how_evidence:"Species suggestions and group comparison", how_ranks:"Map colour and national percentile", how_sources:"Data sources and limits", how_about:"Blitz the Gap and responsible recording",
@@ -752,7 +753,7 @@ const I18N={
     aria_language:"Langue", lang_switch:"Changer de langue", aria_about_data:"À propos des données", aria_lifegroup:"Groupe d'espèces", aria_criteria:"Objectif",
     aria_search:"Rechercher un lieu de départ", aria_search_results:"Résultats de recherche", aria_time_unit:"Unité de temps",
     aria_time_budget:"Temps disponible", aria_max_travel:"Trajet max (aller)", aria_worth_drive:"Vaut le déplacement",
-    aria_map_style:"Style de carte", aria_map_brightness:"Luminosité de la carte", aria_data_opacity:"Opacité des données", aria_climate_opacity:"Opacité de la couche climatique", aria_top_cells:"Meilleures cellules (liste accessible)",
+    aria_map_style:"Style de carte", aria_map_brightness:"Luminosité de la carte", aria_data_opacity:"Opacité des données", aria_climate_opacity:"Opacité de la couche climatique", aria_ge_opacity:"Opacité des cellules Combler l'écart", aria_top_cells:"Meilleures cellules (liste accessible)",
     rank_mask_loading:"Chargement des limites du Canada avant le classement des cellules.",
     rank_mask_unavailable:"Les limites du Canada n'ont pas pu être chargées. Le classement national est indisponible. Rechargez la page pour réessayer.",
     rank_layer_unavailable:"Cette couche n'a pas de classement national des priorités. Choisissez Lacune spatiale, Découverte d'espèces ou Conservation pour afficher les cellules classées.",
@@ -817,6 +818,7 @@ const I18N={
     map_brightness:"Luminosité de la carte",
     data_opacity:"Opacité des données",
     climate_opacity:"Opacité de la couche climatique",
+    ge_opacity:"Opacité des cellules Combler l'écart",
     how_scored:"À propos de la carte",
     how_intro:"Choisissez un objectif, comparez les lieux, puis touchez une cellule pour voir quelles espèces observer. Les scores guident l'effort d'observation; ils ne prédisent pas les découvertes d'une visite.",
     how_goals:"Objectif actif et calcul", how_evidence:"Suggestions d'espèces et comparaison des groupes", how_ranks:"Couleur et centile national", how_sources:"Sources de données et limites", how_about:"Blitz the Gap et observation responsable",
@@ -1857,15 +1859,17 @@ function priorityPercentiles(values){
   }
   return rank;
 }
+let geOpacity=0.62;   // preserve the categorical layer's default independently of other goals
+function paintGECells(){
+  // Keep the coarse click target transparent above the tier switch, including unscored fine cells (#122).
+  const op=(map&&map.getZoom&&map.getZoom()>=TIER_SWITCH_Z)?0:geOpacity;
+  markers.forEach(m=>setCellState(m.i,geColour(m),op));
+  applyCanadaMask();
+}
 function recolour(){
   if(geActive()){
-    // Categorical layer: colour by most under-represented group (no magnitude). Flat opacity; stroke matches fill so cells tile seamlessly.
-    // Above the tier switch the 5 km fill is the visible one, so the 25 km cells drop to opacity 0
-    // rather than being removed: cells-fill is also the click target, and a 0.62 layer of 25 km
-    // colour underneath would show through wherever a 5 km cell is unscored (#122).
-    const op=(map&&map.getZoom&&map.getZoom()>=TIER_SWITCH_Z)?0:0.62;
-    markers.forEach(m=>{const c=geColour(m);setCellState(m.i,c,op);});
-    applyCanadaMask();renderCellTable();setGridFill();paintPopScore();return;   // setGridFill drops the priority grid so it can't show through the 0.62 fill
+    // Categorical colour names the most under-represented group; opacity carries no magnitude.
+    paintGECells();renderCellTable();setGridFill();paintPopScore();return;
   }
   // Getting Even just turned off: clear the categorical feature-state it painted, otherwise
   // cells-fill keeps showing the old GE colours on top of the priority grid.
@@ -2151,7 +2155,7 @@ function setGridFill(){
   map.addLayer({id:'grid5',type:'fill',source:'cells5',minzoom:TIER_SWITCH_Z,paint:{
     'fill-color':['get','c'],
     'fill-color-transition':{duration:250},
-    'fill-opacity':ge?0.62:gridOpacity}},CELL_LAYER);   // 0.62 is the flat categorical opacity the 25 km tier uses
+    'fill-opacity':ge?geOpacity:gridOpacity}},CELL_LAYER);
   if(!ge)loadVals(25000).then(v=>{
     if(seq!==_gridSeq)return;
     if(map.getZoom()<TIER_SWITCH_Z)STRETCH=makeStretch(sample25(v));   // above the switch the 5 km tier is the visible one and sets STRETCH itself
@@ -2276,15 +2280,15 @@ function setClimate(){
   updateOpacityControl();
 }
 function setClimateOpacity(v){climateOpacity=v;if(_mapLoaded&&map.getLayer('climate-gap'))map.setPaintProperty('climate-gap','raster-opacity',v);}
-// #39: the opacity slider drives the data overlay when one is active (so it fades the magma to
-// reveal road/water/place context), else it falls back to basemap brightness. Switches label,
-// aria-label, slider value + % readout to match the active target.
-// #46(b), ryanhenryhull: "keep the slider only while the density style is active, and lock basemap
-// brightness at 100% otherwise". The goal grid is a raster too, so folding gridOverlayActive() in
-// here put the slider back on screen in the default Explore view, labelled "Density opacity" while
-// driving the goal grid. The two raster data overlays are the ones that get a slider; the goal grid
-// keeps its fixed 0.5, which is what leaves the basemap readable underneath.
-function dataOverlayActive(){return covOn()||climateOn();}
+// The shared slider remembers each active data layer's opacity. The priority grid keeps its
+// fixed 0.5 fill (#46); Getting Even adjusts only its categorical cells (#121).
+function dataOverlayActive(){return covOn()||climateOn()||geActive();}
+function setGEOpacity(v){
+  geOpacity=v;
+  if(!_mapLoaded||!geActive())return;
+  paintGECells();
+  if(map.getLayer('grid5'))map.setPaintProperty('grid5','fill-opacity',v);
+}
 function setBaseOpacity(v){baseOpacity=v;if(_mapLoaded&&map.getLayer('basemap'))map.setPaintProperty('basemap','raster-opacity',v);}
 function setCovOpacity(v){covOpacity=v;if(_mapLoaded&&map.getLayer('cov'))map.setPaintProperty('cov','raster-opacity',v);}
 function updateOpacityControl(){
@@ -2292,12 +2296,12 @@ function updateOpacityControl(){
   if(!sl||!lab||!val)return;
   const ov=dataOverlayActive();
   const row=document.getElementById('opacityRow');
-  if(row)row.style.display=ov?'':'none';   // #46(b): the slider only appears with a data overlay; lock basemap brightness at 100% otherwise
+  if(row)row.style.display=ov?'':'none';
   if(!ov)setBaseOpacity(1);
-  const v=ov?(covOn()?covOpacity:climateOpacity):baseOpacity;
+  const v=covOn()?covOpacity:climateOn()?climateOpacity:geActive()?geOpacity:baseOpacity;
+  sl.step=geActive()?'0.01':'0.05';   // the existing 0.62 GE default must be representable by the native range
   sl.value=v;
-  // one slider, three possible targets: name the one it is actually driving.
-  const key=covOn()?'data_opacity':climateOn()?'climate_opacity':'map_brightness';
+  const key=covOn()?'data_opacity':climateOn()?'climate_opacity':geActive()?'ge_opacity':'map_brightness';
   lab.textContent=t(key);
   sl.setAttribute('aria-label',t('aria_'+key));
   lab.setAttribute('data-i18n',key);   // keep applyI18N repaint in sync with the active target
@@ -2350,7 +2354,8 @@ function openHowSection(id,origin){
 document.getElementById('baseop').addEventListener('input',e=>{const v=parseFloat(e.target.value);
   if(covOn())setCovOpacity(v);   // #39: fade the magma data
   else if(climateOn())setClimateOpacity(v);
-  else setBaseOpacity(v);
+  else if(geActive())setGEOpacity(v);
+  else return;
   const bopv=document.getElementById('bopv');bopv.textContent=Math.round(v*100)+'%';
   e.target.setAttribute('aria-valuetext',bopv.textContent);});
 document.getElementById('maxleg').addEventListener('change',e=>{state.maxLeg=parseFloat(e.target.value);replan();});
