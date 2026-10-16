@@ -358,13 +358,13 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
   <section id="historicalPointsPanel" hidden>
     <label class="toggle"><input id="historicalPointsToggle" type="checkbox" checked> <span data-i18n="historical_points">Historical discovery points</span></label>
     <p id="historicalPointsHint" class="optional-status"></p>
-    <details><summary data-i18n="historical_locations">Historical locations in this view</summary><p id="historicalPointsStatus" class="optional-status" role="status"></p><div id="historicalPointsList"></div><div class="optional-pagination"><button id="historicalPointsPrevious" type="button" data-i18n="historical_previous">Previous locations</button><button id="historicalPointsNext" type="button" data-i18n="historical_next">Next locations</button></div></details>
+    <details id="historicalPointsDetails" hidden><summary data-i18n="historical_locations">Historical locations in this view</summary><p id="historicalPointsStatus" class="optional-status" role="status"></p><div id="historicalPointsList"></div><div class="optional-pagination"><button id="historicalPointsPrevious" type="button" data-i18n="historical_previous">Previous locations</button><button id="historicalPointsNext" type="button" data-i18n="historical_next">Next locations</button></div></details>
   </section>
   <div id="recentChallengePanel" hidden>
     <label class="toggle"><input type="checkbox" id="recentChallenge"> <span data-i18n="recent_challenge">Recent challenge sightings</span></label>
     <p id="recentChallengeStatus" class="optional-status" role="status"></p>
-    <details class="optional-source-details"><summary data-i18n="snapshot_details">Snapshot details</summary><div id="recentChallengeMeta"></div></details>
-    <details><summary data-i18n="recent_challenge_list">Sightings in this view</summary><div id="recentChallengeList"></div></details>
+    <details id="recentChallengeDetails" class="optional-source-details" hidden><summary data-i18n="snapshot_details">Snapshot details</summary><div id="recentChallengeMeta"></div></details>
+    <details id="recentChallengeSightings" hidden><summary data-i18n="recent_challenge_list">Sightings in this view</summary><div id="recentChallengeList"></div></details>
     <details id="recentChallengeCoverage" hidden><summary data-i18n="challenge_list_details">About the target list</summary>
       <p id="recentChallengeCoverageCounts" class="optional-status"></p>
       <details id="recentChallengeOmissions"><summary id="recentChallengeOmissionsSummary"></summary><ul id="recentChallengeOmissionList"></ul></details>

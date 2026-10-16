@@ -3,6 +3,7 @@
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -1115,3 +1116,60 @@ def test_unconfigured_historical_points_add_no_map_source_or_visible_panel():
         "source:!!map.sources['historical-discovery']}));", start_recent=False,
     )
     assert result == {"hidden": True, "source": False}
+
+
+@pytest.mark.parametrize("language", ["en", "fr"])
+def test_recent_disclosures_only_open_after_verified_active_data_is_ready(language):
+    result = sighting_lifecycle(
+        "LANG=" + json.dumps(language) + ";"
+        "const details=document.getElementById('recentChallengeDetails'),sightings=document.getElementById('recentChallengeSightings');"
+        "const read=()=>({metadataHidden:details.hidden,listHidden:sightings.hidden,metadata:nodes.recentChallengeMeta?.textContent||'',status:nodes.recentChallengeStatus.textContent});"
+        "const initial=read();let finish;OptionalData.fetchPinned=()=>new Promise(resolve=>finish=resolve);"
+        "const request=optionalLayers.toggleRecent(true);const pending=read();finish(input.snapshot);await request;const ready=read();"
+        "await optionalLayers.toggleRecent(false);const off=read();await optionalLayers.toggleRecent(true);const cached=read();"
+        "viewportBounds=[0,0,1,1];handlers.moveend();const empty={...read(),message:nodes.recentChallengeList.textContent};"
+        "_mapLoaded=false;optionalLayers.refresh();const noMap=read();_mapLoaded=true;optionalLayers.refresh();const restored=read();"
+        "console.log(JSON.stringify({initial,pending,ready,off,cached,empty,noMap,restored}));",
+        start_recent=False,
+    )
+    for name in ("initial", "pending", "off", "noMap"):
+        assert result[name]["metadataHidden"] and result[name]["listHidden"], name
+    for name in ("ready", "cached", "empty", "restored"):
+        assert not result[name]["metadataHidden"] and not result[name]["listHidden"], name
+        assert AS_OF.isoformat() in result[name]["metadata"]
+    assert result["empty"]["message"]
+    assert "No eligible" in result["empty"]["message"] if language == "en" else "Aucune" in result["empty"]["message"]
+
+
+def test_failed_recent_download_keeps_empty_disclosures_hidden():
+    result = sighting_lifecycle(
+        "const details=document.getElementById('recentChallengeDetails'),sightings=document.getElementById('recentChallengeSightings');"
+        "OptionalData.fetchPinned=async()=>{throw Error('failed download');};await optionalLayers.toggleRecent(true);"
+        "console.log(JSON.stringify({metadataHidden:details.hidden,listHidden:sightings.hidden,status:nodes.recentChallengeStatus.textContent}));",
+        start_recent=False,
+    )
+    assert result["metadataHidden"] and result["listHidden"]
+    assert "could not be verified" in result["status"]
+
+
+def test_historical_disclosure_only_opens_for_ready_visible_local_points(tmp_path):
+    result = sighting_lifecycle(
+        "const details=document.getElementById('historicalPointsDetails');overlay='discovery';optionalLayers.refresh();"
+        "const pending=details.hidden;await optionalLayers.load();optionalLayers.refresh();const ready=details.hidden;"
+        "input.cellRes=25000;handlers.moveend();const coarse=details.hidden;input.cellRes=5000;handlers.moveend();"
+        "nodes.historicalPointsToggle.onchange({target:{checked:false}});const off=details.hidden;"
+        "nodes.historicalPointsToggle.onchange({target:{checked:true}});const enabled=details.hidden;"
+        "viewportBounds=[0,0,1,1];handlers.moveend();const empty={hidden:details.hidden,message:nodes.historicalPointsList.textContent};"
+        "overlay='priority';optionalLayers.refresh();const otherMode=details.hidden;"
+        "console.log(JSON.stringify({pending,ready,coarse,off,enabled,empty,otherMode}));",
+        rate_product(tmp_path), start_recent=False, cell_res=5000, historical_points=historical_fixture(),
+    )
+    assert result["pending"] and result["coarse"] and result["off"] and result["otherMode"]
+    assert not result["ready"] and not result["enabled"] and not result["empty"]["hidden"]
+    assert "No supplied historical points" in result["empty"]["message"]
+
+
+def test_data_dependent_disclosures_start_hidden_in_actual_template():
+    source = (ROOT / "webapp/index.html").read_text()
+    for identity in ("recentChallengeDetails", "recentChallengeSightings", "historicalPointsDetails"):
+        assert re.search(r'<details\b[^>]*\bid="' + identity + r'"[^>]*\bhidden(?:\s|>)', source), identity

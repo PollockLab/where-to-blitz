@@ -277,6 +277,8 @@ function installOptionalLayers(){
   function renderChallenge(){
     const panel=node('recentChallengePanel');panel.hidden=!descriptors.challenge;
     const status=node('recentChallengeStatus'),list=node('recentChallengeList');renderCoverage();
+    const ready=recentOn&&!!cache.challenge&&_mapLoaded;
+    for(const id of ['recentChallengeDetails','recentChallengeSightings'])node(id).hidden=!ready;
     if(!recentOn){status.textContent=t('recent_challenge_hint');list.replaceChildren();}
     else if(!cache.challenge)status.textContent=t(recentError?'optional_error':'optional_loading');
     if(!_mapLoaded)return;
@@ -322,7 +324,8 @@ function installOptionalLayers(){
   function renderHistorical(){
     node('historicalPointsPanel').hidden=!historical||!isDiscovery();
     node('historicalPointsToggle').checked=historicalOn;
-    const visible=historicalVisible();
+    const visible=historicalVisible()&&_mapLoaded;
+    node('historicalPointsDetails').hidden=!visible;
     node('historicalPointsHint').textContent=t(!historicalOn?'historical_hidden':activeCellResM()!==5000?'historical_zoom':!cache.discovery?'discovery_loading':'historical_local');
     if(!visible){
       const returnFocus=historicalPopup?.getElement()?.contains(document.activeElement)||!!document.activeElement?.dataset.historicalPoint;
