@@ -73,7 +73,7 @@ function installOptionalLayers(){
   const descriptors=OPTIONAL_LAYERS,cache={},pending={},indices={};
   let recentOn=false,recentError=false,discoveryError=false,selectedSighting=null,sightingBody=null;
   const rateLimits={};
-  let discoveryLegendRes=null;
+  let discoveryLegendRes=null,discoveryPage=0,discoveryListView='',discoveryListRows=[],discoveryListRes=25000;
   let placeContext=null;
   const node=id=>document.getElementById(id);
   const fmt=value=>Number(value).toLocaleString(LANG==='fr'?'fr-CA':'en-CA',{maximumFractionDigits:2});
@@ -175,13 +175,24 @@ function installOptionalLayers(){
     });
     map.getSource('measured-discovery').setData({type:'FeatureCollection',features});
     if(res===5000)DRAWN5=new Set(rows.map(r=>r[1]+','+r[0]));
-    const list=node('discoveryCells');
-    const [west,south,east,north]=bounds();
+    renderDiscoveryList(rows,res);
+  }
+  function renderDiscoveryList(rows=discoveryListRows,res=discoveryListRes){
+    discoveryListRows=rows;discoveryListRes=res;
+    const list=node('discoveryCells'),filter=node('discoveryCellFilter').value||'all';
+    const [west,south,east,north]=bounds(),view=[res,filter,west,south,east,north].join(',');
+    if(view!==discoveryListView){discoveryPage=0;discoveryListView=view;}
     const inView=rows.filter(row=>{
       const [lat,lon]=LAEA.inv(LATTICE_X0+(row[1]+0.5)*res,LATTICE_Y1-(row[0]+0.5)*res);
       return lat>=south&&lat<=north&&(west<=east?lon>=west&&lon<=east:lon>=west||lon<=east);
     });
-    const ranked=inView.sort((a,b)=>b[4]-a[4]||a[0]-b[0]||a[1]-b[1]).slice(0,30);
+    const matching=inView.filter(row=>filter==='zero'?row[4]===0:filter==='positive'?row[4]>0:true).sort((a,b)=>b[4]-a[4]||a[0]-b[0]||a[1]-b[1]);
+    discoveryPage=Math.min(discoveryPage,Math.max(0,Math.ceil(matching.length/30)-1));
+    const start=discoveryPage*30,ranked=matching.slice(start,start+30);
+    node('discoveryCellStatus').textContent=t('discovery_list_scope',fmt(ranked.length?start+1:0),fmt(start+ranked.length),fmt(matching.length),fmt(inView.length));
+    node('discoveryPrevious').setAttribute('aria-disabled',String(discoveryPage===0));
+    node('discoveryNext').setAttribute('aria-disabled',String(start+30>=matching.length));
+    const focused=document.activeElement;
     renderButtons(list,ranked,'discoveryCell',row=>res+':'+row[0]+','+row[1],(button,row)=>{
       const ll=LAEA.inv(LATTICE_X0+(row[1]+0.5)*res,LATTICE_Y1-(row[0]+0.5)*res);
       const coordinates=ll[0].toFixed(2)+', '+ll[1].toFixed(2),context=cellContext(ll[0],ll[1],res);
@@ -189,7 +200,8 @@ function installOptionalLayers(){
       button.setAttribute('aria-label',button.textContent+' '+discoveryUnit()+'. '+discoveryCounts(fmt(row[2]),fmt(row[3])));
       button.onclick=()=>exploreCell(ll[0],ll[1]);
     });
-    if(!ranked.length)list.textContent=t('discovery_unavailable');
+    if(!ranked.length)list.textContent=t(inView.length?'discovery_list_empty':'discovery_unavailable');
+    if(focused?.dataset.discoveryCell&&!focused.isConnected&&document.activeElement===document.body)node('discoveryCellFilter').focus({preventScroll:true});
   }
   function discoveryLegend(){
     const limits=rateLimits[activeCellResM()]||{minimum:0,maximum:0};
@@ -284,5 +296,10 @@ function installOptionalLayers(){
     recentEnabled:()=>recentOn,hasChallenge:()=>!!descriptors.challenge,group:()=>descriptors.discovery&&descriptors.discovery.taxon_group};
   node('recentChallengePanel').hidden=!descriptors.challenge;
   node('recentChallenge').addEventListener('change',e=>{_shareAction++;toggleRecent(e.target.checked);});
+  node('discoveryCellFilter').onchange=()=>{discoveryPage=0;renderDiscoveryList();node('discoveryCells').scrollTop=0;};
+  for(const [id,delta]of [['discoveryPrevious',-1],['discoveryNext',1]])node(id).onclick=()=>{
+    if(node(id).getAttribute('aria-disabled')==='true')return;
+    discoveryPage+=delta;renderDiscoveryList();node('discoveryCells').scrollTop=0;
+  };
   map.on('moveend',refresh);whenMap(refresh);
 }

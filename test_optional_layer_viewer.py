@@ -265,6 +265,7 @@ class Element{
  querySelectorAll(){return [];}
  addEventListener(){}
  setAttribute(key,value){this[key]=value;}
+ getAttribute(key){return this[key]??null;}
  getClientRects(){return this.isConnected?[{}]:[];}
  focus(){if(this.isConnected&&this.tag!=='body')document.activeElement=this;}
 }
@@ -879,3 +880,117 @@ def test_discovery_tier_change_refreshes_legend_without_repainting_on_pan(tmp_pa
     assert '<span>100</span>' in result["coarse"]
     assert result["initialPaints"] == result["panPaints"] == 1
     assert result["switchedPaints"] == result["finalPaints"] == 2
+
+
+@pytest.mark.parametrize("language", ["en", "fr"])
+def test_discovery_browser_discloses_scope_and_reaches_zero_cells_on_bounded_pages(tmp_path, language):
+    product = rate_product(tmp_path)
+    product["tiers"]["25000"]["cells"] = [
+        [400, 400 + i, i + 1 if i < 35 else 0, 100, 100 * (i + 1) if i < 35 else 0, 25, 25]
+        for i in range(70)
+    ]
+    result = sighting_lifecycle(
+        "overlay='discovery';await optionalLayers.load();LANG=" + json.dumps(language) + ";"
+        "optionalLayers.refresh();const status=()=>nodes.discoveryCellStatus.textContent;"
+        "const first={count:nodes.discoveryCells.children.length,status:status(),previous:nodes.discoveryPrevious.getAttribute('aria-disabled')==='true',keys:nodes.discoveryCells.children.map(b=>b.dataset.discoveryCell)};"
+        "nodes.discoveryNext.focus();nodes.discoveryNext.onclick();"
+        "const second={count:nodes.discoveryCells.children.length,status:status(),focused:document.activeElement===nodes.discoveryNext};"
+        "nodes.discoveryCellFilter.value='positive';nodes.discoveryCellFilter.onchange();"
+        "const positive={count:nodes.discoveryCells.children.length,status:status()};"
+        "nodes.discoveryCellFilter.value='zero';nodes.discoveryCellFilter.focus();nodes.discoveryCellFilter.onchange();"
+        "const zero={count:nodes.discoveryCells.children.length,status:status(),focused:document.activeElement===nodes.discoveryCellFilter,"
+        "keys:nodes.discoveryCells.children.map(b=>b.dataset.discoveryCell),previous:nodes.discoveryPrevious.getAttribute('aria-disabled')==='true'};"
+        "nodes.discoveryNext.onclick();const last={count:nodes.discoveryCells.children.length,status:status(),next:nodes.discoveryNext.getAttribute('aria-disabled')==='true'};"
+        "canvas.focus();handlers.moveend();const pan={count:nodes.discoveryCells.children.length,focused:document.activeElement===canvas};"
+        "const button=nodes.discoveryCells.children[0];button.focus();button.onclick();"
+        "console.log(JSON.stringify({first,second,positive,zero,last,pan,activation:{same:nodes.discoveryCells.children[0]===button,origin:originAtExplore===button}}));",
+        product,
+        cell_res=25000,
+    )
+    assert result["first"]["count"] == result["second"]["count"] == result["zero"]["count"] == 30
+    assert result["first"]["previous"] and result["zero"]["previous"]
+    assert result["second"]["focused"] and result["zero"]["focused"]
+    assert result["last"]["count"] == 5 and result["last"]["next"]
+    assert result["positive"]["count"] == 30 and "35" in result["positive"]["status"]
+    assert result["first"]["keys"][0] == "25000:400,434"
+    assert result["pan"] == {"count": 5, "focused": True}
+    assert result["activation"] == {"same": True, "origin": True}
+    assert all(int(key.split(",")[1]) >= 435 for key in result["zero"]["keys"])
+    for page in ("first", "second", "zero", "last"):
+        assert "70" in result[page]["status"]
+    assert "35" in result["zero"]["status"] and "35" in result["last"]["status"]
+    assert ("this view" if language == "en" else "cette vue") in result["first"]["status"]
+
+
+def test_discovery_browser_resets_pages_for_changed_view_tier_and_empty_filter(tmp_path):
+    product = rate_product(tmp_path)
+    product["tiers"]["25000"]["cells"] = [
+        [400, 400 + i, 1, 100, 100, 25, 25] for i in range(35)
+    ]
+    result = sighting_lifecycle(
+        "overlay='discovery';await optionalLayers.load();optionalLayers.refresh();nodes.discoveryNext.onclick();"
+        "viewportBounds=[-89,40,-60,50];handlers.moveend();const moved=nodes.discoveryCells.children.length;"
+        "nodes.discoveryNext.onclick();input.cellRes=5000;handlers.moveend();const tier=nodes.discoveryCells.children.length;"
+        "nodes.discoveryCellFilter.value='zero';nodes.discoveryCellFilter.onchange();"
+        "console.log(JSON.stringify({moved,tier,empty:nodes.discoveryCells.textContent,count:nodes.discoveryCells.children.length,"
+        "previous:nodes.discoveryPrevious.getAttribute('aria-disabled')==='true',next:nodes.discoveryNext.getAttribute('aria-disabled')==='true',status:nodes.discoveryCellStatus.textContent}));",
+        product,
+        cell_res=25000,
+    )
+    assert result["moved"] == 30 and result["tier"] == 1
+    assert result["count"] == 0 and result["previous"] and result["next"]
+    assert "No cells match this filter" in result["empty"]
+    assert "1 measured" in result["status"]
+
+
+def test_discovery_browser_page_boundaries_keep_focus_and_removed_cell_has_a_focus_fallback(tmp_path):
+    product = rate_product(tmp_path)
+    product["tiers"]["25000"]["cells"] = [[400, 400 + i, 1, 100, 100, 25, 25] for i in range(31)]
+    result = sighting_lifecycle(
+        "overlay='discovery';await optionalLayers.load();optionalLayers.refresh();"
+        "nodes.discoveryPrevious.focus();nodes.discoveryPrevious.onclick();const first=nodes.discoveryCells.children.length;"
+        "nodes.discoveryNext.focus();nodes.discoveryNext.onclick();nodes.discoveryNext.onclick();"
+        "const last={count:nodes.discoveryCells.children.length,focused:document.activeElement===nodes.discoveryNext};"
+        "nodes.discoveryCells.children[0].focus();viewportBounds=[10,40,20,50];handlers.moveend();"
+        "console.log(JSON.stringify({first,last,fallback:document.activeElement===nodes.discoveryCellFilter}));",
+        product,
+        cell_res=25000,
+    )
+    assert result == {"first": 30, "last": {"count": 1, "focused": True}, "fallback": True}
+
+
+def test_discovery_page_two_popup_escape_returns_to_browser_after_map_jump_removes_invoker(tmp_path):
+    product = rate_product(tmp_path)
+    product["tiers"]["25000"]["cells"] = [[400, 400 + i, 1, 100, 100, 25, 25] for i in range(35)]
+    result = sighting_lifecycle(
+        "overlay='discovery';await optionalLayers.load();optionalLayers.refresh();nodes.discoveryNext.onclick();"
+        "exploreCell=()=>{const p=wirePopup(new maplibregl.Popup({focusAfterOpen:false}).setDOMContent(document.createElement('div')));"
+        "viewportBounds=[-89,40,-60,50];map.jumpTo({});p.addTo(map);return true;};"
+        "const invoker=nodes.discoveryCells.children[0];invoker.focus();invoker.onclick();"
+        "const opened={removed:!invoker.isConnected,focused:document.activeElement===curPopup.close};"
+        "handlers.keydown({key:'Escape'});console.log(JSON.stringify({opened,closed:curPopup===null,"
+        "returnedToFilter:document.activeElement===nodes.discoveryCellFilter}));",
+        product,
+        cell_res=25000,
+    )
+    assert result == {
+        "opened": {"removed": True, "focused": True},
+        "closed": True,
+        "returnedToFilter": True,
+    }
+
+
+def test_discovery_browser_explicit_navigation_resets_scroll_but_pan_preserves_it(tmp_path):
+    product = rate_product(tmp_path)
+    product["tiers"]["25000"]["cells"] = [[400, 400 + i, 1, 100, 100, 25, 25] for i in range(35)]
+    result = sighting_lifecycle(
+        "overlay='discovery';await optionalLayers.load();optionalLayers.refresh();nodes.discoveryCells.scrollTop=200;"
+        "nodes.discoveryNext.onclick();const next=nodes.discoveryCells.scrollTop;nodes.discoveryCells.scrollTop=100;"
+        "handlers.moveend();const pan=nodes.discoveryCells.scrollTop;nodes.discoveryPrevious.onclick();"
+        "const previous=nodes.discoveryCells.scrollTop;nodes.discoveryCells.scrollTop=200;"
+        "nodes.discoveryCellFilter.value='positive';nodes.discoveryCellFilter.onchange();"
+        "console.log(JSON.stringify({next,pan,previous,filter:nodes.discoveryCells.scrollTop}));",
+        product,
+        cell_res=25000,
+    )
+    assert result == {"next": 0, "pan": 100, "previous": 0, "filter": 0}
