@@ -23,6 +23,8 @@ API = "https://api.inaturalist.org/v1/observations"
 PER_PAGE = 200
 PLACE_ID = 6712  # Canada
 MAX_PAGES = 200
+PHOTO_HOSTS = {"static.inaturalist.org", "inaturalist-open-data.s3.amazonaws.com"}
+PHOTO_LICENSES = {"cc0", "cc-by", "cc-by-sa", "cc-by-nc", "cc-by-nc-sa", "cc-by-nd", "cc-by-nc-nd"}
 OMISSION_REASONS = {
     "blank_scientific_name",
     "inactive_source_taxon",
@@ -218,6 +220,72 @@ def observation_time(value):
     return timestamp.astimezone(timezone.utc).isoformat()
 
 
+def context_text(value, field, limit=300):
+    """Bound display text without interpreting source strings as markup."""
+    if (
+        not isinstance(value, str)
+        or not value.strip()
+        or len(value) > limit
+        or any(ord(char) < 32 or ord(char) == 127 for char in value)
+    ):
+        raise ValueError(f"invalid observation {field}")
+    return value
+
+
+def validate_context(row):
+    """Accept legacy records, but validate every supplied optional display field."""
+    for field in ("common_name", "identified_name", "place_name"):
+        if field in row:
+            context_text(row[field], field)
+    if "photo" not in row:
+        return
+    photo = row["photo"]
+    if not isinstance(photo, dict) or set(photo) != {"url", "attribution", "license_code", "alt"}:
+        raise ValueError("invalid observation photo metadata")
+    context_text(photo["attribution"], "photo attribution", 1000)
+    context_text(photo["alt"], "photo alt")
+    if not isinstance(photo["license_code"], str) or photo["license_code"] not in PHOTO_LICENSES:
+        raise ValueError("invalid observation photo license")
+    context_text(photo["url"], "photo URL")
+    parsed = urlparse(photo["url"])
+    if (
+        parsed.scheme != "https"
+        or parsed.netloc not in PHOTO_HOSTS
+        or parsed.query
+        or parsed.fragment
+        or not re.fullmatch(r"/photos/[1-9][0-9]*/(?:square|small|medium)\.(?i:jpg|jpeg|png)", parsed.path)
+    ):
+        raise ValueError("invalid observation photo URL")
+
+
+def public_context(row, taxon):
+    """Keep public display context only after coordinate privacy has been checked."""
+    result = {}
+    for field, value in (
+        ("identified_name", taxon.get("name")),
+        ("common_name", taxon.get("preferred_common_name")),
+        ("place_name", row.get("place_guess")),
+    ):
+        if value is not None and value != "":
+            result[field] = context_text(value, field).strip()
+    photo = taxon.get("default_photo")
+    # Unlicensed/all-rights-reserved photos are not copied into the public feed.
+    if (
+        isinstance(photo, dict)
+        and isinstance(photo.get("license_code"), str)
+        and photo["license_code"] in PHOTO_LICENSES
+        and result.get("identified_name")
+    ):
+        result["photo"] = {
+            "url": photo.get("medium_url") or photo.get("square_url") or photo.get("url"),
+            "attribution": photo.get("attribution"),
+            "license_code": photo["license_code"],
+            "alt": "Reference photo of " + result["identified_name"],
+        }
+    validate_context(result)
+    return result
+
+
 def public_observation(row, species, start, end, groups=None):
     """Validate eligibility again locally, retaining only public, open coordinates."""
     if not isinstance(row, dict) or not positive_int(row.get("id")):
@@ -276,6 +344,7 @@ def public_observation(row, species, start, end, groups=None):
         "observed_at": observation_time(row.get("time_observed_at")),
         "longitude": coords[0],
         "latitude": coords[1],
+        **public_context(row, taxon),
     }
 
 
@@ -448,6 +517,7 @@ def validate_snapshot(snapshot):
                 raise ValueError("observation timestamp is after snapshot as_of")
             if observation_time(row.get("observed_at")) != row.get("observed_at"):
                 raise ValueError("snapshot timestamp must use UTC")
+            validate_context(row)
             seen.add(row["id"])
     except (KeyError, TypeError, AttributeError) as exc:
         raise ValueError("malformed snapshot") from exc

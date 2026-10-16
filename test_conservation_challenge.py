@@ -102,6 +102,112 @@ def test_subspecies_maps_to_approved_species():
     assert challenge.acquire(CONFIG, FixtureAPI([row]), AS_OF)["observations"][0]["taxon_id"] == 10
 
 
+def display_observation(**changes):
+    return observation(
+        taxon={
+            "id": 30,
+            "ancestor_ids": [10],
+            "name": "Species alpha minor",
+            "preferred_common_name": "Lesser alpha",
+            "default_photo": {
+                "medium_url": "https://inaturalist-open-data.s3.amazonaws.com/photos/123/medium.jpeg",
+                "attribution": "(c) Photo Author, CC BY",
+                "license_code": "cc-by",
+                "attribution_name": "Private extra field",
+            },
+        },
+        place_guess="Public Park, Ottawa, ON, Canada",
+        user={"login": "must-not-copy"},
+        private_place_guess="must-not-copy",
+        **changes,
+    )
+
+
+def test_public_context_keeps_identified_taxon_distinct_from_species_group():
+    snapshot = challenge.acquire(CONFIG, FixtureAPI([display_observation()]), AS_OF)
+    row = snapshot["observations"][0]
+    assert row["name"] == "Species alpha"
+    assert row["identified_name"] == "Species alpha minor"
+    assert row["common_name"] == "Lesser alpha"
+    assert row["place_name"] == "Public Park, Ottawa, ON, Canada"
+    assert row["photo"] == {
+        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/123/medium.jpeg",
+        "attribution": "(c) Photo Author, CC BY",
+        "license_code": "cc-by",
+        "alt": "Reference photo of Species alpha minor",
+    }
+    assert "must-not-copy" not in json.dumps(row)
+    assert "Private extra field" not in json.dumps(row)
+
+
+def test_restricted_coordinates_never_copy_display_context():
+    snapshot = challenge.acquire(CONFIG, FixtureAPI([display_observation(obscured=True)]), AS_OF)
+    assert snapshot["observations"] == []
+
+
+def test_public_photo_preserves_real_uppercase_file_extensions():
+    row = display_observation()
+    row["taxon"]["default_photo"]["medium_url"] = "https://static.inaturalist.org/photos/123/medium.JPG"
+    public = challenge.acquire(CONFIG, FixtureAPI([row]), AS_OF)["observations"][0]
+    assert public["photo"]["url"].endswith("/medium.JPG")
+
+
+@pytest.mark.parametrize("license_code", [None, "", "all-rights-reserved", "unknown", []])
+def test_unlicensed_taxon_reference_photo_is_omitted(license_code):
+    row = display_observation()
+    row["taxon"]["default_photo"]["license_code"] = license_code
+    public = challenge.acquire(CONFIG, FixtureAPI([row]), AS_OF)["observations"][0]
+    assert "photo" not in public
+    assert public["common_name"] == "Lesser alpha"
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "http://static.inaturalist.org/photos/123/medium.jpg",
+        "https://static.inaturalist.org.evil.example/photos/123/medium.jpg",
+        "https://static.inaturalist.org:443/photos/123/medium.jpg",
+        "https://user@static.inaturalist.org/photos/123/medium.jpg",
+        "https://static.inaturalist.org/photos/123/medium.jpg?track=1",
+        "https://static.inaturalist.org/photos/123/medium.jpg#fragment",
+        "https://static.inaturalist.org/photos/../123/medium.jpg",
+        "https://static.inaturalist.org/photos/123/original.jpg",
+        "https://static.inaturalist.org/photos/123/medium.svg",
+        "https://static.inaturalist.org/photos/0/medium.jpg",
+        "https://static.inaturalist.org/photos/123/medium.jpg\n",
+    ],
+)
+def test_present_photo_urls_are_bounded_and_allowlisted(url):
+    row = display_observation()
+    row["taxon"]["default_photo"]["medium_url"] = url
+    with pytest.raises(ValueError, match="photo URL"):
+        challenge.acquire(CONFIG, FixtureAPI([row]), AS_OF)
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("common_name", None),
+        ("common_name", " "),
+        ("identified_name", "a" * 301),
+        ("place_name", "Line\nBreak"),
+        ("photo", {"url": "https://example.org/photo.jpg"}),
+        ("photo", None),
+    ],
+)
+def test_downloaded_optional_context_rejects_malformed_present_values(field, value):
+    snapshot = challenge.acquire(CONFIG, FixtureAPI([observation()]), AS_OF)
+    snapshot["observations"][0][field] = value
+    with pytest.raises(ValueError, match="observation"):
+        challenge.validate_snapshot(snapshot)
+
+
+def test_legacy_snapshot_without_context_remains_valid():
+    snapshot = challenge.acquire(CONFIG, FixtureAPI([observation()]), AS_OF)
+    assert challenge.validate_snapshot(snapshot) == snapshot
+    assert not {"common_name", "identified_name", "place_name", "photo"} & snapshot["observations"][0].keys()
+
+
 @pytest.mark.parametrize(
     "mutate",
     [
