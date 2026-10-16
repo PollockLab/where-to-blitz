@@ -239,7 +239,7 @@ def test_measured_rate_shared_link_cannot_label_another_taxon_group():
     assert result["params"]["g"] == "Fungi" and result["params"]["goal"] == "0"
 
 
-def sighting_lifecycle(action, discovery_product=None, snapshot=None, start_recent=True, cell_res=None, historical_points=None):
+def sighting_lifecycle(action, discovery_product=None, snapshot=None, start_recent=True, cell_res=None, historical_points=None, challenge_catalog=None):
     """Replay real popup wiring, list reconciliation and synchronous map move events."""
     from test_shared_context import _function
 
@@ -278,7 +278,7 @@ const layerHandlers={},handlers={},nodes={},document={activeElement:null,body:ne
 const getComputedStyle=()=>({visibility:'visible',display:'block'});
 const canvas=new Element('canvas',true),language=new Element('language',true);
 let curPopup=null,_reselect=false,destMarker=null,destCell=null,_mapLoaded=true,_shareAction=0,overlay='priority',LANG='en',GE_PRIORITY_LEGEND=null,_discoveryLoading=false,_geLoading=false;
-const state={view:'explore',taxon:'All biodiversity'},OPTIONAL_LAYERS={discovery:input.discovery?{taxon_group:'All biodiversity',scope:input.discovery.scope,metric:input.discovery.metric}:null,challenge:{}};
+const state={view:'explore',taxon:'All biodiversity'},OPTIONAL_LAYERS={discovery:input.discovery?{taxon_group:'All biodiversity',scope:input.discovery.scope,metric:input.discovery.metric}:null,challenge:{catalog:input.catalog}};
 const syncSharedCellUrl=()=>{},localizeMapControls=()=>{};
 const whenMap=fn=>fn(),clearSelection=()=>{},activeCellResM=()=>input.cellRes||(input.discovery?5000:25000);
 const LATTICE_X0=-2150000,LATTICE_Y1=4300000,LATTICE_W=5500000,LATTICE_H=4525000;
@@ -328,7 +328,7 @@ OptionalData.fetchPinned=async(_descriptor,kind)=>kind==='discovery'?input.disco
         snapshot = challenge.acquire(CONFIG, FixtureAPI([observation(1), observation(2, 20)]), AS_OF)
     result = subprocess.run(
         ["node", "-e", script],
-        input=json.dumps({"snapshot": snapshot, "discovery": discovery_product, "cellRes": cell_res,"historical":historical_points}),
+        input=json.dumps({"snapshot": snapshot, "discovery": discovery_product, "cellRes": cell_res,"historical":historical_points,"catalog":challenge_catalog}),
         capture_output=True,
         text=True,
     )
@@ -535,7 +535,7 @@ def test_approved_subset_discloses_every_omitted_source_entry_as_text_in_both_la
     assert all(str(count) in result["counts"] for count in (324, 330, 369))
     assert "39" in result["summary"] and len(result["rows"]) == 39
     assert (
-        "verified targets" in result["counts"] if language == "en" else "taxons vérifiés" in result["counts"]
+        "included names" in result["counts"] if language == "en" else "noms inclus" in result["counts"]
     )
     assert result["rows"][0][0]["text"] == (
         "Scientific name missing" if language == "en" else "Nom scientifique manquant"

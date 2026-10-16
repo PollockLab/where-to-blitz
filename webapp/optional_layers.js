@@ -77,6 +77,9 @@ const OptionalData={
 function installOptionalLayers(){
   const descriptors=OPTIONAL_LAYERS,cache={},pending={},indices={};
   let recentOn=false,recentError=false,discoveryError=false,selectedSighting=null,sightingBody=null;
+  const catalog=descriptors.challenge?.catalog||null;
+  const catalogTaxa=catalog?[...catalog.taxa].sort((a,b)=>a.name.localeCompare(b.name,'en')||a.id-b.id):[];
+  let catalogPage=0,catalogQuery='',catalogRendered='';
   const rateLimits={};
   let discoveryLegendRes=null,discoveryPage=0,discoveryListView='',discoveryListRows=[],discoveryListRes=25000;
   const historical=typeof HISTORICAL_DISCOVERY_POINTS==='undefined'?null:HISTORICAL_DISCOVERY_POINTS;
@@ -256,13 +259,17 @@ function installOptionalLayers(){
   }
   let coverageSnapshot=null,coverageLanguage=null;
   function renderCoverage(){
-    const snapshot=cache.challenge,coverage=snapshot?.coverage,container=node('recentChallengeCoverage');
-    container.hidden=!coverage;
-    if(!coverage)return;
+    const snapshot=cache.challenge,coverage=catalog?.coverage||snapshot?.coverage,container=node('recentChallengeCoverage');
+    container.hidden=!catalog&&!coverage&&!descriptors.challenge?.source_version;
+    node('challengeCatalogBrowser').hidden=!catalog;node('challengeCatalogUnavailable').hidden=!!catalog;
+    node('challengeCatalogSearch').disabled=!catalog;
+    renderCatalog();
+    node('recentChallengeCoverageCounts').hidden=!coverage;
+    if(!coverage){node('recentChallengeOmissions').hidden=true;return;}
     node('recentChallengeCoverageCounts').textContent=t('recent_challenge_coverage',fmt(coverage.unique_targets),fmt(coverage.resolved_rows),fmt(coverage.source_rows));
     const details=node('recentChallengeOmissions');details.hidden=!coverage.omitted_rows;
     node('recentChallengeOmissionsSummary').textContent=t('recent_challenge_omissions',fmt(coverage.omitted_rows));
-    if(coverageSnapshot===snapshot&&coverageLanguage===LANG)return;
+    if(coverageSnapshot===coverage&&coverageLanguage===LANG)return;
     const reasons=new Set(['blank_scientific_name','inactive_source_taxon','no_unique_exact_match','incomplete_search','broader_than_species','rank_mismatch','missing_species_ancestry']);
     const list=node('recentChallengeOmissionList');list.replaceChildren();
     for(const entry of coverage.omissions){
@@ -272,7 +279,29 @@ function installOptionalLayers(){
       reason.textContent=reasons.has(entry.reason_code)?t('challenge_omit_'+entry.reason_code):entry.reason;
       item.append(name);if(entry.common_name)item.append(common);item.append(reason);list.append(item);
     }
-    coverageSnapshot=snapshot;coverageLanguage=LANG;
+    coverageSnapshot=coverage;coverageLanguage=LANG;
+  }
+  function renderCatalog(){
+    if(!catalog)return;
+    const input=node('challengeCatalogSearch'),query=(input.value||'').trim().toLowerCase();
+    if(query!==catalogQuery){catalogPage=0;catalogQuery=query;}
+    const matching=catalogTaxa.filter(row=>row.name.toLowerCase().includes(query));
+    catalogPage=Math.min(catalogPage,Math.max(0,Math.ceil(matching.length/30)-1));
+    const key=[query,catalogPage,LANG].join('|');if(key===catalogRendered)return;catalogRendered=key;
+    const start=catalogPage*30,rows=matching.slice(start,start+30),list=node('challengeCatalogList');
+    node('challengeCatalogStatus').textContent=t('challenge_catalog_scope',rows.length?start+1:0,start+rows.length,matching.length,catalogTaxa.length);
+    node('challengeCatalogPrevious').setAttribute('aria-disabled',String(catalogPage===0));node('challengeCatalogNext').setAttribute('aria-disabled',String(start+30>=matching.length));
+    const focused=document.activeElement,existing=new Map([...list.children].map(el=>[el.dataset.catalogTarget,el])),wanted=new Set();
+    if(!list.children.length)list.textContent='';
+    for(const [index,row]of rows.entries()){
+      const id=String(row.id),item=existing.get(id)||document.createElement('li');item.dataset.catalogTarget=id;item.dataset.rank=row.rank;wanted.add(item);
+      let link=item.children[0],rank=item.children[1];if(!link){link=document.createElement('a');rank=document.createElement('span');item.append(link,rank);}
+      link.textContent=row.name;link.href='https://www.inaturalist.org/taxa/'+row.id;link.target='_blank';link.rel='noopener';rank.textContent=' ('+t('challenge_catalog_rank')[row.rank]+')';
+      if(list.children[index]!==item)list.insertBefore(item,list.children[index]||null);
+    }
+    for(const item of [...list.children])if(!wanted.has(item))item.remove();
+    if(!rows.length)list.textContent=t('challenge_catalog_empty');
+    if(focused!==document.body&&document.activeElement===document.body&&focused&&!focused.isConnected)input.focus({preventScroll:true});
   }
   function renderChallenge(){
     const panel=node('recentChallengePanel');panel.hidden=!descriptors.challenge;
@@ -378,5 +407,7 @@ function installOptionalLayers(){
   };
   node('historicalPointsToggle').onchange=e=>{historicalOn=e.target.checked;renderHistorical();};
   for(const [id,delta]of [['historicalPointsPrevious',-1],['historicalPointsNext',1]])node(id).onclick=()=>{if(!historicalVisible()||node(id).getAttribute('aria-disabled')==='true')return;historicalPage+=delta;renderHistorical();node('historicalPointsList').scrollTop=0;};
+  node('challengeCatalogSearch').oninput=()=>{catalogPage=0;renderCatalog();node('challengeCatalogList').scrollTop=0;};
+  for(const [id,delta]of [['challengeCatalogPrevious',-1],['challengeCatalogNext',1]])node(id).onclick=()=>{if(!catalog||node(id).getAttribute('aria-disabled')==='true')return;catalogPage+=delta;renderCatalog();node('challengeCatalogList').scrollTop=0;};
   map.on('moveend',refresh);whenMap(refresh);
 }
