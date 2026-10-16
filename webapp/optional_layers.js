@@ -73,6 +73,7 @@ function installOptionalLayers(){
   const descriptors=OPTIONAL_LAYERS,cache={},pending={},indices={};
   let recentOn=false,recentError=false,discoveryError=false,selectedSighting=null,sightingBody=null;
   const rateLimits={};
+  let discoveryLegendRes=null;
   let placeContext=null;
   const node=id=>document.getElementById(id);
   const fmt=value=>Number(value).toLocaleString(LANG==='fr'?'fr-CA':'en-CA',{maximumFractionDigits:2});
@@ -109,7 +110,7 @@ function installOptionalLayers(){
   const sourceDetails=()=>'<details class="optional-source-details"><summary>'+t('source_details')+'</summary>'+sourceText()+'<p>'+discoveryUnit()+'</p><p>'+t('discovery_blurb')+'</p><p>'+t('discovery_log_scale')+' '+t('discovery_support')+'</p></details>';
   function discoveryPopup(lat,lon,res){
     const row=discoveryCell(lat,lon,res),context=cellContext(lat,lon,res);
-    return (context?'<div class="sighting-place">'+esc(context)+'</div>':'')+'<b>'+t('discovery_rate')+'</b><br>'+(row?'<b>'+fmt(row[4])+'</b> '+discoveryUnit()+'<p>'+discoveryCounts(fmt(row[2]),fmt(row[3]))+'</p><small>'+t('discovery_support')+'</small>':t('discovery_unavailable'))+sourceDetails();
+    return (context?'<div class="sighting-place">'+esc(context)+'</div>':'')+'<b>'+t('discovery_rate')+'</b><br>'+(row?'<b>'+fmt(row[4])+'</b> '+discoveryUnit()+'<p>'+discoveryCounts(fmt(row[2]),fmt(row[3]))+'</p>'+(row[4]===0?'<p>'+t('discovery_zero_explanation')+'</p>':'')+'<small>'+t('discovery_support')+'</small>':t('discovery_unavailable'))+sourceDetails();
   }
   function cellContext(lat,lon,res){
     let nearest=null,distance=Infinity;
@@ -161,15 +162,16 @@ function installOptionalLayers(){
       if(map.getLayer('measured-discovery'))map.setLayoutProperty('measured-discovery','visibility','none');
       return;
     }
-    ensureSource('measured-discovery','fill',{'fill-color':['get','colour'],'fill-opacity':['get','opacity'],'fill-outline-color':'rgba(255,255,255,0.15)'});
+    ensureSource('measured-discovery','fill',{'fill-color':['get','colour'],'fill-opacity':['get','opacity'],'fill-outline-color':['get','outline']});
     map.setLayoutProperty('measured-discovery','visibility','visible');
     // Coarse support is bounded nationally. Projecting a wrapped viewport's
     // corners can miss most of Canada, so let the map clip this small tier.
     const res=activeCellResM(),rows=res===25000?[...indices[res].values()]:visibleDiscovery();
+    if(discoveryLegendRes!==res){discoveryLegendRes=res;updateLegend();}
     const features=rows.map(row=>{
       const x=LATTICE_X0+row[1]*res,y=LATTICE_Y1-row[0]*res;
       const ring=[[x,y],[x+res,y],[x+res,y-res],[x,y-res],[x,y]].map(p=>{const ll=LAEA.inv(...p);return[ll[1],ll[0]];});
-      return{type:'Feature',properties:{colour:row[4]===0?'#c8d0cd':virColour(OptionalData.rateScale(row[4],rateLimits[res].maximum)),opacity:row[4]===0?0.22:0.7,rate:row[4],discovery_count:row[2],observation_count:row[3]},geometry:{type:'Polygon',coordinates:[ring]}};
+      return{type:'Feature',properties:{colour:row[4]===0?'#94a39d':virColour(OptionalData.rateScale(row[4],rateLimits[res].maximum)),opacity:row[4]===0?0.62:0.7,outline:row[4]===0?'#586b61':'rgba(255,255,255,0.15)',rate:row[4],discovery_count:row[2],observation_count:row[3]},geometry:{type:'Polygon',coordinates:[ring]}};
     });
     map.getSource('measured-discovery').setData({type:'FeatureCollection',features});
     if(res===5000)DRAWN5=new Set(rows.map(r=>r[1]+','+r[0]));
@@ -194,7 +196,7 @@ function installOptionalLayers(){
     const low=Number.isFinite(limits.minimum)?limits.minimum:0;
     const start=OptionalData.rateScale(low,limits.maximum),gradient=Array.from({length:8},(_,i)=>virColour(start+(1-start)*i/7)+' '+(100*i/7)+'%').join(',');
     const ramp=limits.maximum>0?'<div class="ramp optional-positive-ramp" style="background:linear-gradient(to right,'+gradient+')"></div><div class="lab"><span>'+fmt(low)+'</span><span>'+fmt(limits.maximum)+'</span></div><div class="hint">'+t('discovery_log_key')+'</div>':'';
-    return '<div class="lt">'+t('discovery_rate')+'</div>'+ramp+'<div class="hint">'+t('discovery_legend_unit')+'</div><div class="optional-legend-key"><span class="optional-swatch optional-zero"></span>'+t('discovery_zero')+' <span class="optional-swatch optional-missing"></span>'+t('discovery_no_data')+'</div>'+sourceDetails()+(discoveryError?'<div class="hint">'+t('optional_error')+'</div>':'');
+    return '<div class="lt">'+t('discovery_rate')+'</div>'+ramp+'<div class="hint">'+t('discovery_legend_unit')+'</div><div class="optional-legend-key"><span><span class="optional-swatch optional-zero"></span>'+t('discovery_zero')+'</span><span><span class="optional-swatch optional-missing"></span>'+t('discovery_no_data')+'</span></div><div class="hint">'+t('discovery_sparse')+'</div>'+(recentOn?'<div class="hint">'+t('discovery_recent_separate')+'</div>':'')+sourceDetails()+(discoveryError?'<div class="hint">'+t('optional_error')+'</div>':'');
   }
   function paintSighting(){
     if(!selectedSighting||!sightingBody)return;
@@ -267,7 +269,7 @@ function installOptionalLayers(){
     paintSighting();
   }
   async function toggleRecent(enabled){
-    recentOn=!!enabled&&!!descriptors.challenge;recentError=false;if(!recentOn&&selectedSighting)closePopup();node('recentChallenge').checked=recentOn;renderChallenge();syncSharedCellUrl(true);
+    recentOn=!!enabled&&!!descriptors.challenge;recentError=false;if(!recentOn&&selectedSighting)closePopup();node('recentChallenge').checked=recentOn;renderChallenge();syncSharedCellUrl(true);if(isDiscovery())updateLegend();
     if(recentOn)try{await load('challenge');}catch(e){recentError=true;}
     renderChallenge();renderDiscovery();
   }

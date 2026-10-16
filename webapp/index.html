@@ -315,10 +315,10 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
 .map-section{margin-top:14px;border-top:1px solid #e2e8ef;padding-top:2px}
 .map-section>summary{font-weight:650;padding:8px 0;cursor:pointer}
 .optional-cell .sub{display:block;font-size:11.5px;color:#5d6b7a;margin-top:3px}
-.optional-legend-key{display:flex;gap:9px;align-items:center;margin-top:5px;font-size:11px}
+.optional-legend-key{display:flex;flex-wrap:wrap;gap:5px 9px;align-items:center;margin-top:5px;font-size:11px}
 .optional-swatch{display:inline-block;width:12px;height:10px;border:1px solid #aeb9b8;margin-right:4px;vertical-align:middle}
-.optional-zero{background:#c8d1ce;opacity:.5}
-.optional-missing{background:repeating-linear-gradient(135deg,#fff,#fff 3px,#e4e8e6 3px,#e4e8e6 4px)}
+.optional-zero{background:rgba(148,163,157,.62);border-color:#586b61}
+.optional-missing{background:transparent;border-style:dashed}
 .optional-source-details{font-size:11px;line-height:1.45;margin-top:6px;color:#46566a}
 .optional-source-details>summary{cursor:pointer;text-decoration:underline}
 .sighting-photo{display:block;width:100%;max-height:180px;object-fit:contain;background:#f4f7fa;border-radius:6px;margin:8px 0}
@@ -473,7 +473,10 @@ const I18N={
     map_display:"Map display", priority_map:"Recording priorities", historical_map:"Historical discovery evidence",
     historical_scope:(period,group)=>`${period} · ${group}. Switch to recording priorities to choose a goal or species group.`,
     map_filters:"Map controls", close_filters:"Done", source_details:"Source and limits", challenge_list_details:"About the target list", snapshot_details:"Snapshot details",
-    discovery_log_scale:"Positive values use a logarithmic colour scale.", discovery_zero:"No supplied points", discovery_no_data:"No data",
+    discovery_log_scale:"Positive values use a logarithmic colour scale.", discovery_zero:"0 points, with observations", discovery_no_data:"No rate, blank areas",
+    discovery_sparse:"Sparse historical point-set evidence. Blank areas lack usable observation support.",
+    discovery_recent_separate:"Orange dots: recent conservation sightings, a separate dataset and period.",
+    discovery_zero_explanation:"No point from the supplied list was recorded here. This is not evidence that no undiscovered species remain.",
     discovery_legend_unit:"Discovery points / 10,000 records", discovery_log_key:"Logarithmic colours",
     discovery_support:"Compare the underlying counts; a high rate can come from few observations.",
     discovery_cell_label:n=>`Cell ${n}`, discovery_near_place:place=>`Near ${place}`,
@@ -703,7 +706,10 @@ const I18N={
     map_display:"Affichage de la carte", priority_map:"Priorités d'observation", historical_map:"Découvertes historiques",
     historical_scope:(period,group)=>`${period} · ${group}. Passez aux priorités d'observation pour choisir un objectif ou un groupe.`,
     map_filters:"Réglages", close_filters:"Terminé", source_details:"Source et limites", challenge_list_details:"À propos de la liste", snapshot_details:"Détails des observations publiées",
-    discovery_log_scale:"Échelle logarithmique pour les valeurs positives.", discovery_zero:"Aucun point fourni", discovery_no_data:"Aucune donnée",
+    discovery_log_scale:"Échelle logarithmique pour les valeurs positives.", discovery_zero:"0 point, avec observations", discovery_no_data:"Sans taux, espaces vides",
+    discovery_sparse:"Jeux de points historiques clairsemés. Les espaces vides manquent de données d’observation utilisables.",
+    discovery_recent_separate:"Les points orange : observations récentes de conservation, données et période distincts.",
+    discovery_zero_explanation:"Aucun point de la liste fournie n’a été enregistré ici. Cela ne signifie pas qu’il ne reste aucune espèce à découvrir.",
     discovery_legend_unit:"Points / 10 000 observations", discovery_log_key:"Couleurs logarithmiques",
     discovery_support:"Comparez les effectifs : un taux élevé peut reposer sur peu d'observations.",
     discovery_cell_label:n=>`Cellule ${n}`, discovery_near_place:place=>`Près de ${place}`,

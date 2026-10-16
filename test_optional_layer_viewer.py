@@ -273,7 +273,7 @@ const handlers={},nodes={},document={activeElement:null,body:new Element('body',
  addEventListener:(event,fn)=>handlers[event]=fn};document.activeElement=document.body;
 const getComputedStyle=()=>({visibility:'visible',display:'block'});
 const canvas=new Element('canvas',true),language=new Element('language',true);
-let curPopup=null,_reselect=false,destMarker=null,destCell=null,_mapLoaded=true,_shareAction=0,overlay='priority',LANG='en';
+let curPopup=null,_reselect=false,destMarker=null,destCell=null,_mapLoaded=true,_shareAction=0,overlay='priority',LANG='en',GE_PRIORITY_LEGEND=null;
 const state={view:'explore',taxon:'All biodiversity'},OPTIONAL_LAYERS={discovery:input.discovery?{taxon_group:'All biodiversity',scope:input.discovery.scope,metric:input.discovery.metric}:null,challenge:{}};
 const syncSharedCellUrl=()=>{},localizeMapControls=()=>{};
 const whenMap=fn=>fn(),clearSelection=()=>{},activeCellResM=()=>input.cellRes||(input.discovery?5000:25000);
@@ -299,6 +299,7 @@ OptionalData.fetchPinned=async(_descriptor,kind)=>kind==='discovery'?input.disco
     )
     for name in (
         "t",
+        "updateLegend",
         "popupFocusOrigin",
         "focusPopupTarget",
         "restorePopupFocus",
@@ -637,7 +638,7 @@ def test_discovery_log_colours_distinguish_positive_rates_and_preserve_raw_count
         cell_res=25000,
     )
     features = result["features"]
-    assert features[0]["colour"] == "#c8d0cd" and features[0]["opacity"] < features[1]["opacity"]
+    assert features[0]["colour"] == "#94a39d" and features[0]["opacity"] < features[1]["opacity"]
     assert len({row["colour"] for row in features}) == 4
     assert [[row["discovery_count"], row["observation_count"], row["rate"]] for row in features] == [
         row[2:5] for row in product["tiers"]["25000"]["cells"]
@@ -798,3 +799,83 @@ def test_photo_license_links_follow_inaturalist_canonical_license_mapping(licens
         )
         == expected
     )
+
+
+@pytest.mark.parametrize("cell_res", [5000, 25000])
+@pytest.mark.parametrize("language", ["en", "fr"])
+def test_discovery_zero_is_visible_and_never_confused_with_unavailable(tmp_path, cell_res, language):
+    product = rate_product(tmp_path)
+    support = 1 if cell_res == 5000 else 25
+    rows = [
+        [400, 400, 0, 240, 0, support, support],
+        [400, 401, 3, 270, 10000 / 90, support, support],
+        [400, 402, 0, 0, None, support, support],
+        [400, 403, 1, 10, None, 1, 25],
+    ]
+    product["tiers"][str(cell_res)]["cells"] = rows
+    result = sighting_lifecycle(
+        "overlay='discovery';await optionalLayers.load();LANG=" + json.dumps(language) + ";"
+        "optionalLayers.refresh();console.log(JSON.stringify({"
+        "features:map.sources['measured-discovery'].data.features.map(f=>f.properties),"
+        "legend:optionalLayers.discoveryLegend(),popup:optionalLayers.discoveryPopup(45,-75,"
+        + str(cell_res) + ")}));",
+        product,
+        cell_res=cell_res,
+    )
+    zero, positive = result["features"]
+    assert zero["opacity"] >= 0.6
+    assert zero["outline"] != positive["outline"]
+    assert zero["colour"] != positive["colour"]
+    assert [[r["discovery_count"], r["observation_count"], r["rate"]] for r in result["features"]] == [
+        row[2:5] for row in rows[:2]
+    ]
+    assert "optional-zero" in result["legend"] and "optional-missing" in result["legend"]
+    visible_legend = result["legend"].split('<details class="optional-source-details">')[0]
+    if language == "en":
+        assert "blank" in visible_legend and "Sparse historical" in visible_legend
+        assert "separate" in visible_legend and "Orange dots" in visible_legend
+        assert "not evidence that no undiscovered species remain" in result["popup"]
+        assert "Observations: 240." in result["popup"]
+    else:
+        assert "vides" in visible_legend and "historiques clairsemés" in visible_legend
+        assert "distincts" in visible_legend and "points orange" in visible_legend
+        assert "ne signifie pas qu’il ne reste aucune espèce à découvrir" in result["popup"]
+        assert "240 observations" in result["popup"]
+
+
+@pytest.mark.parametrize("language", ["en", "fr"])
+def test_recent_toggle_immediately_updates_discovery_legend(tmp_path, language):
+    result = sighting_lifecycle(
+        "overlay='discovery';await optionalLayers.load();LANG=" + json.dumps(language) + ";"
+        "updateLegend();const before=nodes.maplegend.innerHTML;"
+        "await optionalLayers.toggleRecent(true);const enabled=nodes.maplegend.innerHTML;"
+        "await optionalLayers.toggleRecent(false);const disabled=nodes.maplegend.innerHTML;"
+        "console.log(JSON.stringify({before,enabled,disabled}));",
+        rate_product(tmp_path),
+        start_recent=False,
+    )
+    note = "Orange dots" if language == "en" else "points orange"
+    assert note not in result["before"]
+    assert note in result["enabled"]
+    assert note not in result["disabled"]
+
+
+def test_discovery_tier_change_refreshes_legend_without_repainting_on_pan(tmp_path):
+    product = rate_product(tmp_path)
+    product["tiers"]["25000"]["cells"] = [[80, 80, 1, 100, 100, 25, 25]]
+    result = sighting_lifecycle(
+        "overlay='discovery';await optionalLayers.load();"
+        "const legend=document.getElementById('maplegend');let paints=0,html='';"
+        "Object.defineProperty(legend,'innerHTML',{get:()=>html,set:value=>{html=value;paints++;}});"
+        "optionalLayers.refresh();const fine=html;const initialPaints=paints;"
+        "handlers.moveend();const panPaints=paints;input.cellRes=25000;handlers.moveend();"
+        "const coarse=html;const switchedPaints=paints;handlers.moveend();"
+        "console.log(JSON.stringify({fine,coarse,initialPaints,panPaints,switchedPaints,finalPaints:paints}));",
+        product,
+        start_recent=False,
+        cell_res=5000,
+    )
+    assert '<span>1,000</span>' in result["fine"]
+    assert '<span>100</span>' in result["coarse"]
+    assert result["initialPaints"] == result["panPaints"] == 1
+    assert result["switchedPaints"] == result["finalPaints"] == 2
