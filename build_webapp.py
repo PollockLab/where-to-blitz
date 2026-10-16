@@ -140,6 +140,7 @@ BC_PLANT_PILOT = load_plant_pilot("webapp/bc_plant_pilot.json")
 def load_optional_layers(files, environ=None):
     """Only explicitly configured, validated authentic inputs advertise optional layers."""
     from build_discovery_layer import validate_artifact
+    from challenge_catalog import load_catalog
     from conservation_challenge import validate_snapshot
 
     environ = os.environ if environ is None else environ
@@ -167,7 +168,8 @@ def load_optional_layers(files, environ=None):
             descriptor.update(taxon_group=group, scope=data["scope"], metric=data["metric"])
         else:
             descriptor.update(
-                as_of=data["as_of"], window=data["window"], source_version=data["source"]["version"]
+                as_of=data["as_of"], window=data["window"], source_version=data["source"]["version"],
+                catalog=load_catalog(Path(__file__).resolve().parent / "webapp/challenge_taxa.json", data)
             )
         result[name] = descriptor
     return result

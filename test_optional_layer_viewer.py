@@ -239,7 +239,7 @@ def test_measured_rate_shared_link_cannot_label_another_taxon_group():
     assert result["params"]["g"] == "Fungi" and result["params"]["goal"] == "0"
 
 
-def sighting_lifecycle(action, discovery_product=None, snapshot=None, start_recent=True, cell_res=None, historical_points=None):
+def sighting_lifecycle(action, discovery_product=None, snapshot=None, start_recent=True, cell_res=None, historical_points=None, challenge_catalog=None):
     """Replay real popup wiring, list reconciliation and synchronous map move events."""
     from test_shared_context import _function
 
@@ -253,7 +253,7 @@ const input=JSON.parse(require('node:fs').readFileSync(0,'utf8'));
 const HISTORICAL_DISCOVERY_POINTS=input.historical||null;
 class Element{
  constructor(tag,connected=false){this.tag=tag;this.connected=connected;this.children=[];this.dataset={};this._text='';this.hidden=true;this.classList={contains:()=>false};}
- getContext(){return {beginPath(){},moveTo(){},lineTo(){},closePath(){},fill(){},stroke(){},fillText(){},getImageData(){return {width:64,height:64,data:new Uint8Array(64*64*4)};}};}
+ getContext(){return {beginPath(){},arc(){},moveTo(){},lineTo(){},closePath(){},fill(){},stroke(){},fillText(){},getImageData(){return {width:64,height:64,data:new Uint8Array(64*64*4)};}};}
  get isConnected(){return this.connected||!!this.parentElement?.isConnected;}
  set textContent(value){this.replaceChildren();this._text=value;}
  get textContent(){return this._text;}
@@ -264,7 +264,7 @@ class Element{
  replaceChildren(){for(const child of [...this.children])child.remove();}
  contains(el){return el===this||this.children.some(c=>c.contains(el));}
  closest(){return null;}
- querySelector(selector){return this.children.find(el=>selector==='b'?el.tag==='b':selector==='p'?el.tag==='p':selector==='a'?el.tag==='a':el.tag==='close')||null;}
+ querySelector(selector){return this.children.find(el=>selector==='summary'?el.tag==='summary':selector==='b'?el.tag==='b':selector==='p'?el.tag==='p':selector==='a'?el.tag==='a':el.tag==='close')||null;}
  querySelectorAll(){return [];}
  addEventListener(){}
  setAttribute(key,value){this[key]=value;}
@@ -278,7 +278,7 @@ const layerHandlers={},handlers={},nodes={},document={activeElement:null,body:ne
 const getComputedStyle=()=>({visibility:'visible',display:'block'});
 const canvas=new Element('canvas',true),language=new Element('language',true);
 let curPopup=null,_reselect=false,destMarker=null,destCell=null,_mapLoaded=true,_shareAction=0,overlay='priority',LANG='en',GE_PRIORITY_LEGEND=null,_discoveryLoading=false,_geLoading=false;
-const state={view:'explore',taxon:'All biodiversity'},OPTIONAL_LAYERS={discovery:input.discovery?{taxon_group:'All biodiversity',scope:input.discovery.scope,metric:input.discovery.metric}:null,challenge:{}};
+const state={view:'explore',taxon:'All biodiversity'},OPTIONAL_LAYERS={discovery:input.discovery?{taxon_group:'All biodiversity',scope:input.discovery.scope,metric:input.discovery.metric}:null,challenge:{catalog:input.catalog}};
 const syncSharedCellUrl=()=>{},localizeMapControls=()=>{};
 const whenMap=fn=>fn(),clearSelection=()=>{},activeCellResM=()=>input.cellRes||(input.discovery?5000:25000);
 const LATTICE_X0=-2150000,LATTICE_Y1=4300000,LATTICE_W=5500000,LATTICE_H=4525000;
@@ -294,7 +294,7 @@ const maplibregl={Popup:class{
  constructor(options){this.options=options;this.handlers={};this.root=new Element('popup',true);this.close=new Element('close');this.root.append(this.close);}
  on(event,fn){(this.handlers[event]||(this.handlers[event]=[])).push(fn);return this;}
  emit(event){for(const fn of this.handlers[event]||[])fn();}
- setLngLat(){return this;}setDOMContent(el){this.root.append(el);return this;}
+ setLngLat(value){this.lngLat=value;return this;}setDOMContent(el){this.root.append(el);return this;}
  getElement(){return this.root;}addTo(){this.emit('open');return this;}
  remove(){if(this.root.contains(document.activeElement))document.activeElement=document.body;this.root.connected=false;this.emit('close');}
 }};
@@ -328,7 +328,7 @@ OptionalData.fetchPinned=async(_descriptor,kind)=>kind==='discovery'?input.disco
         snapshot = challenge.acquire(CONFIG, FixtureAPI([observation(1), observation(2, 20)]), AS_OF)
     result = subprocess.run(
         ["node", "-e", script],
-        input=json.dumps({"snapshot": snapshot, "discovery": discovery_product, "cellRes": cell_res,"historical":historical_points}),
+        input=json.dumps({"snapshot": snapshot, "discovery": discovery_product, "cellRes": cell_res,"historical":historical_points,"catalog":challenge_catalog}),
         capture_output=True,
         text=True,
     )
@@ -347,6 +347,47 @@ def test_sighting_native_activation_and_escape_restore_the_connected_invoker_aft
         "closed": True,
         "returned": True,
     }
+
+
+@pytest.mark.parametrize("destination", ["summary", "toggle", "elsewhere", "hidden"])
+def test_sighting_escape_restores_browser_context_after_local_cap_removes_invoker(destination):
+    snapshot = challenge.acquire(CONFIG, FixtureAPI([observation(i, 10) for i in range(1, 621)]), AS_OF)
+    before_close = {
+        "summary": "",
+        "toggle": "summary.remove();",
+        "elsewhere": "language.focus();",
+        "hidden": "summary.getClientRects=()=>[];nodes.recentChallenge.getClientRects=()=>[];",
+    }[destination]
+    result = sighting_lifecycle(
+        "const summary=document.createElement('summary');nodes.recentChallengeSightings.append(summary);"
+        "const initial=nodes.recentChallengeList.children.length,button=nodes.recentChallengeList.children[200];"
+        "button.focus();button.onclick();viewportBounds=[-76,44,-74,46];handlers.moveend();"
+        "const local=nodes.recentChallengeList.children.length,removed=!button.isConnected;"
+        + before_close
+        + "handlers.keydown({key:'Escape'});console.log(JSON.stringify({initial,local,removed,"
+        "summary:document.activeElement===summary,toggle:document.activeElement===nodes.recentChallenge,"
+        "elsewhere:document.activeElement===language,map:document.activeElement===canvas}));",
+        snapshot=snapshot,
+    )
+    assert result == {
+        "initial": 500,
+        "local": 150,
+        "removed": True,
+        "summary": destination == "summary",
+        "toggle": destination == "toggle",
+        "elsewhere": destination == "elsewhere",
+        "map": destination == "hidden",
+    }
+
+
+def test_sighting_escape_resolves_a_rebuilt_invoker_by_observation_id():
+    result = sighting_lifecycle(
+        "const button=nodes.recentChallengeList.children[0],id=button.dataset.sightingId;button.focus();button.onclick();"
+        "button.remove();handlers.moveend();const replacement=nodes.recentChallengeList.children.find(b=>b.dataset.sightingId===id);"
+        "handlers.keydown({key:'Escape'});console.log(JSON.stringify({rebuilt:replacement!==button,"
+        "returned:document.activeElement===replacement}));"
+    )
+    assert result == {"rebuilt": True, "returned": True}
 
 
 def test_challenge_refresh_preserves_keyboard_focus_and_never_steals_focus_from_map_or_controls():
@@ -535,7 +576,7 @@ def test_approved_subset_discloses_every_omitted_source_entry_as_text_in_both_la
     assert all(str(count) in result["counts"] for count in (324, 330, 369))
     assert "39" in result["summary"] and len(result["rows"]) == 39
     assert (
-        "verified targets" in result["counts"] if language == "en" else "taxons vérifiés" in result["counts"]
+        "included names" in result["counts"] if language == "en" else "noms inclus" in result["counts"]
     )
     assert result["rows"][0][0]["text"] == (
         "Scientific name missing" if language == "en" else "Nom scientifique manquant"
@@ -1150,6 +1191,164 @@ def test_failed_recent_download_keeps_empty_disclosures_hidden():
     )
     assert result["metadataHidden"] and result["listHidden"]
     assert "could not be verified" in result["status"]
+
+
+def test_recent_markers_count_only_selected_reports_at_exact_reported_positions():
+    rows = [observation(i, 10 if i % 2 else 20) for i in range(1, 621)]
+    rows[-1]["geojson"]["coordinates"] = [-75.000001, 45]
+    snapshot = challenge.acquire(CONFIG, FixtureAPI(rows), AS_OF)
+    result = sighting_lifecycle(
+        "const national=map.sources['recent-challenge'].data.features;"
+        "viewportBounds=[-76,44,-74,46];handlers.moveend();const local=map.sources['recent-challenge'].data.features;"
+        "viewportBounds=[0,0,1,1];handlers.moveend();"
+        "const empty={features:map.sources['recent-challenge'].data.features,list:nodes.recentChallengeList.children.length};"
+        "viewportBounds=[-75.0000011,44.99999,-75.0000009,45.00001];handlers.moveend();"
+        "const feature=map.sources['recent-challenge'].data.features[0];layerHandlers['recent-challenge:click']({features:[feature]});"
+        "const body=curPopup.root.children[1];console.log(JSON.stringify({national,local,empty,singleton:{"
+        "count:feature.properties.count,link:body.children.at(-1).children[0].href,"
+        "chooser:body.children.some(el=>el.className==='optional-pagination')}}));",
+        snapshot=snapshot,
+    )
+    for name, count in (("national", 500), ("local", 150)):
+        features = result[name]
+        assert len(features) == 2
+        assert sum(feature["properties"]["count"] for feature in features) == count
+        assert sorted(feature["geometry"]["coordinates"] for feature in features) == [
+            [-75.000001, 45],
+            [-75, 45],
+        ]
+        assert sorted(feature["properties"]["count"] for feature in features) == [1, count - 1]
+    assert result["empty"] == {"features": [], "list": 0}
+    assert result["singleton"] == {
+        "count": 1,
+        "link": "https://www.inaturalist.org/observations/620",
+        "chooser": False,
+    }
+
+
+@pytest.mark.parametrize("language", ["en", "fr"])
+def test_counted_recent_popup_reaches_every_selected_report_with_bounded_native_navigation(language):
+    snapshot = challenge.acquire(
+        CONFIG, FixtureAPI([observation(i, 10 if i % 2 else 20) for i in range(1, 501)]), AS_OF
+    )
+    result = sighting_lifecycle(
+        "LANG=" + json.dumps(language) + ";optionalLayers.refresh();"
+        "const feature=map.sources['recent-challenge'].data.features[0];"
+        "layerHandlers['recent-challenge:click']({features:[feature]});"
+        "const body=curPopup.root.children[1],all=el=>[el,...el.children.flatMap(all)],"
+        "action=key=>all(body).find(el=>el.dataset.sightingAction===key);"
+        "const ids=[],sizes=[];for(let i=0;i<500;i++){ids.push(Number(action('0').href.split('/').at(-1)));"
+        "sizes.push(all(body).length);action('next').focus();action('next').onclick();}"
+        "const boundary=action('next').getAttribute('aria-disabled');"
+        "LANG=LANG==='en'?'fr':'en';optionalLayers.refresh();"
+        "const translated={focused:document.activeElement===action('next'),label:action('next').textContent};"
+        "await optionalLayers.toggleRecent(false);console.log(JSON.stringify({count:feature.properties.count,ids,"
+        "maxNodes:Math.max(...sizes),boundary,translated,closed:curPopup===null,list:nodes.recentChallengeList.children.length}));",
+        snapshot=snapshot,
+    )
+    assert result["count"] == 500 and set(result["ids"]) == set(range(1, 501))
+    assert result["maxNodes"] < 20 and result["boundary"] == "true"
+    assert result["translated"] == {
+        "focused": True,
+        "label": "Observation suivante" if language == "en" else "Next sighting",
+    }
+    assert result["closed"] and result["list"] == 0
+
+
+def test_counted_recent_popup_keeps_each_reports_date_photo_and_link():
+    snapshot = challenge.acquire(
+        CONFIG, FixtureAPI([observation(1, 10, observed_on="2026-10-14"), observation(2, 20)]), AS_OF
+    )
+    for row in snapshot["observations"]:
+        row.update(
+            common_name=f"Common {row['id']}",
+            identified_name=f"Scientific {row['id']}",
+            photo={
+                "url": f"https://static.inaturalist.org/photos/{row['id']}/medium.jpg",
+                "attribution": f"Photographer {row['id']}",
+                "license_code": "cc-by",
+                "alt": f"Reference {row['id']}",
+            },
+        )
+    result = sighting_lifecycle(
+        "const feature=map.sources['recent-challenge'].data.features[0];"
+        "layerHandlers['recent-challenge:click']({features:[feature]});const coordinates=curPopup.lngLat,body=curPopup.root.children[1];"
+        "const all=el=>[el,...el.children.flatMap(all)],action=key=>all(body).find(el=>el.dataset.sightingAction===key);"
+        "const read=()=>({name:body.children.find(el=>el.tag==='b').textContent,"
+        "date:body.children.find(el=>el.textContent.startsWith('Observed:')).textContent,"
+        "photo:body.children.find(el=>el.tag==='img').src,link:action('0').href});const first=read();"
+        "action('next').focus();action('next').onclick();const second=read();"
+        "action('previous').focus();action('previous').onclick();const returned=read();"
+        "console.log(JSON.stringify({coordinates,first,second,returned,focused:document.activeElement===action('previous')}));",
+        snapshot=snapshot,
+    )
+    assert result["coordinates"] == [-75, 45] and result["focused"]
+    assert result["returned"] == result["first"]
+    for name, identity, date in (("first", 2, "2026-10-15"), ("second", 1, "2026-10-14")):
+        assert result[name] == {
+            "name": f"Common {identity}",
+            "date": f"Observed: {date}",
+            "photo": f"https://static.inaturalist.org/photos/{identity}/medium.jpg",
+            "link": f"https://www.inaturalist.org/observations/{identity}",
+        }
+
+
+def test_counted_recent_popup_tracks_selected_rows_on_pan_and_hides_without_more_requests():
+    snapshot = challenge.acquire(
+        CONFIG, FixtureAPI([observation(i, 10 if i % 2 else 20) for i in range(1, 621)]), AS_OF
+    )
+    result = sighting_lifecycle(
+        "OptionalData.fetchPinned=()=>{throw Error('unexpected request');};"
+        "const feature=map.sources['recent-challenge'].data.features[0];layerHandlers['recent-challenge:click']({features:[feature]});"
+        "const body=curPopup.root.children[1],all=el=>[el,...el.children.flatMap(all)],"
+        "action=key=>all(body).find(el=>el.dataset.sightingAction===key);action('next').focus();"
+        "viewportBounds=[-76,44,-74,46];handlers.moveend();input.cellRes=5000;handlers.moveend();"
+        "const local={count:map.sources['recent-challenge'].data.features[0].properties.count,"
+        "progress:body.children[0].textContent,list:nodes.recentChallengeList.children.length,"
+        "focused:document.activeElement===action('next'),status:nodes.recentChallengeStatus.textContent};"
+        "viewportBounds=[0,0,1,1];handlers.moveend();const emptyClosed=curPopup===null;"
+        "viewportBounds=[-76,44,-74,46];handlers.moveend();nodes.recentChallengeList.children[0].onclick();"
+        "const singleton=curPopup.root.children[1].children.every(el=>el.className!=='optional-pagination');"
+        "const visibility=[];map.setLayoutProperty=(...args)=>visibility.push(args);await optionalLayers.toggleRecent(false);"
+        "console.log(JSON.stringify({local,emptyClosed,singleton,closed:curPopup===null,visibility,hit:optionalLayers.hitRecent({})}));",
+        snapshot=snapshot,
+        cell_res=25000,
+    )
+    assert result["local"]["count"] == result["local"]["list"] == 150
+    assert "1 of 150" in result["local"]["progress"] and result["local"]["focused"]
+    assert "Reported locations: 1" in result["local"]["status"]
+    assert result["emptyClosed"] and result["singleton"] and result["closed"] and not result["hit"]
+    assert ["recent-challenge", "visibility", "none"] in result["visibility"]
+
+
+@pytest.mark.parametrize("focus", ["chooser", "elsewhere"])
+def test_counted_popup_shrinking_to_one_selected_report_keeps_focus_in_context(focus):
+    rows = [observation(1), observation(151)]
+    rows.extend(
+        observation(i, geojson={"type": "Point", "coordinates": [-75.01 + i * 0.00001, 45]})
+        for i in range(2, 151)
+    )
+    snapshot = challenge.acquire(CONFIG, FixtureAPI(sorted(rows, key=lambda row: row["id"])), AS_OF)
+    result = sighting_lifecycle(
+        "const feature=map.sources['recent-challenge'].data.features.find(f=>f.properties.count===2);"
+        "layerHandlers['recent-challenge:click']({features:[feature]});const body=curPopup.root.children[1],"
+        "all=el=>[el,...el.children.flatMap(all)],action=key=>all(body).find(el=>el.dataset.sightingAction===key);"
+        "action('next').focus();action('next').onclick();const oldLink=action('0').href;"
+        + ("language.focus();" if focus == "elsewhere" else "")
+        + "viewportBounds=[-76,44,-74,46];handlers.moveend();console.log(JSON.stringify({oldLink,link:action('0').href,"
+        "viewFocused:document.activeElement===action('0'),elsewhere:document.activeElement===language,"
+        "count:map.sources['recent-challenge'].data.features.find(f=>f.properties.key==='-75,45').properties.count,"
+        "chooser:!!action('next')}));",
+        snapshot=snapshot,
+    )
+    assert result == {
+        "oldLink": "https://www.inaturalist.org/observations/1",
+        "link": "https://www.inaturalist.org/observations/151",
+        "viewFocused": focus == "chooser",
+        "elsewhere": focus == "elsewhere",
+        "count": 1,
+        "chooser": False,
+    }
 
 
 def test_historical_disclosure_only_opens_for_ready_visible_local_points(tmp_path):

@@ -307,11 +307,14 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
 /* #84: French strings run longer — widen these two elements (desktop only; the mobile rules above already size them) so the How-scored label, legend labels and notice don't wrap to extra lines. */
 @media(min-width:641px){html[lang=fr] #howbtn{max-width:none}html[lang=fr] #maplegend{max-width:320px}}
 .optional-cell{display:block;width:100%;text-align:left;margin:4px 0;padding:7px 8px;border:1px solid #d4dde6;border-radius:7px;background:#f4f7fa;color:var(--ink);font:inherit;font-size:12.5px;cursor:pointer;white-space:pre-line;overflow-wrap:anywhere}
+#challengeCatalogSearch{box-sizing:border-box;width:100%;min-height:44px;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font:inherit;font-size:16px;background:#fff;color:var(--ink)}
+#challengeCatalogList{padding-left:20px}
+#challengeCatalogList li{padding:6px 0;overflow-wrap:anywhere}
 .optional-pagination{display:flex;gap:8px;margin:8px 0}
 .optional-pagination button{flex:1;white-space:normal;min-height:44px;padding:7px 8px;border:1px solid #d4dde6;border-radius:7px;background:#f4f7fa;color:var(--ink);font:inherit;font-size:12.5px;cursor:pointer}
 .optional-pagination button[aria-disabled=true]{opacity:.5;cursor:default}
 .optional-cell:hover,.optional-cell:focus-visible,.optional-pagination button:focus-visible{border-color:var(--acc);outline:2px solid var(--acc);outline-offset:-2px}
-#discoveryCells,#historicalPointsList,#recentChallengeList,#recentChallengeOmissionList{max-height:260px;overflow-y:auto}
+#challengeCatalogList,#discoveryCells,#historicalPointsList,#recentChallengeList,#recentChallengeOmissionList{max-height:260px;overflow-y:auto}
 #discoveryEvidence summary,#recentChallengePanel summary{font-size:13px;cursor:pointer;margin:8px 0 5px}
 .optional-status{font-size:11.5px;line-height:1.45;color:var(--mut);overflow-wrap:anywhere}
 #historicalScope{font-size:12px;line-height:1.45;margin:8px 0;color:var(--mut)}
@@ -366,14 +369,22 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
     <p id="recentChallengeStatus" class="optional-status" role="status"></p>
     <details id="recentChallengeAbout" class="optional-source-details"><summary data-i18n="recent_challenge_about">About these sightings</summary>
       <p data-i18n="recent_challenge_context">The orange dots show public iNaturalist reports for species selected for this project's Conservation Challenge.</p>
-      <p data-i18n="recent_challenge_use">The dots provide recent local examples alongside the map you are viewing.</p>
+      <p data-i18n="recent_challenge_use">The dots provide recent local examples alongside the map you are viewing. A number on a dot shows how many displayed sightings share that reported location. Select it to browse them.</p>
       <p data-i18n="recent_challenge_window">The 14-day window is a display setting for a short view of recent reports. Snapshot details gives the exact dates and update time.</p>
       <p data-i18n="recent_challenge_filters">Sightings include all species groups. Changing the map's species group or goal does not filter these dots.</p>
     </details>
     <details id="recentChallengeDetails" class="optional-source-details" hidden><summary data-i18n="snapshot_details">Snapshot details</summary><div id="recentChallengeMeta"></div></details>
     <details id="recentChallengeSightings" hidden><summary data-i18n="recent_challenge_list">Sightings in this view</summary><div id="recentChallengeList"></div></details>
-    <details id="recentChallengeCoverage" hidden><summary data-i18n="challenge_list_details">About the target list</summary>
+    <details id="recentChallengeCoverage" hidden><summary data-i18n="challenge_list_details">Species included</summary>
+      <p id="challengeCatalogContext" class="optional-status" hidden data-i18n="challenge_catalog_context">The species included in this feed come from the project's list of invasive species, species vulnerable to climate change, and species relevant to Key Biodiversity Area assessments. Some entries are subspecies or varieties.</p>
+      <a id="challengeCatalogRationale" hidden href="https://github.com/PollockLab/where-to-blitz/issues/95" target="_blank" rel="noopener" data-i18n="challenge_catalog_rationale">Project rationale</a>
       <p id="recentChallengeCoverageCounts" class="optional-status"></p>
+      <p id="challengeCatalogUnavailable" class="optional-status" hidden data-i18n="challenge_catalog_unavailable">The included names are unavailable for this snapshot version.</p>
+      <div id="challengeCatalogBrowser" hidden>
+        <label for="challengeCatalogSearch" class="optional-status" data-i18n="challenge_catalog_search">Search included scientific names</label><input id="challengeCatalogSearch" class="full" type="search" autocomplete="off" spellcheck="false">
+        <p id="challengeCatalogStatus" class="optional-status" role="status" aria-live="polite"></p><ul id="challengeCatalogList"></ul>
+        <div class="optional-pagination"><button id="challengeCatalogPrevious" type="button" data-i18n="challenge_catalog_previous">Previous names</button><button id="challengeCatalogNext" type="button" data-i18n="challenge_catalog_next">Next names</button></div>
+      </div>
       <details id="recentChallengeOmissions"><summary id="recentChallengeOmissionsSummary"></summary><ul id="recentChallengeOmissionList"></ul></details>
     </details>
   </div>
@@ -502,7 +513,7 @@ const I18N={
     ge_loading:"Loading Getting Even categories…",
     map_display:"Map display", priority_map:"Recording priorities", historical_map:"Historical discovery evidence",
     historical_scope:(period,group)=>`${period} · ${group}. Switch to recording priorities to choose a goal or species group.`,
-    map_filters:"Map controls", close_filters:"Done", source_details:"Source and limits", challenge_list_details:"About the target list", snapshot_details:"Snapshot details",
+    map_filters:"Map controls", close_filters:"Done", source_details:"Source and limits", challenge_list_details:"Species included", snapshot_details:"Snapshot details",
     discovery_log_scale:"Positive values use a logarithmic colour scale.", discovery_zero:"0 points, with observations", discovery_no_data:"No rate, blank areas",
     discovery_sparse:"Sparse historical point-set evidence. Blank areas lack usable observation support.",
     discovery_recent_separate:"Orange dots: recent conservation sightings, a separate dataset and period.",
@@ -511,6 +522,7 @@ const I18N={
     discovery_support:"Compare the underlying counts; a high rate can come from few observations.",
     discovery_cell_label:n=>`Cell ${n}`, discovery_near_place:place=>`Near ${place}`,
     recent_challenge_all_groups:"All species groups", recent_challenge_shown:(shown,total,cap)=>`${shown} of ${total} matching sightings shown (limit ${cap}, different species first)`,
+    recent_challenge_positions:n=>`Reported locations: ${n}`, sighting_position_progress:(index,total)=>`Sighting ${index} of ${total} at this position`, sighting_previous:"Previous sighting", sighting_next:"Next sighting",
     recent_updated_today:"Updated today", recent_updated_yesterday:"Updated yesterday", recent_updated_days:n=>`Updated ${n} days ago`, recent_exact_refresh:"Published snapshot",
     photo_credit:"Photo", photo_reference:"Species reference photo, not this sighting",
     discovery_unit:"discovery events per 10,000 observations", discovery_period:(start,end)=>`Observation period: ${start} to ${end}`,
@@ -520,15 +532,17 @@ const I18N={
     discovery_supplied_points:"Uses the lab-supplied discovery point set. Its original selection method is unknown.",
     discovery_supplied_unit:"supplied discovery points per 10,000 research-grade observations",
     discovery_supplied_counts:(n,exposure)=>`Supplied discovery points: ${n}. Research-grade observations: ${exposure}.`,
-    recent_challenge:"Recent sightings of selected species", recent_challenge_list:"Sightings in this view",
+    recent_challenge:"Recent Conservation Challenge sightings", recent_challenge_list:"Sightings in this view",
     recent_challenge_purpose:"See what people have recently recorded in this area.", recent_challenge_about:"About these sightings",
     recent_challenge_context:"The orange dots show public iNaturalist reports for species selected for this project's Conservation Challenge.",
-    recent_challenge_use:"The dots provide recent local examples alongside the map you are viewing.",
+    recent_challenge_use:"The dots provide recent local examples alongside the map you are viewing. A number on a dot shows how many displayed sightings share that reported location. Select it to browse them.",
     recent_challenge_window:"The 14-day window is a display setting for a short view of recent reports. Snapshot details gives the exact dates and update time.",
     recent_challenge_filters:"Sightings include all species groups. Changing the map's species group or goal does not filter these dots.",
     recent_challenge_hint:"Turn on to show orange dots on the map.",
     recent_challenge_status:(start,end,refresh,n)=>`${n} sightings shown. Window: ${start} to ${end}. Refreshed: ${refresh}. Orange dots, species diversity before recency.`,
-    recent_challenge_coverage:(targets,resolved,total)=>`${targets} verified targets from ${resolved} of ${total} source entries.`,
+    challenge_catalog_context:"The species included in this feed come from the project’s list of invasive species, species vulnerable to climate change, and species relevant to Key Biodiversity Area assessments. Some entries are subspecies or varieties.", challenge_catalog_rationale:"Project rationale", challenge_catalog_search:"Search included scientific names", challenge_catalog_unavailable:"The included names are unavailable for this snapshot version.", challenge_catalog_empty:"No included names match this search.", challenge_catalog_previous:"Previous names", challenge_catalog_next:"Next names",
+    challenge_catalog_scope:(start,end,matching,total)=>`Names ${start} to ${end} of ${matching} matching (${total} included targets).`, challenge_catalog_rank:{species:"species",subspecies:"subspecies",variety:"variety",form:"form"},
+    recent_challenge_coverage:(targets,resolved,total)=>`${targets} included names matched from ${resolved} of ${total} source entries.`,
     recent_challenge_omissions:n=>`${n} omitted source entries, names and reasons`,
     recent_challenge_unnamed:"Scientific name missing", recent_challenge_common:"Common name",
     challenge_omit_blank_scientific_name:"The source entry has no scientific name.",
@@ -747,7 +761,7 @@ const I18N={
     ge_loading:"Chargement des catégories Combler l'écart…",
     map_display:"Affichage de la carte", priority_map:"Priorités d'observation", historical_map:"Découvertes historiques",
     historical_scope:(period,group)=>`${period} · ${group}. Passez aux priorités d'observation pour choisir un objectif ou un groupe.`,
-    map_filters:"Réglages", close_filters:"Terminé", source_details:"Source et limites", challenge_list_details:"À propos de la liste", snapshot_details:"Détails des observations publiées",
+    map_filters:"Réglages", close_filters:"Terminé", source_details:"Source et limites", challenge_list_details:"Espèces incluses", snapshot_details:"Détails des observations publiées",
     discovery_log_scale:"Échelle logarithmique pour les valeurs positives.", discovery_zero:"0 point, avec observations", discovery_no_data:"Sans taux, espaces vides",
     discovery_sparse:"Jeux de points historiques clairsemés. Les espaces vides manquent de données d’observation utilisables.",
     discovery_recent_separate:"Les points orange : observations récentes de conservation, données et période distincts.",
@@ -756,6 +770,7 @@ const I18N={
     discovery_support:"Comparez les effectifs : un taux élevé peut reposer sur peu d'observations.",
     discovery_cell_label:n=>`Cellule ${n}`, discovery_near_place:place=>`Près de ${place}`,
     recent_challenge_all_groups:"Tous les groupes d'espèces", recent_challenge_shown:(shown,total,cap)=>`${shown} des ${total} observations affichées (limite ${cap}, espèces différentes en priorité)`,
+    recent_challenge_positions:n=>`Emplacements signalés : ${n}`, sighting_position_progress:(index,total)=>`Observation ${index} sur ${total} à cet emplacement`, sighting_previous:"Observation précédente", sighting_next:"Observation suivante",
     recent_updated_today:"Mis à jour aujourd'hui", recent_updated_yesterday:"Mis à jour hier", recent_updated_days:n=>`Mis à jour il y a ${n} jours`, recent_exact_refresh:"Données publiées",
     photo_credit:"Photo", photo_reference:"Photo de référence de l'espèce, pas de cette observation",
     discovery_unit:"découvertes pour 10 000 observations", discovery_period:(start,end)=>`Période des observations : ${start} au ${end}`,
@@ -765,15 +780,17 @@ const I18N={
     discovery_supplied_points:"Ce taux utilise le jeu de points de découverte fourni par le laboratoire. Sa méthode de sélection initiale est inconnue.",
     discovery_supplied_unit:"points de découverte fournis pour 10 000 observations de niveau recherche",
     discovery_supplied_counts:(n,exposure)=>`Points de découverte fournis : ${n}. Observations de niveau recherche : ${exposure}.`,
-    recent_challenge:"Observations récentes d'espèces sélectionnées", recent_challenge_list:"Observations dans cette vue",
+    recent_challenge:"Observations récentes du Défi de conservation", recent_challenge_list:"Observations dans cette vue",
     recent_challenge_purpose:"Voyez ce que des gens ont récemment observé dans cette zone.", recent_challenge_about:"À propos de ces observations",
     recent_challenge_context:"Les points orange montrent des observations publiques sur iNaturalist pour des espèces choisies pour le défi de conservation de ce projet.",
-    recent_challenge_use:"Les points donnent des exemples récents dans la zone affichée, en complément de la carte.",
+    recent_challenge_use:"Les points donnent des exemples récents dans la zone affichée, en complément de la carte. Un nombre sur un point indique combien d'observations affichées partagent cet emplacement signalé. Sélectionnez-le pour les parcourir.",
     recent_challenge_window:"La période de 14 jours est un choix d'affichage pour présenter des observations récentes. Les détails des observations publiées précisent les dates et l'heure de mise à jour.",
     recent_challenge_filters:"Tous les groupes d'espèces sont inclus. Le groupe d'espèces et l'objectif choisis sur la carte ne filtrent pas ces points.",
     recent_challenge_hint:"Activez l'option pour afficher les points orange sur la carte.",
     recent_challenge_status:(start,end,refresh,n)=>`${n} observations affichées. Période : ${start} au ${end}. Mise à jour : ${refresh}. Points orange, diversité des espèces avant la récence.`,
-    recent_challenge_coverage:(targets,resolved,total)=>`${targets} taxons vérifiés pour ${resolved} des ${total} entrées de la source.`,
+    challenge_catalog_context:"Les espèces incluses dans ce flux proviennent de la liste du projet : espèces envahissantes, espèces vulnérables aux changements climatiques et espèces pertinentes pour les évaluations des zones clés pour la biodiversité. Certaines entrées sont des sous-espèces ou des variétés.", challenge_catalog_rationale:"Justification du projet", challenge_catalog_search:"Rechercher les noms scientifiques inclus", challenge_catalog_unavailable:"Les noms inclus ne sont pas disponibles pour cette version des données.", challenge_catalog_empty:"Aucun nom inclus ne correspond à cette recherche.", challenge_catalog_previous:"Noms précédents", challenge_catalog_next:"Noms suivants",
+    challenge_catalog_scope:(start,end,matching,total)=>`Noms ${start} à ${end} sur ${matching} correspondants (${total} taxons inclus).`, challenge_catalog_rank:{species:"espèce",subspecies:"sous-espèce",variety:"variété",form:"forme"},
+    recent_challenge_coverage:(targets,resolved,total)=>`${targets} noms inclus, avec correspondance pour ${resolved} des ${total} entrées de la source.`,
     recent_challenge_omissions:n=>`${n} entrées omises, noms et raisons`,
     recent_challenge_unnamed:"Nom scientifique manquant", recent_challenge_common:"Nom commun",
     challenge_omit_blank_scientific_name:"L'entrée de la source ne contient aucun nom scientifique.",
@@ -1748,7 +1765,7 @@ function localizeMapControls(){
 }
 function popupFocusOrigin(){
   const element=document.activeElement,row=element&&element.closest&&element.closest('#celltable tr[data-la]');
-  return {element:element,row:row?{lat:row.dataset.la,lon:row.dataset.lo}:null,discoveryCell:element?.dataset?.discoveryCell||null,historicalPoint:element?.dataset?.historicalPoint||null};
+  return {element:element,row:row?{lat:row.dataset.la,lon:row.dataset.lo}:null,discoveryCell:element?.dataset?.discoveryCell||null,historicalPoint:element?.dataset?.historicalPoint||null,sightingId:element?.dataset?.sightingId||null};
 }
 function focusPopupTarget(el){
   if(!el||!el.isConnected||typeof el.focus!=='function'||!el.getClientRects().length)return false;
@@ -1756,6 +1773,14 @@ function focusPopupTarget(el){
   el.focus();return document.activeElement===el;
 }
 function restorePopupFocus(origin){
+  if(origin.sightingId){
+    if(globalThis.optionalLayers?.recentEnabled()){
+      if(focusPopupTarget(origin.element))return;
+      const list=document.getElementById('recentChallengeList'),button=list&&Array.from(list.children).find(el=>el.dataset.sightingId===origin.sightingId);
+      if(focusPopupTarget(button)||focusPopupTarget(document.getElementById('recentChallengeSightings')?.querySelector('summary')))return;
+    }
+    if(focusPopupTarget(document.getElementById('recentChallenge')))return;
+  }
   if(focusPopupTarget(origin.element))return;
   if(origin.historicalPoint&&globalThis.optionalLayers?.isDiscovery()){
     const list=document.getElementById('historicalPointsList'),button=list&&Array.from(list.children).find(el=>el.dataset.historicalPoint===origin.historicalPoint);

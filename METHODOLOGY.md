@@ -98,6 +98,55 @@ The three presets, straight from `goal_presets.PRESETS`: *Spatial Gap* = `discov
 
 ---
 
+## Historical discovery evidence
+
+The Map display control exposes historical discovery evidence separately from the five recording goals requested in [#49](https://github.com/PollockLab/where-to-blitz/issues/49): Spatial Gap (the default), Species discovery, Conservation, Getting Even and Climate Gap. The **Species discovery** recording preset remains the documented `discover` plus `staleness` blend; it is not the historical rate. The initial rasterized-point calculation requested in [#98](https://github.com/PollockLab/where-to-blitz/issues/98) is implemented at both 5 km and 25 km. Interim recording formulas and later value-of-information work remain separate from this measured layer.
+
+### Inputs and calculation
+
+The numerator is the lab-supplied 2025 point set: 826 source features. `prepare_discovery_inputs.py` checks the supplied shapefile components, resolves their coordinates against distinct compatible research-grade rows in the frozen lab Canada Parquet export, and requires the declared 2025 observation year. It does not recover original observation IDs. The denominator counts research-grade observation rows from that same export and calendar year, using finite reported coordinates within the existing national LAEA lattice. Source-obscured reported coordinates are retained; private coordinates are not recovered and source obscuration is not reversed. Both inputs declare the same annual period, filters and spatial support in checksum-bearing metadata.
+
+For each supported cell, `rate = 10,000 × supplied_point_count / research_grade_observation_count`. At 25 km, counts are summed over the 25 child cells before division; the parent rate is a ratio of sums, not an average of child rates. These are observed counts and rates, without interpolation, smoothing, an invented minimum denominator or conversion to the recording presets' percentile scale.
+
+A zero rate requires positive observation exposure and complete declared support: it means no point from the supplied list, not absence of undiscovered species. Zero exposure or incomplete support yields an unavailable rate, never zero. The published artifact has 285 positive and 5,712 zero-point cells at 25 km, and 458 positive and 44,054 zero-point cells at 5 km; another 105,413 declared fine cells have zero exposure and no rate. Neutral fills identify exposed zeros and blank areas identify unavailable rates. Positive colours use a logarithmic scale while popups retain the underlying counts and rate. A high ratio can arise from very few observations.
+
+### Point inspection and limits
+
+At the 5 km tier, the optional teal markers group only exact reported coordinates: 826 features occupy 737 positions, with up to 27 features at one position. The marker count is a feature count, and its popup retains every supplied scientific name and observation year alongside the cell's count/rate evidence. A paged keyboard-accessible location list exposes the same positions. The source's original discovery-selection rule is unknown, scientific names are supplied assertions, and a source-feature identity is a shapefile-bundle checksum plus feature index, not a verified iNaturalist observation ID. Annual matching does not establish a unique daily date or original observation link. Some reported positions are obscured. These data describe the supplied historical point set, not every new-to-iNaturalist taxon, exhaustive new species, ecological absence or expected discoveries on a future visit. Orange recent Conservation Challenge sightings use a different source and time window.
+
+### Provenance and reproduction
+
+The [published rate artifact](https://github.com/PollockLab/where-to-blitz/releases/download/grid-outputs-v1/discovery-rate-2025-d9b304b801ee58d2.json) has SHA256 `d9b304b801ee58d21e3006272342470e099f8430be2349c047308699b11ee107`. Its `sources` metadata records the original shapefile-component hashes, frozen Parquet hash, prepared point/count hashes and matching scope. The [approved point-inspection derivative](https://github.com/PollockLab/where-to-blitz/blob/97341625f22f4ba595a149079c9ed069cd3efca0/webapp/historical_discovery_points.json) has SHA256 `467e305252655293103449350f4988b33e175f9b4d093739c0a682322e7736e0`. Raw shapefile and Parquet inputs remain private; the published derivative contains only synthetic source-feature identity, supplied scientific name, year and reported position.
+
+`build_discovery_layer.py` verifies source checksums, compatible scope, count integrity, exact lattice boundaries and aggregation before producing JSON and optional count/rate GeoTIFFs. `prepare_optional_layers.py` verifies the configured public artifact against `DISCOVERY_RATE_SHA256`, validates its contents and stages it before the viewer build. `historical_discovery_points.py` reconstructs the annual point-source bytes from the ordered derivative, checks their checksum and reconciles every numerator cell at both tiers. A missing or different-vintage point derivative does not activate markers; malformed matching data fail the build.
+
+To validate and build the published layer without accessing private sources, run from the repository root:
+
+```bash
+wtb_discovery_dir="$(mktemp -d)"
+gh release download grid-outputs-v1 --repo PollockLab/where-to-blitz --dir "$wtb_discovery_dir" --pattern discovery-rate-2025-d9b304b801ee58d2.json
+printf '%s  %s\n' d9b304b801ee58d21e3006272342470e099f8430be2349c047308699b11ee107 "$wtb_discovery_dir/discovery-rate-2025-d9b304b801ee58d2.json" | shasum -a 256 -c -
+.venv/bin/python -c 'import json, sys; from build_discovery_layer import validate_artifact; validate_artifact(json.load(open(sys.argv[1]))); print("Discovery artifact valid")' "$wtb_discovery_dir/discovery-rate-2025-d9b304b801ee58d2.json"
+DISCOVERY_RATE_FILE="$wtb_discovery_dir/discovery-rate-2025-d9b304b801ee58d2.json" .venv/bin/python build_webapp.py
+```
+
+The build writes the generated root `index.html`; it is not a source file to commit. For automated deployment, configure `DISCOVERY_RATE_URL` and its exact `DISCOVERY_RATE_SHA256`; both deploy paths run `prepare_optional_layers.py --env-file "$GITHUB_ENV"` before building. Without configured discovery input, the optional historical layer is not advertised.
+
+For authorized holders of the frozen private sources, the producer and standalone rasterizer use these exact CLI flags. The private producer additionally requires `ogr2ogr` and `pyarrow`. Replace the example paths with private input/output locations:
+
+```bash
+.venv/bin/python prepare_discovery_inputs.py --points /path/to/supplied-points.shp --observations /path/to/lab-canada.parquet --year 2025 --out-dir /path/to/private-prepared
+.venv/bin/python build_discovery_layer.py --discoveries /path/to/private-prepared/discovery-events.geojson --observations /path/to/private-prepared/observation-counts.csv --discoveries-metadata /path/to/private-prepared/discovery-events.metadata.json --observations-metadata /path/to/private-prepared/observation-counts.metadata.json --out /path/to/private-prepared/discovery_grid.json --raster-dir /path/to/private-prepared/rasters
+```
+
+The producer writes `preparation_audit.json` with source-row matching, boundary accounting and checksums. Existing regression gates exercise preparation, rate aggregation, source-byte binding and viewer behavior:
+
+```bash
+.venv/bin/python -m pytest -q test_prepare_discovery_inputs.py test_discovery_layer.py test_historical_discovery_points.py test_optional_layer_viewer.py
+```
+
+---
+
 ## Validation, retrospective record novelty
 
 The archived backtest compares priority scores with **new taxon IDs in sampled project records**, not prospective field discoveries. Across eight BC and Eastern Canada taxon-region samples, the training-period scarcity proxy has rho 0.48 to 0.71. Its expected record novelty at K = 5 observations is 1.2x to 3.2x at upper versus lower score-tercile cutoffs. The grid-score comparisons below retain their original build and record-input snapshots, identified by each result's `run.grid.source_sha256` and `run.input_sha256`. They have not been rerun for the latest rebuilt grid or the refreshed walkthrough figures and do not establish future trip yield.
