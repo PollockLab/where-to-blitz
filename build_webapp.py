@@ -73,9 +73,8 @@ COMPARE_ENABLED = False  # Issue #71: the "Compare goals" view is stashed (kept 
 with open("webapp/index.html") as _fh:
     HTML = _fh.read()
 
-# CARTO's raster basemaps watermark every tile unless the request carries our key. It is a
-# client-side key by nature (it ships in the page), so it is a repo secret rather than a
-# committed string: CI passes CARTO_API_KEY in, a local build leaves it empty and watermarked.
+# CARTO's browser key ships in the page. Without one the catalog selects a keyless
+# OpenStreetMap source, so local previews display real tiles rather than error images.
 CARTO_API_KEY = os.environ.get("CARTO_API_KEY", "")
 
 
@@ -176,6 +175,7 @@ def load_optional_layers(files, environ=None):
 
 OPTIONAL_LAYERS = load_optional_layers(FILES)
 OPTIONAL_LAYER_SCRIPT = (Path(__file__).resolve().parent / "webapp/optional_layers.js").read_text() + "\ninstallOptionalLayers();\n"
+BASEMAP_SCRIPT = (Path(__file__).resolve().parent / "webapp/basemaps.js").read_text()
 
 
 out = (
@@ -185,12 +185,14 @@ out = (
         json.dumps(OPTIONAL_LAYERS, separators=(",", ":"), allow_nan=False).replace("<", "\\u003c"),
     )
     .replace("__OPTIONAL_LAYER_SCRIPT__", OPTIONAL_LAYER_SCRIPT)
+    .replace("__BASEMAP_SCRIPT__", BASEMAP_SCRIPT)
     .replace("__BC_PLANT_PILOT__", json.dumps(BC_PLANT_PILOT, separators=(",", ":"), allow_nan=False).replace("<", "\\u003c"))
     .replace("__OBJ__", json.dumps(OBJ))
     .replace("__PRESETS__", json.dumps(PRESETS))
     .replace("__DEFAULT__", json.dumps(DEFAULT))
     .replace("__PMTILES_BASE__", PMTILES_BASE)
     .replace("__CARTO_KEY__", CARTO_API_KEY)
+    .replace("__CARTO_KEY_JSON__", json.dumps(CARTO_API_KEY).replace("<", "\\u003c"))
     .replace("__TIER_SWITCH_Z__", str(TIER_SWITCH_Z))
     # The app snaps clicks to the same lattice the tiles are cut on. These were hardcoded in
     # the template, so the clickable cells could drift off the raster without anything saying so.
