@@ -261,6 +261,7 @@ function installOptionalLayers(){
   function renderCoverage(){
     const snapshot=cache.challenge,coverage=catalog?.coverage||snapshot?.coverage,container=node('recentChallengeCoverage');
     container.hidden=!catalog&&!coverage&&!descriptors.challenge?.source_version;
+    node('challengeCatalogContext').hidden=!catalog;node('challengeCatalogRationale').hidden=!catalog;
     node('challengeCatalogBrowser').hidden=!catalog;node('challengeCatalogUnavailable').hidden=!!catalog;
     node('challengeCatalogSearch').disabled=!catalog;
     renderCatalog();

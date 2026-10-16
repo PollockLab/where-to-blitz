@@ -72,7 +72,8 @@ def test_catalog_is_fully_reachable_with_sightings_off_without_observation_reque
         "nodes.challengeCatalogNext.onclick();}"
         "console.log(JSON.stringify({requests,rows,visible:!nodes.recentChallengeCoverage.hidden,"
         "omissions:nodes.recentChallengeOmissionList.children.length,status:nodes.challengeCatalogStatus.textContent}));",
-        start_recent=False, challenge_catalog=catalog,
+        start_recent=False,
+        challenge_catalog=catalog,
     )
     assert result["requests"] == 0 and result["visible"] and result["omissions"] == 39
     assert sorted(row["id"] for row in result["rows"]) == sorted(row["id"] for row in catalog["taxa"])
@@ -95,7 +96,8 @@ def test_catalog_search_paging_and_native_focus_survive_pan_and_language_changes
         "input.value='no matching supplied name';input.oninput();const empty={count:nodes.challengeCatalogList.children.length,"
         "text:nodes.challengeCatalogList.textContent,next:nodes.challengeCatalogNext.getAttribute('aria-disabled')};"
         "input.value='';input.oninput();console.log(JSON.stringify({id,preserved,matched,empty,all:nodes.challengeCatalogList.children.length}));",
-        start_recent=False, challenge_catalog=catalog,
+        start_recent=False,
+        challenge_catalog=catalog,
     )
     assert result["preserved"]["id"] == result["id"]
     assert result["preserved"]["focused"] and result["preserved"]["open"]
@@ -115,8 +117,23 @@ def test_catalog_remains_usable_during_sighting_loading_and_disabled_state():
         "await optionalLayers.toggleRecent(false);const off=nodes.challengeCatalogList.children.length;"
         "finish();await pending;console.log(JSON.stringify({loading,off,requests,after:nodes.challengeCatalogList.children.length,"
         "omissions:nodes.recentChallengeOmissionList.children.length}));",
-        snapshot=empty_snapshot(), start_recent=False, challenge_catalog=catalog,
+        snapshot=empty_snapshot(),
+        start_recent=False,
+        challenge_catalog=catalog,
     )
     assert result["loading"] == {"shown": True, "count": 30}
     assert result["requests"] == 1 and result["off"] == result["after"] > 0
     assert result["omissions"] == 39
+
+
+@pytest.mark.parametrize("matched", [False, True])
+def test_list_rationale_is_only_attributed_to_the_matching_project_source(matched):
+    catalog = load_catalog(CONFIG, empty_snapshot()) if matched else None
+    result = sighting_lifecycle(
+        "console.log(JSON.stringify({context:nodes.challengeCatalogContext.hidden,"
+        "rationale:nodes.challengeCatalogRationale.hidden,"
+        "unavailable:nodes.challengeCatalogUnavailable.hidden}));",
+        start_recent=False,
+        challenge_catalog=catalog,
+    )
+    assert result == {"context": not matched, "rationale": not matched, "unavailable": matched}
