@@ -23,10 +23,10 @@ def test_catalog_contains_every_exact_target_even_with_no_sightings():
     config = json.loads(CONFIG.read_text())
     result = load_catalog(CONFIG, empty_snapshot())
     assert result["taxa"] == [{key: row[key] for key in ("id", "name", "rank")} for row in config["taxa"]]
-    assert len(result["taxa"]) == len({row["id"] for row in result["taxa"]}) == 324
-    assert {row["rank"] for row in result["taxa"]} == {"species", "subspecies", "variety"}
-    assert result["coverage"]["resolved_rows"] == 330
-    assert len(result["coverage"]["omissions"]) == 39
+    assert len(result["taxa"]) == len({row["id"] for row in result["taxa"]}) == 335
+    assert {row["rank"] for row in result["taxa"]} == {"species", "subspecies", "variety", "genus"}
+    assert result["coverage"]["resolved_rows"] == 347
+    assert len(result["coverage"]["omissions"]) == 22
     assert "resolved" not in result["coverage"] and "url" not in result
     assert all(set(row) == {"id", "name", "rank"} for row in result["taxa"])
 
@@ -58,7 +58,7 @@ def test_actual_builder_binds_catalog_to_snapshot_and_abstains_without_one(tmp_p
     result = build(tmp_path, {"CONSERVATION_CHALLENGE_FILE": str(snapshot)})
     assert result.returncode == 0, result.stderr
     catalog = descriptor((tmp_path / "index.html").read_text())["challenge"]["catalog"]
-    assert len(catalog["taxa"]) == 324 and len(catalog["coverage"]["omissions"]) == 39
+    assert len(catalog["taxa"]) == 335 and len(catalog["coverage"]["omissions"]) == 22
     assert build(tmp_path).returncode == 0
     assert descriptor((tmp_path / "index.html").read_text())["challenge"] is None
 
@@ -67,7 +67,7 @@ def test_catalog_is_fully_reachable_with_sightings_off_without_observation_reque
     catalog = load_catalog(CONFIG, empty_snapshot())
     result = sighting_lifecycle(
         "let requests=0;OptionalData.fetchPinned=()=>{requests++;throw Error('unexpected observation request');};"
-        "const rows=[];for(let page=0;page<11;page++){rows.push(...nodes.challengeCatalogList.children.map(li=>({"
+        "const rows=[];for(let page=0;page<12;page++){rows.push(...nodes.challengeCatalogList.children.map(li=>({"
         "id:Number(li.dataset.catalogTarget),rank:li.dataset.rank,name:li.children[0].textContent,href:li.children[0].href})));"
         "nodes.challengeCatalogNext.onclick();}"
         "console.log(JSON.stringify({requests,rows,visible:!nodes.recentChallengeCoverage.hidden,"
@@ -75,13 +75,13 @@ def test_catalog_is_fully_reachable_with_sightings_off_without_observation_reque
         start_recent=False,
         challenge_catalog=catalog,
     )
-    assert result["requests"] == 0 and result["visible"] and result["omissions"] == 39
+    assert result["requests"] == 0 and result["visible"] and result["omissions"] == 22
     assert sorted(row["id"] for row in result["rows"]) == sorted(row["id"] for row in catalog["taxa"])
     expected = {row["id"]: row for row in catalog["taxa"]}
     for row in result["rows"]:
         assert row["rank"] == expected[row["id"]]["rank"] and row["name"] == expected[row["id"]]["name"]
         assert row["href"] == "https://www.inaturalist.org/taxa/" + str(row["id"])
-    assert "324" in result["status"]
+    assert "335" in result["status"]
 
 
 def test_catalog_search_paging_and_native_focus_survive_pan_and_language_changes():
@@ -123,7 +123,7 @@ def test_catalog_remains_usable_during_sighting_loading_and_disabled_state():
     )
     assert result["loading"] == {"shown": True, "count": 30}
     assert result["requests"] == 1 and result["off"] == result["after"] > 0
-    assert result["omissions"] == 39
+    assert result["omissions"] == 22
 
 
 @pytest.mark.parametrize("matched", [False, True])

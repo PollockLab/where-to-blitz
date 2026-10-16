@@ -19,7 +19,13 @@ from urllib.parse import urlsplit
 import requests
 
 from build_discovery_layer import validate_artifact
-from conservation_challenge import digest, query_filters, species_groups, validate_list, validate_snapshot
+from conservation_challenge import (
+    digest,
+    query_filters,
+    validate_list,
+    validate_snapshot,
+    validate_target_mapping,
+)
 
 MAX_BYTES = 50_000_000
 
@@ -159,13 +165,7 @@ def prepare(
             raise ValueError("challenge snapshot is from the future")
         if snapshot["filters"] != query_filters(config, as_of):
             raise ValueError("challenge snapshot filters differ from the approved list configuration")
-        groups = species_groups(config)
-        for row in snapshot["observations"]:
-            targets = row.get("target_ids", [row["taxon_id"]])
-            if any(groups.get(target) != {"id": row["taxon_id"], "name": row["name"]} for target in targets):
-                raise ValueError(
-                    "challenge snapshot has observations outside the approved target/species mapping"
-                )
+        validate_target_mapping(snapshot, config)
         staged["conservation_challenge.json"] = content
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)

@@ -205,9 +205,9 @@ def test_committed_approved_subset_is_exactly_reproducible_from_its_public_audit
     config_bytes = (ROOT / "webapp/challenge_taxa.json").read_bytes()
     assert builder.generate(public, approved=True) == (public, config_bytes)
     config = json.loads(config_bytes)
-    assert len(config["taxa"]) == 324
-    assert config["coverage"]["source_rows"] == 369 and config["coverage"]["resolved_rows"] == 330
-    assert len(config["coverage"]["omissions"]) == 39
+    assert len(config["taxa"]) == 335
+    assert config["coverage"]["source_rows"] == 369 and config["coverage"]["resolved_rows"] == 347
+    assert len(config["coverage"]["omissions"]) == 22
     assert (
         config["coverage"]["original_source_sha256"]
         == "523ca0de128b897f18a511ff1d67448a4d7cd7640464a051f5f91dcd352f205f"

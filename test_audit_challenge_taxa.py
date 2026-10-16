@@ -55,6 +55,15 @@ def test_higher_rank_and_inactive_candidates_are_reviewed():
     assert "incomplete" in resolve("Species alpha", partial)["reason"]
 
 
+@pytest.mark.parametrize("raw", ["Berberis spp.", "Berberis\u00a0spp.", "BerberisÂ\u00a0spp."])
+def test_only_explicit_plural_genus_targets_resolve_without_species_expansion(raw):
+    answer = resolve(raw, response("Berberis", "genus", id=58728))
+    assert answer["status"] == "resolved"
+    assert answer["target"] == {"id": 58728, "name": "Berberis", "rank": "genus"}
+    assert resolve("Berberis", response("Berberis", "genus"))["status"] == "needs_review"
+    assert resolve("Berberis spp.", response("Berberis", "family"))["status"] == "needs_review"
+
+
 def test_csv_audit_preserves_blank_rows_encoding_raw_names_and_cache(tmp_path):
     raw = "Common.name,Scientific.name\nFirst,Species\xa0alpha\nUnknown,\n".encode("cp1252")
     calls = []

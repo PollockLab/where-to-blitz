@@ -1,8 +1,8 @@
 {
   "approved_for_publication": false,
   "input_audit_sha256": "5ddb235e84a8979edd56f6c694b5c9d39ef8914a8df49bf8d10149bdc163d605",
-  "resolved_rows": 330,
-  "review_rows": 39,
+  "resolved_rows": 347,
+  "review_rows": 22,
   "rows": [
     {
       "common_name": "Arctic Blue",
@@ -3066,15 +3066,38 @@
     {
       "common_name": "NA",
       "csv_row": 177,
+      "external_review": {
+        "authority": {
+          "sha256": "be7327b3fe2beb70383a2fcc3f6acec884b418645cf8fd12d61dda1f36d9f779",
+          "url": "https://gd.eppo.int/taxon/NUMOPI"
+        },
+        "authority_name": "Acrobasis pirivorella",
+        "decision": "synonym",
+        "kingdom": "Animalia",
+        "name_lookup": {
+          "sha256": "40cb1118292eec59bc8cd9c9601554585aaf3d310a26cdfc353471a100280672",
+          "url": "https://api.inaturalist.org/v1/taxa?q=Acrobasis+pirivorella&per_page=200&all_names=true&is_active=true"
+        },
+        "provider_kingdom": "Animalia",
+        "source_name": "Acrobasis pyrivorella",
+        "taxonomy_lookup": {
+          "sha256": "6d489ed9fe97de53e3194b7e11986cd929e6ac1df99294ea73d41f962a949bb7",
+          "url": "https://api.inaturalist.org/v1/taxa/1120249"
+        }
+      },
       "lookup": {
         "sha256": "239686ff40b8e3d5f5ef7918985edf095eee49253ba73aeb49a15da378bfee59",
         "url": "https://api.inaturalist.org/v1/taxa?q=Acrobasis+pyrivorella&per_page=200&all_names=true&is_active=true"
       },
+      "match_type": "reviewed_scientific_synonym",
       "query": "Acrobasis pyrivorella",
       "raw_scientific_name": "Acrobasis pyrivorella",
-      "reason": "no unique exact active scientific-name match",
-      "reason_code": "no_unique_exact_match",
-      "status": "needs_review"
+      "status": "resolved",
+      "target": {
+        "id": 1120249,
+        "name": "Acrobasis pirivorella",
+        "rank": "species"
+      }
     },
     {
       "common_name": "NA",
@@ -3198,15 +3221,38 @@
     {
       "common_name": "NA",
       "csv_row": 185,
+      "external_review": {
+        "authority": {
+          "sha256": "da59e5253fd0ec46b65d9cb0f6db1a42519f22014c2ac9ffc141312058f319fd",
+          "url": "https://gd.eppo.int/taxon/ALTEKI"
+        },
+        "authority_name": "Alternaria gaisen",
+        "decision": "synonym",
+        "kingdom": "Fungi",
+        "name_lookup": {
+          "sha256": "9e44ffcabe6e2237370ea824d25915a1001ba8f042ec9ce8a1ce2a21460b7ddb",
+          "url": "https://api.inaturalist.org/v1/taxa?q=Alternaria+gaisen&per_page=200&all_names=true&is_active=true"
+        },
+        "provider_kingdom": "Fungi",
+        "source_name": "Alternaria kikuchiana",
+        "taxonomy_lookup": {
+          "sha256": "06b5b95c93833582e8c9248662fc35a25667b1eb07a9eab4e4540042abdc4393",
+          "url": "https://api.inaturalist.org/v1/taxa/1120252"
+        }
+      },
       "lookup": {
         "sha256": "239686ff40b8e3d5f5ef7918985edf095eee49253ba73aeb49a15da378bfee59",
         "url": "https://api.inaturalist.org/v1/taxa?q=Alternaria+kikuchiana&per_page=200&all_names=true&is_active=true"
       },
+      "match_type": "reviewed_scientific_synonym",
       "query": "Alternaria kikuchiana",
       "raw_scientific_name": "Alternaria kikuchiana",
-      "reason": "no unique exact active scientific-name match",
-      "reason_code": "no_unique_exact_match",
-      "status": "needs_review"
+      "status": "resolved",
+      "target": {
+        "id": 1120252,
+        "name": "Alternaria gaisen",
+        "rank": "species"
+      }
     },
     {
       "common_name": "NA",
@@ -3469,17 +3515,25 @@
       }
     },
     {
+      "ancestry_lookup": {
+        "sha256": "21f7158c29ae822e79d38316246ab647cc2353ac8c529e6dd97407af06d1df4f",
+        "url": "https://api.inaturalist.org/v1/taxa/58728"
+      },
       "common_name": "NA",
       "csv_row": 202,
       "lookup": {
         "sha256": "155733691a50a13bcf286eca77ddd214267956bf13d76d2050847881f3209202",
         "url": "https://api.inaturalist.org/v1/taxa?q=Berberis&per_page=200&all_names=true&is_active=true"
       },
+      "match_type": "accepted_name",
       "query": "Berberis",
       "raw_scientific_name": "Berberis spp.",
-      "reason": "taxon search result is incomplete",
-      "reason_code": "incomplete_search",
-      "status": "needs_review"
+      "status": "resolved",
+      "target": {
+        "id": 58728,
+        "name": "Berberis",
+        "rank": "genus"
+      }
     },
     {
       "common_name": "NA",
@@ -3791,15 +3845,38 @@
     {
       "common_name": "NA",
       "csv_row": 222,
+      "external_review": {
+        "authority": {
+          "sha256": "375a68ae2aeaa75ea2d9261b73faba5d3bf1f5a051e425db6d1c4fcb534ad63b",
+          "url": "https://gd.eppo.int/taxon/CYDIIN"
+        },
+        "authority_name": "Grapholita inopinata",
+        "decision": "synonym",
+        "kingdom": "Animalia",
+        "name_lookup": {
+          "sha256": "b875c5b0822e125ce457168e5e6df7296268f56b8d396f2f0d54099a41c1518c",
+          "url": "https://api.inaturalist.org/v1/taxa?q=Grapholita+inopinata&per_page=200&all_names=true&is_active=true"
+        },
+        "provider_kingdom": "Animalia",
+        "source_name": "Cydia inopinata",
+        "taxonomy_lookup": {
+          "sha256": "66b5aa026127e2df3a1520487d8397b7e22da1c8dcba2ef050b16a92b6640f2e",
+          "url": "https://api.inaturalist.org/v1/taxa/1507288"
+        }
+      },
       "lookup": {
         "sha256": "239686ff40b8e3d5f5ef7918985edf095eee49253ba73aeb49a15da378bfee59",
         "url": "https://api.inaturalist.org/v1/taxa?q=Cydia+inopinata&per_page=200&all_names=true&is_active=true"
       },
+      "match_type": "reviewed_scientific_synonym",
       "query": "Cydia inopinata",
       "raw_scientific_name": "Cydia inopinata",
-      "reason": "no unique exact active scientific-name match",
-      "reason_code": "no_unique_exact_match",
-      "status": "needs_review"
+      "status": "resolved",
+      "target": {
+        "id": 1507288,
+        "name": "Aspila inopinata",
+        "rank": "species"
+      }
     },
     {
       "common_name": "",
@@ -4270,30 +4347,61 @@
       }
     },
     {
+      "ancestry_lookup": {
+        "sha256": "19c6cc1fc2abfa9677f204058db0b76d6bf852d4e61001e32da42af6d2917bef",
+        "url": "https://api.inaturalist.org/v1/taxa/47483"
+      },
       "common_name": "NA",
       "csv_row": 251,
       "lookup": {
         "sha256": "7a8021818f2f9b5fa95e03391f206c1f3b2c0447a5d050a8236c0c1f6f443eca",
         "url": "https://api.inaturalist.org/v1/taxa?q=Helix&per_page=200&all_names=true&is_active=true"
       },
+      "match_type": "accepted_name",
       "query": "Helix",
       "raw_scientific_name": "Helix spp.",
-      "reason": "taxon search result is incomplete",
-      "reason_code": "incomplete_search",
-      "status": "needs_review"
+      "status": "resolved",
+      "target": {
+        "id": 47483,
+        "name": "Helix",
+        "rank": "genus"
+      }
     },
     {
       "common_name": "NA",
       "csv_row": 252,
+      "external_review": {
+        "authority": {
+          "sha256": "7b6814f27e58767b574b100ec5299a31e8475cab82bb4bfc9bf4a8616cc76efd",
+          "url": "https://gd.eppo.int/taxon/HESOCA"
+        },
+        "authority_name": "Trichoferus campestris",
+        "decision": "synonym",
+        "kingdom": "Animalia",
+        "name_lookup": {
+          "sha256": "29f6c403d907e7a7e5c826fb96f1e6f1bf1521a8550cf3b2daa0c5d63c4a5577",
+          "url": "https://api.inaturalist.org/v1/taxa?q=Trichoferus+campestris&per_page=200&all_names=true&is_active=true"
+        },
+        "provider_kingdom": "Animalia",
+        "source_name": "Hesperophanes campestris",
+        "taxonomy_lookup": {
+          "sha256": "37edfdb4b4a45b76818df268f2b5ae9b4254d4ced7b4ac95b84ffeeb604bd8cb",
+          "url": "https://api.inaturalist.org/v1/taxa/447062"
+        }
+      },
       "lookup": {
         "sha256": "239686ff40b8e3d5f5ef7918985edf095eee49253ba73aeb49a15da378bfee59",
         "url": "https://api.inaturalist.org/v1/taxa?q=Hesperophanes+campestris&per_page=200&all_names=true&is_active=true"
       },
+      "match_type": "reviewed_scientific_synonym",
       "query": "Hesperophanes campestris",
       "raw_scientific_name": "Hesperophanes campestris",
-      "reason": "no unique exact active scientific-name match",
-      "reason_code": "no_unique_exact_match",
-      "status": "needs_review"
+      "status": "resolved",
+      "target": {
+        "id": 447062,
+        "name": "Trichoferus campestris",
+        "rank": "species"
+      }
     },
     {
       "common_name": "NA",
@@ -4432,10 +4540,9 @@
       }
     },
     {
-      "candidate": {
-        "id": 510597,
-        "name": "Longidorus",
-        "rank": "genus"
+      "ancestry_lookup": {
+        "sha256": "cb69f8b179d4f473f6ad5d264251bd7cc7eed3e91c26d9d5a262faa0fd1453c2",
+        "url": "https://api.inaturalist.org/v1/taxa/510597"
       },
       "common_name": "NA",
       "csv_row": 261,
@@ -4443,11 +4550,15 @@
         "sha256": "83e29ecc0de322e909d80d9a8d72b0bef9e0b593bf38d2e696164e73f7d2a100",
         "url": "https://api.inaturalist.org/v1/taxa?q=Longidorus&per_page=200&all_names=true&is_active=true"
       },
+      "match_type": "accepted_name",
       "query": "Longidorus",
       "raw_scientific_name": "Longidorus spp.",
-      "reason": "target rank is broader than species",
-      "reason_code": "broader_than_species",
-      "status": "needs_review"
+      "status": "resolved",
+      "target": {
+        "id": 510597,
+        "name": "Longidorus",
+        "rank": "genus"
+      }
     },
     {
       "common_name": "NA",
@@ -4666,15 +4777,38 @@
     {
       "common_name": "NA",
       "csv_row": 275,
+      "external_review": {
+        "authority": {
+          "sha256": "ed344d703d8c08f0eecdddf3d25a8ca479ba814d3fe9e85d863881ff2e8e0b6c",
+          "url": "https://gd.eppo.int/taxon/MONIPO"
+        },
+        "authority_name": "Monilinia polystroma",
+        "decision": "synonym",
+        "kingdom": "Fungi",
+        "name_lookup": {
+          "sha256": "bfb91598d1975a8e2b80ee2cbcab0b22ff6148389d742c8264ffb462f915683c",
+          "url": "https://api.inaturalist.org/v1/taxa?q=Monilinia+polystroma&per_page=200&all_names=true&is_active=true"
+        },
+        "provider_kingdom": "Fungi",
+        "source_name": "Monilia polystroma",
+        "taxonomy_lookup": {
+          "sha256": "410dc631327e6a01d98426598d2911d2bbf08320c21dba19453a81b1a6226f0d",
+          "url": "https://api.inaturalist.org/v1/taxa/978988"
+        }
+      },
       "lookup": {
         "sha256": "239686ff40b8e3d5f5ef7918985edf095eee49253ba73aeb49a15da378bfee59",
         "url": "https://api.inaturalist.org/v1/taxa?q=Monilia+polystroma&per_page=200&all_names=true&is_active=true"
       },
+      "match_type": "reviewed_scientific_synonym",
       "query": "Monilia polystroma",
       "raw_scientific_name": "Monilia polystroma",
-      "reason": "no unique exact active scientific-name match",
-      "reason_code": "no_unique_exact_match",
-      "status": "needs_review"
+      "status": "resolved",
+      "target": {
+        "id": 978988,
+        "name": "Monilinia polystroma",
+        "rank": "species"
+      }
     },
     {
       "common_name": "NA",
@@ -4737,10 +4871,9 @@
       }
     },
     {
-      "candidate": {
-        "id": 82044,
-        "name": "Monochamus",
-        "rank": "genus"
+      "ancestry_lookup": {
+        "sha256": "f2220b86f929e4dc2e97422307f3b031eac81e186313a6e9b39279e7c33a278a",
+        "url": "https://api.inaturalist.org/v1/taxa/82044"
       },
       "common_name": "NA",
       "csv_row": 280,
@@ -4748,11 +4881,15 @@
         "sha256": "bcbb79e57e03b1014ac6fa1c34abdc67878a6dece0da638bc242871927d5a147",
         "url": "https://api.inaturalist.org/v1/taxa?q=Monochamus&per_page=200&all_names=true&is_active=true"
       },
+      "match_type": "accepted_name",
       "query": "Monochamus",
       "raw_scientific_name": "Monochamus spp.",
-      "reason": "target rank is broader than species",
-      "reason_code": "broader_than_species",
-      "status": "needs_review"
+      "status": "resolved",
+      "target": {
+        "id": 82044,
+        "name": "Monochamus",
+        "rank": "genus"
+      }
     },
     {
       "common_name": "NA",
@@ -4791,15 +4928,38 @@
     {
       "common_name": "NA",
       "csv_row": 283,
+      "external_review": {
+        "authority": {
+          "sha256": "e21db1eb5cfda0f672123138c9d6dba4ca774acc6e4383276e2166d7c189731d",
+          "url": "https://gd.eppo.int/taxon/NEOVIN"
+        },
+        "authority_name": "Tilletia indica",
+        "decision": "synonym",
+        "kingdom": "Fungi",
+        "name_lookup": {
+          "sha256": "3159fb2209d82c9920bfa539857adbdb86668b873726c597216297def2451e10",
+          "url": "https://api.inaturalist.org/v1/taxa?q=Tilletia+indica&per_page=200&all_names=true&is_active=true"
+        },
+        "provider_kingdom": "Fungi",
+        "source_name": "Neovossia indica",
+        "taxonomy_lookup": {
+          "sha256": "ee327865f5fee0ad71e45329f896491148fd65a6de475ebdc843778cea6862cf",
+          "url": "https://api.inaturalist.org/v1/taxa/352525"
+        }
+      },
       "lookup": {
         "sha256": "239686ff40b8e3d5f5ef7918985edf095eee49253ba73aeb49a15da378bfee59",
         "url": "https://api.inaturalist.org/v1/taxa?q=Neovossia+indica&per_page=200&all_names=true&is_active=true"
       },
+      "match_type": "reviewed_scientific_synonym",
       "query": "Neovossia indica",
       "raw_scientific_name": "Neovossia indica",
-      "reason": "no unique exact active scientific-name match",
-      "reason_code": "no_unique_exact_match",
-      "status": "needs_review"
+      "status": "resolved",
+      "target": {
+        "id": 352525,
+        "name": "Tilletia indica",
+        "rank": "species"
+      }
     },
     {
       "common_name": "NA",
@@ -4838,15 +4998,38 @@
     {
       "common_name": "NA",
       "csv_row": 286,
+      "external_review": {
+        "authority": {
+          "sha256": "be7327b3fe2beb70383a2fcc3f6acec884b418645cf8fd12d61dda1f36d9f779",
+          "url": "https://gd.eppo.int/taxon/NUMOPI"
+        },
+        "authority_name": "Acrobasis pirivorella",
+        "decision": "synonym",
+        "kingdom": "Animalia",
+        "name_lookup": {
+          "sha256": "40cb1118292eec59bc8cd9c9601554585aaf3d310a26cdfc353471a100280672",
+          "url": "https://api.inaturalist.org/v1/taxa?q=Acrobasis+pirivorella&per_page=200&all_names=true&is_active=true"
+        },
+        "provider_kingdom": "Animalia",
+        "source_name": "Numonia pyrivorella",
+        "taxonomy_lookup": {
+          "sha256": "6d489ed9fe97de53e3194b7e11986cd929e6ac1df99294ea73d41f962a949bb7",
+          "url": "https://api.inaturalist.org/v1/taxa/1120249"
+        }
+      },
       "lookup": {
         "sha256": "239686ff40b8e3d5f5ef7918985edf095eee49253ba73aeb49a15da378bfee59",
         "url": "https://api.inaturalist.org/v1/taxa?q=Numonia+pyrivorella&per_page=200&all_names=true&is_active=true"
       },
+      "match_type": "reviewed_scientific_synonym",
       "query": "Numonia pyrivorella",
       "raw_scientific_name": "Numonia pyrivorella",
-      "reason": "no unique exact active scientific-name match",
-      "reason_code": "no_unique_exact_match",
-      "status": "needs_review"
+      "status": "resolved",
+      "target": {
+        "id": 1120249,
+        "name": "Acrobasis pirivorella",
+        "rank": "species"
+      }
     },
     {
       "common_name": "NA",
@@ -4968,17 +5151,25 @@
       }
     },
     {
+      "ancestry_lookup": {
+        "sha256": "606c4e7066168268aa522900f357151115d7c77e11d1400d3733f04d368c720b",
+        "url": "https://api.inaturalist.org/v1/taxa/47321"
+      },
       "common_name": "NA",
       "csv_row": 294,
       "lookup": {
         "sha256": "c425dcb3cab98dbeb36a168c460285fc9f99a19d9ec53d11eda539747e4caa1b",
         "url": "https://api.inaturalist.org/v1/taxa?q=Orobanche&per_page=200&all_names=true&is_active=true"
       },
+      "match_type": "accepted_name",
       "query": "Orobanche",
       "raw_scientific_name": "Orobanche spp.",
-      "reason": "taxon search result is incomplete",
-      "reason_code": "incomplete_search",
-      "status": "needs_review"
+      "status": "resolved",
+      "target": {
+        "id": 47321,
+        "name": "Orobanche",
+        "rank": "genus"
+      }
     },
     {
       "common_name": "",
@@ -5338,10 +5529,9 @@
       }
     },
     {
-      "candidate": {
-        "id": 127595,
-        "name": "Proeulia",
-        "rank": "genus"
+      "ancestry_lookup": {
+        "sha256": "3f40944a6297367d17858ff8d38ec1a5e354f034df5671bd1d94829e4ade3063",
+        "url": "https://api.inaturalist.org/v1/taxa/127595"
       },
       "common_name": "NA",
       "csv_row": 316,
@@ -5349,11 +5539,15 @@
         "sha256": "3cdb98b903fdf78159cd182cbfa0b84a395121d2a0c5e5fd2a0e58d72bca09b1",
         "url": "https://api.inaturalist.org/v1/taxa?q=Proeulia&per_page=200&all_names=true&is_active=true"
       },
+      "match_type": "accepted_name",
       "query": "Proeulia",
       "raw_scientific_name": "Proeulia spp.",
-      "reason": "target rank is broader than species",
-      "reason_code": "broader_than_species",
-      "status": "needs_review"
+      "status": "resolved",
+      "target": {
+        "id": 127595,
+        "name": "Proeulia",
+        "rank": "genus"
+      }
     },
     {
       "common_name": "NA",
@@ -5586,10 +5780,9 @@
       }
     },
     {
-      "candidate": {
-        "id": 54812,
-        "name": "Rhamnus",
-        "rank": "genus"
+      "ancestry_lookup": {
+        "sha256": "612b7174f735bf5315cddba20ec5f78ba6626f9733da4817d5782817a6c5cbbb",
+        "url": "https://api.inaturalist.org/v1/taxa/54812"
       },
       "common_name": "NA",
       "csv_row": 331,
@@ -5597,11 +5790,15 @@
         "sha256": "bbbadafb4869bdd5d29b452bf28342a2280bb24f2df1570a381c6d654b6589be",
         "url": "https://api.inaturalist.org/v1/taxa?q=Rhamnus&per_page=200&all_names=true&is_active=true"
       },
+      "match_type": "accepted_name",
       "query": "Rhamnus",
       "raw_scientific_name": "Rhamnus spp.",
-      "reason": "target rank is broader than species",
-      "reason_code": "broader_than_species",
-      "status": "needs_review"
+      "status": "resolved",
+      "target": {
+        "id": 54812,
+        "name": "Rhamnus",
+        "rank": "genus"
+      }
     },
     {
       "common_name": "NA",
@@ -5623,15 +5820,38 @@
     {
       "common_name": "NA",
       "csv_row": 333,
+      "external_review": {
+        "authority": {
+          "sha256": "6979aea566c681385d22122b37a73678395a6a232c5ef143f9a46b956f6d94b8",
+          "url": "https://gd.eppo.int/taxon/MONIFG"
+        },
+        "authority_name": "Monilinia fructigena",
+        "decision": "synonym",
+        "kingdom": "Fungi",
+        "name_lookup": {
+          "sha256": "b731288f0ffd1c6517235b1cc044924ab7b90df1a6343b6aad5e44094c2b7c25",
+          "url": "https://api.inaturalist.org/v1/taxa?q=Monilinia+fructigena&per_page=200&all_names=true&is_active=true"
+        },
+        "provider_kingdom": "Fungi",
+        "source_name": "Sclerotinia fructigena",
+        "taxonomy_lookup": {
+          "sha256": "70a8f63f4e5a61f28af6ccddb2b2f1e39cac83e659c4620e32c25c5c91869058",
+          "url": "https://api.inaturalist.org/v1/taxa/775527"
+        }
+      },
       "lookup": {
         "sha256": "74404da667aa64351bf146a0c8d5ed6237d20162353d931040462b4d90558209",
         "url": "https://api.inaturalist.org/v1/taxa?q=Sclerotinia+fructigena&per_page=200&all_names=true&is_active=true"
       },
+      "match_type": "reviewed_scientific_synonym",
       "query": "Sclerotinia fructigena",
       "raw_scientific_name": "Sclerotinia fructigena",
-      "reason": "no unique exact active scientific-name match",
-      "reason_code": "no_unique_exact_match",
-      "status": "needs_review"
+      "status": "resolved",
+      "target": {
+        "id": 775527,
+        "name": "Monilinia fructigena",
+        "rank": "species"
+      }
     },
     {
       "common_name": "NA",
@@ -5783,17 +6003,25 @@
       "status": "needs_review"
     },
     {
+      "ancestry_lookup": {
+        "sha256": "6a6f6c3165b1b8bfd98332953e912d8e9eeb128e04fb11abd279a438e433f0af",
+        "url": "https://api.inaturalist.org/v1/taxa/84833"
+      },
       "common_name": "NA",
       "csv_row": 343,
       "lookup": {
         "sha256": "64c5e83e8e1ca8434a256c5de2113ee57d1486c7edd71f546ea33e6f16201cb8",
         "url": "https://api.inaturalist.org/v1/taxa?q=Striga&per_page=200&all_names=true&is_active=true"
       },
+      "match_type": "accepted_name",
       "query": "Striga",
       "raw_scientific_name": "Striga spp.",
-      "reason": "taxon search result is incomplete",
-      "reason_code": "incomplete_search",
-      "status": "needs_review"
+      "status": "resolved",
+      "target": {
+        "id": 84833,
+        "name": "Striga",
+        "rank": "genus"
+      }
     },
     {
       "common_name": "NA",
@@ -6017,10 +6245,9 @@
       }
     },
     {
-      "candidate": {
-        "id": 510627,
-        "name": "Trichodorus",
-        "rank": "genus"
+      "ancestry_lookup": {
+        "sha256": "5e7d536222ee3d51f96a8db2ddc310086489ee83e5bf0a6a79b3764965c6cf46",
+        "url": "https://api.inaturalist.org/v1/taxa/510627"
       },
       "common_name": "NA",
       "csv_row": 357,
@@ -6028,11 +6255,15 @@
         "sha256": "1b6c3f861573bf08b37ba93ab6b9aab7ac07879bc8c0769e9d3a6514ad17787b",
         "url": "https://api.inaturalist.org/v1/taxa?q=Trichodorus&per_page=200&all_names=true&is_active=true"
       },
+      "match_type": "accepted_name",
       "query": "Trichodorus",
       "raw_scientific_name": "Trichodorus spp.",
-      "reason": "target rank is broader than species",
-      "reason_code": "broader_than_species",
-      "status": "needs_review"
+      "status": "resolved",
+      "target": {
+        "id": 510627,
+        "name": "Trichodorus",
+        "rank": "genus"
+      }
     },
     {
       "common_name": "Velvet Long-horned Beetle",
@@ -6180,10 +6411,9 @@
       }
     },
     {
-      "candidate": {
-        "id": 368914,
-        "name": "Xiphinema",
-        "rank": "genus"
+      "ancestry_lookup": {
+        "sha256": "0f0b6f94a5f5694780ceb381c46dd7b90d05408dbecf6e4aaa7049402520ab47",
+        "url": "https://api.inaturalist.org/v1/taxa/368914"
       },
       "common_name": "NA",
       "csv_row": 367,
@@ -6191,11 +6421,15 @@
         "sha256": "04099719dd7e113d0c8537bb6acf411942c6a7a58bc51d38a8c9e12ee0e20fd9",
         "url": "https://api.inaturalist.org/v1/taxa?q=Xiphinema&per_page=200&all_names=true&is_active=true"
       },
+      "match_type": "accepted_name",
       "query": "Xiphinema",
       "raw_scientific_name": "XiphinemaÂ spp.",
-      "reason": "target rank is broader than species",
-      "reason_code": "broader_than_species",
-      "status": "needs_review"
+      "status": "resolved",
+      "target": {
+        "id": 368914,
+        "name": "Xiphinema",
+        "rank": "genus"
+      }
     },
     {
       "common_name": "NA",
@@ -6215,21 +6449,37 @@
       }
     },
     {
+      "candidate": {
+        "id": 1503461,
+        "name": "Xylophilus ampelinus",
+        "rank": "species"
+      },
       "common_name": "NA",
       "csv_row": 369,
+      "external_review": {
+        "authority": {
+          "sha256": "5aef378745428fb478092c6ab26017c89cb01c9ca4d716ab1b05bb2e1160cd32",
+          "url": "https://gd.eppo.int/taxon/XANTAM"
+        },
+        "authority_name": "Xylophilus ampelinus",
+        "decision": "concept_conflict",
+        "kingdom": "Bacteria",
+        "provider_kingdom": "Animalia",
+        "source_name": "Xylophilus ampelinus",
+        "taxonomy_lookup": {
+          "sha256": "68fce50f5e46b294b6b1e64f453880446587dffc386c2a98f9fea69f26ceee81",
+          "url": "https://api.inaturalist.org/v1/taxa/1503461"
+        }
+      },
       "lookup": {
         "sha256": "a9b207efb99612bcdf8d3f06570f9ffb7391864005852cb7128589d3ba8624d0",
         "url": "https://api.inaturalist.org/v1/taxa?q=Xylophilus+ampelinus&per_page=200&all_names=true&is_active=true"
       },
-      "match_type": "accepted_name",
       "query": "Xylophilus ampelinus",
       "raw_scientific_name": "Xylophilus ampelinus",
-      "status": "resolved",
-      "target": {
-        "id": 1503461,
-        "name": "Xylophilus ampelinus",
-        "rank": "species"
-      }
+      "reason": "taxonomic concept conflicts with authoritative lineage",
+      "reason_code": "taxonomic_concept_conflict",
+      "status": "needs_review"
     },
     {
       "common_name": "NA",

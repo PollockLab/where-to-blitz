@@ -20,6 +20,7 @@ from urllib.parse import urlparse
 import requests
 
 API = "https://api.inaturalist.org/v1/observations"
+TAXON_API = "https://api.inaturalist.org/v1/taxa/"
 PER_PAGE = 200
 PLACE_ID = 6712  # Canada
 MAX_PAGES = 200
@@ -33,6 +34,7 @@ OMISSION_REASONS = {
     "broader_than_species",
     "rank_mismatch",
     "missing_species_ancestry",
+    "taxonomic_concept_conflict",
 }
 
 
@@ -152,7 +154,7 @@ def validate_list(config):
             or not positive_int(taxon.get("id"))
             or not isinstance(taxon.get("name"), str)
             or not taxon["name"].strip()
-            or taxon.get("rank") not in ("species", "subspecies", "variety", "form")
+            or taxon.get("rank") not in ("species", "subspecies", "variety", "form", "genus")
             or taxon["id"] in species
         ):
             raise ValueError("taxon list has an invalid or duplicate species")
@@ -167,6 +169,11 @@ def species_groups(config):
     """Keep listed infraspecies as exact targets, with verified species grouping metadata."""
     groups, names = {}, {}
     for target in config["taxa"]:
+        if target["rank"] == "genus":
+            if "species" in target or len(target["name"].split()) != 1:
+                raise ValueError("genus targets require one genus name and no species grouping")
+            groups[target["id"]] = None
+            continue
         if target["rank"] == "species":
             group = {"id": target["id"], "name": target["name"]}
             if "species" in target and target["species"] != group:
@@ -286,7 +293,111 @@ def public_context(row, taxon):
     return result
 
 
-def public_observation(row, species, start, end, groups=None):
+def taxonomy_identity(value):
+    """Allowlist public ranked taxonomy identities, never arbitrary API fields."""
+    if not isinstance(value, dict) or not positive_int(value.get("id")) or value.get("is_active") is not True:
+        raise ValueError("taxonomy evidence requires active ranked identities")
+    return {
+        "id": value["id"],
+        "name": context_text(value.get("name"), "taxon name"),
+        "rank": context_text(value.get("rank"), "taxon rank", 50),
+        "is_active": True,
+    }
+
+
+def taxonomy_species(fact):
+    """A species is itself; a finer identification needs one ranked species ancestor."""
+    lineage = [fact, *fact["ancestors"]]
+    species = [item for item in lineage if item["rank"] == "species"]
+    finer = fact["rank"] in {"subspecies", "variety", "subvariety", "form", "subform"}
+    if len(species) > 1 or finer and len(species) != 1 or species and fact["rank"] != "species" and not finer:
+        raise ValueError("taxonomy evidence has conflicting species ancestors")
+    if not species:
+        return None
+    return {key: species[0][key] for key in ("id", "name")}
+
+
+def validate_taxonomy(facts):
+    if not isinstance(facts, list):
+        raise ValueError("snapshot taxonomy must be a list")
+    result, identities = {}, {}
+    for fact in facts:
+        if not isinstance(fact, dict) or set(fact) != {
+            "id",
+            "name",
+            "rank",
+            "is_active",
+            "ancestors",
+            "lookup",
+        }:
+            raise ValueError("invalid snapshot taxonomy evidence")
+        taxonomy_identity(fact)
+        ancestors = fact["ancestors"]
+        if not isinstance(ancestors, list) or len(ancestors) > 50:
+            raise ValueError("invalid ranked taxonomy ancestors")
+        ids = [fact["id"]]
+        for ancestor in ancestors:
+            if taxonomy_identity(ancestor) != ancestor:
+                raise ValueError("taxonomy ancestors contain nonallowlisted fields")
+            ids.append(ancestor["id"])
+        for item in [fact, *ancestors]:
+            identity = (item["name"], item["rank"])
+            if item["id"] in identities and identities[item["id"]] != identity:
+                raise ValueError("taxonomy evidence disagrees on one shared identity")
+            identities[item["id"]] = identity
+        lookup = fact["lookup"]
+        if (
+            len(set(ids)) != len(ids)
+            or fact["id"] in result
+            or not isinstance(lookup, dict)
+            or set(lookup) != {"url", "sha256"}
+            or lookup["url"] != TAXON_API + str(fact["id"])
+            or not isinstance(lookup["sha256"], str)
+            or not re.fullmatch(r"[0-9a-f]{64}", lookup["sha256"])
+        ):
+            raise ValueError("invalid taxonomy identity or lookup provenance")
+        taxonomy_species(fact)
+        result[fact["id"]] = fact
+    if list(result) != sorted(result):
+        raise ValueError("snapshot taxonomy must use deterministic ID ordering")
+    return result
+
+
+def validate_target_mapping(snapshot, config):
+    """Bind exact approved targets and dynamic genus descendants to species identities."""
+    groups = species_groups(config)
+    genera = {target["id"]: target for target in config["taxa"] if target["rank"] == "genus"}
+    if genera and "taxonomy" not in snapshot:
+        raise ValueError("genus-target snapshots require ranked taxonomy evidence")
+    facts = validate_taxonomy(snapshot.get("taxonomy", []))
+    used = set()
+    for row in snapshot["observations"]:
+        targets = row.get("target_ids", [row["taxon_id"]])
+        group = {"id": row["taxon_id"], "name": row["name"]}
+        if any(
+            target not in groups or groups[target] is not None and groups[target] != group
+            for target in targets
+        ):
+            raise ValueError(
+                "challenge snapshot has observations outside the approved target/species mapping"
+            )
+        matched_genera = set(targets) & genera.keys()
+        fact = facts.get(row.get("identified_taxon_id"))
+        if genera or fact:
+            if fact is None or taxonomy_species(fact) != group:
+                raise ValueError("observation lacks its verified species taxonomy")
+            lineage = {item["id"]: item for item in [fact, *fact["ancestors"]]}
+            if set(targets) != lineage.keys() & groups.keys():
+                raise ValueError("observation target matches differ from verified ancestry")
+            for target in matched_genera:
+                if any(lineage[target][key] != genera[target][key] for key in ("name", "rank")):
+                    raise ValueError("genus target differs from verified taxonomy")
+            used.add(fact["id"])
+    if used != facts.keys():
+        raise ValueError("snapshot taxonomy contains unused evidence")
+
+
+def public_observation(row, species, start, end, groups=None, taxonomy=None):
     """Validate eligibility again locally, retaining only public, open coordinates."""
     if not isinstance(row, dict) or not positive_int(row.get("id")):
         raise ValueError("invalid observation ID")
@@ -303,13 +414,30 @@ def public_observation(row, species, start, end, groups=None):
     if not matches:
         raise ValueError("observation identification does not match a listed target")
     groups = groups or {target: {"id": target, "name": name} for target, name in species.items()}
-    species_ids = {groups[target]["id"] for target in matches}
+    fixed = [groups[target] for target in matches if groups[target] is not None]
+    dynamic = None
+    if taxonomy is not None or any(groups[target] is None for target in matches):
+        if taxonomy is None:
+            raise ValueError("genus observations require ranked taxonomy lookup")
+        fact = taxonomy(taxon["id"])
+        lineage = {item["id"] for item in [fact, *fact["ancestors"]]}
+        # /taxa/{id}.ancestors omits Life (48460), while observation ancestor_ids includes it.
+        if lineage - {48460} != {taxon["id"], *ancestors} - {48460} or any(
+            key in taxon and taxon[key] != fact[key] for key in ("name", "rank")
+        ):
+            raise ValueError("observation identification differs from verified taxonomy ancestry")
+        dynamic = taxonomy_species(fact)
+        if dynamic is None:
+            return None  # Genus-only identifications do not invent a species diversity group.
+    species_ids = {group["id"] for group in fixed + ([dynamic] if dynamic else [])}
     if len(species_ids) != 1:
         raise ValueError("listed targets disagree on the observation's species grouping")
     species_id = species_ids.pop()
     if species_id not in {taxon["id"], *ancestors}:
         raise ValueError("observation identification lacks the configured species ancestor")
-    species_name = groups[min(matches)]["name"]
+    species_name = (dynamic or fixed[0])["name"]
+    if any(group["name"] != species_name for group in fixed):
+        raise ValueError("listed targets disagree on the observation's species name")
     places = row.get("place_ids")
     if not isinstance(places, list) or PLACE_ID not in places:
         raise ValueError("observation is not in Canada")
@@ -348,7 +476,7 @@ def public_observation(row, species, start, end, groups=None):
     }
 
 
-def enumerate_observations(fetch, filters, species, max_pages=MAX_PAGES, groups=None):
+def enumerate_observations(fetch, filters, species, max_pages=MAX_PAGES, groups=None, taxonomy=None):
     """Use ascending ID cursors, not the API's bounded offset pagination."""
     if not positive_int(max_pages) or max_pages > MAX_PAGES:
         raise ValueError("page budget must be 1..200")
@@ -370,7 +498,7 @@ def enumerate_observations(fetch, filters, species, max_pages=MAX_PAGES, groups=
         if actual == 0:
             return rows, seen, evidence
         for row in data["results"]:
-            item = public_observation(row, species, start, end, groups)
+            item = public_observation(row, species, start, end, groups, taxonomy)
             obs_id = row["id"]
             if obs_id <= cursor or obs_id in seen:
                 raise ValueError("duplicate or unordered observation ID")
@@ -386,8 +514,33 @@ def acquire(config, fetch, as_of):
     species = validate_list(config)
     filters = query_filters(config, as_of)
     groups = species_groups(config)
-    first, hashes, evidence = enumerate_observations(fetch, filters, species, groups=groups)
-    second, repeated, confirmation = enumerate_observations(fetch, filters, species, groups=groups)
+    facts = {}
+
+    def taxonomy(taxon_id):
+        if taxon_id not in facts:
+            url = TAXON_API + str(taxon_id)
+            data = fetch(url)
+            if (
+                not isinstance(data, dict)
+                or not isinstance(data.get("results"), list)
+                or len(data["results"]) != 1
+            ):
+                raise ValueError("taxonomy lookup requires exactly one identified taxon")
+            taxon = data["results"][0]
+            fact = taxonomy_identity(taxon)
+            if fact["id"] != taxon_id or not isinstance(taxon.get("ancestors"), list):
+                raise ValueError("taxonomy lookup returned a different identity or missing ancestors")
+            fact["ancestors"] = [taxonomy_identity(ancestor) for ancestor in taxon["ancestors"]]
+            fact["lookup"] = {"url": url, "sha256": digest(data)}
+            validate_taxonomy([fact])
+            facts[taxon_id] = fact
+        return facts[taxon_id]
+
+    lookup = taxonomy if any(group is None for group in groups.values()) else None
+    first, hashes, evidence = enumerate_observations(fetch, filters, species, groups=groups, taxonomy=lookup)
+    second, repeated, confirmation = enumerate_observations(
+        fetch, filters, species, groups=groups, taxonomy=lookup
+    )
     if hashes != repeated or first != second:
         raise ValueError("observations changed between complete enumerations")
     snapshot = {
@@ -411,6 +564,10 @@ def acquire(config, fetch, as_of):
     }
     if "coverage" in config:
         snapshot["coverage"] = json.loads(json.dumps(config["coverage"]))
+    if any(group is None for group in groups.values()):
+        used = {row["identified_taxon_id"] for row in first}
+        snapshot["taxonomy"] = [facts[key] for key in sorted(facts) if key in used]
+    validate_target_mapping(snapshot, config)
     return validate_snapshot(snapshot)
 
 
@@ -488,6 +645,7 @@ def validate_snapshot(snapshot):
         ):
             raise ValueError("invalid snapshot filters")
         seen = set()
+        facts = validate_taxonomy(snapshot.get("taxonomy", []))
         for row in rows:
             if (
                 not positive_int(row["id"])
@@ -518,7 +676,25 @@ def validate_snapshot(snapshot):
             if observation_time(row.get("observed_at")) != row.get("observed_at"):
                 raise ValueError("snapshot timestamp must use UTC")
             validate_context(row)
+            fact = facts.get(row.get("identified_taxon_id"))
+            if "taxonomy" in snapshot and fact is None:
+                raise ValueError("snapshot observation lacks ranked taxonomy evidence")
+            if fact:
+                lineage = {item["id"] for item in [fact, *fact["ancestors"]]}
+                declared = filters.get("taxon_id", "").split(",")
+                if any(not re.fullmatch(r"[1-9][0-9]*", target) for target in declared):
+                    raise ValueError("invalid taxonomy-bound target filter")
+                if (
+                    taxonomy_species(fact) != {"id": row["taxon_id"], "name": row["name"]}
+                    or row.get("identified_name", fact["name"]) != fact["name"]
+                    or set(target_ids) != lineage & {int(target) for target in declared}
+                ):
+                    raise ValueError("snapshot observation conflicts with ranked taxonomy")
             seen.add(row["id"])
+        if facts.keys() != {
+            row.get("identified_taxon_id") for row in rows if row.get("identified_taxon_id") in facts
+        }:
+            raise ValueError("snapshot taxonomy contains unused evidence")
     except (KeyError, TypeError, AttributeError) as exc:
         raise ValueError("malformed snapshot") from exc
     return snapshot

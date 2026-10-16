@@ -285,6 +285,7 @@ function installOptionalLayers(){
     const snapshot=cache.challenge,coverage=catalog?.coverage||snapshot?.coverage,container=node('recentChallengeCoverage');
     container.hidden=!catalog&&!coverage&&!descriptors.challenge?.source_version;
     node('challengeCatalogContext').hidden=!catalog;node('challengeCatalogRationale').hidden=!catalog;
+    if(catalog)node('challengeCatalogContext').textContent=t(catalog.taxa.some(row=>row.rank==='genus')?'challenge_catalog_context_genus':'challenge_catalog_context');
     node('challengeCatalogBrowser').hidden=!catalog;node('challengeCatalogUnavailable').hidden=!!catalog;
     node('challengeCatalogSearch').disabled=!catalog;
     renderCatalog();
@@ -294,7 +295,7 @@ function installOptionalLayers(){
     const details=node('recentChallengeOmissions');details.hidden=!coverage.omitted_rows;
     node('recentChallengeOmissionsSummary').textContent=t('recent_challenge_omissions',fmt(coverage.omitted_rows));
     if(coverageSnapshot===coverage&&coverageLanguage===LANG)return;
-    const reasons=new Set(['blank_scientific_name','inactive_source_taxon','no_unique_exact_match','incomplete_search','broader_than_species','rank_mismatch','missing_species_ancestry']);
+    const reasons=new Set(['blank_scientific_name','inactive_source_taxon','no_unique_exact_match','incomplete_search','broader_than_species','rank_mismatch','missing_species_ancestry','taxonomic_concept_conflict']);
     const list=node('recentChallengeOmissionList');list.replaceChildren();
     for(const entry of coverage.omissions){
       const item=document.createElement('li'),name=document.createElement('b'),common=document.createElement('p'),reason=document.createElement('p');
