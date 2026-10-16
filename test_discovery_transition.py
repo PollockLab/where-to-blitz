@@ -14,7 +14,7 @@ def replay(previous, outcome, language="en"):
     script += r"""
 const input=JSON.parse(process.argv[1]);let LANG=input.language;
 const t=(key,...args)=>{const value=I18N[LANG][key];return typeof value==='function'?value(...args):value;};
-let overlay=input.previous,_overlaySeq=0,_overlayReady,GE_PRIORITY_LEGEND='PRIORITY LEGEND';
+let overlay=input.previous,_overlaySeq=0,_overlayReady,GE_PRIORITY_LEGEND='PRIORITY LEGEND',GE_LOADED=false,_geLoading=false;
 const state={taxon:'All biodiversity'},window={__activePreset:0};
 const OVERLAY_TOGGLE={coverage:'tgCoverage',gettingeven:'tgGettingEven',climate:'tgClimateGap'};
 const nodes={criteria:{value:'discovery'},basemap:{value:'Standard'},challengeBlurb:{},maplegend:{innerHTML:'OLD LEGEND',querySelector:()=>null}};

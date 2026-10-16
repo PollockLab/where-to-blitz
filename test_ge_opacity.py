@@ -27,6 +27,7 @@ const t=k=>I18N[LANG][k],window={__activePreset:0},state={taxon:'All biodiversit
 const CELL_LAYER='cells-fill',TIER_SWITCH_Z=9,PM_BASE='',PM_TILE=256,COVPM=['All'];
 const OVERLAY_TOGGLE={coverage:'tgCoverage',gettingeven:'tgGettingEven',climate:'tgClimateGap'};
 let overlay='priority',_overlaySeq=0,_overlayReady,zoom=3,_mapLoaded=true;
+let GE_LOADED=true,_geLoading=false,_discoveryLoading=false;
 let DRAWN5=null,_gridSeq=0,STRETCH=null,_lineFilterIds=-1;
 const sources={cells:{setData(){}}},layers={'cells-fill':{paint:{}},basemap:{paint:{'raster-opacity':1}}};
 const writes=[],cellStates={};
@@ -38,10 +39,11 @@ const map={getZoom:()=>zoom,getSource:id=>sources[id],getLayer:id=>layers[id],
   setFilter(){},once(){}};
 const markers=[{i:0,r:[45,-75]},{i:1,r:[46,-76]}],US_CELLS=new Set(['46,-76']);
 const gekey=(lat,lon)=>lat+','+lon,caOnlyActive=()=>true;
-const geColour=()=> 'blue',eligibleMarkers=()=>[],impact=()=>0;
+let geColour=()=> 'blue';const eligibleMarkers=()=>[],impact=()=>0;
 const renderCellTable=()=>{},paintPopScore=()=>{},renderGoalContext=()=>{},syncSharedCellUrl=()=>{};
-const setGridLines=()=>{},updateLegend=()=>{},setBase=()=>{},ensurePM=()=>{};
-const whenMap=fn=>fn(),loadGE=async()=>{},loadVals=async()=>({});
+const setGridLines=()=>{},setBase=()=>{},ensurePM=()=>{};
+let updateLegend=()=>{},loadGE=async()=>{};
+const whenMap=fn=>fn(),loadVals=async()=>({});
 const sample25=()=>[],makeStretch=()=>null,paintGrid25=()=>{},warmOverlays=()=>{};
 const refreshCells5=()=>{},updateLegendLabels=()=>{};
 function snapshot(){return {visible:nodes.opacityRow.style.display!=='none',value:+nodes.baseop.value,

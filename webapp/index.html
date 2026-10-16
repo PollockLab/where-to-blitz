@@ -485,6 +485,7 @@ const I18N={
     discovery_list_scope:(start,end,total,all)=>`Showing ${start} to ${end} of ${total} matching cells in this view (${all} measured cells).`,
     discovery_list_order:"Highest historical rates first, equal rates in grid order.", discovery_list_empty:"No cells match this filter in this view.",
     discovery_previous:"Previous cells", discovery_next:"Next cells",
+    ge_loading:"Loading Getting Even categories…",
     map_display:"Map display", priority_map:"Recording priorities", historical_map:"Historical discovery evidence",
     historical_scope:(period,group)=>`${period} · ${group}. Switch to recording priorities to choose a goal or species group.`,
     map_filters:"Map controls", close_filters:"Done", source_details:"Source and limits", challenge_list_details:"About the target list", snapshot_details:"Snapshot details",
@@ -723,6 +724,7 @@ const I18N={
     discovery_list_scope:(start,end,total,all)=>`Cellules ${start} à ${end} sur ${total} correspondantes dans cette vue (${all} cellules mesurées).`,
     discovery_list_order:"Taux historiques décroissants, puis ordre de la grille à taux égal.", discovery_list_empty:"Aucune cellule ne correspond au filtre dans cette vue.",
     discovery_previous:"Cellules précédentes", discovery_next:"Cellules suivantes",
+    ge_loading:"Chargement des catégories Combler l'écart…",
     map_display:"Affichage de la carte", priority_map:"Priorités d'observation", historical_map:"Découvertes historiques",
     historical_scope:(period,group)=>`${period} · ${group}. Passez aux priorités d'observation pour choisir un objectif ou un groupe.`,
     map_filters:"Réglages", close_filters:"Terminé", source_details:"Source et limites", challenge_list_details:"À propos de la liste", snapshot_details:"Détails des observations publiées",
@@ -1134,7 +1136,7 @@ function geCat(v,col,row){
 // the style dropdown follow it, never the reverse.
 const OVERLAY_TOGGLE={coverage:'tgCoverage',gettingeven:'tgGettingEven',climate:'tgClimateGap'};
 let overlay='priority';   // 'priority' (the goal grid) | 'coverage' | 'gettingeven' | 'climate'
-let _overlaySeq=0,_overlayReady=Promise.resolve(),_discoveryLoading=false;
+let _overlaySeq=0,_overlayReady=Promise.resolve(),_discoveryLoading=false,_geLoading=false;
 function geActive(){return overlay==='gettingeven';}
 function covOn(){return overlay==='coverage';}
 function climateOn(){return overlay==='climate';}
@@ -1142,6 +1144,7 @@ function setOverlay(kind){
   const seq=++_overlaySeq;
   overlay=kind==='discovery'&&globalThis.optionalLayers&&globalThis.optionalLayers.supports(state.taxon)?kind:OVERLAY_TOGGLE[kind]?kind:'priority';
   _discoveryLoading=overlay==='discovery';
+  _geLoading=geActive()&&!GE_LOADED;
   if(overlay==='priority'){const cs=document.getElementById('criteria');if(cs&&(cs.value==='ge'||cs.value==='climate'||cs.value==='discovery'))cs.value=String(window.__activePreset||0);}
   renderCellTable();paintPopScore();   // invalidate previous priority evidence before an overlay's async load
   for(const[k,id]of Object.entries(OVERLAY_TOGGLE)){const el=document.getElementById(id);if(el)el.checked=(overlay===k);}
@@ -1166,8 +1169,13 @@ function setOverlay(kind){
     paint();
     return _overlayReady=globalThis.optionalLayers.load().then(()=>{if(seq!==_overlaySeq)return;_discoveryLoading=false;paint();},()=>{if(seq!==_overlaySeq)return;setOverlay('priority');const blurb=document.getElementById('challengeBlurb');if(blurb)blurb.textContent=t('optional_error');});
   }
-  return _overlayReady=geActive()?loadGE().then(paint,()=>{if(seq!==_overlaySeq)return;setOverlay('priority');
-    const cs=document.getElementById('criteria');if(cs)cs.value=String(window.__activePreset||0);syncSharedCellUrl();}):Promise.resolve(paint());
+  if(geActive()){
+    paint();   // clear old colours and disable GE opacity until its categories are available
+    if(!_geLoading)return _overlayReady=Promise.resolve();
+    return _overlayReady=loadGE().then(()=>{if(seq!==_overlaySeq)return;_geLoading=false;paint();},()=>{if(seq!==_overlaySeq)return;setOverlay('priority');
+      const cs=document.getElementById('criteria');if(cs)cs.value=String(window.__activePreset||0);syncSharedCellUrl();});
+  }
+  return _overlayReady=Promise.resolve(paint());
 }
 // The 25 km lattice outline is the shape of the goal grid, so it explains the cells it traces.
 // Under a raster overlay (iNat density, climate gap) it traces nothing the pixels below it share,
@@ -1897,8 +1905,8 @@ function priorityPercentiles(values){
 let geOpacity=0.62;   // preserve the categorical layer's default independently of other goals
 function paintGECells(){
   // Keep the coarse click target transparent above the tier switch, including unscored fine cells (#122).
-  const op=(map&&map.getZoom&&map.getZoom()>=TIER_SWITCH_Z)?0:geOpacity;
-  markers.forEach(m=>setCellState(m.i,geColour(m),op));
+  const op=_geLoading||(map&&map.getZoom&&map.getZoom()>=TIER_SWITCH_Z)?0:geOpacity;
+  markers.forEach(m=>setCellState(m.i,_geLoading?null:geColour(m),op));
   applyCanadaMask();
 }
 function recolour(){
@@ -1944,6 +1952,7 @@ function updateLegend(){
   if(GE_PRIORITY_LEGEND===null)GE_PRIORITY_LEGEND=ml.innerHTML;   // capture the as-built priority legend once
   if(globalThis.optionalLayers&&globalThis.optionalLayers.isDiscovery()){ml.innerHTML=_discoveryLoading?'<div class="hint" role="status">'+t('discovery_loading')+'</div>':globalThis.optionalLayers.discoveryLegend();return;}
   if(geActive()){
+    if(_geLoading){ml.innerHTML='<div class="hint" role="status">'+t('ge_loading')+'</div>';return;}
     const sw=(c,lab)=>`<div style="display:flex;align-items:center;gap:6px;margin:2px 0"><span style="width:13px;height:13px;border-radius:3px;background:${c};border:1px solid #ccc;flex:none"></span><span>${lab}</span></div>`;
     ml.innerHTML='<div class="lt">'+t('getting_even')+'</div>'+
       t('ge_cats').map((nm,i)=>sw(GE_PAL[i],nm)).join('')+sw(GE_ALL,t('ge_all'));
@@ -2173,7 +2182,7 @@ function setGridFill(){
   ['grid25','grid5'].forEach(id=>{if(map.getLayer(id))map.removeLayer(id);});
   if(map.getSource('cells5'))map.removeSource('cells5');
   DRAWN5=null;
-  if(covOn()||climateOn()||(globalThis.optionalLayers&&globalThis.optionalLayers.isDiscovery()))return;   // data overlays replace the priority grid fill
+  if(_geLoading||covOn()||climateOn()||(globalThis.optionalLayers&&globalThis.optionalLayers.isDiscovery()))return;   // data overlays replace the priority grid fill
   if(!markers.length)return;
   // Getting Even keeps its 25 km fill on the cells-fill feature-state that recolour() paints, so
   // only the 5 km tier is built here (#122). Everything below the switch is untouched by that.
@@ -2319,6 +2328,7 @@ function setClimateOpacity(v){climateOpacity=v;if(_mapLoaded&&map.getLayer('clim
 // fixed 0.5 fill (#46); Getting Even adjusts only its categorical cells (#121).
 function dataOverlayActive(){return covOn()||climateOn()||geActive();}
 function setGEOpacity(v){
+  if(_geLoading)return;
   geOpacity=v;
   if(!_mapLoaded||!geActive())return;
   paintGECells();
@@ -2330,6 +2340,7 @@ function updateOpacityControl(){
   const sl=document.getElementById('baseop'),lab=document.getElementById('bople'),val=document.getElementById('bopv');
   if(!sl||!lab||!val)return;
   const ov=dataOverlayActive();
+  sl.disabled=_geLoading;
   const row=document.getElementById('opacityRow');
   if(row)row.style.display=ov?'':'none';
   if(!ov)setBaseOpacity(1);
@@ -2386,7 +2397,7 @@ function openHowSection(id,origin){
   const toggle=()=>{document.body.classList.toggle('panel-collapsed');refresh();setTimeout(()=>{try{map.resize();}catch(e){}},0);};
   globalThis.refreshPanelControls=refresh;refresh();tog.addEventListener('click',toggle);if(sheet)sheet.addEventListener('click',toggle);
 })();
-document.getElementById('baseop').addEventListener('input',e=>{const v=parseFloat(e.target.value);
+document.getElementById('baseop').addEventListener('input',e=>{if(_geLoading)return;const v=parseFloat(e.target.value);
   if(covOn())setCovOpacity(v);   // #39: fade the magma data
   else if(climateOn())setClimateOpacity(v);
   else if(geActive())setGEOpacity(v);
