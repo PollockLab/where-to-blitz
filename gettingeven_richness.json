@@ -1,0 +1,20 @@
+{
+  "schema": "gettingeven-richness@1",
+  "sources": {
+    "Reptiles & Amphibians": {
+      "source": "https://github.com/PollockLab/where-to-blitz/releases/download/grid-inputs-v1/ar.richness-3c1fc10f9adb464aaf7d32e6d7b4625c515aa8b5871b2aa56693a32c76426c3f.tif",
+      "sha256": "3c1fc10f9adb464aaf7d32e6d7b4625c515aa8b5871b2aa56693a32c76426c3f",
+      "provenance": "Lab-supplied Getting Even richness raster ar.richness.tif, issue #59"
+    },
+    "Mammals": {
+      "source": "https://github.com/PollockLab/where-to-blitz/releases/download/grid-inputs-v1/mammal.richness-3b846b3d000b2ca7e51b46e4e0f30cc4ecb875a2777f9363cd9025112e7e30e2.tif",
+      "sha256": "3b846b3d000b2ca7e51b46e4e0f30cc4ecb875a2777f9363cd9025112e7e30e2",
+      "provenance": "Lab-supplied Getting Even richness raster mammal.richness.tif, issue #59"
+    },
+    "Plants": {
+      "source": "https://github.com/PollockLab/where-to-blitz/releases/download/grid-inputs-v1/plant.richness.stacks-f078b9ccbc4bef9e3d23f2d1d898ea181e8e20cd126e157cbdd08d2abdf22c59.tif",
+      "sha256": "f078b9ccbc4bef9e3d23f2d1d898ea181e8e20cd126e157cbdd08d2abdf22c59",
+      "provenance": "Lab-supplied Getting Even richness raster plant.richness.stacks.tif, issue #59"
+    }
+  }
+}
