@@ -458,6 +458,18 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
   <label class="toggle" style="display:none"><input type="checkbox" id="tgCoverage"> <span data-i18n="inat_coverage">iNaturalist coverage</span></label><!-- driven by the "iNaturalist sampling density" map style (#20) -->
   <label class="toggle" style="display:none"><input type="checkbox" id="tgGettingEven"> <span data-i18n="getting_even">Getting Even — which group to record</span></label><span class="infobtn" id="geinfobtn" style="display:none" data-i18n-title="ge_info_btn" title="How is the recommended group worked out?" role="button" tabindex="0" data-i18n-aria="ge_info_btn" aria-label="How is the recommended group worked out?" aria-expanded="false" onclick="const b=document.getElementById('geinfo').classList.toggle('open');this.setAttribute('aria-expanded',b)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">i</span><!-- driven by the "Getting Even" criterion (#20) -->
   <div class="infobox" id="geinfo" data-i18n-html="ge_method"></div>
+  <div id="geEvidenceControls" hidden style="margin-top:8px;font-size:11px;line-height:1.4">
+    <p id="geReference" style="margin:4px 0"></p>
+    <label for="geCountCutoff" data-i18n="ge_count_filter">Show recommendations with input count</label>
+    <select id="geCountCutoff" class="full" aria-describedby="geCountExplanation geEvidenceStatus" disabled>
+      <option value="1">1+</option><option value="5">5+</option><option value="10">10+</option><option value="20">20+</option><option value="30">30+</option><option value="100">100+</option>
+    </select>
+    <p id="geCountExplanation" style="margin:4px 0" data-i18n="ge_count_explanation"></p>
+    <p id="geEvidenceStatus" role="status" aria-live="polite" style="margin:4px 0"></p>
+    <button id="geEvidenceRetry" type="button" hidden data-i18n="retry">Retry</button>
+    <button id="geEvidenceReset" type="button" hidden data-i18n="ge_count_reset">Show all published recommendations</button>
+  </div>
+
   <label class="toggle" style="display:none"><input type="checkbox" id="tgClimateGap"> <span data-i18n="climate_gap">Climate Gap — under-sampled climates</span></label><!-- driven by the "Climate Gap" criterion -->
   <div id="opacityRow" style="display:none"><!-- Active density, climate or Getting Even cells; basemap brightness stays at 100%. -->
   <div style="display:flex;justify-content:space-between;margin:9px 0 0"><span id="bople" style="font-size:12.5px" data-i18n="data_opacity">Density opacity</span><span class="v" id="bopv" style="color:var(--acc)">80%</span></div>
@@ -496,6 +508,7 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
 
 <script>
 const FILES=__FILES__, OBJ=__OBJ__, PRESETS=__PRESETS__, DEFAULT=__DEFAULT__;
+const GE_EVIDENCE=__GE_EVIDENCE__;
 const BC_PLANT_PILOT=__BC_PLANT_PILOT__;
 const OPTIONAL_LAYERS=__OPTIONAL_LAYERS__;
 const HISTORICAL_DISCOVERY_POINTS=__HISTORICAL_DISCOVERY_POINTS__;
@@ -532,6 +545,7 @@ const I18N={
     species_page_label:name=>`${name}, species page on iNaturalist, opens in a new tab`, species_page_hint:"Species cards open their iNaturalist pages in a new tab.",
     recent_updated_today:"Updated today", recent_updated_yesterday:"Updated yesterday", recent_updated_days:n=>`Updated ${n} days ago`, recent_exact_refresh:"Published snapshot",
     photo_credit:"Photo", photo_reference:"Species reference photo, not this sighting",
+    sighting_inclusion_rank:{species:"Included through listed species",genus:"Included through listed genus",subspecies:"Included through listed subspecies",variety:"Included through listed variety",form:"Included through listed form"},
     discovery_unit:"discovery events per 10,000 observations", discovery_period:(start,end)=>`Observation period: ${start} to ${end}`,
     discovery_counts:(n,exposure)=>`Discovery events: ${n}. Observations: ${exposure}.`, discovery_unavailable:"No measured rate with complete observation support here.",
     discovery_blurb:"Historical discovery events divided by observed recording effort. This is a measured rate, not a prediction of your visit. Cells without complete support remain blank.",
@@ -634,7 +648,12 @@ const I18N={
     ge_info_btn:"How is the recommended group worked out?",
     ge_method:`<b>Map colours and popup bars answer different questions.</b> The Getting Even map compares each group's share of records with that group's share across cells, then names the lowest standardised group. Birds are excluded from that offline map. At 5&nbsp;km the comparison uses a different cell population, so the recommended group can change with zoom. Thinly recorded cells can give unstable recommendations.<br><br>The popup uses live research-grade iNaturalist species counts in the cell's bounding box and a 40&nbsp;km radius around its centre. Each group's here/nearby ratio is divided by the overall recording ratio across groups. A short bar means less recorded here relative to the other groups, not that the species are absent. Queries can be capped at 500 species per query; sensitive records are excluded.`,
     ge_cats:["Fishes","Fungi","Reptiles & Amphibians","Invertebrates","Mammals","Plants"],
-    ge_all:"All groups under-sampled",
+    ge_all:"No group recommendation",
+    ge_count_filter:"Show recommendations with input count", ge_count_explanation:"This hides published recommendations without recalculating them. Input counts are aggregate, density-derived proxies, not confidence scores.",
+    ge_count_reset:"Show all published recommendations",
+    ge_reference:n=>`Groups are compared with other ${n} km cells. Zoom changes the reference population.`, ge_published_group:name=>`Published group recommendation: ${name}.`, ge_count_value:n=>`All-taxa input count for this cell: ${n} (aggregate density-derived proxy).`,
+    ge_count_hidden:n=>`Recommendation hidden by the display cutoff (${n}+).`, ge_count_unavailable:"Input counts unavailable. All published recommendations are shown; the display filter is disabled.", ge_count_missing:"No aggregate input count is available for this cell.", ge_count_loading:"Loading verified input counts…", ge_count_error:"Input counts could not be verified. Retry to use the display filter.", ge_count_ready:n=>`Display cutoff: ${n}+. Published group scores are unchanged.`, ge_count_live:"The live popup bars use separate research-grade species counts.",
+
     canada_only:"Canada only",
     canada_only_hint:"Hides US-side cells, where the bright band is the data edge, not a real gap.",
     climate_gap:"Climate Gap — under-sampled climates",
@@ -784,6 +803,7 @@ const I18N={
     species_page_label:name=>`${name}, fiche d'espèce sur iNaturalist, s'ouvre dans un nouvel onglet`, species_page_hint:"Les fiches d'espèces s'ouvrent sur iNaturalist dans un nouvel onglet.",
     recent_updated_today:"Mis à jour aujourd'hui", recent_updated_yesterday:"Mis à jour hier", recent_updated_days:n=>`Mis à jour il y a ${n} jours`, recent_exact_refresh:"Données publiées",
     photo_credit:"Photo", photo_reference:"Photo de référence de l'espèce, pas de cette observation",
+    sighting_inclusion_rank:{species:"Inclus via l’espèce répertoriée",genus:"Inclus via le genre répertorié",subspecies:"Inclus via la sous-espèce répertoriée",variety:"Inclus via la variété répertoriée",form:"Inclus via la forme répertoriée"},
     discovery_unit:"découvertes pour 10 000 observations", discovery_period:(start,end)=>`Période des observations : ${start} au ${end}`,
     discovery_counts:(n,exposure)=>`${n} découvertes / ${exposure} observations`, discovery_unavailable:"Aucun taux mesuré avec un effort d'observation complet ici.",
     discovery_blurb:"Découvertes historiques divisées par l'effort d'observation enregistré. Ce taux mesuré ne prédit pas votre visite. Les cellules incomplètes restent vides.",
@@ -886,7 +906,12 @@ const I18N={
     ge_info_btn:"Comment le groupe recommandé est-il déterminé ?",
     ge_method:`<b>Les couleurs de la carte et les barres de la fenêtre répondent à des questions différentes.</b> La carte Combler l'écart compare la part d'observations de chaque groupe à sa part dans l'ensemble des cellules, puis indique le groupe au score standardisé le plus faible. Les oiseaux sont exclus de cette carte calculée hors ligne. À 5&nbsp;km, la comparaison utilise une autre population de cellules, donc le groupe recommandé peut changer avec le zoom. Les recommandations sont instables quand les observations sont rares.<br><br>La fenêtre utilise les nombres d'espèces de qualité recherche iNaturalist dans le rectangle englobant la cellule et un rayon de 40&nbsp;km autour de son centre, interrogés en direct. Le rapport ici/à proximité de chaque groupe est divisé par le rapport global des groupes. Une barre courte signifie moins d'espèces notées ici relativement aux autres groupes, pas leur absence. Les requêtes peuvent être limitées à 500 espèces par requête; les observations sensibles sont exclues.`,
     ge_cats:["Poissons","Champignons","Reptiles et amphibiens","Invertébrés","Mammifères","Plantes"],
-    ge_all:"Tous sous-échantillonnés",
+    ge_all:"Aucun groupe recommandé",
+    ge_count_filter:"Afficher les recommandations avec un effectif d’entrée", ge_count_explanation:"Ce filtre masque des recommandations publiées sans les recalculer. Les effectifs sont des approximations agrégées issues de la densité, pas des scores de confiance.",
+    ge_count_reset:"Afficher toutes les recommandations publiées",
+    ge_reference:n=>`Les groupes sont comparés aux autres cellules de ${n} km. Le zoom change la population de référence.`, ge_published_group:name=>`Groupe recommandé publié : ${name}.`, ge_count_value:n=>`Effectif d’entrée, tous taxons, pour cette cellule : ${n} (approximation agrégée issue de la densité).`,
+    ge_count_hidden:n=>`Recommandation masquée par le seuil d’affichage (${n}+).`, ge_count_unavailable:"Effectifs d’entrée indisponibles. Toutes les recommandations publiées sont affichées ; le filtre d’affichage est désactivé.", ge_count_missing:"Aucun effectif d’entrée agrégé n’est disponible pour cette cellule.", ge_count_loading:"Chargement des effectifs d’entrée vérifiés…", ge_count_error:"Impossible de vérifier les effectifs d’entrée. Réessayez pour utiliser le filtre d’affichage.", ge_count_ready:n=>`Seuil d’affichage : ${n}+. Les scores des groupes publiés restent identiques.`, ge_count_live:"Les barres de la fenêtre utilisent des nombres d’espèces de qualité recherche distincts, obtenus en direct.",
+
     canada_only:"Canada seulement",
     canada_only_hint:"Masque les cellules au sud de la frontière, où la bande vive est une limite de données, pas une vraie lacune.",
     climate_gap:"Lacune climatique — climats sous-échantillonnés",
@@ -1089,6 +1114,8 @@ function relabelDynamic(){
   // same problem. updateLegend() picks the right branch itself, so it needs no guard beyond
   // "is it defined yet".
   if(typeof updateLegend==='function')updateLegend();
+  if(typeof renderCellTable==='function')renderCellTable();
+  globalThis.refreshGEEvidenceControls?.();
   if(globalThis.optionalLayers)globalThis.optionalLayers.refresh();
   renderGoalContext();
   if(globalThis.refreshPanelControls)globalThis.refreshPanelControls();
@@ -1173,6 +1200,7 @@ async function loadGE(){if(GE_LOADED)return;const r=await fetchT(DATA_DIR+'webap
 const GE_VALS={}, GE_UNSCORED=255;   // GE_UNSCORED matches PNG_UNSCORED in build_gettingeven.py
 async function loadGEVals(res){
   const key='gettingeven_grid_'+res+'m';
+  if(globalThis.geEvidence){const verified=globalThis.geEvidence.categoryImage(res);if(verified)return verified;globalThis.geEvidence.load(res);}
   return cachedPng(GE_VALS,key,DATA_DIR+key+'.png');
 }
 // -1 means "draw nothing here": no cell, or a cell holding too few records to name a group. At
@@ -1212,7 +1240,7 @@ function setOverlay(kind){
   renderGoalContext();
   {const n=document.getElementById('goalnote');if(n)n.style.display=covOn()?'':'none';}
   {const gib=document.getElementById('geinfobtn');if(gib){gib.style.display=geActive()?'':'none';if(!geActive()){const gi=document.getElementById('geinfo');if(gi)gi.classList.remove('open');}}}
-  const paint=()=>{if(seq!==_overlaySeq)return;setCoverage();setClimate();updateLegend();recolour();if(globalThis.optionalLayers)globalThis.optionalLayers.refresh();syncSharedCellUrl();};
+  const paint=()=>{if(seq!==_overlaySeq)return;globalThis.refreshGEEvidence?.();setCoverage();setClimate();updateLegend();recolour();if(globalThis.optionalLayers)globalThis.optionalLayers.refresh();syncSharedCellUrl();};
   // loadGE() had no rejection path: when its fetch failed (offline, a 404, a blocked scheme) paint()
   // never ran, so `overlay` said gettingeven while the map and the legend still showed the previous
   // layer and the checkbox agreed with neither. Fall back the way the taxon dropdown already does on
@@ -1273,7 +1301,7 @@ function applyCanadaMask(){
     map.setFilter('cells-line',hiddenIds.length?['!',['in',['id'],['literal',hiddenIds]]]:null);
   }
 }
-function geColour(m){const v=GE[gekey(m.r[0],m.r[1])];if(!v)return GE_ALL;return v[0]<0?GE_ALL:(GE_PAL[v[0]]||GE_ALL);}
+function geColour(m){const image=globalThis.geEvidence?.categoryImage(25000),cell=image&&snapToLattice(m.r[0],m.r[1],25000);if(cell){const category=geCat(image,cell.col,cell.row);return category<0?GE_ALL:(GE_PAL[category]||GE_ALL);}const v=GE[gekey(m.r[0],m.r[1])];if(!v)return GE_ALL;return v[0]<0?GE_ALL:(GE_PAL[v[0]]||GE_ALL);}
 // A cell in the bottom band of the national gap ranking (e.g. well-sampled cities) is a low
 // priority for the all-taxa mission -- but it's not worthless. Surface the two honest reasons
 // to still record here: the single most under-recorded group (Getting Even), and the nearest
@@ -1302,7 +1330,7 @@ function paintPopScore(){
 function popScoreHtml(m,resM,lat,lon){
   const cell=t('pop_cell',(resM||25000)/1000);
   if(globalThis.optionalLayers&&globalThis.optionalLayers.isDiscovery())return cell+'<br>'+globalThis.optionalLayers.discoveryPopup(lat,lon,resM);
-  if(overlay!=='priority')return cell+'<br>'+t(geActive()?'pop_layer_ge':climateOn()?'pop_layer_climate':'pop_layer_density');
+  if(overlay!=='priority')return cell+'<br>'+t(geActive()?'pop_layer_ge':climateOn()?'pop_layer_climate':'pop_layer_density')+(geActive()&&typeof geEvidencePopup==='function'?geEvidencePopup(lat,lon,resM):'');
   const goal='<br>'+t('current_goal',presetName(window.__activePreset||0));
   if(!m||!Number.isFinite(m.t))return cell+goal+'<br>'+t('pop_noscore');
   const basis=t(resM===5000?'pop_parent':'pop_national');
@@ -1976,7 +2004,7 @@ let geOpacity=0.62;   // preserve the categorical layer's default independently 
 function paintGECells(){
   // Keep the coarse click target transparent above the tier switch, including unscored fine cells (#122).
   const op=_geLoading||(map&&map.getZoom&&map.getZoom()>=TIER_SWITCH_Z)?0:geOpacity;
-  markers.forEach(m=>setCellState(m.i,_geLoading?null:geColour(m),op));
+  markers.forEach(m=>{const cell=globalThis.geEvidence&&snapToLattice(m.r[0],m.r[1],25000),shown=!cell||globalThis.geEvidence.visible(25000,cell.col,cell.row);setCellState(m.i,_geLoading?null:geColour(m),shown?op:0);});
   applyCanadaMask();
 }
 function recolour(){
@@ -2287,7 +2315,7 @@ function setGridFill(){
   map.addLayer({id:'grid5',type:'fill',source:'cells5',minzoom:TIER_SWITCH_Z,paint:{
     'fill-color':['get','c'],
     'fill-color-transition':{duration:250},
-    'fill-opacity':ge?geOpacity:gridOpacity}},CELL_LAYER);
+    'fill-opacity':ge&&globalThis.geEvidence?globalThis.geEvidence.opacityExpression(geOpacity):ge?geOpacity:gridOpacity}},CELL_LAYER);
   if(!ge)loadVals(25000).then(v=>{
     if(seq!==_gridSeq)return;
     if(map.getZoom()<TIER_SWITCH_Z)STRETCH=makeStretch(sample25(v));   // above the switch the 5 km tier is the visible one and sets STRETCH itself
@@ -2345,7 +2373,7 @@ async function refreshCells5(){
     const x=LATTICE_X0+col*R,y=LATTICE_Y1-row*R;   // exact lattice corners -> neighbours share vertices, no seams
     const ring=[[x,y],[x+R,y],[x+R,y-R],[x,y-R],[x,y]].map(q=>{const g=LAEA.inv(q[0],q[1]);return[g[1],g[0]];});
     const fill=ge?(GE_PAL[c[2]]||GE_ALL):(STRETCH?virColour(stretchT(c[2])):valColor(v,col,row));
-    return{type:'Feature',properties:{c:fill},geometry:{type:'Polygon',coordinates:[ring]}};
+    return{type:'Feature',properties:{c:fill,...(ge&&globalThis.geEvidence?{geCount:globalThis.geEvidence.countAt(5000,col,row)??-1}:{})},geometry:{type:'Polygon',coordinates:[ring]}};
   });
   map.getSource('cells5').setData({type:'FeatureCollection',features:feats});
   DRAWN5=new Set(cells.map(c=>c[0]+','+c[1]));
@@ -2420,7 +2448,7 @@ function setGEOpacity(v){
   geOpacity=v;
   if(!_mapLoaded||!geActive())return;
   paintGECells();
-  if(map.getLayer('grid5'))map.setPaintProperty('grid5','fill-opacity',v);
+  if(map.getLayer('grid5'))map.setPaintProperty('grid5','fill-opacity',globalThis.geEvidence?globalThis.geEvidence.opacityExpression(v):v);
 }
 function setBaseOpacity(v){baseOpacity=v;if(_mapLoaded&&map.getLayer('basemap'))map.setPaintProperty('basemap','raster-opacity',v);}
 function setCovOpacity(v){covOpacity=v;if(_mapLoaded&&map.getLayer('cov'))map.setPaintProperty('cov','raster-opacity',v);}
@@ -2442,6 +2470,7 @@ function updateOpacityControl(){
   sl.setAttribute('data-i18n-aria','aria_'+key);
   val.textContent=Math.round(v*100)+'%';
   sl.setAttribute('aria-valuetext',val.textContent);
+  globalThis.refreshGEEvidenceControls?.();
 }
 // every overlay checkbox is wired the same way, so wire them from the same table setOverlay reads.
 // setOverlay writes .checked directly, and a scripted .checked fires no 'change', so this cannot loop.
@@ -2451,6 +2480,7 @@ for(const[kind,id]of Object.entries(OVERLAY_TOGGLE)){const el=document.getElemen
 let _mvT=null,_geTier=null;
 map.on('moveend',()=>{
   globalThis.refreshMapContext?.();
+  globalThis.refreshGEEvidence?.();
   refreshCells5();   // seq-guarded and async; it sets STRETCH from the 5 km cells it is about to draw
   // Getting Even swaps tiers rather than restretching, so the crossing itself is the repaint trigger.
   if(geActive()){const tier=activeCellResM();if(tier!==_geTier){_geTier=tier;recolour();}}
@@ -2859,13 +2889,14 @@ function parseSharedContext(search){
   const style=Object.hasOwn(styles,s)?styles[s]:'Standard';
   const p=(u.get('at')||'').split(',');
   const valid=p.length===2&&p.every(x=>x.trim()!==''&&Number.isFinite(+x))&&+p[0]>=BB.minlat&&+p[0]<=BB.maxlat&&+p[1]>=BB.minlon&&+p[1]<=BB.maxlon;
-  return{taxon,goal,style,recent:u.get('recent')==='1',linked:['at','g','res','goal','style','recent'].some(k=>u.has(k)),cell:valid?{lat:+p[0],lon:+p[1],resM:r==='5000'?5000:25000}:null};
+  return{taxon,goal,style,...(goal==='ge'&&['1','5','10','20','30','100'].includes(u.get('ge_count'))?{geCount:+u.get('ge_count')}:{}),recent:u.get('recent')==='1',linked:['at','g','res','goal','style','recent','ge_count'].some(k=>u.has(k)),cell:valid?{lat:+p[0],lon:+p[1],resM:r==='5000'?5000:25000}:null};
 }
 function sharedCellUrl(cell,taxon,goal,style,href){
   const u=new URL(href),p=u.searchParams;
   if(cell){p.set('at',cell.lat.toFixed(3)+','+cell.lon.toFixed(3));p.set('res',String(cell.resM));}
   else{p.delete('at');p.delete('res');}
   p.set('g',taxon);p.set('goal',goal);p.set('style',style);
+  const count=globalThis.geEvidence?.cutoff()||1;if(goal==='ge'&&count!==1)p.set('ge_count',String(count));else p.delete('ge_count');
   if(globalThis.optionalLayers&&globalThis.optionalLayers.recentEnabled())p.set('recent','1');else p.delete('recent');
   return u.pathname+u.search+u.hash;
 }
@@ -2895,6 +2926,7 @@ async function restoreSharedCell(shared,action,loadedTaxon,selection){
     if(shared.goal!=='ge'&&shared.goal!=='climate'&&shared.goal!=='discovery')applyChallenge(PRESETS[+shared.goal]);
     bmSel.value=shared.style;setBase(shared.style==='__inat__'?'Light':shared.style);
     const kind=shared.style==='__inat__'?'coverage':shared.goal==='ge'?'gettingeven':shared.goal==='climate'?'climate':shared.goal==='discovery'?'discovery':'priority';
+    if(kind==='gettingeven')globalThis.geEvidence?.restore(shared.geCount||1);
     await setOverlay(kind);
     if(action===_shareAction&&globalThis.optionalLayers&&shared.recent)await globalThis.optionalLayers.toggleRecent(true);
     if(!currentSelection())return;
@@ -3003,6 +3035,49 @@ if(!COMPARE_ENABLED){const vc=document.getElementById('vcompare');if(vc)vc.style
 if(!PLAN_ENABLED&&!COMPARE_ENABLED){const vt=document.getElementById('viewtoggle');if(vt)vt.style.display='none';}   // only Explore remains — the toggle is redundant
 
 function showLoading(on){const el=document.getElementById('loading');if(el)el.style.display=on?'block':'none';}
+
+__GE_EVIDENCE_SCRIPT__
+
+function refreshGEEvidenceControls(){
+  const evidence=globalThis.geEvidence,container=document.getElementById('geEvidenceControls');if(!container)return;
+  container.hidden=!geActive();if(!evidence||!geActive())return;
+  const res=activeCellResM(),state=evidence.state(res),select=document.getElementById('geCountCutoff');
+  select.disabled=_geLoading||!evidence.ready(res);select.value=String(evidence.cutoff());
+  document.getElementById('geReference').textContent=t('ge_reference',res/1000);
+  const status=document.getElementById('geEvidenceStatus');status.textContent=t(state==='ready'?'ge_count_ready':state==='error'?'ge_count_error':state==='unavailable'?'ge_count_unavailable':'ge_count_loading',evidence.cutoff());
+  document.getElementById('geEvidenceRetry').hidden=state!=='error';
+  document.getElementById('geEvidenceReset').hidden=evidence.cutoff()===1||state==='ready';
+}
+function refreshGEEvidence(){
+  const evidence=globalThis.geEvidence;if(!evidence)return;
+  refreshGEEvidenceControls();if(geActive()&&!_geLoading)evidence.load(activeCellResM());
+}
+function repaintGEEvidence(){
+  if(!geActive())return;
+  paintGECells();if(_mapLoaded&&map.getLayer('grid5'))map.setPaintProperty('grid5','fill-opacity',globalThis.geEvidence.opacityExpression(geOpacity));
+  paintPopScore();refreshGEEvidenceControls();syncSharedCellUrl(true);
+}
+function geEvidencePopup(lat,lon,resM){
+  const evidence=globalThis.geEvidence;if(!evidence)return '';
+  const cell=snapToLattice(lat,lon,resM),count=cell&&evidence.countAt(resM,cell.col,cell.row),image=evidence.categoryImage(resM);
+  const phase=evidence.state(resM),missing=phase==='ready'?'ge_count_missing':phase==='error'?'ge_count_error':phase==='unavailable'?'ge_count_unavailable':'ge_count_loading';
+  let text=count===null||count===undefined?t(missing):t('ge_count_value',count.toLocaleString(LANG==='fr'?'fr-CA':'en-CA'));
+  if(count!==null&&count!==undefined&&evidence.cutoff()>1&&count<evidence.cutoff())text+='<br>'+t('ge_count_hidden',evidence.cutoff());
+  if(image&&cell){const category=geCat(image,cell.col,cell.row);text+='<br>'+(category<0?t('ge_all'):t('ge_published_group',t('ge_cats')[category]));}
+  return '<p>'+text+'</p><small>'+t('ge_count_live')+'</small>';
+}
+if(typeof GettingEvenEvidence!=='undefined'){
+  globalThis.geEvidence=GettingEvenEvidence.create({descriptor:GE_EVIDENCE,
+    lattice:res=>({x0:LATTICE_X0,y1:LATTICE_Y1,res_m:res,ncol:Math.floor(LATTICE_W/res),nrow:Math.floor(LATTICE_H/res)}),
+    decode:async bytes=>{const img=await createImageBitmap(new Blob([bytes]));const canvas=document.createElement('canvas');canvas.width=img.width;canvas.height=img.height;const context=canvas.getContext('2d',{willReadFrequently:true});context.drawImage(img,0,0);const result={w:img.width,h:img.height,d:context.getImageData(0,0,img.width,img.height).data};img.close();return result;},
+    fetcher:(url,options)=>fetch(url,options),subtle:crypto.subtle,baseUrl:document.baseURI,active:geActive,
+    onChange:(res,phase)=>{refreshGEEvidenceControls();if(phase==='loaded'&&geActive()){if(res===activeCellResM()){if(_mapLoaded&&map.getSource('cells5'))refreshCells5();repaintGEEvidence();}else paintPopScore();}}
+  });
+  globalThis.refreshGEEvidence=refreshGEEvidence;globalThis.refreshGEEvidenceControls=refreshGEEvidenceControls;
+  document.getElementById('geCountCutoff').onchange=()=>{if(!geEvidence.choose(document.getElementById('geCountCutoff').value,activeCellResM())){refreshGEEvidenceControls();return;}_shareAction++;repaintGEEvidence();};
+  document.getElementById('geEvidenceRetry').onclick=()=>{if(geActive())geEvidence.load(activeCellResM(),true);};
+  document.getElementById('geEvidenceReset').onclick=()=>{if(geEvidence.choose(1,activeCellResM())){_shareAction++;repaintGEEvidence();}};
+}
 
 // language toggle: seed from navigator.language / localStorage (done above), wire buttons, apply chrome
 document.getElementById('langbtn').onclick=()=>setLang(LANG==='en'?'fr':'en');   // #69: one button toggles EN/FR

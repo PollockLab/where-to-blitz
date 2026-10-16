@@ -295,6 +295,23 @@ python evaluate_plant_pilot.py --observations /path/to/inat_bcall_Plantae.csv --
 
 ## The Getting Even layer (#59)
 
+**Default display policy, 2026-10-16 (#135).** Retain a production minimum of one aggregate source count and standardize each tier against its own cell population. This keeps the published metric's question and preserves coverage of sparsely recorded places. It is a reversible product choice, not a claim that this minimum optimizes ecological benefit. A common 25 km reference would answer a different comparison question; greater agreement across zoom levels alone would not establish better recording advice.
+
+The viewer offers display cutoffs of 1, 5, 10, 20, 30 and 100. These hide existing recommendations without recalculating group scores, reference distributions or richness gates. A hidden cell remains clickable, and shared links retain the chosen cutoff. Counts belong to the displayed tier and include all taxa, independently of the selected species group. They are aggregate `n_train` inputs that may be rounded density-derived proxies, not individual verified observations or calibrated confidence. Grey means no group recommendation, not that every group is under-sampled. The live popup species bars remain a separate calculation.
+
+For the frozen published map, the number of currently colored cells retained by each display cutoff is:
+
+| Cutoff | 25 km cells retained | 5 km cells retained |
+|---:|---:|---:|
+| 1 | 10,497 (100.0%) | 94,574 (100.0%) |
+| 5 | 7,246 (69.0%) | 50,312 (53.2%) |
+| 10 | 6,344 (60.4%) | 38,960 (41.2%) |
+| 20 | 5,433 (51.8%) | 29,662 (31.4%) |
+| 30 | 4,932 (47.0%) | 24,972 (26.4%) |
+| 100 | 3,452 (32.9%) | 14,183 (15.0%) |
+
+These fractions describe display coverage, not geographic area, accuracy or confidence. Changing production `GE_MIN_RECORDS` also refits category means, deviations and richness quartiles; the display filter deliberately does not simulate that estimator change. `gettingeven_evidence.py` reconstructs count images from the exact same-tier source inputs and binds them to the category images, coarse category JSON, lattice and observation fingerprints. `prepare_gettingeven_evidence.py` checks the pinned publisher or native build attachments before exposing them. Unknown source versions disable the filter; verification failures offer retry and a return to all published recommendations.
+
 A separate layer, not one of the five axes: it answers *what* to record in a cell, not *where* to
 go. It is the calculation Lucas Eckert ran for the 2025 *Getting Even* challenge, moved from
 census districts onto this app's equal-area cells (`build_gettingeven.py`):

@@ -59,6 +59,8 @@ OUTPUT_PATTERNS = [
     "cluster_results/ca/gettingeven_grid_*.png",
     "cluster_results/ca/gettingeven_gate_*.png",
     "cluster_results/ca/gettingeven_grid.json",
+    "cluster_results/ca/gettingeven_counts_*.png",
+    "cluster_results/ca/gettingeven_evidence.json",
     "cluster_results/ca/land_sea_5000m.png",
     "cluster_results/ca/values/*.png",
 ]
@@ -119,6 +121,28 @@ def validate_release_data(data: dict[str, bytes]) -> None:
             name = mask["png"]
             if name not in data or hashlib.sha256(data[name]).hexdigest() != mask["sha256"]:
                 raise ValueError(f"Getting Even gate-mask checksum mismatch or missing file: {name}")
+    evidence_files = {
+        "gettingeven_evidence.json",
+        "gettingeven_counts_25000m.png",
+        "gettingeven_counts_5000m.png",
+    }
+    if evidence_files & data.keys():
+        if not evidence_files <= data.keys():
+            raise ValueError("incomplete Getting Even count evidence in app bundle")
+        from prepare_gettingeven_evidence import load_installed
+
+        binding_files = evidence_files | {
+            "index.json",
+            "gettingeven_grid.json",
+            "webapp_data_gettingeven.json",
+            "gettingeven_grid_25000m.png",
+            "gettingeven_grid_5000m.png",
+        }
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            for name in binding_files:
+                (directory / name).write_bytes(data[name])
+            load_installed(directory)
     provenance = json.loads(data["provenance.json"])
     grid = {key: index[key] for key in ("res_m", "n_cells", "lattice", "crs")}
     if provenance["grid"] != grid:
