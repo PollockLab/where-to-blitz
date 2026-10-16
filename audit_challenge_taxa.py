@@ -19,7 +19,7 @@ from pathlib import Path
 import requests
 
 API = "https://api.inaturalist.org/v1/taxa"
-SUPPORTED = {"species", "subspecies", "variety", "form"}
+SUPPORTED = {"species", "subspecies", "variety", "form", "genus"}
 
 
 def normalized(value):
@@ -109,7 +109,11 @@ def resolve(raw, response):
     if type(match.get("id")) is not int or match["id"] <= 0:
         raise ValueError("invalid taxon identifier")
     rank = match.get("rank")
-    if rank not in SUPPORTED:
+    if (
+        rank not in SUPPORTED
+        or rank == "genus"
+        and (expected != "genus" or normalized(match["name"]).casefold() != name.casefold())
+    ):
         return {
             "status": "needs_review",
             "reason": "target rank is broader than species",
@@ -118,7 +122,7 @@ def resolve(raw, response):
     if expected and rank != expected:
         return {"status": "needs_review", "reason": "exact name has a different rank from the source"}
     target = {"id": match["id"], "name": match["name"], "rank": rank}
-    if rank != "species":
+    if rank not in ("species", "genus"):
         ancestors = [
             a
             for a in match.get("ancestors", [])

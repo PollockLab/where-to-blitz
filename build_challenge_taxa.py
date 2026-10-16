@@ -10,7 +10,7 @@ import hashlib
 import json
 import re
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 from audit_challenge_taxa import normalized, query_name
 from conservation_challenge import validate_list
@@ -26,6 +26,7 @@ REASONS = {
     "target rank is broader than species": "broader_than_species",
     "exact name has a different rank from the source": "rank_mismatch",
     "species ancestry is not independently available": "missing_species_ancestry",
+    "taxonomic concept conflicts with authoritative lineage": "taxonomic_concept_conflict",
 }
 
 
@@ -69,9 +70,9 @@ def public_target(value, supported=True):
         raise ValueError("invalid audited target identity")
     target = {key: value[key] for key in ("id", "name", "rank")}
     if supported:
-        if target["rank"] not in ("species", "subspecies", "variety", "form"):
+        if target["rank"] not in ("species", "subspecies", "variety", "form", "genus"):
             raise ValueError("resolved audit target has an unsupported rank")
-        if target["rank"] != "species":
+        if target["rank"] not in ("species", "genus"):
             species = value.get("species")
             if (
                 not isinstance(species, dict)
@@ -82,6 +83,53 @@ def public_target(value, supported=True):
                 raise ValueError("audited infraspecies requires species grouping metadata")
             target["species"] = {key: species[key] for key in ("id", "name")}
     return target
+
+
+def public_review(value, entry, target, decision):
+    """Preserve a reviewed EPPO-to-provider bridge without publishing raw responses."""
+    if not isinstance(value, dict) or value.get("decision") != decision:
+        raise ValueError("external taxonomic review requires an explicit matching decision")
+    review = {"decision": decision}
+    for key in ("source_name", "authority_name", "kingdom", "provider_kingdom"):
+        name = value.get(key)
+        if not isinstance(name, str) or not name.strip() or len(name) > 200:
+            raise ValueError("external taxonomic review requires bounded scientific identities")
+        review[key] = name
+    if review["source_name"] != entry["query"] or target.get("rank") != "species":
+        raise ValueError("external review must identify this source query and a species target")
+    same_kingdom = review["kingdom"] == review["provider_kingdom"]
+    if same_kingdom != (decision == "synonym"):
+        raise ValueError("external taxonomic decision disagrees with its kingdom evidence")
+    authority = value.get("authority")
+    if not isinstance(authority, dict) or set(authority) != {"url", "sha256"}:
+        raise ValueError("external review requires a fingerprinted EPPO reference")
+    validate_digest(authority["sha256"])
+    url = urlparse(authority["url"])
+    if (
+        url.scheme != "https"
+        or url.netloc != "gd.eppo.int"
+        or not re.fullmatch(r"/taxon/[A-Z0-9]{6}", url.path)
+        or url.query
+        or url.fragment
+    ):
+        raise ValueError("external review authority must be a public EPPO taxon page")
+    review["authority"] = dict(authority)
+    lookup = public_lookup(value.get("taxonomy_lookup"))
+    if lookup["url"] != f"https://api.inaturalist.org/v1/taxa/{target['id']}":
+        raise ValueError("external review taxonomy lookup must identify the exact target")
+    review["taxonomy_lookup"] = lookup
+    if decision == "synonym":
+        lookup = public_lookup(value.get("name_lookup"))
+        query = parse_qs(urlparse(lookup["url"]).query)
+        if urlparse(lookup["url"]).path != "/v1/taxa" or query != {
+            "q": [review["authority_name"]],
+            "per_page": ["200"],
+            "all_names": ["true"],
+            "is_active": ["true"],
+        }:
+            raise ValueError("external synonym review requires the authority name lookup")
+        review["name_lookup"] = lookup
+    return review
 
 
 def generate(data, *, approved=False, audit_url=AUDIT_URL):
@@ -127,8 +175,21 @@ def generate(data, *, approved=False, audit_url=AUDIT_URL):
                 raise ValueError("blank or explicitly inactive source names cannot enter the verified subset")
             target = public_target(entry.get("target"))
             match_type = entry.get("match_type")
-            if match_type not in ("accepted_name", "recorded_scientific_synonym"):
+            if match_type not in (
+                "accepted_name",
+                "recorded_scientific_synonym",
+                "reviewed_scientific_synonym",
+            ):
                 raise ValueError("resolved target must have an exact scientific-name match")
+            if match_type == "reviewed_scientific_synonym":
+                row["external_review"] = public_review(entry.get("external_review"), entry, target, "synonym")
+            elif "external_review" in entry:
+                raise ValueError("external review requires the reviewed scientific-synonym match type")
+            if target["rank"] == "genus" and (
+                not normalized(entry["raw_scientific_name"]).endswith(" spp.")
+                or match_type != "accepted_name"
+            ):
+                raise ValueError("genus targets require an explicit spp. source and exact accepted genus")
             if (
                 match_type == "accepted_name"
                 and normalized(target["name"]).casefold() != entry["query"].casefold()
@@ -146,6 +207,12 @@ def generate(data, *, approved=False, audit_url=AUDIT_URL):
             row.update(reason=reason, reason_code=REASONS[reason])
             if "candidate" in entry:
                 row["candidate"] = public_target(entry["candidate"], supported=False)
+            if reason == "taxonomic concept conflicts with authoritative lineage":
+                row["external_review"] = public_review(
+                    entry.get("external_review"), entry, row.get("candidate", {}), "concept_conflict"
+                )
+            elif "external_review" in entry:
+                raise ValueError("external review requires the taxonomic-concept conflict reason")
             omissions.append(
                 {
                     key: row[key]

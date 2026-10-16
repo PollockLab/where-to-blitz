@@ -18,20 +18,6 @@
       },
       {
         "common_name": "NA",
-        "csv_row": 177,
-        "raw_scientific_name": "Acrobasis pyrivorella",
-        "reason": "no unique exact active scientific-name match",
-        "reason_code": "no_unique_exact_match"
-      },
-      {
-        "common_name": "NA",
-        "csv_row": 185,
-        "raw_scientific_name": "Alternaria kikuchiana",
-        "reason": "no unique exact active scientific-name match",
-        "reason_code": "no_unique_exact_match"
-      },
-      {
-        "common_name": "NA",
         "csv_row": 186,
         "raw_scientific_name": "American plum line pattern virus",
         "reason": "no unique exact active scientific-name match",
@@ -50,13 +36,6 @@
         "raw_scientific_name": "Archachatina purpurea",
         "reason": "no unique exact active scientific-name match",
         "reason_code": "no_unique_exact_match"
-      },
-      {
-        "common_name": "NA",
-        "csv_row": 202,
-        "raw_scientific_name": "Berberis spp.",
-        "reason": "taxon search result is incomplete",
-        "reason_code": "incomplete_search"
       },
       {
         "common_name": "NA",
@@ -88,13 +67,6 @@
       },
       {
         "common_name": "NA",
-        "csv_row": 222,
-        "raw_scientific_name": "Cydia inopinata",
-        "reason": "no unique exact active scientific-name match",
-        "reason_code": "no_unique_exact_match"
-      },
-      {
-        "common_name": "NA",
         "csv_row": 238,
         "raw_scientific_name": "Euzophera pyriella",
         "reason": "no unique exact active scientific-name match",
@@ -106,27 +78,6 @@
         "raw_scientific_name": "Guignardia baccae",
         "reason": "no unique exact active scientific-name match",
         "reason_code": "no_unique_exact_match"
-      },
-      {
-        "common_name": "NA",
-        "csv_row": 251,
-        "raw_scientific_name": "Helix spp.",
-        "reason": "taxon search result is incomplete",
-        "reason_code": "incomplete_search"
-      },
-      {
-        "common_name": "NA",
-        "csv_row": 252,
-        "raw_scientific_name": "Hesperophanes campestris",
-        "reason": "no unique exact active scientific-name match",
-        "reason_code": "no_unique_exact_match"
-      },
-      {
-        "common_name": "NA",
-        "csv_row": 261,
-        "raw_scientific_name": "Longidorus spp.",
-        "reason": "target rank is broader than species",
-        "reason_code": "broader_than_species"
       },
       {
         "common_name": "NA",
@@ -151,13 +102,6 @@
       },
       {
         "common_name": "NA",
-        "csv_row": 275,
-        "raw_scientific_name": "Monilia polystroma",
-        "reason": "no unique exact active scientific-name match",
-        "reason_code": "no_unique_exact_match"
-      },
-      {
-        "common_name": "NA",
         "csv_row": 276,
         "raw_scientific_name": "Monilia yunnanensis",
         "reason": "no unique exact active scientific-name match",
@@ -169,41 +113,6 @@
         "raw_scientific_name": "Monilinia mali",
         "reason": "no unique exact active scientific-name match",
         "reason_code": "no_unique_exact_match"
-      },
-      {
-        "common_name": "NA",
-        "csv_row": 280,
-        "raw_scientific_name": "Monochamus spp.",
-        "reason": "target rank is broader than species",
-        "reason_code": "broader_than_species"
-      },
-      {
-        "common_name": "NA",
-        "csv_row": 283,
-        "raw_scientific_name": "Neovossia indica",
-        "reason": "no unique exact active scientific-name match",
-        "reason_code": "no_unique_exact_match"
-      },
-      {
-        "common_name": "NA",
-        "csv_row": 286,
-        "raw_scientific_name": "Numonia pyrivorella",
-        "reason": "no unique exact active scientific-name match",
-        "reason_code": "no_unique_exact_match"
-      },
-      {
-        "common_name": "NA",
-        "csv_row": 294,
-        "raw_scientific_name": "Orobanche spp.",
-        "reason": "taxon search result is incomplete",
-        "reason_code": "incomplete_search"
-      },
-      {
-        "common_name": "NA",
-        "csv_row": 316,
-        "raw_scientific_name": "Proeulia spp.",
-        "reason": "target rank is broader than species",
-        "reason_code": "broader_than_species"
       },
       {
         "common_name": "NA",
@@ -221,38 +130,10 @@
       },
       {
         "common_name": "NA",
-        "csv_row": 331,
-        "raw_scientific_name": "Rhamnus spp.",
-        "reason": "target rank is broader than species",
-        "reason_code": "broader_than_species"
-      },
-      {
-        "common_name": "NA",
-        "csv_row": 333,
-        "raw_scientific_name": "Sclerotinia fructigena",
-        "reason": "no unique exact active scientific-name match",
-        "reason_code": "no_unique_exact_match"
-      },
-      {
-        "common_name": "NA",
         "csv_row": 342,
         "raw_scientific_name": "Spur cherry agent",
         "reason": "no unique exact active scientific-name match",
         "reason_code": "no_unique_exact_match"
-      },
-      {
-        "common_name": "NA",
-        "csv_row": 343,
-        "raw_scientific_name": "Striga spp.",
-        "reason": "taxon search result is incomplete",
-        "reason_code": "incomplete_search"
-      },
-      {
-        "common_name": "NA",
-        "csv_row": 357,
-        "raw_scientific_name": "Trichodorus spp.",
-        "reason": "target rank is broader than species",
-        "reason_code": "broader_than_species"
       },
       {
         "common_name": "NA",
@@ -270,13 +151,13 @@
       },
       {
         "common_name": "NA",
-        "csv_row": 367,
-        "raw_scientific_name": "XiphinemaÂ spp.",
-        "reason": "target rank is broader than species",
-        "reason_code": "broader_than_species"
+        "csv_row": 369,
+        "raw_scientific_name": "Xylophilus ampelinus",
+        "reason": "taxonomic concept conflicts with authoritative lineage",
+        "reason_code": "taxonomic_concept_conflict"
       }
     ],
-    "omitted_rows": 39,
+    "omitted_rows": 22,
     "original_source_sha256": "523ca0de128b897f18a511ff1d67448a4d7cd7640464a051f5f91dcd352f205f",
     "resolved": [
       {
@@ -972,6 +853,10 @@
         "target_id": 502885
       },
       {
+        "csv_row": 177,
+        "target_id": 1120249
+      },
+      {
         "csv_row": 178,
         "target_id": 471461
       },
@@ -997,6 +882,10 @@
       },
       {
         "csv_row": 184,
+        "target_id": 1120252
+      },
+      {
+        "csv_row": 185,
         "target_id": 1120252
       },
       {
@@ -1050,6 +939,10 @@
       {
         "csv_row": 201,
         "target_id": 64017
+      },
+      {
+        "csv_row": 202,
+        "target_id": 58728
       },
       {
         "csv_row": 203,
@@ -1110,6 +1003,10 @@
       {
         "csv_row": 221,
         "target_id": 325295
+      },
+      {
+        "csv_row": 222,
+        "target_id": 1507288
       },
       {
         "csv_row": 223,
@@ -1216,6 +1113,14 @@
         "target_id": 480298
       },
       {
+        "csv_row": 251,
+        "target_id": 47483
+      },
+      {
+        "csv_row": 252,
+        "target_id": 447062
+      },
+      {
         "csv_row": 253,
         "target_id": 199380
       },
@@ -1246,6 +1151,10 @@
       {
         "csv_row": 260,
         "target_id": 480748
+      },
+      {
+        "csv_row": 261,
+        "target_id": 510597
       },
       {
         "csv_row": 262,
@@ -1288,12 +1197,20 @@
         "target_id": 116710
       },
       {
+        "csv_row": 275,
+        "target_id": 978988
+      },
+      {
         "csv_row": 277,
         "target_id": 775527
       },
       {
         "csv_row": 279,
         "target_id": 209674
+      },
+      {
+        "csv_row": 280,
+        "target_id": 82044
       },
       {
         "csv_row": 281,
@@ -1304,12 +1221,20 @@
         "target_id": 417299
       },
       {
+        "csv_row": 283,
+        "target_id": 352525
+      },
+      {
         "csv_row": 284,
         "target_id": 1538560
       },
       {
         "csv_row": 285,
         "target_id": 124118
+      },
+      {
+        "csv_row": 286,
+        "target_id": 1120249
       },
       {
         "csv_row": 287,
@@ -1338,6 +1263,10 @@
       {
         "csv_row": 293,
         "target_id": 429916
+      },
+      {
+        "csv_row": 294,
+        "target_id": 47321
       },
       {
         "csv_row": 295,
@@ -1424,6 +1353,10 @@
         "target_id": 67760
       },
       {
+        "csv_row": 316,
+        "target_id": 127595
+      },
+      {
         "csv_row": 318,
         "target_id": 337405
       },
@@ -1472,8 +1405,16 @@
         "target_id": 366909
       },
       {
+        "csv_row": 331,
+        "target_id": 54812
+      },
+      {
         "csv_row": 332,
         "target_id": 1095789
+      },
+      {
+        "csv_row": 333,
+        "target_id": 775527
       },
       {
         "csv_row": 334,
@@ -1506,6 +1447,10 @@
       {
         "csv_row": 341,
         "target_id": 499054
+      },
+      {
+        "csv_row": 343,
+        "target_id": 84833
       },
       {
         "csv_row": 344,
@@ -1560,6 +1505,10 @@
         "target_id": 1555031
       },
       {
+        "csv_row": 357,
+        "target_id": 510627
+      },
+      {
         "csv_row": 358,
         "target_id": 447062
       },
@@ -1588,25 +1537,25 @@
         "target_id": 1065767
       },
       {
-        "csv_row": 368,
-        "target_id": 549670
+        "csv_row": 367,
+        "target_id": 368914
       },
       {
-        "csv_row": 369,
-        "target_id": 1503461
+        "csv_row": 368,
+        "target_id": 549670
       },
       {
         "csv_row": 370,
         "target_id": 79560
       }
     ],
-    "resolved_rows": 330,
+    "resolved_rows": 347,
     "source_rows": 369,
-    "unique_targets": 324
+    "unique_targets": 335
   },
   "schema_version": 1,
   "source": {
-    "sha256": "b6a056c2ca4a7c8bafc3ce276e7dca73fc3a8517ba7664ca994ee03e63af4626",
+    "sha256": "9e8aa6b755a61ce32c0b79a0210847cfa81aa02358319306d85b0a993a75e1ce",
     "url": "https://raw.githubusercontent.com/PollockLab/where-to-blitz/main/webapp/challenge_taxa_audit.json"
   },
   "taxa": [
@@ -1706,6 +1655,16 @@
       "rank": "species"
     },
     {
+      "id": 47321,
+      "name": "Orobanche",
+      "rank": "genus"
+    },
+    {
+      "id": 47483,
+      "name": "Helix",
+      "rank": "genus"
+    },
+    {
       "id": 47802,
       "name": "Lymantria dispar",
       "rank": "species"
@@ -1729,6 +1688,11 @@
       "id": 52588,
       "name": "Centaurea solstitialis",
       "rank": "species"
+    },
+    {
+      "id": 54812,
+      "name": "Rhamnus",
+      "rank": "genus"
     },
     {
       "id": 55246,
@@ -1769,6 +1733,11 @@
       "id": 58726,
       "name": "Quercus prinoides",
       "rank": "species"
+    },
+    {
+      "id": 58728,
+      "name": "Berberis",
+      "rank": "genus"
     },
     {
       "id": 60295,
@@ -1934,6 +1903,11 @@
       }
     },
     {
+      "id": 82044,
+      "name": "Monochamus",
+      "rank": "genus"
+    },
+    {
       "id": 82371,
       "name": "Bombus occidentalis",
       "rank": "species"
@@ -1942,6 +1916,11 @@
       "id": 84778,
       "name": "Leptinotarsa decemlineata",
       "rank": "species"
+    },
+    {
+      "id": 84833,
+      "name": "Striga",
+      "rank": "genus"
     },
     {
       "id": 98491,
@@ -2042,6 +2021,11 @@
       "id": 126645,
       "name": "Vitis vulpina",
       "rank": "species"
+    },
+    {
+      "id": 127595,
+      "name": "Proeulia",
+      "rank": "genus"
     },
     {
       "id": 127895,
@@ -2666,6 +2650,11 @@
       "rank": "species"
     },
     {
+      "id": 368914,
+      "name": "Xiphinema",
+      "rank": "genus"
+    },
+    {
       "id": 379762,
       "name": "Clavibacter michiganensis",
       "rank": "species"
@@ -2839,6 +2828,16 @@
       "id": 508637,
       "name": "Callipogon relictus",
       "rank": "species"
+    },
+    {
+      "id": 510597,
+      "name": "Longidorus",
+      "rank": "genus"
+    },
+    {
+      "id": 510627,
+      "name": "Trichodorus",
+      "rank": "genus"
     },
     {
       "id": 522769,
@@ -3059,6 +3058,11 @@
       "rank": "species"
     },
     {
+      "id": 978988,
+      "name": "Monilinia polystroma",
+      "rank": "species"
+    },
+    {
       "id": 1006604,
       "name": "Pseudoperonospora cannabina",
       "rank": "species"
@@ -3096,6 +3100,11 @@
     {
       "id": 1096726,
       "name": "Phytoplasma solani",
+      "rank": "species"
+    },
+    {
+      "id": 1120249,
+      "name": "Acrobasis pirivorella",
       "rank": "species"
     },
     {
@@ -3204,11 +3213,6 @@
       "rank": "species"
     },
     {
-      "id": 1503461,
-      "name": "Xylophilus ampelinus",
-      "rank": "species"
-    },
-    {
       "id": 1507288,
       "name": "Aspila inopinata",
       "rank": "species"
@@ -3279,5 +3283,5 @@
       "rank": "species"
     }
   ],
-  "version": "verified-subset-b6a056c2ca4a7c8b"
+  "version": "verified-subset-9e8aa6b755a61ce3"
 }
