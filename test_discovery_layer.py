@@ -138,6 +138,40 @@ def test_events_on_both_period_boundaries_are_retained(tmp_path):
     assert product["events"]["unique"] == 2
 
 
+def annual_event(identity, year=2024):
+    feature = event(identity)
+    feature["properties"] = {"event_id": identity, "observed_year": year}
+    return feature
+
+
+def test_verified_annual_events_need_no_invented_observation_day(tmp_path):
+    inputs = sources(tmp_path, [annual_event("one"), annual_event("two")], {(400, 400): 20})
+    edit_metadata(inputs[2], lambda metadata: metadata.update(event_dates="annual"))
+    product = layer.build(*inputs)
+    assert product["tiers"]["5000"]["cells"][0][2:5] == [2, 20, 1000]
+    assert product["sources"]["discoveries"]["event_dates"] == "annual"
+
+
+@pytest.mark.parametrize("year", [2023, 2025, True, "2024", 2024.0, None])
+def test_annual_events_require_the_declared_integer_year(tmp_path, year):
+    inputs = sources(tmp_path, [annual_event("one", year)], {(400, 400): 20})
+    edit_metadata(inputs[2], lambda metadata: metadata.update(event_dates="annual"))
+    with pytest.raises(ValueError, match="observed_year"):
+        layer.build(*inputs)
+
+
+def test_annual_events_reject_partial_year_scope_and_fabricated_day(tmp_path):
+    feature = annual_event("one")
+    feature["properties"]["observed_on"] = "2024-01-01"
+    inputs = sources(tmp_path, [feature], {(400, 400): 20})
+    edit_metadata(inputs[2], lambda metadata: metadata.update(event_dates="annual"))
+    with pytest.raises(ValueError, match="must not invent observed_on"):
+        layer.build(*inputs)
+    edit_metadata(inputs[2], lambda metadata: metadata["scope"]["period"].update(start="2024-02-01"))
+    with pytest.raises(ValueError, match="complete calendar year"):
+        layer.build(*inputs)
+
+
 @pytest.mark.parametrize(
     "coordinates", [[None, 45], [float("nan"), 45], [True, 45], [181, 45], [0, 91], [0, 0]]
 )

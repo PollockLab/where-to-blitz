@@ -10,6 +10,9 @@ crs, and scope={period:{start,end},filters:{...},support_id:...}. Dates are incl
 Units are discovery_events and observations, respectively. The numerator CRS must
 be EPSG:4326; the denominator CRS must be the existing WGS84 LAEA lattice CRS.
 The numerator event_definition must be one_discovery_event_per_observation.
+For a verified annual cohort without recoverable daily identities, declare
+event_dates="annual" and use integer observed_year instead of observed_on.
+Annual dates require a complete January 1 through December 31 scope.
 The denominator also needs grid={resolution_m:5000,x0:-2150000,y1:4300000,
 width:1100,height:905}. Both scopes must match exactly. A source hash is of the
 original input bytes, not its sidecar. No density or training-count proxy is used.
@@ -87,6 +90,13 @@ def validate_contract(contract, unit, metadata="source metadata"):
         raise ValueError(f"{metadata}: scope.period needs start and end")
     if _date(period["start"], "period.start") > _date(period["end"], "period.end"):
         raise ValueError(f"{metadata}: period.start must not follow period.end")
+    if unit == "discovery_events":
+        precision = contract.get("event_dates", "daily")
+        if precision not in ("daily", "annual"):
+            raise ValueError(f"{metadata}: event_dates must be daily or annual")
+        start, end = (_date(period[key], key) for key in ("start", "end"))
+        if precision == "annual" and (start != date(start.year, 1, 1) or end != date(start.year, 12, 31)):
+            raise ValueError(f"{metadata}: annual events require one complete calendar year")
     try:
         crs = CRS.from_user_input(contract.get("crs"))
     except Exception as exc:
@@ -161,7 +171,7 @@ def point_cell(lon, lat):
     return row, col
 
 
-def count_discoveries(data, scope, support):
+def count_discoveries(data, scope, support, event_dates="daily"):
     geo = json.loads(data)
     if not isinstance(geo, dict) or geo.get("type") != "FeatureCollection" or "crs" in geo:
         raise ValueError("discoveries must be an RFC 7946 FeatureCollection without a crs member")
@@ -178,9 +188,21 @@ def count_discoveries(data, scope, support):
         identity = props.get("event_id")
         if not isinstance(identity, str) or not identity.strip():
             raise ValueError(f"discovery {index}: nonempty string event_id is required")
-        observed = _date(props.get("observed_on"), f"discovery {identity}.observed_on")
-        if not start <= observed <= end:
-            raise ValueError(f"discovery {identity}: observed_on is outside the declared period")
+        if event_dates == "annual":
+            year = props.get("observed_year")
+            if (
+                type(year) is not int
+                or year != start.year
+                or end != date(year, 12, 31)
+                or start != date(year, 1, 1)
+            ):
+                raise ValueError(f"discovery {identity}: observed_year must match a complete declared year")
+            if "observed_on" in props:
+                raise ValueError(f"discovery {identity}: annual events must not invent observed_on")
+        else:
+            observed = _date(props.get("observed_on"), f"discovery {identity}.observed_on")
+            if not start <= observed <= end:
+                raise ValueError(f"discovery {identity}: observed_on is outside the declared period")
         coordinates = geom.get("coordinates")
         if not isinstance(coordinates, list) or len(coordinates) != 2:
             raise ValueError(f"discovery {identity}: expected exactly longitude,latitude")
@@ -234,7 +256,9 @@ def build(discoveries_path, observations_path, discoveries_metadata, observation
     if numerator_contract["scope"] != denominator_contract["scope"]:
         raise ValueError("discovery/observation scope mismatch: periods, filters and support must match")
     observations = read_counts(denominator)
-    discoveries, unique, duplicates = count_discoveries(numerator, numerator_contract["scope"], observations)
+    discoveries, unique, duplicates = count_discoveries(
+        numerator, numerator_contract["scope"], observations, numerator_contract.get("event_dates", "daily")
+    )
     product = {
         "schema_version": 1,
         "metric": "discovery_events_per_10000_observations",
