@@ -185,6 +185,46 @@ def test_exact_projected_boundaries_are_half_open(monkeypatch):
 
 
 @pytest.mark.parametrize(
+    "row,col", [(0, 0), (1, 1), (100, 400), (400, 400), (904, 1099), (905, 100), (400, 1100), (904, 1100)]
+)
+def test_real_projection_roundtrip_keeps_half_open_corner_ownership(row, col):
+    x, y = layer.GRID.x0 + col * 5000, layer.GRID.y1 - row * 5000
+    lon, lat = transform(layer.LAEA, "EPSG:4326", [x], [y])
+    if row == layer.GRID.nrow or col == layer.GRID.ncol:
+        with pytest.raises(ValueError, match="outside the lattice"):
+            layer.point_cell(lon[0], lat[0])
+    else:
+        assert layer.point_cell(lon[0], lat[0]) == (row, col)
+
+
+@pytest.mark.parametrize(
+    "row,col,dx,dy,want",
+    [
+        (400, 400, -1e-5, 0, (400, 399)),
+        (400, 400, 1e-5, 0, (400, 400)),
+        (400, 400, 0, -1e-5, (400, 400)),
+        (400, 400, 0, 1e-5, (399, 400)),
+        (400, 0, -1e-5, 0, None),
+        (400, 0, 1e-5, 0, (400, 0)),
+        (0, 400, 0, 1e-5, None),
+        (0, 400, 0, -1e-5, (0, 400)),
+        (400, 1100, -1e-5, 0, (400, 1099)),
+        (400, 1100, 1e-5, 0, None),
+        (905, 400, 0, 1e-5, (904, 400)),
+        (905, 400, 0, -1e-5, None),
+    ],
+)
+def test_real_projection_preserves_nearby_points_on_both_sides_of_edges(row, col, dx, dy, want):
+    x, y = layer.GRID.x0 + col * 5000 + dx, layer.GRID.y1 - row * 5000 + dy
+    lon, lat = transform(layer.LAEA, "EPSG:4326", [x], [y])
+    if want is None:
+        with pytest.raises(ValueError, match="outside the lattice"):
+            layer.point_cell(lon[0], lat[0])
+    else:
+        assert layer.point_cell(lon[0], lat[0]) == want
+
+
+@pytest.mark.parametrize(
     "mutate",
     [
         lambda p: p["tiers"]["5000"]["cells"][0].__setitem__(4, 300),

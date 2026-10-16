@@ -147,8 +147,15 @@ def point_cell(lon, lat):
     x, y = transform("EPSG:4326", LAEA, [lon], [lat])
     if not math.isfinite(x[0]) or not math.isfinite(y[0]):
         raise ValueError("discovery point has no finite LAEA position")
-    row = math.floor((GRID.y1 - y[0]) / GRID.res)
-    col = math.floor((x[0] - GRID.x0) / GRID.res)
+
+    def cell_index(value):
+        # PROJ round trips move exact edges by nanometres. Snap only within
+        # 1e-10 cell widths (0.5 micrometres), then apply the half-open rule.
+        nearest = round(value)
+        return math.floor(nearest if abs(value - nearest) <= 1e-10 else value)
+
+    row = cell_index((GRID.y1 - y[0]) / GRID.res)
+    col = cell_index((x[0] - GRID.x0) / GRID.res)
     if not (0 <= row < GRID.nrow and 0 <= col < GRID.ncol):
         raise ValueError("discovery point is outside the lattice")
     return row, col
