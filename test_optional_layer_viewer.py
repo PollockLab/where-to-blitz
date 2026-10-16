@@ -994,3 +994,50 @@ def test_discovery_browser_explicit_navigation_resets_scroll_but_pan_preserves_i
         cell_res=25000,
     )
     assert result == {"next": 0, "pan": 100, "previous": 0, "filter": 0}
+
+
+@pytest.mark.parametrize("language", ["en", "fr"])
+@pytest.mark.parametrize("cell_res", [5000, 25000])
+def test_discovery_browser_waits_for_verified_data_before_reporting_counts(tmp_path, language, cell_res):
+    product = rate_product(tmp_path)
+    support = 1 if cell_res == 5000 else 25
+    product["tiers"][str(cell_res)]["cells"] = [
+        [400, 400 + i, 0, 100, 0, support, support] for i in range(35)
+    ] + [[400, 435, 1, 100, 100, support, support]]
+    result = sighting_lifecycle(
+        "LANG=" + json.dumps(language) + ";let finish;"
+        "OptionalData.fetchPinned=()=>new Promise(resolve=>{finish=()=>resolve(input.discovery);});"
+        "['discoveryCellStatus','discoveryCells','discoveryPrevious','discoveryNext'].forEach(id=>document.getElementById(id));"
+        "LAEA.fwd=(lat,lon)=>[LATTICE_X0+(lon<-75?399:437)*input.cellRes,LATTICE_Y1-400*input.cellRes];"
+        "overlay='discovery';_discoveryLoading=true;const pending=optionalLayers.load();optionalLayers.refresh();"
+        "const loading=()=>({disabled:nodes.discoveryCellFilter.disabled,status:nodes.discoveryCellStatus.textContent,"
+        "list:nodes.discoveryCells.textContent,previous:nodes.discoveryPrevious.getAttribute('aria-disabled'),"
+        "next:nodes.discoveryNext.getAttribute('aria-disabled')});const initial=loading();"
+        "nodes.discoveryCellFilter.value='zero';nodes.discoveryCellFilter.onchange();nodes.discoveryNext.onclick();"
+        "handlers.moveend();const changed=loading();finish();await pending;_discoveryLoading=false;optionalLayers.refresh();"
+        "console.log(JSON.stringify({initial,changed,ready:{disabled:nodes.discoveryCellFilter.disabled,"
+        "filter:nodes.discoveryCellFilter.value,status:nodes.discoveryCellStatus.textContent,"
+        "count:nodes.discoveryCells.children.length,previous:nodes.discoveryPrevious.getAttribute('aria-disabled'),"
+        "next:nodes.discoveryNext.getAttribute('aria-disabled'),keys:nodes.discoveryCells.children.map(b=>b.dataset.discoveryCell)}}));",
+        product,
+        start_recent=False,
+        cell_res=cell_res,
+    )
+    message = (
+        "Loading historical discovery evidence…"
+        if language == "en"
+        else "Chargement des données historiques de découverte…"
+    )
+    for phase in ("initial", "changed"):
+        assert result[phase] == {
+            "disabled": True,
+            "status": message,
+            "list": "",
+            "previous": "true",
+            "next": "true",
+        }
+    ready = result["ready"]
+    assert not ready["disabled"] and ready["filter"] == "zero"
+    assert ready["count"] == 30 and ready["previous"] == "true" and ready["next"] == "false"
+    assert "35" in ready["status"] and "36" in ready["status"]
+    assert ready["keys"][0] == f"{cell_res}:400,400"
