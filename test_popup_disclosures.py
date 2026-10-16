@@ -31,6 +31,8 @@ const caOnlyActive=()=>true,US_CELLS=new Set(),gekey=()=>'',DRAWN5=null;
 const clearRoute=()=>{},syncSharedCellUrl=()=>{},setDestCell=()=>{},latKey=()=>'';
 const t=id=>id,popScoreHtml=()=>'cell facts',contribStr=()=>'components',openHowSection=()=>{};
 const popupActionsHtml=()=>'record actions';
+let LANG='en',groupCalls=[];
+let fetchGapTree=async(...args)=>{groupCalls.push(args);};
 let _selectionSeq=0,_reselect=false,_sharedCell=null,_popScoreEl=null,_popComponentsEl=null,destMarker;
 let content,popupOptions;
 const maplibregl={Popup:class{constructor(options){popupOptions=options;}setDOMContent(el){content=el;return this;}}},wirePopup=p=>p;
@@ -38,8 +40,10 @@ const destMarkerAt=()=>({addTo(){return this;},setPopup(){return this;},togglePo
 let refs;
 function fetchProspects(lat,lon,where,opts){refs=opts;}
 """
-    script += _function(src, "exploreCell")
-    script += "\nexploreCell(49,-123);\n" + code
+    script += _function(src, "wireGroupComparison") + _function(src, "exploreCell")
+    script += (
+        "\n(async()=>{exploreCell(49,-123);\n" + code + "})().catch(e=>{console.error(e);process.exit(1);});"
+    )
     result = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=False)
     assert result.returncode == 0, result.stderr
     return json.loads(result.stdout)
@@ -58,6 +62,52 @@ def test_species_precede_closed_group_and_component_disclosures():
 
 def test_explore_popup_disables_library_focus_before_the_open_event():
     assert _run("console.log(JSON.stringify(popupOptions.focusAfterOpen===false));") is True
+
+
+def test_closed_group_comparison_does_not_advertise_loading_or_failure():
+    result = _run(
+        "const details=created.find(el=>el.tag==='details');"
+        "console.log(JSON.stringify({body:refs.gapsEl.innerHTML,"
+        "status:details.children[0].children.length}));"
+    )
+    assert result == {"body": "", "status": 0}
+
+
+def test_comparison_loads_only_when_open_and_reuses_a_pending_load():
+    result = _run(
+        "const details=created.find(el=>el.tag==='details');let finish;"
+        "fetchGapTree=(...args)=>{groupCalls.push(args);return new Promise(resolve=>{finish=resolve;});};"
+        "await refs.gapsEl._refresh();const closed=groupCalls.length;"
+        "details.open=true;const first=details.ontoggle();"
+        "details.open=false;details.ontoggle();details.open=true;const second=details.ontoggle();"
+        "const pending=groupCalls.length;finish();await Promise.all([first,second]);"
+        "console.log(JSON.stringify({closed,pending,open:details.open}));"
+    )
+    assert result == {"closed": 0, "pending": 1, "open": True}
+
+
+@pytest.mark.parametrize("change", ["LANG='fr'", "state.taxon='Fungi'"])
+def test_closed_comparison_refreshes_only_after_reopening(change):
+    result = _run(
+        "const details=created.find(el=>el.tag==='details');details.open=true;await details.ontoggle();"
+        "refs.gapsEl.innerHTML='old evidence';details.open=false;details.ontoggle();"
+        + change
+        + ";await refs.gapsEl._refresh();const closed=groupCalls.length;"
+        "const body=refs.gapsEl.innerHTML;details.open=true;await details.ontoggle();"
+        "console.log(JSON.stringify({closed,body,reopened:groupCalls.length}));"
+    )
+    assert result == {"closed": 1, "body": "", "reopened": 2}
+
+
+def test_old_completion_cannot_clear_a_new_locale_pending_load():
+    result = _run(
+        "const details=created.find(el=>el.tag==='details');const finish=[];"
+        "fetchGapTree=(...args)=>{groupCalls.push(args);return new Promise(resolve=>finish.push(resolve));};"
+        "details.open=true;const first=details.ontoggle();LANG='fr';const second=refs.gapsEl._refresh();"
+        "finish[0]();await first;const same=refs.gapsEl._refresh();const calls=groupCalls.length;"
+        "finish[1]();await Promise.all([second,same]);console.log(JSON.stringify({calls}));"
+    )
+    assert result == {"calls": 2}
 
 
 def test_evidence_repaint_keeps_disclosure_and_summary_focus():

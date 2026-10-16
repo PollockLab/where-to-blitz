@@ -170,7 +170,6 @@ details.adv>summary:hover{color:var(--ink)}
 .popscore b{font-weight:700}
 .popdetails{border-top:1px solid #dde;margin-top:9px;font-size:11px;line-height:1.4;color:#667}
 .popdetails>summary{padding:7px 0;cursor:pointer;color:#0a2a44;font-size:12px;font-weight:650}
-.popstatus{display:block;font-size:10.5px;font-weight:400;color:#667;margin:2px 0 0 14px}
 .pophelp{display:inline-block;font-size:11px;color:var(--acc);margin-top:7px}
 .popretry{background:none;border:0;padding:4px 0;color:var(--acc);text-decoration:underline;font:inherit;cursor:pointer}
 .popgrid a:focus-visible,.popdetails>summary:focus-visible,.pophelp:focus-visible,.popretry:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
@@ -515,7 +514,6 @@ const I18N={
     how_goals:"Current goal and scoring", how_evidence:"Species suggestions and group comparison", how_ranks:"Map colour and national percentile", how_sources:"Data sources and limits", how_about:"Blitz the Gap and responsible recording",
     current_goal:name=>`Active goal: ${name}`,
     pop_groups_summary:"Compare groups", pop_components:"Score components", pop_help:"Scoring and evidence explained",
-    group_status_loading:"Loading group evidence…", group_status_partial:"Incomplete lists, comparison unavailable", group_status_error:"Group evidence unavailable", group_status_sparse:"Too few nearby records",
     inat_scope:"Public research-grade iNaturalist records only. Threatened species and protected locations excluded.",
     evidence_method:"Species evidence is fetched live for the selected cell's bounding box and a 40 km radius around its centre. The nearby-count method puts verified gaps in matching records first, then smaller local-to-nearby recording shares, then fewer nearby records. Up to four candidates are shown. An available BC plant pilot instead uses habitat and current-month seasonal recording indices, checks up to 32 candidates, and leaves fewer cards when evidence is weak. A complete local list can establish that a nearby candidate has no matching filtered record here. For the nearby-count method, an incomplete local list needs a separate bounded check of up to eight candidates. If that check cannot establish a gap, only species already recorded locally are suggested. These labels describe filtered records, not biological absence. Failed nearby queries leave local cards without nearby counts or rarity labels.",
     source_expl:`<p><a href="https://www.inaturalist.org" target="_blank" rel="noopener">iNaturalist</a> supplies the live popup records and historical research-grade records. Recording-density rasters are supplied by <a href="https://object-arbutus.cloud.computecanada.ca/bq-io/io/inat_canada_heatmaps/" target="_blank" rel="noopener">Biodiversité Québec</a>.</p><p>Climate inputs use <a href="https://chelsa-climate.org" target="_blank" rel="noopener">CHELSA</a>. Tree-cover loss uses <a href="https://glad.earthengine.app/view/global-forest-change" target="_blank" rel="noopener">Hansen Global Forest Change</a>, cumulative 2001–2023. Conservation combines <a href="https://doi.org/10.17605/OSF.IO/E4A58" target="_blank" rel="noopener">CAN-SAR assessments</a> with the GBIF occurrence download and taxonomy identified below.</p>`,
@@ -712,7 +710,6 @@ const I18N={
     how_goals:"Objectif actif et calcul", how_evidence:"Suggestions d'espèces et comparaison des groupes", how_ranks:"Couleur et centile national", how_sources:"Sources de données et limites", how_about:"Blitz the Gap et observation responsable",
     current_goal:name=>`Objectif actif : ${name}`,
     pop_groups_summary:"Comparer les groupes", pop_components:"Composantes du score", pop_help:"Comprendre les scores et les observations",
-    group_status_loading:"Chargement des observations par groupe…", group_status_partial:"Listes incomplètes, comparaison indisponible", group_status_error:"Observations par groupe indisponibles", group_status_sparse:"Trop peu d'observations à proximité",
     inat_scope:"Observations publiques de qualité recherche sur iNaturalist seulement. Espèces menacées et localisations protégées exclues.",
     evidence_method:"Les observations sont récupérées en direct dans la boîte englobante de la cellule sélectionnée et dans un rayon de 40 km autour de son centre. La méthode des nombres d'observations privilégie les lacunes vérifiées dans les observations retenues, puis une faible part d'observations locales par rapport aux voisines, puis un faible nombre d'observations voisines. Jusqu'à quatre candidates sont affichées. Un projet pilote de plantes en C.-B., lorsqu'il est disponible, utilise plutôt des indices d'habitat et de saison des observations du mois courant, vérifie jusqu'à 32 candidates et affiche moins de fiches lorsque les données sont insuffisantes. Une liste locale complète peut établir qu'une candidate voisine n'a aucune observation correspondant aux filtres ici. Pour la méthode des nombres d'observations, une liste locale incomplète nécessite une vérification distincte et limitée à huit candidates. Si cette vérification ne peut pas établir de lacune, seules les espèces déjà observées localement sont suggérées. Ces étiquettes décrivent les observations filtrées, pas une absence biologique. Un échec de la requête voisine laisse les fiches locales sans nombre voisin ni étiquette de rareté.",
     source_expl:`<p><a href="https://www.inaturalist.org" target="_blank" rel="noopener">iNaturalist</a> fournit les observations en direct et les observations historiques de qualité recherche. Les rasters de densité sont fournis par <a href="https://object-arbutus.cloud.computecanada.ca/bq-io/io/inat_canada_heatmaps/" target="_blank" rel="noopener">Biodiversité Québec</a>.</p><p>Les données climatiques viennent de <a href="https://chelsa-climate.org" target="_blank" rel="noopener">CHELSA</a>. La perte de couvert arboré utilise <a href="https://glad.earthengine.app/view/global-forest-change" target="_blank" rel="noopener">Hansen Global Forest Change</a>, cumulée de 2001 à 2023. Conservation combine les <a href="https://doi.org/10.17605/OSF.IO/E4A58" target="_blank" rel="noopener">évaluations CAN-SAR</a> avec le téléchargement d'occurrences GBIF et la taxonomie indiqués ci-dessous.</p>`,
@@ -1330,7 +1327,7 @@ async function fetchProspects(lat,lon,whereKey,opts){
   const note=s=>(toPopup?'<div class="popcap">':'<div style="margin-top:8px;font-size:10.5px;color:var(--mut);line-height:1.35">')+s+'</div>';
   if(!toPopup) pr.dataset.idle='0';
   pr.innerHTML=toPopup?'<div class="popsec">'+t('pop_rare_hd')+'</div><div class="popcap">'+t('prospects_lookup')+'</div>':msg(t('prospects_lookup'));
-  if(toPopup) fetchGapTree(lat,lon,gapsEl,resM);   // the coverage-by-group tree only lives in the popup now
+  if(toPopup&&gapsEl&&gapsEl._refresh)gapsEl._refresh();   // only an open comparison requests group evidence
   const T_here=n=>t('here_count',n),T_near=n=>t('near_count',n);
   const L_rare=t('rare'),L_new=t('new_here'),L_notHere=t('not_here_tag');
   const ic=ICONIC[taxon]||'',locale=inatLocale();
@@ -1442,13 +1439,21 @@ const GT_DENSE={};
 const gtkey=(lat,lon)=>lat.toFixed(3)+','+lon.toFixed(3);
 // rows: [] -> too few nearby records to rank (honest, not a failure); null -> the lookup itself failed.
 const gtHead=()=>'<div class="popsec">'+t('pop_groups_hd')+'</div>';
-function paintGapStatus(el,key){
-  if(el._statusEl){el._statusEl.dataset.i18n=key||'';el._statusEl.textContent=key?t(key):'';}
+function wireGroupComparison(details,el,lat,lon,resM){
+  let context='',pending=null;
+  el._refresh=async()=>{
+    const key=state.taxon+'|'+LANG;
+    if(context!==key){context=key;pending=null;el.innerHTML='';}
+    if(!details.open||el.isConnected===false)return;
+    if(pending)return pending;   // collapse/reopen shares the user's in-flight request
+    const request=fetchGapTree(lat,lon,el,resM);pending=request;
+    try{await request;}finally{if(pending===request)pending=null;}
+  };
+  details.ontoggle=()=>details.open?el._refresh():undefined;
 }
 function paintGapTree(el,rows,dense){
-  if(rows===null){paintGapStatus(el,'group_status_error');el.innerHTML='<div class="popcap">'+t('gaptree_err')+'</div>';return;}
-  if(!rows.length){paintGapStatus(el,'group_status_sparse');el.innerHTML='<div class="popcap">'+t('gaptree_sparse')+'</div>';return;}
-  paintGapStatus(el,null);
+  if(rows===null){el.innerHTML='<div class="popcap">'+t('gaptree_err')+'</div>';return;}
+  if(!rows.length){el.innerHTML='<div class="popcap">'+t('gaptree_sparse')+'</div>';return;}
   const lab=v=>v<0.2?t('gt_gap'):(v<0.6?t('gt_partial'):t('gt_ok'));
   const cls=v=>v<0.2?'gt-gap':(v<0.6?'gt-part':'gt-ok');
   // The popup itself scrolls; the group list does not introduce another scroll surface.
@@ -1458,14 +1463,14 @@ function paintGapTree(el,rows,dense){
 }
 async function fetchGapTree(lat,lon,el,resM){
   const myseq=++gapSeq,taxon=state.taxon,lang=LANG;
-  const current=()=>myseq===gapSeq&&taxon===state.taxon&&lang===LANG;
+  const current=()=>myseq===gapSeq&&taxon===state.taxon&&lang===LANG&&el.isConnected!==false;
   // `el` is the PERSISTENT popup element passed by exploreCell, not a getElementById lookup: Leaflet
   // rebuilds the popup content node during the autoPan/setView churn of a tap, so a queried node goes
   // stale mid-fetch and the on-screen popup keeps its loading text (issue #56).
   if(!el) return;   // popup container; closed -> nothing to fill
   const ck=gtkey(lat,lon)+'|'+String(resM||25000);
   if(GT_CACHE[ck]!==undefined){paintGapTree(el,GT_CACHE[ck],GT_DENSE[ck]);return;}
-  paintGapStatus(el,'group_status_loading');el.innerHTML='<div class="popcap">'+t('gaptree_lookup')+'</div>';
+  el.innerHTML='<div class="popcap">'+t('gaptree_lookup')+'</div>';
   const GR=t('group'),groups=Object.keys(ICONIC),locale=inatLocale();
   const inner=cellBoundsForRes(lat,lon,resM||25000);
   const box=(b)=>`swlat=${b.swlat}&nelat=${b.nelat}&swlng=${b.swlng}&nelng=${b.nelng}`;
@@ -1473,7 +1478,7 @@ async function fetchGapTree(lat,lon,el,resM){
   const failed=()=>{
     paintGapTree(el,null);
     el.innerHTML+='<button type="button" class="popretry" data-group-retry="1">'+t('retry')+'</button>';
-    const retry=el.querySelector('[data-group-retry]');if(retry)retry.onclick=ev=>{ev.preventDefault();return fetchGapTree(lat,lon,el,resM);};
+    const retry=el.querySelector('[data-group-retry]');if(retry)retry.onclick=ev=>{ev.preventDefault();return el._refresh?el._refresh():fetchGapTree(lat,lon,el,resM);};
   };
   try{
     // Keep two calls total (issue #56): per-group requests flooded iNaturalist's per-IP rate limit.
@@ -1489,7 +1494,7 @@ async function fetchGapTree(lat,lon,el,resM){
       if(!validSpeciesCounts(nj))_jc.delete(nearbyUrl);
       failed();return;
     }
-    if(!completeSpeciesCounts(cj)||!completeSpeciesCounts(nj)){paintGapStatus(el,'group_status_partial');el.innerHTML='<div class="popcap">'+t('gaptree_partial')+'</div>';return;}
+    if(!completeSpeciesCounts(cj)||!completeSpeciesCounts(nj)){el.innerHTML='<div class="popcap">'+t('gaptree_partial')+'</div>';return;}
     const cell={};(cj.results||[]).forEach(r=>{const g=r.taxon&&r.taxon.iconic_taxon_name;if(g)cell[g]=(cell[g]||0)+1;});
     const nbhd={};(nj.results||[]).forEach(r=>{const g=r.taxon&&r.taxon.iconic_taxon_name;if(g)nbhd[g]=(nbhd[g]||0)+1;});
     const elig=groups.filter(g=>nbhd[g]>=3&&GR[g]);
@@ -2647,12 +2652,12 @@ function exploreCell(lat,lon){
   // keeps the same persistent element (the two child containers stay attached) so an in-flight fetch can fill it.
   const popDiv=document.createElement('div');popDiv.className='popbody';
   const popScore=document.createElement('div');popScore.id='popscore';popScore.className='popscore';_popScoreEl=popScore;popScore.innerHTML=popScoreHtml(best,resM);
-  const popGaps=document.createElement('div');popGaps.id='popgaps';popGaps.innerHTML='<div class="popcap">'+t('gaptree_lookup')+'</div>';
+  const popGaps=document.createElement('div');popGaps.id='popgaps';
   const popSp=document.createElement('div'); popSp.id='popsp'; popSp.innerHTML='<div class="popsec">'+t('pop_rare_hd')+'</div><div class="popcap">'+t('prospects_lookup')+'</div>';
   const groups=document.createElement('details');groups.className='popdetails';
   const groupSummary=document.createElement('summary');groupSummary.innerHTML='<span data-i18n="pop_groups_summary">'+t('pop_groups_summary')+'</span>';
-  const groupStatus=document.createElement('span');groupStatus.className='popstatus';groupStatus.setAttribute('role','status');groupStatus.dataset.i18n='group_status_loading';groupStatus.textContent=t('group_status_loading');popGaps._statusEl=groupStatus;
-  popGaps._summaryEl=groupSummary;groupSummary.appendChild(groupStatus);groups.appendChild(groupSummary);groups.appendChild(popGaps);
+  popGaps._summaryEl=groupSummary;groups.appendChild(groupSummary);groups.appendChild(popGaps);
+  wireGroupComparison(groups,popGaps,dest[0],dest[1],resM);
   const components=document.createElement('details');components.className='popdetails';components.hidden=overlay!=='priority';
   const componentSummary=document.createElement('summary');componentSummary.innerHTML='<span data-i18n="pop_components">'+t('pop_components')+'</span>';
   const componentBody=document.createElement('div');_popComponentsEl=componentBody;componentBody.innerHTML=best&&Number.isFinite(best.t)?contribStr(best.r):t('pop_noscore');

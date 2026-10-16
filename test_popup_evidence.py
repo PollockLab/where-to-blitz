@@ -91,12 +91,16 @@ const fetchT=async(url)=>{
         script += _function(src, "prospectSupportRows") + _function(src, "wireProspectSupport")
         start = src.index("function haversine(")
         script += src[start : src.index("\n", start)] + "\n"
-    for helper in ("validPlantPilotArtifact", "scorePlantPilot", "plantPilotForCell", "completePlantRegionalRows"):
+    for helper in (
+        "validPlantPilotArtifact",
+        "scorePlantPilot",
+        "plantPilotForCell",
+        "completePlantRegionalRows",
+        "wireGroupComparison",
+    ):
         script += _function(src, helper)
     script += _function(src, "fetchProspects")
     script += _function(src, "paintGapTree") + _function(src, "fetchGapTree")
-    if "function paintGapStatus(" in src:
-        script += _function(src, "paintGapStatus")
     script += "\n(async()=>{" + action + "})().catch(e=>{console.error(e);process.exit(1);});"
     result = subprocess.run(
         ["node", "-e", script],
@@ -288,6 +292,62 @@ def test_failed_species_lookup_offers_a_working_retry_instead_of_claiming_absenc
     assert "No matching public research-grade iNaturalist records found here" not in result["first"]
     assert "2 here · 3 within 40 km" in result["second"]
     assert result["calls"] == 3
+
+
+def test_species_load_does_not_request_an_unopened_group_comparison():
+    result = _run_popup(
+        [{"total_results": 0, "results": []}, {"total_results": 0, "results": []}],
+        "let groupRequests=0;fetchGapTree=async()=>{groupRequests++;};"
+        "await fetchProspects(49,-123,'right_here',{toPopup:true,spEl,gapsEl:gapEl});"
+        "console.log(JSON.stringify({groupRequests,calls:calls.length}));",
+    )
+    assert result == {"groupRequests": 0, "calls": 2}
+
+
+def test_real_comparison_requests_and_partial_notice_wait_for_explicit_open():
+    result = _run_popup(
+        [
+            {"total_results": 0, "results": []},
+            {"total_results": 0, "results": []},
+            {"total_results": 501, "results": [_species(i, 3) for i in range(1, 501)]},
+            {"total_results": 3, "results": [_species(i, 3) for i in range(1, 4)]},
+        ],
+        "const details={open:false};wireGroupComparison(details,gapEl,49,-123,25000);"
+        "await fetchProspects(49,-123,'right_here',{toPopup:true,spEl,gapsEl:gapEl});"
+        "const closed={calls:calls.length,body:gapEl.innerHTML};"
+        "details.open=true;await details.ontoggle();"
+        "console.log(JSON.stringify({closed,calls:calls.length,body:gapEl.innerHTML}));",
+    )
+    assert result["closed"] == {"calls": 2, "body": ""}
+    assert result["calls"] == 4
+    assert "Partial species lists" in result["body"]
+
+
+def test_comparison_retry_and_reopen_share_the_same_pending_requests():
+    nearby = {"total_results": 3, "results": [_species(i, 3) for i in range(1, 4)]}
+    result = _run_popup(
+        [{"error": "429"}, nearby, {"total_results": 0, "results": []}, nearby],
+        "const details={open:true};wireGroupComparison(details,gapEl,49,-123,25000);"
+        "await details.ontoggle();const retry=gapEl.querySelector('[data-group-retry]');"
+        "let finish;const hold=new Promise(resolve=>{finish=resolve;}),original=jget;"
+        "jget=async(...args)=>{const value=await original(...args);await hold;return value;};"
+        "const first=retry.onclick({preventDefault(){}});details.open=false;details.ontoggle();"
+        "details.open=true;const second=details.ontoggle();"
+        "await new Promise(resolve=>setImmediate(resolve));const requests=calls.length;"
+        "finish();await Promise.all([first,second]);console.log(JSON.stringify({requests}));",
+    )
+    assert result == {"requests": 4}  # two failed-attempt requests, then one shared retry pair
+
+
+def test_removed_popup_does_not_launch_or_paint_delayed_group_evidence():
+    result = _run_popup(
+        [{"total_results": 0, "results": []}],
+        "let finish;surfaceFilter=()=>new Promise(resolve=>{finish=resolve;});"
+        "const pending=fetchGapTree(49,-123,gapEl,25000);"
+        "gapEl.isConnected=false;gapEl.innerHTML='removed popup';finish('');await pending;"
+        "console.log(JSON.stringify({calls:calls.length,body:gapEl.innerHTML,cache:GT_CACHE}));",
+    )
+    assert result == {"calls": 1, "body": "removed popup", "cache": {}}
 
 
 def test_confirmed_empty_species_response_keeps_the_empty_record_message():

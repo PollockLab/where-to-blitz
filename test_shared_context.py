@@ -104,7 +104,7 @@ const destMarkerAt=()=>({addTo(){return this;},setPopup(){return this;},togglePo
 document.createElement=()=>({dataset:{},appendChild(){},setAttribute(){}});
 """
         script += _function(src, "cellRecordsUrl") + _function(src, "popupActionsHtml")
-        script += _function(src, "exploreCell")
+        script += _function(src, "wireGroupComparison") + _function(src, "exploreCell")
         script += _function(src, "clearSelection")
     if real_overlay:
         script += "\nconst OVERLAY_TOGGLE={coverage:'tgCoverage',gettingeven:'tgGettingEven',climate:'tgClimateGap'};"
