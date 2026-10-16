@@ -13,11 +13,16 @@ const OptionalData={
     const half=Math.sin(span*radians/(2*segments)),a=Math.min(1,Math.cos(latitude)**2*half**2);
     return segments*2*6371*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
   },
-  selectChallenge(snapshot,bounds,national=false){
-    const groups=new Map(),[west,south,east,north]=bounds;
-    for(const row of snapshot.observations){
+  matchingChallenge(snapshot,bounds){
+    const [west,south,east,north]=bounds;
+    return snapshot.observations.filter(row=>{
       const lon=row.longitude,lat=row.latitude;
-      if(!(west<=east?west<=lon&&lon<=east:lon>=west||lon<=east)||lat<south||lat>north)continue;
+      return (west<=east?west<=lon&&lon<=east:lon>=west||lon<=east)&&lat>=south&&lat<=north;
+    });
+  },
+  selectChallenge(snapshot,bounds,national=false){
+    const groups=new Map();
+    for(const row of this.matchingChallenge(snapshot,bounds)){
       if(!groups.has(row.taxon_id))groups.set(row.taxon_id,[]);
       groups.get(row.taxon_id).push(row);
     }
@@ -51,12 +56,24 @@ const OptionalData={
       product.window.start!==descriptor.window.start||product.window.end!==descriptor.window.end)throw Error('Challenge snapshot mismatch');
     return product;
   },
+  rateScale(rate,maximum){return maximum>0?Math.log1p(rate)/Math.log1p(maximum):0;},
+  relativeRefresh(asOf,now=Date.now()){
+    const day=value=>Math.floor(value/86400000),days=day(now)-day(Date.parse(asOf));
+    return days<=0?['recent_updated_today']:days===1?['recent_updated_yesterday']:['recent_updated_days',days];
+  },
+  photoUrl(url){
+    try{const u=new URL(url);return u.protocol==='https:'&&!u.port&&!u.username&&!u.password&&!u.search&&!u.hash&&['static.inaturalist.org','inaturalist-open-data.s3.amazonaws.com'].includes(u.hostname)&&/^\/photos\/[1-9]\d*\/(square|small|medium)\.(jpg|jpeg|png)$/i.test(u.pathname)?u.href:'';}catch{return '';}
+  },
+  // Mirrors iNaturalist app/models/shared/license_module.rb (CC 4.0, CC0 1.0).
+  photoLicense(code){return code==='cc0'?'https://creativecommons.org/publicdomain/zero/1.0/':['cc-by','cc-by-sa','cc-by-nc','cc-by-nc-sa','cc-by-nd','cc-by-nc-nd'].includes(code)?'https://creativecommons.org/licenses/'+code.slice(3)+'/4.0/':'';},
   stale(asOf,now=Date.now()){return now-Date.parse(asOf)>36*60*60*1000;}
 };
 
 function installOptionalLayers(){
   const descriptors=OPTIONAL_LAYERS,cache={},pending={},indices={};
-  let recentOn=false,recentError=false,discoveryError=false,selectedSighting=null,sightingBody=null,maxRate=0;
+  let recentOn=false,recentError=false,discoveryError=false,selectedSighting=null,sightingBody=null;
+  const rateLimits={};
+  let placeContext=null;
   const node=id=>document.getElementById(id);
   const fmt=value=>Number(value).toLocaleString(LANG==='fr'?'fr-CA':'en-CA',{maximumFractionDigits:2});
   const isDiscovery=()=>overlay==='discovery';
@@ -70,7 +87,7 @@ function installOptionalLayers(){
       cache[kind]=data;
       if(kind==='discovery'){
         for(const res of [5000,25000])indices[res]=new Map(OptionalData.availableCells(data,res).map(r=>[r[0]+','+r[1],r]));
-        for(const row of indices[5000].values())maxRate=Math.max(maxRate,row[4]);
+        for(const res of [5000,25000]){const rates=[...indices[res].values()].map(r=>r[4]).filter(r=>r>0);rateLimits[res]={maximum:rates.reduce((a,b)=>Math.max(a,b),0),minimum:rates.reduce((a,b)=>Math.min(a,b),Infinity)};}
       }
       return data;
     }).finally(()=>{delete pending[kind];});
@@ -89,9 +106,19 @@ function installOptionalLayers(){
     const note=typeof detail==='string'&&detail.trim()?(suppliedPoints()?t('discovery_supplied_points'):t('discovery_point_scope')+': '+detail):'';
     return t('discovery_period',d.scope.period.start,d.scope.period.end)+(note?'<br>'+esc(note):'');
   }
+  const sourceDetails=()=>'<details class="optional-source-details"><summary>'+t('source_details')+'</summary>'+sourceText()+'<p>'+t('discovery_blurb')+'</p></details>';
   function discoveryPopup(lat,lon,res){
     const row=discoveryCell(lat,lon,res);
-    return '<b>'+t('discovery_rate')+'</b><br>'+(row?discoveryCounts(fmt(row[2]),fmt(row[3]))+'<br><b>'+fmt(row[4])+'</b> '+discoveryUnit():t('discovery_unavailable'))+'<br>'+sourceText();
+    return '<b>'+t('discovery_rate')+'</b><br>'+(row?'<b>'+fmt(row[4])+'</b> '+discoveryUnit()+'<p>'+discoveryCounts(fmt(row[2]),fmt(row[3]))+'</p><small>'+t('discovery_support')+'</small>':t('discovery_unavailable'))+sourceDetails();
+  }
+  function cellContext(lat,lon,res){
+    let nearest=null,distance=Infinity;
+    for(const row of [...(cache.challenge?.observations||[]),...(placeContext?[placeContext]:[])]){
+      if(!row.place_name)continue;
+      const dx=(row.longitude-lon)*Math.cos(lat*Math.PI/180)*111.32,dy=(row.latitude-lat)*111.32,d=Math.hypot(dx,dy);
+      if(d<distance){distance=d;nearest=row;}
+    }
+    return nearest&&distance<=Math.SQRT2*res/1000? t('discovery_near_place',nearest.place_name):null;
   }
   function ensureSource(id,type,paint){
     if(map.getSource(id))return;
@@ -134,7 +161,7 @@ function installOptionalLayers(){
       if(map.getLayer('measured-discovery'))map.setLayoutProperty('measured-discovery','visibility','none');
       return;
     }
-    ensureSource('measured-discovery','fill',{'fill-color':['get','colour'],'fill-opacity':0.65,'fill-outline-color':'rgba(255,255,255,0.15)'});
+    ensureSource('measured-discovery','fill',{'fill-color':['get','colour'],'fill-opacity':['get','opacity'],'fill-outline-color':'rgba(255,255,255,0.15)'});
     map.setLayoutProperty('measured-discovery','visibility','visible');
     // Coarse support is bounded nationally. Projecting a wrapped viewport's
     // corners can miss most of Canada, so let the map clip this small tier.
@@ -142,7 +169,7 @@ function installOptionalLayers(){
     const features=rows.map(row=>{
       const x=LATTICE_X0+row[1]*res,y=LATTICE_Y1-row[0]*res;
       const ring=[[x,y],[x+res,y],[x+res,y-res],[x,y-res],[x,y]].map(p=>{const ll=LAEA.inv(...p);return[ll[1],ll[0]];});
-      return{type:'Feature',properties:{colour:virColour(maxRate?row[4]/maxRate:0)},geometry:{type:'Polygon',coordinates:[ring]}};
+      return{type:'Feature',properties:{colour:row[4]===0?'#c8d0cd':virColour(OptionalData.rateScale(row[4],rateLimits[res].maximum)),opacity:row[4]===0?0.22:0.7,rate:row[4],discovery_count:row[2],observation_count:row[3]},geometry:{type:'Polygon',coordinates:[ring]}};
     });
     map.getSource('measured-discovery').setData({type:'FeatureCollection',features});
     if(res===5000)DRAWN5=new Set(rows.map(r=>r[1]+','+r[0]));
@@ -155,26 +182,44 @@ function installOptionalLayers(){
     const ranked=inView.sort((a,b)=>b[4]-a[4]||a[0]-b[0]||a[1]-b[1]).slice(0,30);
     renderButtons(list,ranked,'discoveryCell',row=>res+':'+row[0]+','+row[1],(button,row)=>{
       const ll=LAEA.inv(LATTICE_X0+(row[1]+0.5)*res,LATTICE_Y1-(row[0]+0.5)*res);
-      button.textContent=ll[0].toFixed(2)+', '+ll[1].toFixed(2)+' · '+fmt(row[4])+' / 10 000';
+      const coordinates=ll[0].toFixed(2)+', '+ll[1].toFixed(2),context=cellContext(ll[0],ll[1],res);
+      button.textContent=(context||coordinates)+' · '+fmt(row[4])+' / 10 000\n'+discoveryCounts(fmt(row[2]),fmt(row[3]))+(context?'\n'+coordinates:'');
       button.setAttribute('aria-label',button.textContent+' '+discoveryUnit()+'. '+discoveryCounts(fmt(row[2]),fmt(row[3])));
       button.onclick=()=>exploreCell(ll[0],ll[1]);
     });
     if(!ranked.length)list.textContent=t('discovery_unavailable');
   }
   function discoveryLegend(){
-    return '<div class="lt">'+t('discovery_rate')+'</div><div class="ramp"></div><div class="lab"><span>0</span><span>'+fmt(maxRate)+'</span></div><div class="hint">'+discoveryUnit()+'</div><div class="hint">'+sourceText()+'</div><div class="hint">'+t(discoveryError?'optional_error':'discovery_blurb')+'</div>';
+    const limits=rateLimits[activeCellResM()]||{minimum:0,maximum:0};
+    const low=Number.isFinite(limits.minimum)?limits.minimum:0;
+    const start=OptionalData.rateScale(low,limits.maximum),gradient=Array.from({length:8},(_,i)=>virColour(start+(1-start)*i/7)+' '+(100*i/7)+'%').join(',');
+    const ramp=limits.maximum>0?'<div class="ramp optional-positive-ramp" style="background:linear-gradient(to right,'+gradient+')"></div><div class="lab"><span>'+fmt(low)+'</span><span>'+fmt(limits.maximum)+'</span></div><div class="hint">'+t('discovery_log_scale')+'</div>':'';
+    return '<div class="lt">'+t('discovery_rate')+'</div>'+ramp+'<div class="hint">'+discoveryUnit()+'</div><div class="optional-legend-key"><span class="optional-swatch optional-zero"></span>'+t('discovery_zero')+' <span class="optional-swatch optional-missing"></span>'+t('discovery_no_data')+'</div><div class="hint">'+t('discovery_support')+'</div>'+sourceDetails()+(discoveryError?'<div class="hint">'+t('optional_error')+'</div>':'');
   }
   function paintSighting(){
     if(!selectedSighting||!sightingBody)return;
-    sightingBody.querySelector('b').textContent=selectedSighting.name;
-    sightingBody.querySelector('p').textContent=t('sighting_date',selectedSighting.observed_on);
-    sightingBody.querySelector('a').textContent=t('view_sighting');
+    const row=selectedSighting;if(sightingBody.paintLanguage===LANG)return;
+    const focusTargets={};
+    const focusedAction=sightingBody.contains(document.activeElement)?document.activeElement.dataset?.sightingAction:null;
+    sightingBody.replaceChildren();sightingBody.paintLanguage=LANG;
+    const name=document.createElement('b'),scientific=document.createElement('p'),date=document.createElement('p'),place=document.createElement('p'),links=document.createElement('div'),view=document.createElement('a'),record=document.createElement('a');
+    name.textContent=row.common_name||row.identified_name||row.name;
+    scientific.textContent=row.common_name?(row.identified_name||row.name):'';
+    date.textContent=t('sighting_date',row.observed_on);place.textContent=row.place_name||'';place.className='sighting-place';
+    sightingBody.append(name);if(scientific.textContent)sightingBody.append(scientific);
+    const photo=row.photo,url=photo&&photo.attribution&&OptionalData.photoLicense(photo.license_code)&&OptionalData.photoUrl(photo.url);
+    if(url){
+      const image=document.createElement('img'),credit=document.createElement('small'),source=document.createElement('a'),license=document.createElement('a');image.src=url;image.alt=photo.alt||row.identified_name||row.name;image.loading='lazy';image.className='sighting-photo';credit.className='sighting-credit';credit.textContent=t('photo_reference')+'. '+t('photo_credit')+': ';
+      source.href='https://www.inaturalist.org/photos/'+new URL(url).pathname.split('/')[2];source.textContent=photo.attribution;license.href=OptionalData.photoLicense(photo.license_code);license.textContent=photo.license_code.toUpperCase();
+      for(const [key,link] of [['photo',source],['license',license]]){link.target='_blank';link.rel='noopener';link.dataset.sightingAction=key;focusTargets[key]=link;}const separator=document.createElement('span');separator.textContent=' · ';credit.append(source,separator,license);sightingBody.append(image,credit);
+    }
+    sightingBody.append(date);if(place.textContent)sightingBody.append(place);
+    view.href='https://www.inaturalist.org/observations/'+row.id;view.textContent=t('view_sighting');record.href='https://www.inaturalist.org/observations/new';record.textContent=t('record_sighting');
+    for(const [index,link] of [view,record].entries()){link.target='_blank';link.rel='noopener';link.dataset.sightingAction=String(index);focusTargets[String(index)]=link;}links.className='sighting-actions';links.append(view,record);sightingBody.append(links);
+    if(focusedAction!==null&&focusedAction!==undefined)focusTargets[focusedAction]?.focus({preventScroll:true});
   }
   function openSighting(row){
-    closePopup();selectedSighting=row;sightingBody=document.createElement('div');sightingBody.className='popbody';
-    const name=document.createElement('b'),date=document.createElement('p'),link=document.createElement('a');
-    link.href='https://www.inaturalist.org/observations/'+row.id;link.target='_blank';link.rel='noopener';
-    sightingBody.append(name,date,link);paintSighting();
+    closePopup();selectedSighting=row;sightingBody=document.createElement('div');sightingBody.className='popbody';paintSighting();
     const popup=wirePopup(new maplibregl.Popup({focusAfterOpen:false,maxWidth:'320px'}).setLngLat([row.longitude,row.latitude]).setDOMContent(sightingBody));
     popup.on('close',()=>{if(selectedSighting===row){selectedSighting=null;sightingBody=null;}});popup.addTo(map);
   }
@@ -207,12 +252,15 @@ function installOptionalLayers(){
     if(!recentOn||!cache.challenge){if(map.getLayer('recent-challenge'))map.setLayoutProperty('recent-challenge','visibility','none');return;}
     ensureSource('recent-challenge','circle',{'circle-radius':6,'circle-color':'#d96c14','circle-stroke-width':2,'circle-stroke-color':'#fff'});
     map.setLayoutProperty('recent-challenge','visibility','visible');
-    const snapshot=cache.challenge,view=bounds(),rows=OptionalData.selectChallenge(snapshot,view,OptionalData.viewportWidthKm(view)>500);
+    const snapshot=cache.challenge,view=bounds(),national=OptionalData.viewportWidthKm(view)>500,rows=OptionalData.selectChallenge(snapshot,view,national),matching=OptionalData.matchingChallenge(snapshot,view).length;
     const features=rows.map(row=>({type:'Feature',properties:{id:row.id},geometry:{type:'Point',coordinates:[row.longitude,row.latitude]}}));
     map.getSource('recent-challenge').setData({type:'FeatureCollection',features});
-    status.textContent=t('recent_challenge_status',snapshot.window.start,snapshot.window.end,snapshot.as_of,rows.length)+(OptionalData.stale(snapshot.as_of)?' '+t('optional_stale'):'');
+    status.textContent=t('recent_challenge_all_groups')+' · '+t('recent_challenge_shown',fmt(rows.length),fmt(matching),national?500:150)+' · '+t(...OptionalData.relativeRefresh(snapshot.as_of))+(OptionalData.stale(snapshot.as_of)?' '+t('optional_stale'):'');
+    status.title=t('recent_exact_refresh')+': '+snapshot.as_of+' UTC. '+snapshot.window.start+' – '+snapshot.window.end;
+    const metadata=node('recentChallengeMeta');if(metadata)metadata.textContent=status.title;
+    const freshness=node('recentChallengeFreshness');if(freshness){freshness.textContent=t(...OptionalData.relativeRefresh(snapshot.as_of));freshness.title=status.title;freshness.dateTime=snapshot.as_of;}
     renderButtons(list,rows,'sightingId',row=>String(row.id),(button,row)=>{
-      button.textContent=row.name+' · '+row.observed_on;
+      button.textContent=(row.common_name||row.identified_name||row.name)+' · '+row.observed_on+(row.place_name?'\n'+row.place_name:'');
       button.onclick=()=>{openSighting(row);map.jumpTo({center:[row.longitude,row.latitude],zoom:Math.max(7,map.getZoom())});};
     });
     if(!rows.length)list.textContent=t('recent_challenge_empty');
@@ -221,7 +269,7 @@ function installOptionalLayers(){
   async function toggleRecent(enabled){
     recentOn=!!enabled&&!!descriptors.challenge;recentError=false;if(!recentOn&&selectedSighting)closePopup();node('recentChallenge').checked=recentOn;renderChallenge();syncSharedCellUrl(true);
     if(recentOn)try{await load('challenge');}catch(e){recentError=true;}
-    renderChallenge();
+    renderChallenge();renderDiscovery();
   }
   async function prepareDiscovery(){
     discoveryError=false;
@@ -230,7 +278,7 @@ function installOptionalLayers(){
   function refresh(){renderDiscovery();renderChallenge();}
   function appendCriteria(select){if(!descriptors.discovery)return;const option=document.createElement('option');option.value='discovery';option.textContent=t('discovery_rate');select.appendChild(option);}
   function hitRecent(point){return recentOn&&_mapLoaded&&!!map.getLayer('recent-challenge')&&map.queryRenderedFeatures(point,{layers:['recent-challenge']}).length>0;}
-  globalThis.optionalLayers={isDiscovery,supports,load:prepareDiscovery,refresh,appendCriteria,discoveryCell,discoveryPopup,discoveryLegend,hitRecent,toggleRecent,
+  globalThis.optionalLayers={setPlaceContext(context){placeContext=context&&Number.isFinite(context.lat)&&Number.isFinite(context.lon)&&typeof context.name==='string'?{latitude:context.lat,longitude:context.lon,place_name:context.name}:null;renderDiscovery();},isDiscovery,supports,load:prepareDiscovery,refresh,appendCriteria,discoveryCell,discoveryPopup,discoveryLegend,hitRecent,toggleRecent,
     recentEnabled:()=>recentOn,hasChallenge:()=>!!descriptors.challenge,group:()=>descriptors.discovery&&descriptors.discovery.taxon_group};
   node('recentChallengePanel').hidden=!descriptors.challenge;
   node('recentChallenge').addEventListener('change',e=>{_shareAction++;toggleRecent(e.target.checked);});

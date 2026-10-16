@@ -278,7 +278,7 @@ const state={view:'explore',taxon:'All biodiversity'},OPTIONAL_LAYERS={discovery
 const syncSharedCellUrl=()=>{},localizeMapControls=()=>{};
 const whenMap=fn=>fn(),clearSelection=()=>{},activeCellResM=()=>input.cellRes||(input.discovery?5000:25000);
 const LATTICE_X0=-2150000,LATTICE_Y1=4300000,LATTICE_W=5500000,LATTICE_H=4525000;
-const LAEA={fwd:()=>[-150000,2300000],inv:()=>[45,-75]},virColour=()=> 'rgb(1,2,3)',snapToLattice=()=>({row:400,col:400});let DRAWN5=null;
+const LAEA={fwd:()=>[-150000,2300000],inv:()=>[45,-75]},virColour=value=> 'colour('+value+')',snapToLattice=()=>({row:400,col:400});let DRAWN5=null;
 function exploreCell(){const origin=document.activeElement;map.jumpTo({});originAtExplore=origin;return true;}
 let originAtExplore=null;
 let viewportBounds=[-90,40,-60,50];
@@ -623,3 +623,182 @@ def test_fine_discovery_keeps_bounded_rendering_and_viewport_scoped_accessible_c
         rate_product(tmp_path),
     )
     assert result == {"inside": 1, "features": 1, "outside": 0}
+
+
+def test_discovery_log_colours_distinguish_positive_rates_and_preserve_raw_counts(tmp_path):
+    product = rate_product(tmp_path)
+    product["tiers"]["25000"]["cells"] = [
+        [400, 400, 0, 10000, 0, 25, 25],
+        [400, 401, 1, 10000, 1, 25, 25],
+        [400, 402, 10, 10000, 10, 25, 25],
+        [400, 403, 1, 1, 10000, 25, 25],
+    ]
+    result = sighting_lifecycle(
+        "overlay='discovery';await optionalLayers.load();optionalLayers.refresh();"
+        "console.log(JSON.stringify({features:map.sources['measured-discovery'].data.features.map(f=>f.properties),"
+        "buttons:nodes.discoveryCells.children.map(b=>b.textContent),legend:optionalLayers.discoveryLegend()}));",
+        product,
+        cell_res=25000,
+    )
+    features = result["features"]
+    assert features[0]["colour"] == "#c8d0cd" and features[0]["opacity"] < features[1]["opacity"]
+    assert len({row["colour"] for row in features}) == 4
+    assert [[row["discovery_count"], row["observation_count"], row["rate"]] for row in features] == [
+        row[2:5] for row in product["tiers"]["25000"]["cells"]
+    ]
+    assert "Research-grade observations" not in result["buttons"][0]
+    assert "Observations: 1." in result["buttons"][0]
+    assert '<details class="optional-source-details">' in result["legend"]
+
+
+def test_zero_rate_is_supported_but_zero_observation_exposure_is_not():
+    product = {
+        "tiers": {
+            "5000": {"cells": [[1, 1, 0, 20, 0, 1, 1], [1, 2, 0, 0, None, 1, 1], [1, 3, 1, 10, 1000, 1, 25]]}
+        }
+    }
+    assert run_js(
+        "console.log(JSON.stringify(OptionalData.availableCells(JSON.parse(process.argv[1]),5000)));", product
+    ) == [[1, 1, 0, 20, 0, 1, 1]]
+
+
+def test_relative_freshness_uses_calendar_days_and_preserves_stale_threshold():
+    assert run_js(
+        "console.log(JSON.stringify(['2026-10-16T01:00:00Z','2026-10-15T23:00:00Z','2026-10-13T23:00:00Z'].map(value=>OptionalData.relativeRefresh(value,Date.parse('2026-10-16T02:00:00Z'))))); "
+    ) == [["recent_updated_today"], ["recent_updated_yesterday"], ["recent_updated_days", 3]]
+
+
+@pytest.mark.parametrize(
+    "url,allowed",
+    [
+        ("https://static.inaturalist.org/photos/123/medium.jpg", True),
+        ("https://static.inaturalist.org/photos/123/medium.JPG", True),
+        ("https://inaturalist-open-data.s3.amazonaws.com/photos/1/small.png", True),
+        ("http://static.inaturalist.org/photos/123/medium.jpg", False),
+        ("https://static.inaturalist.org.evil.example/photos/123/medium.jpg", False),
+        ("https://static.inaturalist.org/photos/123/medium.jpg?redirect=1", False),
+        ("https://user@static.inaturalist.org/photos/123/medium.jpg", False),
+        ("https://static.inaturalist.org:8443/photos/123/medium.jpg", False),
+        ("https://static.inaturalist.org/private/image.jpg", False),
+    ],
+)
+def test_optional_reference_photo_urls_match_the_public_snapshot_contract(url, allowed):
+    assert (
+        bool(run_js("console.log(JSON.stringify(OptionalData.photoUrl(JSON.parse(process.argv[1]))));", url))
+        is allowed
+    )
+
+
+def test_sighting_metadata_is_text_and_reference_photo_requires_public_license():
+    snapshot = challenge.acquire(CONFIG, FixtureAPI([observation()]), AS_OF)
+    snapshot["observations"][0].update(
+        common_name="Common <name>",
+        identified_name="Exact variety",
+        place_name="Public <place>",
+        photo={
+            "url": "https://static.inaturalist.org/photos/123/medium.jpg",
+            "attribution": "Photographer <name>",
+            "license_code": "cc-by",
+            "alt": "Reference photo of Exact variety",
+        },
+    )
+    result = sighting_lifecycle(
+        "nodes.recentChallengeList.children[0].onclick();const body=curPopup.root.children[1];"
+        "const before=body.children.slice();handlers.moveend();console.log(JSON.stringify({"
+        "same:before.every((node,index)=>body.children[index]===node),"
+        "children:body.children.map(child=>({tag:child.tag,text:child.textContent,src:child.src,alt:child.alt,html:child.innerHTML??null})),"
+        'credit:body.children.find(child=>child.tag==="small").children.map(link=>({href:link.href,text:link.textContent})),'
+        "actions:body.children.at(-1).children.map(link=>({href:link.href,text:link.textContent}))}));",
+        snapshot=snapshot,
+    )
+    assert result["same"]
+    assert result["children"][0]["text"] == "Common <name>"
+    assert result["children"][1]["text"] == "Exact variety"
+    image = next(child for child in result["children"] if child["tag"] == "img")
+    assert image["alt"] == "Reference photo of Exact variety"
+    assert all(child["html"] is None for child in result["children"])
+    assert result["credit"][0] == {
+        "href": "https://www.inaturalist.org/photos/123",
+        "text": "Photographer <name>",
+    }
+    assert result["credit"][2] == {"href": "https://creativecommons.org/licenses/by/4.0/", "text": "CC-BY"}
+    assert result["actions"][0]["href"].startswith("https://www.inaturalist.org/observations/")
+    assert result["actions"][1]["href"] == "https://www.inaturalist.org/observations/new"
+
+
+def test_recording_action_keeps_focus_when_sighting_translates():
+    result = sighting_lifecycle(
+        "nodes.recentChallengeList.children[0].onclick();const body=curPopup.root.children[1];"
+        "body.children.at(-1).children[1].focus();LANG='fr';optionalLayers.refresh();"
+        "console.log(JSON.stringify({focused:document.activeElement===body.children.at(-1).children[1],text:document.activeElement.textContent}));"
+    )
+    assert result["focused"] and result["text"] == "Noter une observation"
+
+
+def test_recent_status_discloses_all_matching_rows_and_cap_before_thinning():
+    rows = [observation(i, 10 if i % 2 else 20) for i in range(1, 621)]
+    snapshot = challenge.acquire(CONFIG, FixtureAPI(rows), AS_OF)
+    result = sighting_lifecycle(
+        "const calls=[],translate=t;t=(key,...args)=>{calls.push([key,...args]);return translate(key,...args)};"
+        "viewportBounds=[-76,44,-74,46];optionalLayers.refresh();console.log(JSON.stringify({"
+        "counts:calls.find(row=>row[0]==='recent_challenge_shown'),allGroups:calls.some(row=>row[0]==='recent_challenge_all_groups'),"
+        "exact:nodes.recentChallengeStatus.title}));",
+        snapshot=snapshot,
+    )
+    assert result["counts"] == ["recent_challenge_shown", "150", "620", 150]
+    assert result["allGroups"]
+    assert snapshot["as_of"] in result["exact"] and snapshot["window"]["start"] in result["exact"]
+
+
+def test_user_known_place_context_is_labeled_nearby_and_never_replaces_distant_coordinates(tmp_path):
+    result = sighting_lifecycle(
+        "const calls=[],translate=t;t=(key,...args)=>{calls.push([key,...args]);return translate(key,...args)};"
+        "overlay='discovery';await optionalLayers.load();optionalLayers.setPlaceContext({lat:45,lon:-75,name:'Known place'});"
+        "const near=calls.filter(row=>row[0]==='discovery_near_place');calls.length=0;"
+        "optionalLayers.setPlaceContext({lat:50,lon:-90,name:'Distant place'});console.log(JSON.stringify({near,"
+        "distant:calls.some(row=>row[0]==='discovery_near_place'),text:nodes.discoveryCells.children[0].textContent}));",
+        rate_product(tmp_path),
+    )
+    assert result["near"] == [["discovery_near_place", "Known place"]]
+    assert not result["distant"] and result["text"].startswith("45.00, -75.00")
+
+
+@pytest.mark.parametrize("action", ["photo", "license"])
+def test_reference_credit_links_keep_focus_during_translation(action):
+    snapshot = challenge.acquire(CONFIG, FixtureAPI([observation()]), AS_OF)
+    snapshot["observations"][0]["photo"] = {
+        "url": "https://static.inaturalist.org/photos/123/medium.jpg",
+        "attribution": "Photographer",
+        "license_code": "cc-by",
+        "alt": "Reference photo",
+    }
+    result = sighting_lifecycle(
+        "nodes.recentChallengeList.children[0].onclick();const body=curPopup.root.children[1];"
+        "const credit=body.children.find(child=>child.tag==='small');"
+        + "credit.children.find(link=>link.dataset.sightingAction==="
+        + json.dumps(action)
+        + ").focus();"
+        "LANG='fr';optionalLayers.refresh();console.log(JSON.stringify({focused:document.activeElement.dataset.sightingAction,"
+        "connected:document.activeElement.isConnected}));",
+        snapshot=snapshot,
+    )
+    assert result == {"focused": action, "connected": True}
+
+
+@pytest.mark.parametrize(
+    "license_code,expected",
+    [
+        ("cc0", "https://creativecommons.org/publicdomain/zero/1.0/"),
+        ("cc-by-nc-sa", "https://creativecommons.org/licenses/by-nc-sa/4.0/"),
+        ("all-rights-reserved", ""),
+        ("unknown", ""),
+    ],
+)
+def test_photo_license_links_follow_inaturalist_canonical_license_mapping(license_code, expected):
+    assert (
+        run_js(
+            "console.log(JSON.stringify(OptionalData.photoLicense(JSON.parse(process.argv[1]))));",
+            license_code,
+        )
+        == expected
+    )
