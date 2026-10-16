@@ -13,7 +13,7 @@ import build_discovery_layer as discovery
 import build_provenance as provenance
 import conservation_challenge as challenge
 import prepare_optional_layers as optional
-from test_conservation_challenge import AS_OF, CONFIG, FixtureAPI, observation
+from test_conservation_challenge import AS_OF, CONFIG, FixtureAPI, infraspecies_config, observation
 from test_discovery_layer import fixture_product
 from test_release_bundle import release_repo as release_repo
 
@@ -376,3 +376,31 @@ def test_release_bundle_rejects_missing_or_changed_getting_even_gate_masks(relea
 
 def test_gate_decisions_are_included_in_root_provenance_patterns():
     assert "cluster_results/ca/gettingeven_gate_*.png" in provenance.OUTPUT_PATTERNS
+
+
+@pytest.mark.parametrize("mode", ["infraspecies", "unapproved-broader-target", "legacy-species"])
+def test_preparation_preserves_narrow_targets_and_accepts_older_species_only_snapshots(tmp_path, mode):
+    config = infraspecies_config() if mode != "legacy-species" else CONFIG
+    source_row = observation(taxon={"id": 30, "ancestor_ids": [10]})
+    feed = challenge.acquire(config, FixtureAPI([source_row]), AS_OF)
+    if mode == "unapproved-broader-target":
+        feed["observations"][0]["target_ids"] = [10]
+    elif mode == "legacy-species":
+        feed["observations"][0].pop("target_ids")
+        feed["observations"][0].pop("identified_taxon_id")
+    content, config_bytes = encoded(feed), encoded(config)
+    metadata = asset(1, content)
+    values = {TAXA_URL: config_bytes, metadata["browser_download_url"]: content}
+    kwargs = {
+        "taxa_url": TAXA_URL,
+        "taxa_sha": checksum(config_bytes),
+        "fetch": values.__getitem__,
+        "assets": lambda _: [metadata],
+        "now": NOW,
+    }
+    if mode == "unapproved-broader-target":
+        with pytest.raises(ValueError, match="target/species mapping"):
+            optional.prepare(tmp_path / "public", **kwargs)
+    else:
+        optional.prepare(tmp_path / "public", **kwargs)
+        assert (tmp_path / "public" / "conservation_challenge.json").read_bytes() == content

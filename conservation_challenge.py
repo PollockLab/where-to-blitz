@@ -74,12 +74,38 @@ def validate_list(config):
             or not positive_int(taxon.get("id"))
             or not isinstance(taxon.get("name"), str)
             or not taxon["name"].strip()
-            or taxon.get("rank") != "species"
+            or taxon.get("rank") not in ("species", "subspecies", "variety", "form")
             or taxon["id"] in species
         ):
             raise ValueError("taxon list has an invalid or duplicate species")
         species[taxon["id"]] = taxon["name"]
+    species_groups(config)
     return species
+
+
+def species_groups(config):
+    """Keep listed infraspecies as exact targets, with verified species grouping metadata."""
+    groups, names = {}, {}
+    for target in config["taxa"]:
+        if target["rank"] == "species":
+            group = {"id": target["id"], "name": target["name"]}
+            if "species" in target and target["species"] != group:
+                raise ValueError("species target has conflicting species grouping metadata")
+        else:
+            group = target.get("species")
+            if (
+                not isinstance(group, dict)
+                or not positive_int(group.get("id"))
+                or group["id"] == target["id"]
+                or not isinstance(group.get("name"), str)
+                or not group["name"].strip()
+            ):
+                raise ValueError("infraspecies target requires verified species ID and name")
+        if group["id"] in names and names[group["id"]] != group["name"]:
+            raise ValueError("conflicting scientific names for one species grouping")
+        names[group["id"]] = group["name"]
+        groups[target["id"]] = group
+    return groups
 
 
 def query_filters(config, as_of):
@@ -114,7 +140,7 @@ def observation_time(value):
     return timestamp.astimezone(timezone.utc).isoformat()
 
 
-def public_observation(row, species, start, end):
+def public_observation(row, species, start, end, groups=None):
     """Validate eligibility again locally, retaining only public, open coordinates."""
     if not isinstance(row, dict) or not positive_int(row.get("id")):
         raise ValueError("invalid observation ID")
@@ -128,9 +154,16 @@ def public_observation(row, species, start, end):
     if not isinstance(ancestors, list) or any(not positive_int(v) for v in ancestors):
         raise ValueError("invalid taxon ancestry")
     matches = set([taxon["id"], *ancestors]) & species.keys()
-    if len(matches) != 1:
-        raise ValueError("observation identification does not match exactly one listed species")
-    species_id = matches.pop()
+    if not matches:
+        raise ValueError("observation identification does not match a listed target")
+    groups = groups or {target: {"id": target, "name": name} for target, name in species.items()}
+    species_ids = {groups[target]["id"] for target in matches}
+    if len(species_ids) != 1:
+        raise ValueError("listed targets disagree on the observation's species grouping")
+    species_id = species_ids.pop()
+    if species_id not in {taxon["id"], *ancestors}:
+        raise ValueError("observation identification lacks the configured species ancestor")
+    species_name = groups[min(matches)]["name"]
     places = row.get("place_ids")
     if not isinstance(places, list) or PLACE_ID not in places:
         raise ValueError("observation is not in Canada")
@@ -158,7 +191,9 @@ def public_observation(row, species, start, end):
     return {
         "id": row["id"],
         "taxon_id": species_id,
-        "name": species[species_id],
+        "name": species_name,
+        "target_ids": sorted(matches),
+        "identified_taxon_id": taxon["id"],
         "observed_on": observed.isoformat(),
         "observed_at": observation_time(row.get("time_observed_at")),
         "longitude": coords[0],
@@ -166,7 +201,7 @@ def public_observation(row, species, start, end):
     }
 
 
-def enumerate_observations(fetch, filters, species, max_pages=MAX_PAGES):
+def enumerate_observations(fetch, filters, species, max_pages=MAX_PAGES, groups=None):
     """Use ascending ID cursors, not the API's bounded offset pagination."""
     if not positive_int(max_pages) or max_pages > MAX_PAGES:
         raise ValueError("page budget must be 1..200")
@@ -188,7 +223,7 @@ def enumerate_observations(fetch, filters, species, max_pages=MAX_PAGES):
         if actual == 0:
             return rows, seen, evidence
         for row in data["results"]:
-            item = public_observation(row, species, start, end)
+            item = public_observation(row, species, start, end, groups)
             obs_id = row["id"]
             if obs_id <= cursor or obs_id in seen:
                 raise ValueError("duplicate or unordered observation ID")
@@ -203,8 +238,9 @@ def acquire(config, fetch, as_of):
     """Publish only two agreeing complete enumerations, including valid empty windows."""
     species = validate_list(config)
     filters = query_filters(config, as_of)
-    first, hashes, evidence = enumerate_observations(fetch, filters, species)
-    second, repeated, confirmation = enumerate_observations(fetch, filters, species)
+    groups = species_groups(config)
+    first, hashes, evidence = enumerate_observations(fetch, filters, species, groups=groups)
+    second, repeated, confirmation = enumerate_observations(fetch, filters, species, groups=groups)
     if hashes != repeated or first != second:
         raise ValueError("observations changed between complete enumerations")
     snapshot = {
@@ -314,6 +350,15 @@ def validate_snapshot(snapshot):
                 or not -90 <= row["latitude"] <= 90
             ):
                 raise ValueError("invalid snapshot observation")
+            target_ids = row.get("target_ids", [row["taxon_id"]])
+            if (
+                not isinstance(target_ids, list)
+                or not target_ids
+                or any(not positive_int(target) for target in target_ids)
+                or target_ids != sorted(set(target_ids))
+                or not positive_int(row.get("identified_taxon_id", row["taxon_id"]))
+            ):
+                raise ValueError("invalid observation target identity")
             if row.get("observed_at") and datetime.fromisoformat(row["observed_at"]) > as_of:
                 raise ValueError("observation timestamp is after snapshot as_of")
             if observation_time(row.get("observed_at")) != row.get("observed_at"):

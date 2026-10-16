@@ -301,3 +301,78 @@ def test_missing_source_privacy_evidence_never_publishes_coordinates(field):
     row = observation()
     del row[field]
     assert challenge.acquire(CONFIG, FixtureAPI([row]), AS_OF)["observations"] == []
+
+
+def infraspecies_config(rank="variety"):
+    config = copy.deepcopy(CONFIG)
+    config["taxa"] = [
+        {
+            "id": 30,
+            "name": "Species alpha var. narrow",
+            "rank": rank,
+            "species": {"id": 10, "name": "Species alpha"},
+        }
+    ]
+    return config
+
+
+@pytest.mark.parametrize("rank", ["subspecies", "variety", "form"])
+def test_infraspecies_targets_keep_exact_identity_and_verified_species_grouping(rank):
+    config = infraspecies_config(rank)
+    api = FixtureAPI([observation(taxon={"id": 30, "ancestor_ids": [10]})])
+    feed = challenge.acquire(config, api, AS_OF)
+    row = feed["observations"][0]
+    assert row["target_ids"] == [30] and row["identified_taxon_id"] == 30
+    assert row["taxon_id"] == 10 and row["name"] == "Species alpha"
+    assert all(call["taxon_id"] == ["30"] for call in api.calls)  # Never query the broader species.
+
+
+def test_parent_species_does_not_satisfy_a_narrow_infraspecies_target():
+    with pytest.raises(ValueError, match="listed target"):
+        challenge.acquire(infraspecies_config(), FixtureAPI([observation(taxon_id=10)]), AS_OF)
+
+
+def test_overlapping_species_and_variety_targets_keep_one_observation_and_both_source_matches():
+    config = infraspecies_config()
+    config["taxa"].append(copy.deepcopy(CONFIG["taxa"][0]))
+    feed = challenge.acquire(config, FixtureAPI([observation(taxon={"id": 30, "ancestor_ids": [10]})]), AS_OF)
+    assert len(feed["observations"]) == 1
+    assert feed["observations"][0]["target_ids"] == [10, 30]
+    assert feed["observations"][0]["taxon_id"] == 10
+
+
+def test_different_infraspecies_of_one_species_share_a_diversity_round():
+    config = infraspecies_config()
+    other = copy.deepcopy(config["taxa"][0])
+    other.update(id=31, name="Species alpha var. other")
+    config["taxa"].extend([other, copy.deepcopy(CONFIG["taxa"][1])])
+    observations = [
+        observation(1, taxon={"id": 30, "ancestor_ids": [10]}),
+        observation(2, taxon={"id": 31, "ancestor_ids": [10]}),
+        observation(3, 20, observed_on="2026-10-14"),
+    ]
+    selected = challenge.select_observations(challenge.acquire(config, FixtureAPI(observations), AS_OF))
+    assert [row["id"] for row in selected] == [2, 3, 1]
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda c: c["taxa"][0].pop("species"),
+        lambda c: c["taxa"][0]["species"].update(id=30),
+        lambda c: c["taxa"][0]["species"].update(name=""),
+        lambda c: c["taxa"][0].update(rank="genus"),
+    ],
+)
+def test_unverified_infraspecies_and_unresolved_broad_targets_block_before_fetch(mutate):
+    config = infraspecies_config()
+    mutate(config)
+    api = FixtureAPI([])
+    with pytest.raises(ValueError):
+        challenge.acquire(config, api, AS_OF)
+    assert api.calls == []
+
+
+def test_actual_identification_must_include_verified_species_ancestor():
+    with pytest.raises(ValueError, match="configured species ancestor"):
+        challenge.acquire(infraspecies_config(), FixtureAPI([observation(taxon_id=30)]), AS_OF)
