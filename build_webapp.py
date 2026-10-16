@@ -187,6 +187,28 @@ OPTIONAL_LAYER_SCRIPT = (Path(__file__).resolve().parent / "webapp/optional_laye
 BASEMAP_SCRIPT = (Path(__file__).resolve().parent / "webapp/basemaps.js").read_text()
 
 
+def load_ge_evidence(directory):
+    """Expose count evidence only after it matches the exact displayed map outputs."""
+    directory = Path(directory)
+    if not (directory / "gettingeven_evidence.json").exists():
+        return None
+    from prepare_gettingeven_evidence import load_installed
+
+    evidence = load_installed(directory)
+    descriptor = {key: evidence[key] for key in ("schema_version", "kind", "encoding", "source")}
+    descriptor["tiers"] = {}
+    for res, tier in evidence["tiers"].items():
+        descriptor["tiers"][res] = {
+            key: tier[key] for key in ("sha256", "lattice", "category_sha256", "observations_sha256")
+        }
+        descriptor["tiers"][res]["path"] = "cluster_results/ca/" + tier["png"]
+    return descriptor
+
+
+GE_EVIDENCE = load_ge_evidence("cluster_results/ca")
+GE_EVIDENCE_SCRIPT = (Path(__file__).resolve().parent / "webapp/gettingeven_evidence.js").read_text()
+
+
 out = (
     HTML.replace("__FILES__", json.dumps(FILES, separators=(",", ":")))
     .replace(
@@ -194,6 +216,11 @@ out = (
         json.dumps(OPTIONAL_LAYERS, separators=(",", ":"), allow_nan=False).replace("<", "\\u003c"),
     )
     .replace("__OPTIONAL_LAYER_SCRIPT__", OPTIONAL_LAYER_SCRIPT)
+    .replace(
+        "__GE_EVIDENCE__",
+        json.dumps(GE_EVIDENCE, separators=(",", ":"), allow_nan=False).replace("<", "\\u003c"),
+    )
+    .replace("__GE_EVIDENCE_SCRIPT__", GE_EVIDENCE_SCRIPT)
     .replace(
         "__HISTORICAL_DISCOVERY_POINTS__",
         json.dumps(HISTORICAL_DISCOVERY_POINTS, separators=(",", ":"), allow_nan=False).replace("<", "\\u003c"),

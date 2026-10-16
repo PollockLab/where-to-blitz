@@ -246,7 +246,7 @@ jobs:
           sha2=$(git log -n1 --pretty=format:%H -- build_fullgrid_ca.py 2>/dev/null || echo)
           sha3=$(git log -n1 --pretty=format:%H -- build_grid_values.py 2>/dev/null || echo)
           sha4=$(git log -n1 --pretty=format:%H -- rebuild_grid.sh 2>/dev/null || echo)
-          sha5=$(git log -n1 --pretty=format:%H -- build_gettingeven.py gettingeven_inputs.py gettingeven_oracle.py 2>/dev/null || echo)
+          sha5=$(git log -n1 --pretty=format:%H -- build_gettingeven.py gettingeven_inputs.py gettingeven_oracle.py gettingeven_evidence.py 2>/dev/null || echo)
           sha6=$(git log -n1 --pretty=format:%H -- build_provenance.py 2>/dev/null || echo)
           sha7=$(sha256sum cluster_results/ca/ca_atrisk_richness.csv cluster_results/ca/ca_atrisk_provenance.json | sha256sum | awk '{print $1}')
           sha8=$(sha256sum cluster_results/ca/webapp_data_*.json cluster_results/ca/grid_{25000,5000}m/*.tif | sha256sum | awk '{print $1}')
@@ -318,6 +318,7 @@ jobs:
           for res in 25000 5000; do
             GRID_RES="$res" python build_gettingeven.py
           done
+          python gettingeven_evidence.py --output-dir cluster_results/ca
           python -m pytest test_gettingeven.py test_gettingeven_inputs.py -q
       - name: Re-freeze the provenance manifest over the rebuilt artifacts
         # Hashes what this run read and wrote. Must follow the grid build and precede the
@@ -417,6 +418,11 @@ jobs:
       contents: write   # release asset upload (--clobber deletes + re-creates assets)
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install release validation dependencies
+        run: pip install -r requirements.txt
       - name: Download rebuilt site artifact
         uses: actions/download-artifact@v4
         with:
@@ -476,7 +482,9 @@ jobs:
           DISCOVERY_RATE_SHA256: ${{ vars.DISCOVERY_RATE_SHA256 }}
           CHALLENGE_TAXA_URL: ${{ vars.CHALLENGE_TAXA_URL }}
           CHALLENGE_TAXA_SHA256: ${{ vars.CHALLENGE_TAXA_SHA256 }}
-        run: python prepare_optional_layers.py --env-file "$GITHUB_ENV"
+        run: |
+          python prepare_optional_layers.py --env-file "$GITHUB_ENV"
+          python prepare_gettingeven_evidence.py
       - name: Rebuild webapp with current optional layers
         env:
           CARTO_API_KEY: ${{ secrets.CARTO_API_KEY }}
@@ -562,7 +570,9 @@ jobs:
           DISCOVERY_RATE_SHA256: ${{ vars.DISCOVERY_RATE_SHA256 }}
           CHALLENGE_TAXA_URL: ${{ vars.CHALLENGE_TAXA_URL }}
           CHALLENGE_TAXA_SHA256: ${{ vars.CHALLENGE_TAXA_SHA256 }}
-        run: python prepare_optional_layers.py --env-file "$GITHUB_ENV"
+        run: |
+          python prepare_optional_layers.py --env-file "$GITHUB_ENV"
+          python prepare_gettingeven_evidence.py
       - name: Rebuild webapp
         env:
           CARTO_API_KEY: ${{ secrets.CARTO_API_KEY }}

@@ -1,0 +1,22 @@
+{
+  "counts": {
+    "25000": {
+      "sha256": "ef9bac04afb2ae5bb5ed09c5e7c060d65e7e35c8a596c602c6088dd6a0ca5342",
+      "url": "https://github.com/PollockLab/where-to-blitz/releases/download/grid-inputs-v1/gettingeven-counts-25000m-ef9bac04afb2ae5bb5ed09c5e7c060d65e7e35c8a596c602c6088dd6a0ca5342.png"
+    },
+    "5000": {
+      "sha256": "6c0a1644bc9cee6389bc362896ea6bebc8dd5234f12d331d0df377f0cc3b8345",
+      "url": "https://github.com/PollockLab/where-to-blitz/releases/download/grid-inputs-v1/gettingeven-counts-5000m-6c0a1644bc9cee6389bc362896ea6bebc8dd5234f12d331d0df377f0cc3b8345.png"
+    }
+  },
+  "manifest": {
+    "sha256": "46ecae254ef4a8bca52b539b3ed86b2e28502a99b277318747a1a8a5d6be6fc6",
+    "url": "https://github.com/PollockLab/where-to-blitz/releases/download/grid-inputs-v1/gettingeven-evidence-46ecae254ef4a8bca52b539b3ed86b2e28502a99b277318747a1a8a5d6be6fc6.json"
+  },
+  "published_outputs_sha256": {
+    "gettingeven_grid_25000m.png": "f530bf8147942b7bc120b8840b14d05f1d41dbf47974d7979df74745a0c30af3",
+    "gettingeven_grid_5000m.png": "1e28d91c4ac6f09ba1968ecf613b1a5ddb8947e8d3a7df0090a0b396917aa5d7",
+    "webapp_data_gettingeven.json": "a309579e91338f6a9145bd054469d67ba08903eefcd526f841e52db9589ea11a"
+  },
+  "schema_version": 1
+}

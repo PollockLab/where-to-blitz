@@ -37,6 +37,15 @@ const OptionalData={
     }
     return result;
   },
+  challengeTargets(snapshot,catalog,row){
+    const source=snapshot?.source,ids=row.target_ids;
+    if(!source||!catalog||!catalog.source_version||catalog.source_version!==source.version||
+      !/^[a-f0-9]{64}$/.test(catalog.source_config_sha256)||catalog.source_config_sha256!==source.config_sha256||
+      !Array.isArray(catalog.taxa)||!Array.isArray(ids)||!ids.length||new Set(ids).size!==ids.length)return [];
+    const targets=ids.map(id=>Number.isSafeInteger(id)&&id>0?catalog.taxa.find(target=>target.id===id):null);
+    return targets.every(target=>target&&typeof target.name==='string'&&target.name.trim()&&
+      ['species','genus','subspecies','variety','form'].includes(target.rank))?targets:[];
+  },
   historicalGroups(points){
     const groups=new Map();
     for(const point of points){const key=point.longitude+','+point.latitude;if(!groups.has(key))groups.set(key,{key,longitude:point.longitude,latitude:point.latitude,points:[]});groups.get(key).points.push(point);}
@@ -232,6 +241,18 @@ function installOptionalLayers(){
     const ramp=limits.maximum>0?'<div class="ramp optional-positive-ramp" style="background:linear-gradient(to right,'+gradient+')"></div><div class="lab"><span>'+fmt(low)+'</span><span>'+fmt(limits.maximum)+'</span></div><div class="hint">'+t('discovery_log_key')+'</div>':'';
     return '<div class="lt">'+t('discovery_rate')+'</div>'+ramp+'<div class="hint">'+t('discovery_legend_unit')+'</div><div class="optional-legend-key"><span><span class="optional-swatch optional-zero"></span>'+t('discovery_zero')+'</span><span><span class="optional-swatch optional-missing"></span>'+t('discovery_no_data')+'</span></div><div class="hint">'+t('discovery_sparse')+'</div>'+(recentOn?'<div class="hint">'+t('discovery_recent_separate')+'</div>':'')+sourceDetails()+(discoveryError?'<div class="hint">'+t('optional_error')+'</div>':'');
   }
+  function inclusionTargets(row){return OptionalData.challengeTargets(cache.challenge,catalog,row);}
+  const inclusionLabel=target=>t('sighting_inclusion_rank')[target.rank]+' ';
+  function inclusionLine(row,focusTargets){
+    const targets=inclusionTargets(row);if(!targets.length)return null;
+    const line=document.createElement('p');line.className='sighting-inclusion';
+    for(const [index,target]of targets.entries()){
+      const label=document.createElement('span'),link=document.createElement('a');label.textContent=(index?' · ':'')+inclusionLabel(target);
+      link.textContent=target.name;link.href='https://www.inaturalist.org/taxa/'+target.id;link.target='_blank';link.rel='noopener';link.dataset.inclusionTarget=String(target.id);
+      const action='target-'+target.id;link.dataset.sightingAction=action;focusTargets[action]=link;line.append(label,link);
+    }
+    return line;
+  }
   function paintSighting(){
     if(!selectedSighting||!sightingBody)return;
     const row=selectedSighting,selection=selectedSightings.map(r=>r.id).join(',')+':'+row.id;
@@ -255,6 +276,7 @@ function installOptionalLayers(){
     scientific.textContent=row.common_name?(row.identified_name||row.name):'';
     date.textContent=t('sighting_date',row.observed_on);place.textContent=row.place_name||'';place.className='sighting-place';
     sightingBody.append(name);if(scientific.textContent)sightingBody.append(scientific);
+    const inclusion=inclusionLine(row,focusTargets);if(inclusion)sightingBody.append(inclusion);
     const photo=row.photo,url=photo&&photo.attribution&&OptionalData.photoLicense(photo.license_code)&&OptionalData.photoUrl(photo.url);
     if(url){
       const image=document.createElement('img'),credit=document.createElement('small'),source=document.createElement('a'),license=document.createElement('a');image.src=url;image.alt=photo.alt||row.identified_name||row.name;image.loading='lazy';image.className='sighting-photo';credit.className='sighting-credit';credit.textContent=t('photo_reference')+'. '+t('photo_credit')+': ';
@@ -351,6 +373,7 @@ function installOptionalLayers(){
     const freshness=node('recentChallengeFreshness');if(freshness){freshness.textContent=t(...OptionalData.relativeRefresh(snapshot.as_of));freshness.title=status.title;freshness.dateTime=snapshot.as_of;}
     renderButtons(list,rows,'sightingId',row=>String(row.id),(button,row)=>{
       button.textContent=(row.common_name||row.identified_name||row.name)+' · '+row.observed_on+(row.place_name?'\n'+row.place_name:'');
+      const inclusion=inclusionTargets(row).map(target=>inclusionLabel(target)+target.name).join(' · ');if(inclusion)button.textContent+='\n'+inclusion;
       button.onclick=()=>{openSighting(row);map.jumpTo({center:[row.longitude,row.latitude],zoom:Math.max(7,map.getZoom())});};
     });
     if(!rows.length)list.textContent=t('recent_challenge_empty');

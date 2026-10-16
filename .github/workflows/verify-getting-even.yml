@@ -7,6 +7,9 @@ on:
       - gettingeven_reference.json
       - gettingeven_inputs.py
       - gettingeven_oracle.py
+      - gettingeven_evidence.py
+      - gettingeven_evidence_source.json
+      - prepare_gettingeven_evidence.py
       - build_gettingeven.py
       - prepare_gettingeven_reference.py
       - test_gettingeven*.py
@@ -63,6 +66,10 @@ jobs:
               print(path.name + ": identical decoded cells")
           PY
           python -m pytest test_gettingeven.py -q
+      - name: Produce and verify both source-count evidence tiers
+        run: |
+          python gettingeven_evidence.py --output-dir cluster_results/ca
+          python prepare_gettingeven_evidence.py
       - name: Retain rebuild provenance
         if: always()
         uses: actions/upload-artifact@v4
@@ -70,5 +77,6 @@ jobs:
           name: hosted-getting-even-proof
           path: |
             cluster_results/ca/gettingeven_grid.json
+            cluster_results/ca/gettingeven_evidence.json
             cluster_results/ca/gettingeven_*m.png
           retention-days: 30
