@@ -28,10 +28,13 @@ on:
   # Without this the light checks only ran after a merge, so the lint and test gates below
   # could only ever report a regression that had already landed on main.
   pull_request:
+  workflow_run:
+    workflows: ["Conservation Challenge snapshot"]
+    types: [completed]
 
 jobs:
   validate-light:
-    if: github.event_name != 'workflow_dispatch'
+    if: github.event_name == 'push' || github.event_name == 'pull_request' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == github.event.repository.default_branch && github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -446,6 +449,7 @@ jobs:
       group: pages
       cancel-in-progress: false
     permissions:
+      contents: read
       pages: write
       id-token: write
     environment:
@@ -458,13 +462,32 @@ jobs:
         with:
           name: rebuilt-site-${{ needs.aggregate.outputs.inputs_hash }}
           path: artifacts
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install viewer build dependencies
+        run: pip install -r requirements.txt
+      - name: Restore validated artifact data for a fresh viewer build
+        run: cp -R artifacts/cluster_results/ca/. cluster_results/ca/
+      - name: Prepare validated optional layers
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DISCOVERY_RATE_URL: ${{ vars.DISCOVERY_RATE_URL }}
+          DISCOVERY_RATE_SHA256: ${{ vars.DISCOVERY_RATE_SHA256 }}
+          CHALLENGE_TAXA_URL: ${{ vars.CHALLENGE_TAXA_URL }}
+          CHALLENGE_TAXA_SHA256: ${{ vars.CHALLENGE_TAXA_SHA256 }}
+        run: python prepare_optional_layers.py --env-file "$GITHUB_ENV"
+      - name: Rebuild webapp with current optional layers
+        env:
+          CARTO_API_KEY: ${{ secrets.CARTO_API_KEY }}
+        run: python build_webapp.py
       - name: Assemble _site
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           mkdir -p _site/tiles _site/cluster_results/ca
-          cp artifacts/index.html _site/
+          cp index.html _site/
           for f in blitz-logo.png og-image.png where-to-blitz-walkthrough.html where-to-blitz-zoomout.png; do
             [ -f "$f" ] && cp "$f" _site/
           done
@@ -475,12 +498,12 @@ jobs:
           # loop above never picks it up. Without this the criterion serves a 404 and blanks the map.
           gh release download grid-outputs-v1 --pattern "climate_gap.pmtiles" --dir _site/tiles --repo "$GITHUB_REPOSITORY" --clobber
           test -s _site/tiles/climate_gap.pmtiles
-          cp artifacts/cluster_results/ca/*.json _site/cluster_results/ca/
+          cp cluster_results/ca/*.json _site/cluster_results/ca/
           # The Getting Even fill at both tiers (#122) and the 5 km land/sea mask. Unguarded on purpose: it is a tracked
           # file, so a missing one means the build lost it, and the app would silently lose the
           # 5 km layer rather than the deploy failing.
-          cp artifacts/cluster_results/ca/*.png _site/cluster_results/ca/
-          cp -R artifacts/cluster_results/ca/values _site/cluster_results/ca/
+          cp cluster_results/ca/*.png _site/cluster_results/ca/
+          cp -R cluster_results/ca/values _site/cluster_results/ca/
           du -sh _site
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
@@ -493,7 +516,7 @@ jobs:
   deploy-site-fast:
     # On push to main: redeploy the site without rebuilding tiles (use latest release assets).
     # Lint validation already passed. This job rebuilds the webapp (index.html) and deploys.
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == github.event.repository.default_branch && github.event.workflow_run.head_repository.full_name == github.repository)
     needs: validate-light
     runs-on: ubuntu-latest
     # One Pages deployment at a time: deploy-site (dispatch) and deploy-site-fast (push to
@@ -502,6 +525,7 @@ jobs:
       group: pages
       cancel-in-progress: false
     permissions:
+      contents: read
       pages: write
       id-token: write
     environment:
@@ -531,6 +555,14 @@ jobs:
       # the lattice before they reach the site.
       - name: Gate artefact invariants
         run: python -m pytest test_artifact_invariants.py -q
+      - name: Prepare validated optional layers
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DISCOVERY_RATE_URL: ${{ vars.DISCOVERY_RATE_URL }}
+          DISCOVERY_RATE_SHA256: ${{ vars.DISCOVERY_RATE_SHA256 }}
+          CHALLENGE_TAXA_URL: ${{ vars.CHALLENGE_TAXA_URL }}
+          CHALLENGE_TAXA_SHA256: ${{ vars.CHALLENGE_TAXA_SHA256 }}
+        run: python prepare_optional_layers.py --env-file "$GITHUB_ENV"
       - name: Rebuild webapp
         env:
           CARTO_API_KEY: ${{ secrets.CARTO_API_KEY }}

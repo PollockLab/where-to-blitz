@@ -57,6 +57,7 @@ OUTPUT_PATTERNS = [
     # lattice change re-points every pixel instead of making a lookup miss; freezing its hash
     # here is how a reader can tell which build the shipped colours came from.
     "cluster_results/ca/gettingeven_grid_*.png",
+    "cluster_results/ca/gettingeven_gate_*.png",
     "cluster_results/ca/gettingeven_grid.json",
     "cluster_results/ca/land_sea_5000m.png",
     "cluster_results/ca/values/*.png",
@@ -101,6 +102,23 @@ def validate_release_data(data: dict[str, bytes]) -> None:
             raise ValueError(f"empty app file: {name}")
         if name.endswith(".json"):
             json.loads(content)
+    # Optional overlays are rebuilt outside the expensive grid cache, but validate
+    # any included release artifact before it can be restored and published.
+    if "discovery_rate.json" in data:
+        from build_discovery_layer import validate_artifact
+
+        validate_artifact(json.loads(data["discovery_rate.json"]))
+    if "conservation_challenge.json" in data:
+        from conservation_challenge import validate_snapshot
+
+        validate_snapshot(json.loads(data["conservation_challenge.json"]))
+    getting_even = json.loads(data["gettingeven_grid.json"])
+    for tier in getting_even.get("tiers", {}).values():
+        mask = tier.get("gate_mask")
+        if mask:
+            name = mask["png"]
+            if name not in data or hashlib.sha256(data[name]).hexdigest() != mask["sha256"]:
+                raise ValueError(f"Getting Even gate-mask checksum mismatch or missing file: {name}")
     provenance = json.loads(data["provenance.json"])
     grid = {key: index[key] for key in ("res_m", "n_cells", "lattice", "crs")}
     if provenance["grid"] != grid:
