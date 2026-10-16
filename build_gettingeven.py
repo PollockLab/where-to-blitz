@@ -23,6 +23,9 @@ the lab SharePoint, not in any public bucket, so the step runs only when it is p
     GE_RICHNESS_HERP=ar.richness.tif GE_RICHNESS_MAMMAL=mammal.richness.tif \
     GE_RICHNESS_PLANT=plant.richness.stacks.tif python build_gettingeven.py
 
+For checksum-pinned local or HTTPS inputs, set GE_RICHNESS_MANIFEST to the manifest described
+in gettingeven_inputs.py. Hosted manifests also require GE_RICHNESS_MANIFEST_SHA256.
+
 Any CRS or resolution is accepted; each raster is averaged onto the lattice cell. Without them
 the run prints and records the layer as ungated -- a missing input never passes silently for a
 metric that has no such step.
@@ -49,6 +52,7 @@ a defect, and probe_gettingeven.py measures how often it happens.
 Usage:  python build_gettingeven.py                 # 25 km tier, after build_fullgrid_ca.py
         GRID_RES=5000 python build_gettingeven.py   # 5 km tier: raster + PNG, no JSON
 """
+
 import json
 import os
 
@@ -59,6 +63,8 @@ import rasterio.warp
 
 import border_mask
 from build_provenance import sha256_file
+from gettingeven_inputs import RICHNESS_ENV, load_richness_inputs, observation_hash
+from gettingeven_oracle import gate_bits, metric
 from grid_lattice import Lattice, reproject_mean
 
 OUT_DIR = "cluster_results/ca"
@@ -87,11 +93,6 @@ GE_GROUPS = {
 CATS = list(GE_GROUPS)
 
 # Category -> env var holding its modelled-richness raster (Eckert's ar / mammal / plant stacks).
-RICHNESS_ENV = {
-    "Reptiles & Amphibians": "GE_RICHNESS_HERP",
-    "Mammals": "GE_RICHNESS_MAMMAL",
-    "Plants": "GE_RICHNESS_PLANT",
-}
 RICHNESS_PCT = 25   # a group is dropped below this percentile of its own richness
 
 # Red-channel value for a cell that is on the map but holds too few records to score. Kept
@@ -133,6 +134,8 @@ def cells_from_json(lat):
             rows = json.load(fh)[group]
         if len(rows) != len(coords):
             raise SystemExit(f"{group}: {len(rows)} rows, expected {len(coords)}")
+        if [(r[0], r[1]) for r in rows] != coords:
+            raise SystemExit(f"{group}: cell ordering differs from {TOTAL}")
         return np.array([r[ntr] for r in rows], float)
 
     with open(os.path.join(OUT_DIR, index["files"][TOTAL])) as fh:
@@ -151,8 +154,11 @@ def cells_from_json(lat):
 
 def cells_from_stacks(lat):
     """Every on-mask cell of the lattice stacks: (row, col), all-taxa and per-category records."""
+
     def plane(group):
         with rasterio.open(_stack(group)) as ds:
+            if ds.crs != lat.crs or ds.shape != lat.shape or ds.transform != lat.transform:
+                raise SystemExit(f"{group}: observation stack is not on the {RES} m lattice")
             return ds.read(ds.descriptions.index("n_train") + 1).astype(float)
 
     total_plane = plane(TOTAL)
@@ -170,17 +176,23 @@ def zscores(total, counts):
     in the national distribution *of that category's share*, which is what makes the six
     categories comparable to each other in the argmin below.
     """
+    if not np.isfinite(MIN_RECORDS) or MIN_RECORDS <= 0:
+        raise SystemExit("GE_MIN_RECORDS must be finite and greater than zero")
+    if np.any(~np.isfinite(total)) or np.any(total < 0) or np.any(~np.isfinite(counts)) or np.any(counts < 0):
+        raise SystemExit("observation counts must be finite and nonnegative")
     scored = np.isfinite(total) & (total >= MIN_RECORDS)
+    if not scored.any():
+        raise SystemExit("no cells meet GE_MIN_RECORDS")
     prop = np.full(counts.shape, np.nan)
     np.divide(counts, total, out=prop, where=scored)
     mean, sd = np.nanmean(prop, axis=1), np.nanstd(prop, axis=1)
-    if not np.all(sd > 0):
-        flat = [CATS[i] for i in np.where(sd <= 0)[0]]
+    if not np.all(np.isfinite(sd) & (sd > 0)):
+        flat = [CATS[i] for i in np.where(~np.isfinite(sd) | (sd <= 0))[0]]
         raise SystemExit(f"no variation in {', '.join(flat)}: refusing to write a constant layer")
     return (prop - mean[:, None]) / sd[:, None], scored
 
 
-def apply_richness_gate(z, lat, rowcol, scored):
+def apply_richness_gate(z, lat, rowcol, scored, paths=None, richness=None):
     """Drop a category where its own modelled richness is in the national bottom quartile.
 
     Returns what was actually gated, so the run can report the step rather than let an absent
@@ -189,8 +201,10 @@ def apply_richness_gate(z, lat, rowcol, scored):
     same at every tier (see test_the_tiers_agree_on_the_gate_and_the_floor).
     """
     gated, cats = [], []
+    if paths is None:
+        paths, _ = load_richness_inputs()
     for i, cat in enumerate(CATS):
-        path = os.environ.get(RICHNESS_ENV.get(cat, ""))
+        path = paths.get(cat)
         if not path:
             continue
         if not os.path.exists(path):
@@ -201,6 +215,8 @@ def apply_richness_gate(z, lat, rowcol, scored):
         # denominator as well as below the limit. Excluding them from the quantile instead lifts
         # the limit and over-drops: 3,394 cells against the R script's 2,670 at 25 km.
         rich = np.where(np.isfinite(rich), rich, 0.0)
+        if richness is not None:
+            richness[i] = rich
         limit = np.percentile(rich[scored], RICHNESS_PCT)
         drop = scored & (rich < limit)
         z[i][drop] = np.nan
@@ -263,7 +279,7 @@ def _sidecar():
         return json.load(fh)
 
 
-def write_sidecar(lat, gated, gated_cats, png_path):
+def write_sidecar(lat, gated, gated_cats, png_path, inputs=None, mask_path=None):
     """Per-tier build record for the PNGs: which lattice, which gate, which floor.
 
     A coordinate-keyed file fails loudly when the lattice moves, because every key misses; that
@@ -284,12 +300,25 @@ def write_sidecar(lat, gated, gated_cats, png_path):
     doc.setdefault("tiers", {})[str(RES)] = {
         "png": os.path.basename(png_path),
         "sha256": sha256_file(png_path),
-        "lattice": {"x0": lat.x0, "y1": lat.y1, "res_m": lat.res,
-                    "ncol": lat.ncol, "nrow": lat.nrow, "crs": lat.crs.to_wkt()},
+        "lattice": {
+            "x0": lat.x0,
+            "y1": lat.y1,
+            "res_m": lat.res,
+            "ncol": lat.ncol,
+            "nrow": lat.nrow,
+            "crs": lat.crs.to_wkt(),
+        },
         "min_records": MIN_RECORDS,
         "richness_gate": gated,
         "gated_categories": gated_cats,
+        "inputs": inputs,
+        "build_status": "rebuilt-and-verified",
     }
+    if mask_path:
+        doc["tiers"][str(RES)]["gate_mask"] = {
+            "png": os.path.basename(mask_path),
+            "sha256": sha256_file(mask_path),
+        }
     with open(SIDECAR, "w") as fh:
         json.dump(doc, fh, indent=1, sort_keys=True)
     return SIDECAR
@@ -315,7 +344,7 @@ def _refuse_silent_ungating(path, shipped, gated):
         f"or GE_ALLOW_UNGATED=1 to overwrite it on purpose.")
 
 
-def _keep_shipped(lat, coords, shipped, gated):
+def _keep_shipped(lat, coords, shipped, gated, inputs=None):
     """With GE_KEEP_SHIPPED=1, leave a gated shipped tier in place instead of failing the build.
 
     CI cannot see the richness rasters, so every full rebuild there would otherwise stop at
@@ -340,6 +369,29 @@ def _keep_shipped(lat, coords, shipped, gated):
         if {f"{r[0]:.3f},{r[1]:.3f}" for r in rows} != {f"{a:.3f},{b:.3f}" for a, b in coords}:
             raise SystemExit("GE_KEEP_SHIPPED: webapp_data_gettingeven.json is not keyed on the "
                              "cells the app draws; rebuild it with the richness rasters")
+    previous = shipped.get("inputs")
+    if shipped.get("min_records") != MIN_RECORDS:
+        raise SystemExit("GE_KEEP_SHIPPED: record floor changed; rebuild with pinned richness inputs")
+    if previous:
+        if not inputs or previous["observations_sha256"] != inputs["observations_sha256"]:
+            raise SystemExit(
+                "GE_KEEP_SHIPPED: observation counts changed; rebuild with pinned richness inputs"
+            )
+        if previous.get("richness_percentile") != RICHNESS_PCT:
+            raise SystemExit(
+                "GE_KEEP_SHIPPED: richness percentile changed; rebuild with pinned richness inputs"
+            )
+        status = "preserved-observations-verified"
+    else:
+        print(
+            f"::warning::legacy-preserved {RES} m Getting Even: input hashes unavailable; "
+            "this is not a reproduced build"
+        )
+        status = "legacy-preserved-inputs-unverified"
+    doc = _sidecar()
+    doc["tiers"][str(RES)]["build_status"] = status
+    with open(SIDECAR, "w") as fh:
+        json.dump(doc, fh, indent=1, sort_keys=True)
     print(f"::notice::kept the shipped gated {RES} m Getting Even tier "
           f"({'; '.join(shipped['richness_gate'])}): no richness rasters in this build")
     return True
@@ -372,9 +424,20 @@ def write_json(coords, idx, best, gated):
 def main():
     lat = _lattice()
     coords, rowcol, total, counts = (cells_from_json if RES == JSON_RES else cells_from_stacks)(lat)
+    paths, records = load_richness_inputs()
+    inputs = {
+        "observations_sha256": observation_hash(rowcol, total, counts),
+        "richness": records,
+        "richness_percentile": RICHNESS_PCT,
+    }
     z, scored = zscores(total, counts)
-    gated, gated_cats = apply_richness_gate(z, lat, rowcol, scored)
+    richness = {}
+    gated, gated_cats = apply_richness_gate(z, lat, rowcol, scored, paths, richness)
     idx, best = priority(z, scored)
+    excluded = gate_bits(richness, scored)
+    expected, expected_z = metric(total, counts, MIN_RECORDS, excluded)
+    if not np.array_equal(idx, expected) or not np.allclose(best, expected_z, atol=1e-10, equal_nan=True):
+        raise SystemExit("independent gated metric oracle disagrees with the build")
 
     print(f"lattice: {lat.ncol} x {lat.nrow} cells of {RES} m; {len(total):,} on the mask, "
           f"{int(scored.sum()):,} with >= {MIN_RECORDS:g} records")
@@ -385,13 +448,17 @@ def main():
     if any(n == 0 for _, n in named):
         raise SystemExit("a category never wins: the legend would promise a colour nobody sees")
     shipped_tier = _sidecar().get("tiers", {}).get(str(RES), {})
-    if _keep_shipped(lat, coords, shipped_tier, gated):
+    if _keep_shipped(lat, coords, shipped_tier, gated, inputs):
         return
     _refuse_silent_ungating(SIDECAR, shipped_tier.get("richness_gate") or [], gated)
     print(f"wrote {write_raster(lat, rowcol, idx, best)}")
     png = write_png(lat, rowcol, idx)
+    mask_path = os.path.join(OUT_DIR, f"gettingeven_gate_{RES}m.png")
+    mask = np.zeros(lat.shape, dtype=np.uint8)
+    mask[rowcol] = excluded
+    matplotlib.image.imsave(mask_path, np.dstack([mask, mask, mask]))
     print(f"wrote {png}: {lat.ncol} x {lat.nrow} px, {os.path.getsize(png) / 1e3:.0f} kB")
-    print(f"wrote {write_sidecar(lat, gated, gated_cats, png)}")
+    print(f"wrote {write_sidecar(lat, gated, gated_cats, png, inputs, mask_path)}")
 
     if coords is not None:
         path, rows = write_json(coords, idx, best, gated)

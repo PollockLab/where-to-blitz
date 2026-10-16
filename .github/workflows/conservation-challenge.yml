@@ -1,0 +1,51 @@
+name: Conservation Challenge snapshot
+on:
+  schedule:
+    - cron: '17 5 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: conservation-challenge-snapshot
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    # No component list, placeholder or fixture may activate this public feed.
+    if: github.repository == 'PollockLab/where-to-blitz' && vars.CHALLENGE_TAXA_URL != '' && vars.CHALLENGE_TAXA_SHA256 != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TAXA_URL: ${{ vars.CHALLENGE_TAXA_URL }}
+      TAXA_SHA256: ${{ vars.CHALLENGE_TAXA_SHA256 }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install acquisition dependency
+        run: pip install requests==2.34.2
+      - name: Retrieve pinned approved combined species list
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$TAXA_SHA256" =~ ^[0-9a-f]{64}$ ]]
+          curl --fail --location --proto '=https' --proto-redir '=https' --max-time 60 --retry 2 --max-filesize 5000000 "$TAXA_URL" --output "$RUNNER_TEMP/challenge-taxa.json"
+          printf '%s  %s\n' "$TAXA_SHA256" "$RUNNER_TEMP/challenge-taxa.json" | sha256sum --check --strict
+      - name: Acquire two agreeing complete public snapshots
+        shell: bash
+        run: |
+          set -euo pipefail
+          python conservation_challenge.py --taxa "$RUNNER_TEMP/challenge-taxa.json" --output "$RUNNER_TEMP/conservation-challenge-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.json"
+      - name: Publish immutable snapshot, preserving older complete feeds
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release view conservation-challenge-v1 >/dev/null 2>&1 || gh release create conservation-challenge-v1 --title 'Conservation Challenge snapshots' --notes 'Complete public observation snapshots from the approved combined species list.' --latest=false
+          gh release upload conservation-challenge-v1 "$RUNNER_TEMP/conservation-challenge-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.json"

@@ -7,6 +7,7 @@ to the grey "all groups under-sampled" branch, and the map went uniformly grey u
 legend of six colours that could no longer appear. A join can fail completely and still
 look like data, so the join is what gets asserted here.
 """
+
 import hashlib
 import json
 import re
@@ -18,6 +19,9 @@ import rasterio
 import rasterio.warp
 from PIL import Image
 
+import border_mask
+from gettingeven_inputs import observation_hash
+from gettingeven_oracle import metric
 from grid_lattice import Lattice
 
 HERE = Path(__file__).resolve().parent
@@ -124,12 +128,20 @@ def test_the_shipped_layer_is_the_published_metric():
     files rather than by calling the builder.
     """
     ge = _ge()
-    if ge.get("richness_gate"):
-        pytest.skip(f"built with the richness gate on: {ge['richness_gate']}")
     groups = _per_group_records()
     total = groups["All biodiversity"]
     floor = ge.get("min_records", 1)
     scored = [i for i, t in enumerate(total) if t >= floor]
+    excluded = np.zeros(len(total), dtype=np.uint8)
+    if ge.get("richness_gate"):
+        tier = _sidecar()["tiers"]["25000"]
+        mask = tier["gate_mask"]
+        path = CA / mask["png"]
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == mask["sha256"]
+        rowcol = _rowcol(ge["gettingeven"], _lattice(tier))
+        excluded = np.asarray(Image.open(path))[*rowcol, 0]
+        counts = np.asarray([np.sum([groups[g] for g in GE_GROUPS[cat]], axis=0) for cat in ge["cats"]])
+        assert observation_hash(rowcol, total, counts) == tier["inputs"]["observations_sha256"]
 
     z = []
     for cat in ge["cats"]:
@@ -141,14 +153,65 @@ def test_the_shipped_layer_is_the_published_metric():
 
     rows = ge["gettingeven"]
     for k, i in enumerate(scored):
-        want = min(range(len(z)), key=lambda c: z[c][k])
+        eligible = [c for c in range(len(z)) if not (int(excluded[i]) & (1 << c))]
+        want = min(eligible, key=lambda c: z[c][k]) if eligible else -1
         assert rows[i][2] == want, (
             f"cell {rows[i][0]},{rows[i][1]}: layer says {ge['cats'][rows[i][2]]}, the "
             f"published metric says {ge['cats'][want]}"
         )
-        assert rows[i][3] == pytest.approx(z[want][k], abs=5e-4), (
+        assert rows[i][3] == pytest.approx(z[want][k], abs=5e-4) if want >= 0 else rows[i][3] is None, (
             "the shipped z is not the winning category's z-score"
         )
+
+
+def _verify_fine_tier(res, tier):
+    """Check the shipped PNG even when preserving a tier produced no local output TIFF."""
+    stack_dir = CA / f"grid_{res}m"
+    lattice = _lattice(tier)
+
+    def plane(group):
+        with rasterio.open(stack_dir / (group.replace(" ", "_") + ".tif")) as ds:
+            assert ds.shape == lattice.shape and ds.crs == lattice.crs and ds.transform == lattice.transform
+            return ds.read(ds.descriptions.index("n_train") + 1).astype(float)
+
+    total_plane = plane("All biodiversity")
+    rowcol = np.where(np.isfinite(total_plane))
+    total = total_plane[rowcol]
+    counts = np.asarray(
+        [sum(np.nan_to_num(plane(g))[rowcol] for g in GE_GROUPS[cat]) for cat in _ge()["cats"]]
+    )
+    assert observation_hash(rowcol, total, counts) == tier["inputs"]["observations_sha256"]
+    mask = tier["gate_mask"]
+    path = CA / mask["png"]
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == mask["sha256"]
+    excluded = np.asarray(Image.open(path))[*rowcol, 0]
+    want, best = metric(total, counts, tier["min_records"], excluded)
+    path = CA / tier["png"]
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == tier["sha256"]
+    image = np.asarray(Image.open(path))
+    assert image.shape == (*lattice.shape, 4)
+    categories = np.full(lattice.shape, PNG_UNSCORED, np.uint8)
+    categories[rowcol] = np.where(want < 0, PNG_UNSCORED, want)
+    assert np.array_equal(image[:, :, 0], categories), "fine-tier PNG disagrees with gated metric"
+    present = np.zeros(lattice.shape, bool)
+    present[rowcol] = True
+    hidden = border_mask.hidden_for_tier(
+        lattice.nrow, lattice.ncol, lattice.res, lattice.crs, lattice.x0, lattice.y1
+    )
+    assert np.array_equal(image[:, :, 3], np.where(present & ~hidden, 255, 0)), "fine-tier PNG alpha disagrees with mask"
+    output = stack_dir / "gettingeven.tif"
+    if output.exists():
+        with rasterio.open(output) as ds:
+            assert ds.shape == lattice.shape and ds.crs == lattice.crs and ds.transform == lattice.transform
+            assert np.array_equal(ds.read(1)[rowcol], want)
+            assert np.allclose(ds.read(2)[rowcol], best, atol=1e-6, equal_nan=True)
+
+
+def test_gated_oracle_covers_both_tiers_when_stacks_are_available():
+    """Full rebuilds check actual fine-tier counts too, not just the public coarse rows."""
+    for res, tier in _sidecar()["tiers"].items():
+        if int(res) != 25000 and (CA / f"grid_{res}m" / "All_biodiversity.tif").exists():
+            _verify_fine_tier(res, tier)
 
 
 def test_only_the_too_sparse_cells_are_grey():
@@ -334,3 +397,65 @@ def test_the_tiers_agree_on_the_gate_and_the_floor():
         f"the tiers gate different categories: {gates}"
     )
     assert len(set(floors.values())) == 1, f"the tiers carry different record floors: {floors}"
+
+
+@pytest.mark.parametrize("corrupt", [None, "category", "alpha"])
+def test_preserved_fine_png_is_verified_without_a_local_gettingeven_tiff(tmp_path, monkeypatch, corrupt):
+    """A clean CI rebuild has source stacks and preserved PNGs, with no Getting Even TIFF."""
+    from types import SimpleNamespace
+
+    lattice = SimpleNamespace(
+        shape=(2, 3), nrow=2, ncol=3, res=5000, x0=0, y1=2,
+        crs=rasterio.crs.CRS.from_epsg(4326), transform=rasterio.transform.from_origin(0, 2, 1, 1),
+    )
+    monkeypatch.setattr(f"{__name__}.CA", tmp_path)
+    monkeypatch.setattr(f"{__name__}._lattice", lambda _: lattice)
+    monkeypatch.setattr(f"{__name__}._ge", lambda: {"cats": list(GE_GROUPS)})
+    hidden = np.array([[False, True, False], [False, False, False]])
+    monkeypatch.setattr(border_mask, "hidden_for_tier", lambda *args: hidden)
+    stack_dir = tmp_path / "grid_5000m"
+    stack_dir.mkdir()
+    total = np.array([10, 20, 30, 0.])
+    counts = np.array([[1, 3, 2, 0], [4, 2, 7, 0], [2, 6, 2, 0],
+                       [1, 4, 5, 0], [2, 1, 4, 0], [0, 4, 10, 0.]])
+    rowcol = (np.array([0, 0, 0, 1]), np.array([0, 1, 2, 0]))
+    groups = {"All biodiversity": total}
+    for category, values in zip(GE_GROUPS.values(), counts):
+        for index, group in enumerate(category):
+            groups[group] = values if index == 0 else np.zeros_like(values)
+    for group, values in groups.items():
+        data = np.full(lattice.shape, np.nan, np.float32)
+        data[rowcol] = values
+        with rasterio.open(stack_dir / (group.replace(" ", "_") + ".tif"), "w", driver="GTiff",
+                           height=2, width=3, count=1, dtype="float32", crs=lattice.crs,
+                           transform=lattice.transform, nodata=np.nan) as ds:
+            ds.write(data, 1)
+            ds.descriptions = ("n_train",)
+    excluded = np.array([0, 4, 0, 0], np.uint8)
+    gate = np.zeros(lattice.shape, np.uint8)
+    gate[rowcol] = excluded
+    gate_path = tmp_path / "gate.png"
+    Image.fromarray(np.dstack([gate, gate, gate])).save(gate_path)
+    want, _ = metric(total, counts, 1, excluded)
+    categories = np.full(lattice.shape, PNG_UNSCORED, np.uint8)
+    categories[rowcol] = np.where(want < 0, PNG_UNSCORED, want)
+    alpha = np.zeros(lattice.shape, np.uint8)
+    alpha[rowcol] = 255
+    alpha[hidden] = 0
+    if corrupt == "category":
+        categories[0, 0] = (categories[0, 0] + 1) % len(GE_GROUPS)
+    if corrupt == "alpha":
+        alpha[0, 1] = 255
+    image_path = tmp_path / "priority.png"
+    Image.fromarray(np.dstack([categories, np.zeros_like(gate), np.zeros_like(gate), alpha])).save(image_path)
+    tier = {
+        "inputs": {"observations_sha256": observation_hash(rowcol, total, counts)}, "min_records": 1,
+        "gate_mask": {"png": gate_path.name, "sha256": hashlib.sha256(gate_path.read_bytes()).hexdigest()},
+        "png": image_path.name, "sha256": hashlib.sha256(image_path.read_bytes()).hexdigest(),
+    }
+    assert not (stack_dir / "gettingeven.tif").exists()
+    if corrupt:
+        with pytest.raises(AssertionError, match="fine-tier PNG"):
+            _verify_fine_tier("5000", tier)
+    else:
+        _verify_fine_tier("5000", tier)

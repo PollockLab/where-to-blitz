@@ -39,6 +39,7 @@ h1,.sec,.sechd .sec,.popsec,#viewtoggle button,#langbtn{font-family:'Space Grote
    no scroll) and #panelInner does the scrolling inside it. */
 #panel{position:absolute;z-index:1100;top:12px;left:12px;width:300px;max-height:calc(100% - 24px);display:flex;flex-direction:column;overflow:hidden;background:var(--panel);border-radius:12px;border:1px solid #2a3a4d;box-shadow:0 6px 22px rgba(0,0,0,.5)}
 #panelInner{flex:1 1 auto;min-height:0;overflow-y:auto;padding:14px 15px 18px}
+#sheetHead{display:none}
 #map{flex:1;height:100%}
 #panelToggle{position:fixed;top:calc(var(--bh) + 18px);left:300px;z-index:1300;width:26px;height:26px;border-radius:50%;background:var(--panel);color:var(--ink);border:1px solid #2a3a4d;cursor:pointer;font-size:15px;line-height:24px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.35);padding:0}
 #panelToggle:hover{border-color:var(--acc);color:var(--acc)}
@@ -208,10 +209,19 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
 .infobox ul{margin:5px 0 0;padding-left:15px}
 .infobox li{margin:3px 0}
 @media(max-width:640px){
-  #app{flex-direction:column;height:calc(100dvh - var(--bh))}
-  #panel{position:static;width:100%;min-width:0;height:auto;max-height:calc(50% - 56px);flex-shrink:0;border-radius:0;border:0;border-bottom:1px solid #0a1119;box-shadow:none}
-  #panelInner{position:relative}
-  #map{height:auto;min-height:0;flex:1 1 0}
+  #app{display:block;height:calc(100dvh - var(--bh))}
+  #map{position:absolute;inset:0;width:100%;height:100%}
+  #panel{position:fixed;inset:auto 8px 8px;width:auto;max-height:62dvh;border-radius:14px;border:1px solid #dfe5ec;box-shadow:0 4px 20px rgba(20,40,70,.2)}
+  #panelInner{padding-top:0;overscroll-behavior:contain}
+  #panelInner>.titlerow{display:none}
+  #sheetHead{display:flex;align-items:center;gap:12px;padding:12px 14px;min-height:64px}
+  .sheet-title{flex:1;min-width:0}
+  .sheet-brand{display:block;font-size:11px;color:#5d6b7a;margin-bottom:2px}
+  #sheetSummary{display:block;font-weight:650;font-size:14px;line-height:1.3}
+  #sheetToggle{flex:none;min-height:40px;border:1px solid #b4c5ad;border-radius:8px;background:#edf3ea;color:#284323;padding:7px 12px;font:inherit;font-size:13px;font-weight:650}
+  body.panel-collapsed #panel{display:flex}
+  body.panel-collapsed #panelInner{display:none}
+  body:has(.maplibregl-popup) #panel,body:has(.maplibregl-popup) #maplegend{visibility:hidden;pointer-events:none}
   #viewtoggle{left:50%;top:auto;bottom:12px}
   #insights{left:0;top:0;height:100%;padding:54px 12px 24px}
   .infobtn{width:24px;height:24px;line-height:22px;font-size:13px}
@@ -219,11 +229,10 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
      after collapse, so the language, help and restore controls remain available. */
   #panelToggle{position:static;flex:none;align-self:center}
   body.panel-collapsed #panelToggle{left:auto;right:auto;top:auto}
-  .maplibregl-popup-content{max-width:calc(100vw - 24px);max-height:calc(40dvh - 54px)}
-  body.panel-collapsed .maplibregl-popup-content{max-height:calc(68dvh - 54px)}
+  .maplibregl-popup-content{max-width:calc(100vw - 24px);max-height:68dvh}
   /* A larger cell gallery stays inside the phone viewport rather than clipping behind the controls. */
   .maplibregl-popup:has(.popbody){position:fixed;inset:auto 12px 12px!important;transform:none!important;max-width:none!important;z-index:1400}
-  .maplibregl-popup:has(.popbody)>.maplibregl-popup-content{width:100%;max-width:none;max-height:calc(100dvh - 88px - var(--bh))}
+  .maplibregl-popup:has(.popbody)>.maplibregl-popup-content{width:100%;max-width:none;max-height:68dvh}
   .maplibregl-popup:has(.popbody)>.maplibregl-popup-tip{display:none}
 }
 #maplegend{position:fixed;bottom:24px;right:14px;z-index:1050;background:rgba(255,255,255,.93);border-radius:9px;padding:6px 10px;box-shadow:0 2px 10px rgba(0,0,0,.22);font-size:14px;color:#16233a;min-width:188px;max-width:244px;line-height:1.25}
@@ -243,8 +252,11 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
 #maplegend .hint{margin-top:3px;color:#46566a;font-size:10.5px}/* #82: two sizes under the .lab labels (12.5px) */
 .maplibregl-ctrl-bottom-left{left:14px;bottom:14px;z-index:1060}
 .maplibregl-ctrl-attrib a{text-decoration:underline}   /* link-in-text-block: colour alone does not separate them from the surrounding text */
-@media(max-width:640px){#maplegend{left:auto;right:8px;bottom:8px;top:auto;min-width:0;max-width:158px;max-height:calc(50dvh - 16px);overflow-y:auto;overscroll-behavior:contain;padding:6px 8px}}/* the corner is free now that attribution moved bottom-left: same position at every breakpoint */
-@media(max-width:640px){.maplibregl-ctrl-bottom-left{left:8px;bottom:8px}
+#map .maplibregl-ctrl-attrib{color:#263742;background:rgba(255,255,255,.96)}
+@media(max-width:640px){#maplegend{left:auto;right:8px;bottom:104px;top:auto;min-width:0;max-width:210px;max-height:30dvh;overflow-y:auto;overscroll-behavior:contain;padding:8px 10px}}
+@media(max-width:640px){.maplibregl-ctrl-bottom-left{left:8px;bottom:104px;max-width:160px}
+  #map .maplibregl-ctrl-attrib{position:fixed;inset:56px auto auto 8px;width:max-content;max-width:calc(100vw - 16px);font-size:10px;line-height:1.35;margin:0!important}
+  .maplibregl-ctrl-attrib-inner{white-space:normal;overflow-wrap:anywhere}
   /* expanded, the attribution runs nearly the full width; keep it clear of the legend's 158px column instead of under it */
   .maplibregl-ctrl-attrib.maplibregl-compact-show{box-sizing:border-box;max-width:calc(100vw - 190px)}}
 #loading{position:fixed;left:50%;top:46%;transform:translate(-50%,-50%);z-index:1200;background:rgba(255,255,255,.96);border-radius:10px;padding:11px 17px;box-shadow:0 3px 14px rgba(0,0,0,.25);font-size:14px;font-weight:600;color:#1b2a3a}
@@ -284,32 +296,65 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
 #howclose{position:sticky;top:0;float:right;margin-top:-24px;background:var(--panel);border:0;color:var(--mut);font-size:20px;line-height:1;cursor:pointer;padding:2px 6px}
 #howclose:hover{color:var(--ink)}
 @media(max-width:640px){
-  #topctrls{position:relative;inset:auto;order:-1;flex:none;width:100%;padding:8px 12px;background:#fff}
+  #topctrls{position:fixed;inset:calc(8px + var(--bh)) 8px auto;display:flex;width:auto;padding:0;background:transparent}
   #findplacebtn{flex:none;padding:7px 9px}
   #findplacebtn .search-name{display:none}
   #placepanel,#howpanel{z-index:1500}
   #placepanel{left:8px;right:8px;width:auto;max-width:none;top:calc(76px + var(--bh));max-height:calc(100dvh - 92px - var(--bh))}
   #howbtn{flex:1;min-width:0;max-width:none;font-size:12px;justify-content:center}
-  body.panel-collapsed #topctrls{position:fixed;top:calc(8px + var(--bh));left:8px;right:8px;width:auto;padding:0;background:transparent}
   #howpanel{left:8px;right:8px;width:auto;top:calc(72px + var(--bh));max-height:calc(100dvh - 88px - var(--bh))}
 }
 /* #84: French strings run longer — widen these two elements (desktop only; the mobile rules above already size them) so the How-scored label, legend labels and notice don't wrap to extra lines. */
 @media(min-width:641px){html[lang=fr] #howbtn{max-width:none}html[lang=fr] #maplegend{max-width:320px}}
+.optional-cell{display:block;width:100%;text-align:left;margin:4px 0;padding:7px 8px;border:1px solid #d4dde6;border-radius:7px;background:#f4f7fa;color:var(--ink);font:inherit;font-size:12.5px;cursor:pointer;white-space:pre-line;overflow-wrap:anywhere}
+.optional-cell:hover,.optional-cell:focus-visible{border-color:var(--acc);outline:2px solid var(--acc);outline-offset:-2px}
+#discoveryCells,#recentChallengeList,#recentChallengeOmissionList{max-height:260px;overflow-y:auto}
+#discoveryEvidence summary,#recentChallengePanel summary{font-size:13px;cursor:pointer;margin:8px 0 5px}
+.optional-status{font-size:11.5px;line-height:1.45;color:var(--mut);overflow-wrap:anywhere}
+#historicalScope{font-size:12px;line-height:1.45;margin:8px 0;color:var(--mut)}
+.map-section{margin-top:14px;border-top:1px solid #e2e8ef;padding-top:2px}
+.map-section>summary{font-weight:650;padding:8px 0;cursor:pointer}
+.optional-cell .sub{display:block;font-size:11.5px;color:#5d6b7a;margin-top:3px}
+.optional-legend-key{display:flex;gap:9px;align-items:center;margin-top:5px;font-size:11px}
+.optional-swatch{display:inline-block;width:12px;height:10px;border:1px solid #aeb9b8;margin-right:4px;vertical-align:middle}
+.optional-zero{background:#c8d1ce;opacity:.5}
+.optional-missing{background:repeating-linear-gradient(135deg,#fff,#fff 3px,#e4e8e6 3px,#e4e8e6 4px)}
+.optional-source-details{font-size:11px;line-height:1.45;margin-top:6px;color:#46566a}
+.optional-source-details>summary{cursor:pointer;text-decoration:underline}
+.sighting-photo{display:block;width:100%;max-height:180px;object-fit:contain;background:#f4f7fa;border-radius:6px;margin:8px 0}
+.sighting-place{font-size:12.5px;margin:6px 0;color:#46566a}
+.sighting-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px}
+.sighting-actions a{font-size:13px;font-weight:650}
+.sighting-credit{font-size:10.5px;line-height:1.35;color:#5d6b7a}
+@media(max-width:640px){#topctrls button{min-height:40px}#panelToggle{width:40px;height:40px;font-size:21px}#howbtn{font-size:12px}.optional-cell{min-height:44px}#panel .sec{text-transform:none;letter-spacing:0;font-size:13px}.maplibregl-popup-close-button{min-width:36px;min-height:36px}}
 </style></head>
 <body><div id="app">
 <div id="topctrls"><button id="findplacebtn" type="button" aria-expanded="false" aria-controls="placepanel" data-i18n-aria="find_place" data-i18n-title="find_place" aria-label="Find a place" title="Find a place"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="6"></circle><path d="m15 15 6 6"></path></svg><span class="search-name" data-i18n="find_place">Find a place</span></button><button id="langbtn" type="button" data-i18n-aria="aria_language" data-i18n-title="lang_switch" aria-label="Language" title="Switch language">FR</button><button id="howbtn" type="button" aria-expanded="false" aria-controls="howpanel" data-i18n-title="how_scored" title="How impact is scored & data sources"><span data-i18n="how_scored">How impact is scored & data sources</span></button><button id="panelToggle" type="button" data-i18n-aria="hide_panel" data-i18n-title="hide_panel" aria-label="Hide the panel" title="Hide the panel">‹</button></div>
-<div id="panel" role="main"><div id="panelInner">
+<div id="panel" role="main"><div id="sheetHead"><div class="sheet-title"><span class="sheet-brand">Where to Blitz</span><span id="sheetSummary"></span></div><button id="sheetToggle" type="button" aria-expanded="false" aria-controls="panelInner" data-i18n="map_filters">Map controls</button></div><div id="panelInner">
   <div class="titlerow">
     <h1 data-i18n-html="title_full">Where to<br><a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc);text-decoration:underline">Blitz the Gap</a></h1>
     <img class="logo" src="blitz-logo.png" alt="" width="56" height="56">
   </div>
-  <div class="sechd"><h2 class="sec" data-i18n="sec_taxon">Species group</h2></div>
+  <div id="evidenceControls" hidden><div class="sechd"><h2 class="sec" data-i18n="map_display">Map display</h2></div><select id="evidenceLayer" class="full" data-i18n-aria="map_display" aria-label="Map display"><option value="goal" data-i18n="priority_map">Recording priorities</option><option value="discovery" data-i18n="historical_map">Historical discovery evidence</option></select><p id="historicalScope" hidden></p></div>
+  <div id="priorityControls"><div class="sechd"><h2 class="sec" data-i18n="sec_taxon">Species group</h2></div>
   <select id="taxon" class="full" data-i18n-aria="aria_lifegroup" aria-label="Species group" style="margin-bottom:8px"></select>
   <div class="sechd"><h2 class="sec" data-i18n="sec_goal">Goal</h2><span class="infobtn" data-i18n-title="info_btn" title="Where do these scores come from?" role="button" tabindex="0" data-i18n-aria="aria_about_data" aria-label="About the data" aria-expanded="false" onclick="const b=document.getElementById('taxinfo').classList.toggle('open');this.setAttribute('aria-expanded',b)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">i</span></div>
   <div class="infobox" id="taxinfo" data-i18n-html="taxinfo"></div>
   <select id="criteria" class="full" data-i18n-aria="aria_criteria" aria-label="Goal" style="margin-bottom:8px"></select>
   <div id="challengeBlurb" style="font-size:11.5px;line-height:1.4;color:var(--mut);margin:-4px 0 8px"></div>
   <div id="goalnote" role="status" data-i18n="goal_inactive" style="display:none;font-size:11.5px;line-height:1.4;color:var(--mut);margin:-4px 0 8px">The map is showing iNaturalist records. Pick a goal to go back to the goal map.</div>
+  </div>
+  <details id="discoveryEvidence" hidden><summary data-i18n="discovery_cells">Measured cells in this view</summary><div id="discoveryCells"></div></details>
+  <div id="recentChallengePanel" hidden>
+    <label class="toggle"><input type="checkbox" id="recentChallenge"> <span data-i18n="recent_challenge">Recent challenge sightings</span></label>
+    <p id="recentChallengeStatus" class="optional-status" role="status"></p>
+    <details class="optional-source-details"><summary data-i18n="snapshot_details">Snapshot details</summary><div id="recentChallengeMeta"></div></details>
+    <details><summary data-i18n="recent_challenge_list">Sightings in this view</summary><div id="recentChallengeList"></div></details>
+    <details id="recentChallengeCoverage" hidden><summary data-i18n="challenge_list_details">About the target list</summary>
+      <p id="recentChallengeCoverageCounts" class="optional-status"></p>
+      <details id="recentChallengeOmissions"><summary id="recentChallengeOmissionsSummary"></summary><ul id="recentChallengeOmissionList"></ul></details>
+    </details>
+  </div>
 
   <div id="tripui">
   <h2 class="sec" data-i18n="your_trip">Your trip</h2>
@@ -414,6 +459,7 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
 <script>
 const FILES=__FILES__, OBJ=__OBJ__, PRESETS=__PRESETS__, DEFAULT=__DEFAULT__;
 const BC_PLANT_PILOT=__BC_PLANT_PILOT__;
+const OPTIONAL_LAYERS=__OPTIONAL_LAYERS__;
 const PLAN_ENABLED=__PLAN_ENABLED__||/[?&]plan=1/.test(location.search);   // issue #17: hidden by default; ?plan=1 is a no-clutter escape hatch for the team (no rebuild)
 const COMPARE_ENABLED=__COMPARE_ENABLED__||/[?&]compare=1/.test(location.search);   // issue #71: stashed; ?compare=1 re-enables
 
@@ -423,6 +469,39 @@ const COMPARE_ENABLED=__COMPARE_ENABLED__||/[?&]compare=1/.test(location.search)
 // OBJ/PRESET/group names below are indexed to keep the data structures stable.
 const I18N={
   en:{
+    discovery_rate:"Measured discovery rate", discovery_cells:"Measured cells in this view",
+    map_display:"Map display", priority_map:"Recording priorities", historical_map:"Historical discovery evidence",
+    historical_scope:(period,group)=>`${period} · ${group}. Switch to recording priorities to choose a goal or species group.`,
+    map_filters:"Map controls", close_filters:"Done", source_details:"Source and limits", challenge_list_details:"About the target list", snapshot_details:"Snapshot details",
+    discovery_log_scale:"Positive values use a logarithmic colour scale.", discovery_zero:"No supplied points", discovery_no_data:"No data",
+    discovery_legend_unit:"Discovery points / 10,000 records", discovery_log_key:"Logarithmic colours",
+    discovery_support:"Compare the underlying counts; a high rate can come from few observations.",
+    discovery_cell_label:n=>`Cell ${n}`, discovery_near_place:place=>`Near ${place}`,
+    recent_challenge_all_groups:"All species groups", recent_challenge_shown:(shown,total,cap)=>`${shown} of ${total} matching sightings shown (limit ${cap}, different species first)`,
+    recent_updated_today:"Updated today", recent_updated_yesterday:"Updated yesterday", recent_updated_days:n=>`Updated ${n} days ago`, recent_exact_refresh:"Published snapshot",
+    photo_credit:"Photo", photo_reference:"Species reference photo, not this sighting",
+    discovery_unit:"discovery events per 10,000 observations", discovery_period:(start,end)=>`Observation period: ${start} to ${end}`,
+    discovery_counts:(n,exposure)=>`Discovery events: ${n}. Observations: ${exposure}.`, discovery_unavailable:"No measured rate with complete observation support here.",
+    discovery_blurb:"Historical discovery events divided by observed recording effort. This is a measured rate, not a prediction of your visit. Cells without complete support remain blank.",
+    discovery_point_scope:"Discovery point-set scope",
+    discovery_supplied_points:"Uses the lab-supplied discovery point set. Its original selection method is unknown.",
+    discovery_supplied_unit:"supplied discovery points per 10,000 research-grade observations",
+    discovery_supplied_counts:(n,exposure)=>`Supplied discovery points: ${n}. Research-grade observations: ${exposure}.`,
+    recent_challenge:"Recent challenge sightings", recent_challenge_list:"Sightings in this view",
+    recent_challenge_hint:"Orange dots show public sightings for verified list targets from the last published two-week window, independent of the selected species group and cumulative Conservation goal. Turn on to load.",
+    recent_challenge_status:(start,end,refresh,n)=>`${n} sightings shown. Window: ${start} to ${end}. Refreshed: ${refresh}. Orange dots, species diversity before recency.`,
+    recent_challenge_coverage:(targets,resolved,total)=>`${targets} verified targets from ${resolved} of ${total} source entries.`,
+    recent_challenge_omissions:n=>`${n} omitted source entries, names and reasons`,
+    recent_challenge_unnamed:"Scientific name missing", recent_challenge_common:"Common name",
+    challenge_omit_blank_scientific_name:"The source entry has no scientific name.",
+    challenge_omit_inactive_source_taxon:"The source marks this taxon as inactive.",
+    challenge_omit_no_unique_exact_match:"No unique exact taxon match was verified.",
+    challenge_omit_incomplete_search:"The taxon lookup was incomplete.",
+    challenge_omit_broader_than_species:"The entry is broader than a species.",
+    challenge_omit_rank_mismatch:"The matched taxon's rank does not match the source entry.",
+    challenge_omit_missing_species_ancestry:"The species ancestor could not be verified.",
+    recent_challenge_empty:"No eligible sightings in this view.", optional_loading:"Loading published snapshot…", optional_error:"Published data could not be verified. Toggle the layer to retry.",
+    optional_stale:"The published snapshot is over 36 hours old.", sighting_date:date=>`Observed: ${date}`, view_sighting:"View sighting on iNaturalist",
     title_full:`Where to<br><a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc);text-decoration:underline">Blitz the Gap</a>`,
     sub:"Choose what counts as <b>impact</b>, then <b>explore</b> the priority map — or <b>plan a trip</b> to the best spot you can reach and get back from.",
     sec_group:"Life group & goal", sec_taxon:"Species group", sec_goal:"Goal", goal_inactive:"The map is showing iNaturalist records. Pick a goal to go back to the goal map.",
@@ -509,7 +588,7 @@ const I18N={
     map_brightness:"Map brightness",
     data_opacity:"Density opacity",
     climate_opacity:"Climate layer opacity",
-    how_scored:"How impact is scored & data sources",
+    how_scored:"About this map",
     how_intro:"Choose a goal, compare places, then tap a cell for species worth recording. Scores guide recording effort; they do not predict what a visit will find.",
     how_goals:"Current goal and scoring", how_evidence:"Species suggestions and group comparison", how_ranks:"Map colour and national percentile", how_sources:"Data sources and limits", how_about:"Blitz the Gap and responsible recording",
     current_goal:name=>`Active goal: ${name}`,
@@ -619,6 +698,39 @@ const I18N={
     modes:{Walk:"Walk",Cycle:"Cycle",Drive:"Drive"},
   },
   fr:{
+    discovery_rate:"Taux de découverte mesuré", discovery_cells:"Cellules mesurées dans cette vue",
+    map_display:"Affichage de la carte", priority_map:"Priorités d'observation", historical_map:"Découvertes historiques",
+    historical_scope:(period,group)=>`${period} · ${group}. Passez aux priorités d'observation pour choisir un objectif ou un groupe.`,
+    map_filters:"Réglages", close_filters:"Terminé", source_details:"Source et limites", challenge_list_details:"À propos de la liste", snapshot_details:"Détails des observations publiées",
+    discovery_log_scale:"Échelle logarithmique pour les valeurs positives.", discovery_zero:"Aucun point fourni", discovery_no_data:"Aucune donnée",
+    discovery_legend_unit:"Points / 10 000 observations", discovery_log_key:"Couleurs logarithmiques",
+    discovery_support:"Comparez les effectifs : un taux élevé peut reposer sur peu d'observations.",
+    discovery_cell_label:n=>`Cellule ${n}`, discovery_near_place:place=>`Près de ${place}`,
+    recent_challenge_all_groups:"Tous les groupes d'espèces", recent_challenge_shown:(shown,total,cap)=>`${shown} des ${total} observations affichées (limite ${cap}, espèces différentes en priorité)`,
+    recent_updated_today:"Mis à jour aujourd'hui", recent_updated_yesterday:"Mis à jour hier", recent_updated_days:n=>`Mis à jour il y a ${n} jours`, recent_exact_refresh:"Données publiées",
+    photo_credit:"Photo", photo_reference:"Photo de référence de l'espèce, pas de cette observation",
+    discovery_unit:"découvertes pour 10 000 observations", discovery_period:(start,end)=>`Période des observations : ${start} au ${end}`,
+    discovery_counts:(n,exposure)=>`${n} découvertes / ${exposure} observations`, discovery_unavailable:"Aucun taux mesuré avec un effort d'observation complet ici.",
+    discovery_blurb:"Découvertes historiques divisées par l'effort d'observation enregistré. Ce taux mesuré ne prédit pas votre visite. Les cellules incomplètes restent vides.",
+    discovery_point_scope:"Portée du jeu de points de découverte",
+    discovery_supplied_points:"Ce taux utilise le jeu de points de découverte fourni par le laboratoire. Sa méthode de sélection initiale est inconnue.",
+    discovery_supplied_unit:"points de découverte fournis pour 10 000 observations de niveau recherche",
+    discovery_supplied_counts:(n,exposure)=>`Points de découverte fournis : ${n}. Observations de niveau recherche : ${exposure}.`,
+    recent_challenge:"Observations récentes du défi", recent_challenge_list:"Observations dans cette vue",
+    recent_challenge_hint:"Les points orange montrent les observations publiques des taxons vérifiés de la liste durant la dernière période publiée de deux semaines, indépendamment du groupe choisi et de l'objectif Conservation cumulatif. Activez pour charger.",
+    recent_challenge_status:(start,end,refresh,n)=>`${n} observations affichées. Période : ${start} au ${end}. Mise à jour : ${refresh}. Points orange, diversité des espèces avant la récence.`,
+    recent_challenge_coverage:(targets,resolved,total)=>`${targets} taxons vérifiés pour ${resolved} des ${total} entrées de la source.`,
+    recent_challenge_omissions:n=>`${n} entrées omises, noms et raisons`,
+    recent_challenge_unnamed:"Nom scientifique manquant", recent_challenge_common:"Nom commun",
+    challenge_omit_blank_scientific_name:"L'entrée de la source ne contient aucun nom scientifique.",
+    challenge_omit_inactive_source_taxon:"La source indique que ce taxon est inactif.",
+    challenge_omit_no_unique_exact_match:"Aucune correspondance taxonomique exacte et unique n'a été vérifiée.",
+    challenge_omit_incomplete_search:"La recherche taxonomique était incomplète.",
+    challenge_omit_broader_than_species:"L'entrée désigne un groupe plus large qu'une espèce.",
+    challenge_omit_rank_mismatch:"Le rang du taxon trouvé ne correspond pas à celui de l'entrée source.",
+    challenge_omit_missing_species_ancestry:"L'espèce ancêtre n'a pas pu être vérifiée.",
+    recent_challenge_empty:"Aucune observation admissible dans cette vue.", optional_loading:"Chargement des données publiées…", optional_error:"Impossible de vérifier les données publiées. Désactivez puis réactivez pour réessayer.",
+    optional_stale:"Les données publiées datent de plus de 36 heures.", sighting_date:date=>`Observé le : ${date}`, view_sighting:"Voir l'observation sur iNaturalist",
     title_full:`Où aller pour<br><a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc);text-decoration:underline">Blitz the Gap</a>`,
     sub:"Choisissez ce qui compte comme <b>impact</b>, puis <b>explorez</b> la carte des priorités — ou <b>planifiez une sortie</b> vers le meilleur endroit que vous pouvez atteindre et d'où vous pouvez revenir.",
     sec_group:"Groupe d'espèces et objectif", sec_taxon:"Groupe d'espèces", sec_goal:"Objectif", goal_inactive:"La carte affiche les observations iNaturalist. Choisissez un objectif pour revenir à la carte des objectifs.",
@@ -705,7 +817,7 @@ const I18N={
     map_brightness:"Luminosité de la carte",
     data_opacity:"Opacité des données",
     climate_opacity:"Opacité de la couche climatique",
-    how_scored:"Calcul de l'impact et sources de données",
+    how_scored:"À propos de la carte",
     how_intro:"Choisissez un objectif, comparez les lieux, puis touchez une cellule pour voir quelles espèces observer. Les scores guident l'effort d'observation; ils ne prédisent pas les découvertes d'une visite.",
     how_goals:"Objectif actif et calcul", how_evidence:"Suggestions d'espèces et comparaison des groupes", how_ranks:"Couleur et centile national", how_sources:"Sources de données et limites", how_about:"Blitz the Gap et observation responsable",
     current_goal:name=>`Objectif actif : ${name}`,
@@ -838,6 +950,11 @@ function goalMethodsHtml(selected){
     '<br>• <b style="color:var(--ink)">'+t('crit_climate')+'</b>: '+t('method_climate');
 }
 function renderGoalContext(){
+  if(typeof syncEvidenceControls==='function')syncEvidenceControls();
+  if(globalThis.optionalLayers&&globalThis.optionalLayers.isDiscovery()){
+    const methods=document.getElementById('goalmethods'),current=document.getElementById('howcurrent'),blurb=document.getElementById('challengeBlurb');
+    if(methods)methods.textContent=t('discovery_blurb');if(current)current.textContent=t('current_goal',t('discovery_rate'));if(blurb)blurb.textContent=t('discovery_blurb');return;
+  }
   const selected=overlay==='priority'?(window.__activePreset||0):geActive()?'ge':climateOn()?'climate':'coverage';
   const methods=document.getElementById('goalmethods');if(methods)methods.innerHTML=goalMethodsHtml(selected);
   const current=document.getElementById('howcurrent');if(current)current.textContent=t('current_goal',typeof selected==='number'?presetName(selected):t(selected==='ge'?'crit_ge':selected==='climate'?'crit_climate':'density_name'));
@@ -887,7 +1004,9 @@ function relabelDynamic(){
   // same problem. updateLegend() picks the right branch itself, so it needs no guard beyond
   // "is it defined yet".
   if(typeof updateLegend==='function')updateLegend();
+  if(globalThis.optionalLayers)globalThis.optionalLayers.refresh();
   renderGoalContext();
+  if(globalThis.refreshPanelControls)globalThis.refreshPanelControls();
   relabelPlaceFinder();
   // start marker's tooltip/title/alt (created once at init) follow the language
   if(typeof startMarker!=='undefined'&&startMarker){const se=startMarker.getElement();if(se){se.setAttribute('title',t('start_tip'));se.setAttribute('aria-label',t('start_alt'));}}
@@ -993,8 +1112,8 @@ function covOn(){return overlay==='coverage';}
 function climateOn(){return overlay==='climate';}
 function setOverlay(kind){
   const seq=++_overlaySeq;
-  overlay=OVERLAY_TOGGLE[kind]?kind:'priority';
-  if(overlay==='priority'){const cs=document.getElementById('criteria');if(cs&&(cs.value==='ge'||cs.value==='climate'))cs.value=String(window.__activePreset||0);}
+  overlay=kind==='discovery'&&globalThis.optionalLayers&&globalThis.optionalLayers.supports(state.taxon)?kind:OVERLAY_TOGGLE[kind]?kind:'priority';
+  if(overlay==='priority'){const cs=document.getElementById('criteria');if(cs&&(cs.value==='ge'||cs.value==='climate'||cs.value==='discovery'))cs.value=String(window.__activePreset||0);}
   renderCellTable();paintPopScore();   // invalidate previous priority evidence before an overlay's async load
   for(const[k,id]of Object.entries(OVERLAY_TOGGLE)){const el=document.getElementById(id);if(el)el.checked=(overlay===k);}
   // the style dropdown's iNat entry is the coverage overlay under another name; keep the two agreed.
@@ -1006,20 +1125,21 @@ function setOverlay(kind){
   renderGoalContext();
   {const n=document.getElementById('goalnote');if(n)n.style.display=covOn()?'':'none';}
   {const gib=document.getElementById('geinfobtn');if(gib){gib.style.display=geActive()?'':'none';if(!geActive()){const gi=document.getElementById('geinfo');if(gi)gi.classList.remove('open');}}}
-  const paint=()=>{if(seq!==_overlaySeq)return;setCoverage();setClimate();updateLegend();recolour();syncSharedCellUrl();};
+  const paint=()=>{if(seq!==_overlaySeq)return;setCoverage();setClimate();updateLegend();recolour();if(globalThis.optionalLayers)globalThis.optionalLayers.refresh();syncSharedCellUrl();};
   // loadGE() had no rejection path: when its fetch failed (offline, a 404, a blocked scheme) paint()
   // never ran, so `overlay` said gettingeven while the map and the legend still showed the previous
   // layer and the checkbox agreed with neither. Fall back the way the taxon dropdown already does on
   // a failed load: put the overlay and the dropdown back where they were. Read #criteria off the DOM
   // rather than the critSel const, for the same reason the basemap select is read that way above.
   syncSharedCellUrl();
+  if(overlay==='discovery')return _overlayReady=globalThis.optionalLayers.load().then(paint,()=>{if(seq!==_overlaySeq)return;setOverlay('priority');const blurb=document.getElementById('challengeBlurb');if(blurb)blurb.textContent=t('optional_error');});
   return _overlayReady=geActive()?loadGE().then(paint,()=>{if(seq!==_overlaySeq)return;setOverlay('priority');
     const cs=document.getElementById('criteria');if(cs)cs.value=String(window.__activePreset||0);syncSharedCellUrl();}):Promise.resolve(paint());
 }
 // The 25 km lattice outline is the shape of the goal grid, so it explains the cells it traces.
 // Under a raster overlay (iNat density, climate gap) it traces nothing the pixels below it share,
 // and just reads as chart junk over the data. Hide it while one of those is up.
-function setGridLines(){if(_mapLoaded&&map.getLayer('cells-line'))map.setLayoutProperty('cells-line','visibility',(covOn()||climateOn())?'none':'visible');}
+function setGridLines(){if(_mapLoaded&&map.getLayer('cells-line'))map.setLayoutProperty('cells-line','visibility',(covOn()||climateOn()||(globalThis.optionalLayers&&globalThis.optionalLayers.isDiscovery()))?'none':'visible');}
 function caOnlyActive(){const e=document.getElementById('tgCanadaOnly');return e?e.checked:true;}        // issue #20 removed the toggle; behaviour stays on by default
 // The shared country mask governs ranking and candidate eligibility as well as rendering.
 let US_CELLS=null;
@@ -1079,12 +1199,13 @@ let _popComponentsEl=null;
 function paintPopScore(){
   if(!_popScoreEl||!_popScoreEl.isConnected||!_lastProspect)return;
   const m=parentMarker(_lastProspect.lat,_lastProspect.lon);
-  _popScoreEl.innerHTML=popScoreHtml(m,_lastProspect.resM);
+  _popScoreEl.innerHTML=popScoreHtml(m,_lastProspect.resM,_lastProspect.lat,_lastProspect.lon);
   if(_popComponentsEl&&_popComponentsEl.isConnected){_popComponentsEl.innerHTML=m&&Number.isFinite(m.t)?contribStr(m.r):t('pop_noscore');_popComponentsEl.parentElement.hidden=overlay!=='priority';}
 }
 // A drawn 5 km cell can sit in a 25 km cell with no data row: it still opens, just without a national score.
-function popScoreHtml(m,resM){
+function popScoreHtml(m,resM,lat,lon){
   const cell=t('pop_cell',(resM||25000)/1000);
+  if(globalThis.optionalLayers&&globalThis.optionalLayers.isDiscovery())return cell+'<br>'+globalThis.optionalLayers.discoveryPopup(lat,lon,resM);
   if(overlay!=='priority')return cell+'<br>'+t(geActive()?'pop_layer_ge':climateOn()?'pop_layer_climate':'pop_layer_density');
   const goal='<br>'+t('current_goal',presetName(window.__activePreset||0));
   if(!m||!Number.isFinite(m.t))return cell+goal+'<br>'+t('pop_noscore');
@@ -1512,7 +1633,6 @@ function colour(t){t=Math.max(0,Math.min(1,t));const x=t*(RAMP.length-1),i=Math.
 function fmth(h){if(h>=24){const d=Math.floor(h/24),hr=Math.round(h%24);return d+'d'+(hr?(' '+hr+'h'):'');}const m=Math.round(h*60);return m>=60?Math.floor(m/60)+'h'+String(m%60).padStart(2,'0'):m+' min';}
 function haversine(a,b,c,d){const R=6371,r=Math.PI/180,x=(c-a)*r,y=(d-b)*r,h=Math.sin(x/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin(y/2)**2;return 2*R*Math.asin(Math.sqrt(h));}
 
-const ATTR='&copy; <a href="https://carto.com/attributions">CARTO</a> · &copy; OpenStreetMap contributors · routing &copy; OSRM';   // CARTO attribution is a condition of the free basemap tier
 // MapLibre zoom = Leaflet zoom - 1 (256-px raster tiles): the old Leaflet zoom 4 maps to 3 here.
 const map=new maplibregl.Map({container:'map',style:{version:8,sources:{},layers:[]},center:[-96,58],zoom:3,minZoom:1,maxZoom:18,attributionControl:false});
 map.addControl(new maplibregl.NavigationControl({showCompass:false}),'bottom-left');   // issue #54: clear of the floating panel
@@ -1520,7 +1640,7 @@ map.addControl(new maplibregl.NavigationControl({showCompass:false}),'bottom-lef
 // belongs to #maplegend: the legend grows with its content (the Getting Even categorical list is a
 // title plus seven swatches) and the expanded attribution panel is wider than either, so sharing
 // that corner meant retuning a fixed dodge every time the legend changed shape.
-map.addControl(new maplibregl.AttributionControl({compact:true,customAttribution:ATTR}),'bottom-left');
+map.addControl(new maplibregl.AttributionControl({compact:false,customAttribution:'routing &copy; OSRM'}),'bottom-left');
 map.dragRotate.disable();map.touchZoomRotate.disableRotation();   // a 2-D priority map has no use for bearing/pitch
 const CELL_LAYER='cells-fill';
 // Layer stack bottom->top: basemap -> density (cov) -> cells-fill -> route lines; DOM markers sit above the canvas.
@@ -1543,7 +1663,7 @@ map.on('load',()=>{
   map.addLayer({id:'cells-line',type:'line',source:'cells',minzoom:5,maxzoom:TIER_SWITCH_Z,paint:{
     'line-color':'#0f1620','line-width':1,
     'line-opacity':['interpolate',['linear'],['zoom'],5,0,7,0.25]}});
-  map.on('click',CELL_LAYER,e=>{const f=e.features&&e.features[0];if(!f)return;const r=markers[f.id]&&markers[f.id].r;if(!r)return;
+  map.on('click',CELL_LAYER,e=>{if(globalThis.optionalLayers&&(globalThis.optionalLayers.isDiscovery()||globalThis.optionalLayers.hitRecent(e.point)))return;const f=e.features&&e.features[0];if(!f)return;const r=markers[f.id]&&markers[f.id].r;if(!r)return;
     if(caOnlyActive()&&US_CELLS&&US_CELLS.has(gekey(r[0],r[1])))return;state.view==='explore'?exploreCell(e.lngLat.lat,e.lngLat.lng):planTap(r[0],r[1]);});
   map.on('mouseenter',CELL_LAYER,()=>{map.getCanvas().style.cursor='pointer';});
   map.on('mouseleave',CELL_LAYER,()=>{map.getCanvas().style.cursor='';});
@@ -1604,28 +1724,20 @@ function lngLatBounds(latlngs){const b=new maplibregl.LngLatBounds();latlngs.for
 document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;
   const fp=document.getElementById('placepanel');if(fp&&!fp.hidden)return;   // Escape closes search before the selected cell
   const hp=document.getElementById('howpanel');if(hp&&hp.classList.contains('open'))return;   // Esc closes the info panel first (handled below)
-  if(state.view==='explore'&&(destMarker||destCell)){closePopup();clearSelection();}});
+  if(state.view==='explore'&&(curPopup||destMarker||destCell)){closePopup();clearSelection();}});
 // Raster basemaps. Leaflet {s}/{r} templating isn't supported, so subdomains expand into a tiles[] array
 // (round-robined) and {r} retina is dropped. The dead vector-basemap branch (#layertoggles, never wired to a
 // real style) is gone with the maplibre-gl-leaflet shim.
-const SUB=(u,s)=>s?s.split('').map(c=>u.replace('{s}',c)):[u];
-// CARTO raster basemaps need an API key or they serve a watermarked tile. build_webapp.py injects
-// it from the CARTO_API_KEY secret at deploy time; empty in a local build, which just re-watermarks.
-const CARTO_KEY='__CARTO_KEY__';
-const CARTO=u=>CARTO_KEY?u+'?key='+CARTO_KEY:u;
-const BASEMAPS={
-  "Standard":{tiles:SUB(CARTO('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'),'abcd'),maxzoom:20},
-  "Satellite":{tiles:SUB('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'),maxzoom:19},
-  "Terrain":{tiles:SUB('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png','abc'),maxzoom:17},
-  "Light":{tiles:SUB(CARTO('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png'),'abcd'),maxzoom:20}   // base under the iNaturalist-density style; not a dropdown choice
-};
+__BASEMAP_SCRIPT__
+const CARTO_KEY=__CARTO_KEY_JSON__;
+const BASEMAPS=BasemapCatalog.create(CARTO_KEY);
 let baseOpacity=1, gridOpacity=0.5, covOpacity=0.8, climateOpacity=0.85;   // default grid opacity keeps basemap context visible
 function setBase(name){
   if(!_mapLoaded){whenMap(()=>setBase(name));return;}
   if(map.getLayer('basemap'))map.removeLayer('basemap');
   if(map.getSource('basemap'))map.removeSource('basemap');
   const b=BASEMAPS[name];
-  map.addSource('basemap',{type:'raster',tiles:b.tiles,tileSize:256,maxzoom:b.maxzoom,attribution:ATTR});
+  map.addSource('basemap',{type:'raster',tiles:b.tiles,tileSize:256,maxzoom:b.maxzoom,attribution:b.attribution});
   map.addLayer({id:'basemap',type:'raster',source:'basemap',paint:{'raster-opacity':baseOpacity}},firstNonBase());
 }
 
@@ -1647,7 +1759,7 @@ const startMarker=new maplibregl.Marker({element:startEl,draggable:true,anchor:'
 startMarker.on('drag',()=>{const ll=startMarker.getLngLat();state.start=[ll.lat,ll.lng];});
 startMarker.on('dragend',()=>{const ll=startMarker.getLngLat();setStart(ll.lat,ll.lng);});
 // Bare-map click: in MapLibre the cell-layer handler (above) already fired for clicks that hit a cell, so skip those.
-map.on('click',e=>{if(_mapLoaded&&map.getLayer(CELL_LAYER)&&map.queryRenderedFeatures(e.point,{layers:[CELL_LAYER]}).length)return;
+map.on('click',e=>{if(globalThis.optionalLayers&&(globalThis.optionalLayers.isDiscovery()||globalThis.optionalLayers.hitRecent(e.point)))return;if(_mapLoaded&&map.getLayer(CELL_LAYER)&&map.queryRenderedFeatures(e.point,{layers:[CELL_LAYER]}).length)return;
   state.view==='explore'?exploreCell(e.lngLat.lat,e.lngLat.lng):planTap(e.lngLat.lat,e.lngLat.lng);});
 function setStartLabel(s){document.getElementById('startlbl').textContent=s;}
 function setStart(lat,lon,tag){state.start=[lat,lon];startMarker.setLngLat([lon,lat]);state.startSet=true;refreshTapHint();
@@ -1662,7 +1774,7 @@ const geocode=debounce((lat,lon,tag)=>{
   fetchT(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=10&lat=${lat}&lon=${lon}`,7000)
     .then(r=>r.json()).then(j=>{if(state.start[0]!==lat||state.start[1]!==lon)return;   // start moved while geocoding -> stale label, skip
       const a=j.address||{};const nm=a.city||a.town||a.village||a.hamlet||a.county||a.state||((j.display_name||'').split(',')[0])||t('here');
-      setStartLabel((tag?tag+' · ':'')+t('near')+' '+nm);}).catch(()=>{});},600);
+      setStartLabel((tag?tag+' · ':'')+t('near')+' '+nm);globalThis.optionalLayers?.setPlaceContext?.({lat,lon,name:nm});}).catch(()=>{});},600);
 
 function rows(){return DATA[state.taxon]||[];}
 function impact(r){let s=0;for(const o of OBJ)s+=state.w[o.key]*(r[IDX[o.key]]||0);return s;}
@@ -1780,6 +1892,7 @@ let GE_PRIORITY_LEGEND=null;
 // Legend low/high labels follow the dominant goal so they stay accurate per preset
 // (e.g. Conservation -> "no at-risk .. many at-risk", Species discovery -> "recently recorded .. long overdue").
 function updateLegendLabels(){const ml=document.getElementById('maplegend');if(!ml||geActive()||covOn())return;
+  if(globalThis.optionalLayers&&globalThis.optionalLayers.isDiscovery())return;
   let bi=0,bv=-1;OBJ.forEach((o,i)=>{const v=state.w[o.key]||0;if(v>bv){bv=v;bi=i;}});
   const lab=(t('axis_legend')||[])[bi];const sp=ml.querySelectorAll('.lab span');
   if(lab&&sp.length>=2){sp[0].textContent=lab[0];sp[1].textContent=lab[1];}
@@ -1790,6 +1903,7 @@ function updateLegendLabels(){const ml=document.getElementById('maplegend');if(!
 function updateLegend(){
   const ml=document.getElementById('maplegend');if(!ml)return;
   if(GE_PRIORITY_LEGEND===null)GE_PRIORITY_LEGEND=ml.innerHTML;   // capture the as-built priority legend once
+  if(globalThis.optionalLayers&&globalThis.optionalLayers.isDiscovery()){ml.innerHTML=globalThis.optionalLayers.discoveryLegend();return;}
   if(geActive()){
     const sw=(c,lab)=>`<div style="display:flex;align-items:center;gap:6px;margin:2px 0"><span style="width:13px;height:13px;border-radius:3px;background:${c};border:1px solid #ccc;flex:none"></span><span>${lab}</span></div>`;
     ml.innerHTML='<div class="lt">'+t('getting_even')+'</div>'+
@@ -1809,6 +1923,8 @@ function updateLegend(){
   }
 }
 
+__OPTIONAL_LAYER_SCRIPT__
+
 // controls
 function refreshProspectGroup(){prospectSeq++;const p=_lastProspect;if(p)fetchProspects(p.lat,p.lon,p.whereKey,p);}
 const taxonSel=document.getElementById('taxon');
@@ -1818,13 +1934,14 @@ function rebuildTaxonOptions(){const cur=state.taxon;taxonSel.innerHTML='';
   taxonSel.value=cur;}
 rebuildTaxonOptions();
 taxonSel.onchange=()=>{const seq=++_taxonSeq;_shareAction++;const prev=state.taxon,wanted=taxonSel.value;state.taxon=wanted;
+  if(globalThis.optionalLayers&&globalThis.optionalLayers.isDiscovery()&&!globalThis.optionalLayers.supports(wanted))setOverlay('priority');
   const pr=document.getElementById('prospects');if(pr){pr.dataset.idle='0';pr.innerHTML='<div class="hd">'+t('cells_loading',groupName(state.taxon))+'</div>';}
   if(typeof showLoading==='function')showLoading(true);
   setCoverage();   // the density overlay needs only state.taxon, so its tiles load alongside the group's cells
   syncSharedCellUrl();
   refreshProspectGroup();
   const pending=loadGroup(wanted).then(()=>{if(seq!==_taxonSeq)return;buildMarkers();if(document.getElementById('insights').style.display==='block')renderInsights();})
-    .catch(()=>{if(seq!==_taxonSeq)return;const fallback=_committedTaxon||_bootTaxon||prev;state.taxon=fallback;taxonSel.value=fallback;setCoverage();if(Array.isArray(DATA[fallback]))buildMarkers();syncSharedCellUrl();if(pr){pr.dataset.idle='1';pr.innerHTML='<div class="hd" style="margin-top:10px">'+t('prospects_idle')+'</div>';}refreshProspectGroup();})   // revert to rendered rows, not another pending request's group
+    .catch(()=>{if(seq!==_taxonSeq)return;const fallback=_committedTaxon||_bootTaxon||prev;state.taxon=fallback;taxonSel.value=fallback;setCoverage();if(Array.isArray(DATA[fallback]))buildMarkers();if(globalThis.optionalLayers&&globalThis.optionalLayers.isDiscovery()&&!globalThis.optionalLayers.supports(fallback))setOverlay('priority');syncSharedCellUrl();if(pr){pr.dataset.idle='1';pr.innerHTML='<div class="hd" style="margin-top:10px">'+t('prospects_idle')+'</div>';}refreshProspectGroup();})   // revert to rendered rows, not another pending request's group
     .finally(()=>{if(seq===_taxonSeq&&typeof showLoading==='function')showLoading(false);});
   _taxonPending={taxon:wanted,promise:pending};return pending;};
 
@@ -1838,13 +1955,16 @@ function rebuildCriteria(){if(!critSel)return;const cur=critSel.value;critSel.in
   PRESETS.forEach((p,i)=>{const o=document.createElement('option');o.value=String(i);o.textContent=presetName(i);o.title=presetBlurb(i);critSel.appendChild(o);});
   const ge=document.createElement('option');ge.value='ge';ge.textContent=t('crit_ge');critSel.appendChild(ge);
   const clim=document.createElement('option');clim.value='climate';clim.textContent=t('crit_climate');critSel.appendChild(clim);
+  if(globalThis.optionalLayers){globalThis.optionalLayers.appendCriteria(critSel);const legacy=Array.from(critSel.options).find(o=>o.value==='discovery');if(legacy){legacy.hidden=true;legacy.disabled=true;}}
   if(cur)critSel.value=cur;}
 rebuildCriteria();
 function applyChallenge(p){const i=PRESETS.indexOf(p);window.__activePreset=i;
   applyWeights(p.w,presetName(i));state.project=p.proj;
   renderGoalContext();syncSharedCellUrl();}
 if(critSel)critSel.onchange=()=>{_shareAction++;const v=critSel.value;
-  if(v==='ge'){
+  if(v==='discovery'&&globalThis.optionalLayers){
+    const group=globalThis.optionalLayers.group();if(state.taxon!==group){taxonSel.value=group;taxonSel.onchange();}setOverlay('discovery');
+  }else if(v==='ge'){
     if(state.taxon!=='All biodiversity'&&FILES['All biodiversity']){taxonSel.value='All biodiversity';taxonSel.onchange();}
     setOverlay('gettingeven');
   }else if(v==='climate'){
@@ -1854,6 +1974,41 @@ if(critSel)critSel.onchange=()=>{_shareAction++;const v=critSel.value;
     applyChallenge(PRESETS[+v]);
   }};
 applyChallenge(PRESETS[0]);
+
+// Historical evidence has its own display control. Keep the hidden legacy option
+// only so existing shared links and asynchronous restoration retain their meaning.
+var _evidenceReturn=null,_evidenceSeq=0;
+function syncEvidenceControls(){
+  const optional=globalThis.optionalLayers,available=!!optional?.group?.(),historical=!!optional?.isDiscovery();
+  const container=document.getElementById('evidenceControls'),select=document.getElementById('evidenceLayer');
+  if(container)container.hidden=!available;
+  if(select)select.value=historical?'discovery':'goal';
+  const controls=document.getElementById('priorityControls');if(controls)controls.hidden=historical;
+  for(const id of ['taxon','criteria']){const control=document.getElementById(id);if(control)control.disabled=historical;}
+  const scope=document.getElementById('historicalScope');
+  if(scope){scope.hidden=!historical;if(historical){const p=OPTIONAL_LAYERS.discovery.scope.period;scope.textContent=t('historical_scope',p.start.slice(0,4)===p.end.slice(0,4)?p.start.slice(0,4):p.start+'–'+p.end,groupName(optional.group()));}}
+  const summary=document.getElementById('sheetSummary');
+  if(summary)summary.textContent=historical?t('historical_map'):geActive()?t('crit_ge'):climateOn()?t('crit_climate'):covOn()?t('density_name'):presetName(window.__activePreset||0);
+}
+async function selectEvidenceLayer(value){
+  const seq=++_evidenceSeq;_shareAction++;
+  if(value==='discovery'&&globalThis.optionalLayers?.group()){
+    if(globalThis.optionalLayers.isDiscovery())return _overlayReady;
+    _evidenceReturn={taxon:state.taxon,goal:critSel.value};
+    const group=globalThis.optionalLayers.group();
+    if(state.taxon!==group){taxonSel.value=group;const pending=taxonSel.onchange(),action=_shareAction;await pending;if(action!==_shareAction){syncEvidenceControls();return;}}
+    if(seq!==_evidenceSeq)return;
+    if(state.taxon!==group){syncEvidenceControls();return;}
+    critSel.value='discovery';return setOverlay('discovery');
+  }
+  const previous=_evidenceReturn||{taxon:state.taxon,goal:String(window.__activePreset||0)};
+  setOverlay('priority');
+  if(state.taxon!==previous.taxon){taxonSel.value=previous.taxon;const pending=taxonSel.onchange(),action=_shareAction;await pending;if(action!==_shareAction){syncEvidenceControls();return;}}
+  if(seq!==_evidenceSeq)return;
+  critSel.value=previous.goal;return critSel.onchange();
+}
+document.getElementById('evidenceLayer').addEventListener('change',e=>selectEvidenceLayer(e.target.value));
+syncEvidenceControls();
 
 // Presets' "join" link points at goal_presets.py's shipped "proj" slug, a Canada-wide, taxon-
 // unrestricted iNaturalist project. That project has no stable name across years (2025's was
@@ -1979,7 +2134,7 @@ function setGridFill(){
   ['grid25','grid5'].forEach(id=>{if(map.getLayer(id))map.removeLayer(id);});
   if(map.getSource('cells5'))map.removeSource('cells5');
   DRAWN5=null;
-  if(covOn()||climateOn())return;   // the density and Climate Gap rasters replace the grid fill
+  if(covOn()||climateOn()||(globalThis.optionalLayers&&globalThis.optionalLayers.isDiscovery()))return;   // data overlays replace the priority grid fill
   if(!markers.length)return;
   // Getting Even keeps its 25 km fill on the cells-fill feature-state that recolour() paints, so
   // only the 5 km tier is built here (#122). Everything below the switch is untouched by that.
@@ -2183,10 +2338,15 @@ function openHowSection(id,origin){
   if(x)x.addEventListener('click',()=>setHowOpen(false));
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&p.classList.contains('open')){e.preventDefault();setHowOpen(false);}});})();
 // Collapse the side panel for a near-full-width map (Strava-clean) -- additive, reversible. invalidateSize after the layout settles.
-(function(){const tog=document.getElementById('panelToggle');if(!tog)return;
-  const setAria=c=>{const lab=t(c?'show_panel':'hide_panel');tog.setAttribute('aria-label',lab);tog.title=lab;tog.textContent=c?'›':'‹';};
-  setAria(false);
-  tog.addEventListener('click',()=>{const c=document.body.classList.toggle('panel-collapsed');setAria(c);setTimeout(()=>{try{map.resize();}catch(e){}},220);});})();
+(function(){const tog=document.getElementById('panelToggle'),sheet=document.getElementById('sheetToggle');if(!tog)return;
+  const mobile=matchMedia('(max-width:640px)');
+  if(mobile.matches)document.body.classList.add('panel-collapsed');
+  const refresh=()=>{const collapsed=document.body.classList.contains('panel-collapsed'),lab=t(collapsed?'show_panel':'hide_panel');
+    tog.setAttribute('aria-label',lab);tog.title=lab;tog.textContent=collapsed?'☰':'‹';tog.setAttribute('aria-expanded',String(!collapsed));
+    if(sheet){sheet.textContent=t(collapsed?'map_filters':'close_filters');sheet.setAttribute('aria-expanded',String(!collapsed));}};
+  const toggle=()=>{document.body.classList.toggle('panel-collapsed');refresh();setTimeout(()=>{try{map.resize();}catch(e){}},0);};
+  globalThis.refreshPanelControls=refresh;refresh();tog.addEventListener('click',toggle);if(sheet)sheet.addEventListener('click',toggle);
+})();
 document.getElementById('baseop').addEventListener('input',e=>{const v=parseFloat(e.target.value);
   if(covOn())setCovOpacity(v);   // #39: fade the magma data
   else if(climateOn())setClimateOpacity(v);
@@ -2554,27 +2714,28 @@ var _sharedCell=null,_shareContext=false,_shareAction=0,_selectionSeq=0;   // va
 function parseSharedContext(search){
   const u=new URLSearchParams(search),g=u.get('g'),v=u.get('goal'),r=u.get('res');
   const taxon=Object.hasOwn(FILES,g)?g:(FILES['All biodiversity']?'All biodiversity':Object.keys(FILES)[0]);
-  const goal=v==='ge'||v==='climate'?v:(/^(0|[1-9]\d*)$/.test(v||'')&&+v<PRESETS.length?v:'0');
+  const goal=v==='discovery'&&globalThis.optionalLayers&&globalThis.optionalLayers.supports(taxon)?v:v==='ge'||v==='climate'?v:(/^(0|[1-9]\d*)$/.test(v||'')&&+v<PRESETS.length?v:'0');
   const styles={standard:'Standard',satellite:'Satellite',terrain:'Terrain',density:'__inat__'},s=u.get('style');
   const style=Object.hasOwn(styles,s)?styles[s]:'Standard';
   const p=(u.get('at')||'').split(',');
   const valid=p.length===2&&p.every(x=>x.trim()!==''&&Number.isFinite(+x))&&+p[0]>=BB.minlat&&+p[0]<=BB.maxlat&&+p[1]>=BB.minlon&&+p[1]<=BB.maxlon;
-  return{taxon,goal,style,linked:['at','g','res','goal','style'].some(k=>u.has(k)),cell:valid?{lat:+p[0],lon:+p[1],resM:r==='5000'?5000:25000}:null};
+  return{taxon,goal,style,recent:u.get('recent')==='1',linked:['at','g','res','goal','style','recent'].some(k=>u.has(k)),cell:valid?{lat:+p[0],lon:+p[1],resM:r==='5000'?5000:25000}:null};
 }
 function sharedCellUrl(cell,taxon,goal,style,href){
   const u=new URL(href),p=u.searchParams;
   if(cell){p.set('at',cell.lat.toFixed(3)+','+cell.lon.toFixed(3));p.set('res',String(cell.resM));}
   else{p.delete('at');p.delete('res');}
   p.set('g',taxon);p.set('goal',goal);p.set('style',style);
+  if(globalThis.optionalLayers&&globalThis.optionalLayers.recentEnabled())p.set('recent','1');else p.delete('recent');
   return u.pathname+u.search+u.hash;
 }
 function syncSharedCellUrl(force){
   if(!_shareContext&&!_sharedCell&&!force)return;
   _shareContext=true;
   const cs=document.getElementById('criteria'),sel=document.getElementById('basemap');
-  const v=cs&&cs.value,goal=geActive()?'ge':climateOn()?'climate':(covOn()&&v==='ge'||covOn()&&v==='climate'||/^(0|[1-9]\d*)$/.test(v||''))?v:String(window.__activePreset||0);
+  const v=cs&&cs.value,goal=globalThis.optionalLayers&&globalThis.optionalLayers.isDiscovery()?'discovery':geActive()?'ge':climateOn()?'climate':(covOn()&&v==='ge'||covOn()&&v==='climate'||/^(0|[1-9]\d*)$/.test(v||''))?v:String(window.__activePreset||0);
   const style=covOn()?'density':((sel&&sel.value)==='__inat__'?'density':(sel&&sel.value||'Standard').toLowerCase());
-  try{history.replaceState(null,'',sharedCellUrl(_sharedCell,state.taxon,goal,style,location.href));}catch(e){}
+  try{history.replaceState(null,'',new URL(sharedCellUrl(_sharedCell,state.taxon,goal,style,location.href),location.href).href);}catch(e){}
 }
 async function restoreSharedCell(shared,action,loadedTaxon,selection){
   const currentSelection=()=>selection===_selectionSeq;
@@ -2591,10 +2752,11 @@ async function restoreSharedCell(shared,action,loadedTaxon,selection){
   buildMarkers();setView('explore');
   if(action===_shareAction){
     critSel.value=shared.goal;
-    if(shared.goal!=='ge'&&shared.goal!=='climate')applyChallenge(PRESETS[+shared.goal]);
+    if(shared.goal!=='ge'&&shared.goal!=='climate'&&shared.goal!=='discovery')applyChallenge(PRESETS[+shared.goal]);
     bmSel.value=shared.style;setBase(shared.style==='__inat__'?'Light':shared.style);
-    const kind=shared.style==='__inat__'?'coverage':shared.goal==='ge'?'gettingeven':shared.goal==='climate'?'climate':'priority';
+    const kind=shared.style==='__inat__'?'coverage':shared.goal==='ge'?'gettingeven':shared.goal==='climate'?'climate':shared.goal==='discovery'?'discovery':'priority';
     await setOverlay(kind);
+    if(action===_shareAction&&globalThis.optionalLayers&&shared.recent)await globalThis.optionalLayers.toggleRecent(true);
     if(!currentSelection())return;
   }
   await loadUS();
@@ -2606,6 +2768,7 @@ async function restoreSharedCell(shared,action,loadedTaxon,selection){
     if(!currentSelection())return;
     if(current!==_shareAction)continue;
     map.jumpTo({center:[c.lon,c.lat],zoom:c.resM===5000?TIER_SWITCH_Z+1:Math.min(7,TIER_SWITCH_Z-1)});
+    if(globalThis.optionalLayers&&globalThis.optionalLayers.isDiscovery())globalThis.optionalLayers.refresh();
     if(c.resM===5000&&!covOn()&&!climateOn()){
       await refreshCells5();if(!currentSelection())return;if(current!==_shareAction)continue;
       const s=snapToLattice(c.lat,c.lon,5000);
@@ -2641,7 +2804,7 @@ function exploreCell(lat,lon){
   // grid. At 5 km a cell opens exactly when it is drawn (DRAWN5; under a raster overlay, when its 25 km
   // parent has data); at 25 km, when it has a data row. Never select a hidden US cell -- the marker
   // handler already guards direct cell taps, this covers taps on the bare map.
-  const open=resM===5000&&DRAWN5?DRAWN5.has(latKey(snap)):!!best;
+  const open=globalThis.optionalLayers&&globalThis.optionalLayers.isDiscovery()?!!globalThis.optionalLayers.discoveryCell(snap.lat,snap.lon,resM):resM===5000&&DRAWN5?DRAWN5.has(latKey(snap)):!!best;
   if(!open||(best&&caOnlyActive()&&US_CELLS&&US_CELLS.has(gekey(best.r[0],best.r[1]))))return;
   _selectionSeq++;   // a valid explicit selection supersedes a pending shared-link restoration
   _reselect=true;   // swapping selections: suppress the close-driven deselect until the new popup is open (issue #16)
@@ -2651,7 +2814,7 @@ function exploreCell(lat,lon){
   // Issue #44/#56: the popup holds the per-cell coverage tree and the rarest species, filled async. setDOMContent
   // keeps the same persistent element (the two child containers stay attached) so an in-flight fetch can fill it.
   const popDiv=document.createElement('div');popDiv.className='popbody';
-  const popScore=document.createElement('div');popScore.id='popscore';popScore.className='popscore';_popScoreEl=popScore;popScore.innerHTML=popScoreHtml(best,resM);
+  const popScore=document.createElement('div');popScore.id='popscore';popScore.className='popscore';_popScoreEl=popScore;popScore.innerHTML=popScoreHtml(best,resM,dest[0],dest[1]);
   const popGaps=document.createElement('div');popGaps.id='popgaps';
   const popSp=document.createElement('div'); popSp.id='popsp'; popSp.innerHTML='<div class="popsec">'+t('pop_rare_hd')+'</div><div class="popcap">'+t('prospects_lookup')+'</div>';
   const groups=document.createElement('details');groups.className='popdetails';

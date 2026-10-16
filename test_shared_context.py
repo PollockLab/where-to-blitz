@@ -31,12 +31,14 @@ def _function(src, name):
     raise AssertionError(f"{name} has no closing brace")
 
 
-def _run(search, action, *, real_cells=False, real_overlay=False, controls=False, real_build=False):
+def _run(
+    search, action, *, real_cells=False, real_overlay=False, controls=False, real_build=False, base_href=None
+):
     src = TEMPLATE.read_text()
     script = r"""
 const input=JSON.parse(process.argv[1]);
 let location=new URL('https://example.org/map.html'+input.search);
-const history={replaceState:(_state,_title,url)=>{location=new URL(url,location);}};
+const history={replaceState:(_state,_title,url)=>{const next=new URL(url,input.base_href||location);if(next.origin!==location.origin)throw Error('Cross-origin history URL');location=next;}};
 const FILES={'All biodiversity':'all.json',Aves:'birds.json',Fungi:'fungi.json'};
 const PRESETS=[{w:[1],proj:'p0'},{w:[2],proj:'p1'},{w:[3],proj:'p2'}];
 const BB={minlon:-141,maxlon:-52,minlat:41,maxlat:84},TIER_SWITCH_Z=9;
@@ -120,7 +122,7 @@ document.createElement=()=>({dataset:{},appendChild(){},setAttribute(){}});
         script += src[src.index("\nbmSel.onchange=") : src.index("\n// dec25 100 m density")]
     script += "\n(async()=>{" + action + "})().catch(e=>{console.error(e);process.exit(1);});"
     out = subprocess.run(
-        ["node", "-e", script, "--", json.dumps({"search": search})],
+        ["node", "-e", script, "--", json.dumps({"search": search, "base_href": base_href})],
         capture_output=True,
         text=True,
         check=False,
@@ -148,6 +150,15 @@ def test_shared_fine_cell_restores_group_goal_style_and_waits_for_the_grid():
         }
     ]
     assert result["steps"].index("jump") < result["steps"].index("draw5")
+
+
+def test_remote_asset_base_cannot_prevent_shared_url_from_following_the_current_goal():
+    result = _run(
+        "?goal=0",
+        "critSel.value='2';syncSharedCellUrl(true);console.log(JSON.stringify({goal:location.searchParams.get('goal'),origin:location.origin}));",
+        base_href="https://assets.example.org/map/",
+    )
+    assert result == {"goal": "2", "origin": "https://example.org"}
 
 
 def test_selecting_a_cell_preserves_flags_and_encodes_its_context():

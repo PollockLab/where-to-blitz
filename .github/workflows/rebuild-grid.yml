@@ -28,10 +28,13 @@ on:
   # Without this the light checks only ran after a merge, so the lint and test gates below
   # could only ever report a regression that had already landed on main.
   pull_request:
+  workflow_run:
+    workflows: ["Conservation Challenge snapshot"]
+    types: [completed]
 
 jobs:
   validate-light:
-    if: github.event_name != 'workflow_dispatch'
+    if: github.event_name == 'push' || github.event_name == 'pull_request' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == github.event.repository.default_branch && github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -233,6 +236,8 @@ jobs:
           fi
       - name: Compute inputs hash
         id: compute_inputs
+        env:
+          GE_MANIFEST_SHA256: ${{ vars.GE_RICHNESS_MANIFEST_SHA256 }}
         run: |
           set -euo pipefail
           REL="${GRID_INPUTS_RELEASE:-grid-inputs-v1}"
@@ -241,10 +246,11 @@ jobs:
           sha2=$(git log -n1 --pretty=format:%H -- build_fullgrid_ca.py 2>/dev/null || echo)
           sha3=$(git log -n1 --pretty=format:%H -- build_grid_values.py 2>/dev/null || echo)
           sha4=$(git log -n1 --pretty=format:%H -- rebuild_grid.sh 2>/dev/null || echo)
-          sha5=$(git log -n1 --pretty=format:%H -- build_gettingeven.py 2>/dev/null || echo)
+          sha5=$(git log -n1 --pretty=format:%H -- build_gettingeven.py gettingeven_inputs.py gettingeven_oracle.py 2>/dev/null || echo)
           sha6=$(git log -n1 --pretty=format:%H -- build_provenance.py 2>/dev/null || echo)
           sha7=$(sha256sum cluster_results/ca/ca_atrisk_richness.csv cluster_results/ca/ca_atrisk_provenance.json | sha256sum | awk '{print $1}')
-          INPUTS_HASH=$(printf "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n" "$REL" "$breaks_content" "$sha1" "$sha2" "$sha3" "$sha4" "$sha5" "$sha6" "$sha7" | sha256sum | awk '{print $1}')
+          sha8=$(sha256sum cluster_results/ca/webapp_data_*.json cluster_results/ca/grid_{25000,5000}m/*.tif | sha256sum | awk '{print $1}')
+          INPUTS_HASH=$(printf "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n" "$REL" "$breaks_content" "$sha1" "$sha2" "$sha3" "$sha4" "$sha5" "$sha6" "$sha7" "$GE_MANIFEST_SHA256" "$sha8" | sha256sum | awk '{print $1}')
           echo "inputs_hash=$INPUTS_HASH" >> $GITHUB_OUTPUT
           echo "INPUTS_HASH=$INPUTS_HASH" >> $GITHUB_ENV
       - name: Check for existing rebuilt artifact
@@ -300,12 +306,19 @@ jobs:
         # Keyed on cell centres, like us_cells.json above, and it went stale the same way:
         # the #87 lattice migration moved every cell and this file was a committed artifact
         # no build step touched, so all 31804 of its keys missed and the layer went grey.
-        # The richness rasters are on the lab SharePoint, not here, so keep the shipped gated
-        # layer rather than revert it; build_gettingeven.py still fails if it no longer fits the grid.
+        # Configure a private manifest URL and pinned checksum to reproduce both gated tiers.
+        # Without it, preserve the shipped layer only while the recorded observations still fit.
         if: ${{ steps.check_artifact.outputs.found != 'true' }}
         env:
           GE_KEEP_SHIPPED: "1"
-        run: python build_gettingeven.py
+          GE_RICHNESS_MANIFEST: ${{ secrets.GE_RICHNESS_MANIFEST_URL }}
+          GE_RICHNESS_MANIFEST_SHA256: ${{ vars.GE_RICHNESS_MANIFEST_SHA256 }}
+        run: |
+          set -euo pipefail
+          for res in 25000 5000; do
+            GRID_RES="$res" python build_gettingeven.py
+          done
+          python -m pytest test_gettingeven.py test_gettingeven_inputs.py -q
       - name: Re-freeze the provenance manifest over the rebuilt artifacts
         # Hashes what this run read and wrote. Must follow the grid build and precede the
         # upload, or the manifest describes the previous build's files.
@@ -436,6 +449,7 @@ jobs:
       group: pages
       cancel-in-progress: false
     permissions:
+      contents: read
       pages: write
       id-token: write
     environment:
@@ -448,13 +462,32 @@ jobs:
         with:
           name: rebuilt-site-${{ needs.aggregate.outputs.inputs_hash }}
           path: artifacts
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install viewer build dependencies
+        run: pip install -r requirements.txt
+      - name: Restore validated artifact data for a fresh viewer build
+        run: cp -R artifacts/cluster_results/ca/. cluster_results/ca/
+      - name: Prepare validated optional layers
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DISCOVERY_RATE_URL: ${{ vars.DISCOVERY_RATE_URL }}
+          DISCOVERY_RATE_SHA256: ${{ vars.DISCOVERY_RATE_SHA256 }}
+          CHALLENGE_TAXA_URL: ${{ vars.CHALLENGE_TAXA_URL }}
+          CHALLENGE_TAXA_SHA256: ${{ vars.CHALLENGE_TAXA_SHA256 }}
+        run: python prepare_optional_layers.py --env-file "$GITHUB_ENV"
+      - name: Rebuild webapp with current optional layers
+        env:
+          CARTO_API_KEY: ${{ secrets.CARTO_API_KEY }}
+        run: python build_webapp.py
       - name: Assemble _site
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           mkdir -p _site/tiles _site/cluster_results/ca
-          cp artifacts/index.html _site/
+          cp index.html _site/
           for f in blitz-logo.png og-image.png where-to-blitz-walkthrough.html where-to-blitz-zoomout.png; do
             [ -f "$f" ] && cp "$f" _site/
           done
@@ -465,12 +498,12 @@ jobs:
           # loop above never picks it up. Without this the criterion serves a 404 and blanks the map.
           gh release download grid-outputs-v1 --pattern "climate_gap.pmtiles" --dir _site/tiles --repo "$GITHUB_REPOSITORY" --clobber
           test -s _site/tiles/climate_gap.pmtiles
-          cp artifacts/cluster_results/ca/*.json _site/cluster_results/ca/
+          cp cluster_results/ca/*.json _site/cluster_results/ca/
           # The Getting Even fill at both tiers (#122) and the 5 km land/sea mask. Unguarded on purpose: it is a tracked
           # file, so a missing one means the build lost it, and the app would silently lose the
           # 5 km layer rather than the deploy failing.
-          cp artifacts/cluster_results/ca/*.png _site/cluster_results/ca/
-          cp -R artifacts/cluster_results/ca/values _site/cluster_results/ca/
+          cp cluster_results/ca/*.png _site/cluster_results/ca/
+          cp -R cluster_results/ca/values _site/cluster_results/ca/
           du -sh _site
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
@@ -483,7 +516,7 @@ jobs:
   deploy-site-fast:
     # On push to main: redeploy the site without rebuilding tiles (use latest release assets).
     # Lint validation already passed. This job rebuilds the webapp (index.html) and deploys.
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == github.event.repository.default_branch && github.event.workflow_run.head_repository.full_name == github.repository)
     needs: validate-light
     runs-on: ubuntu-latest
     # One Pages deployment at a time: deploy-site (dispatch) and deploy-site-fast (push to
@@ -492,6 +525,7 @@ jobs:
       group: pages
       cancel-in-progress: false
     permissions:
+      contents: read
       pages: write
       id-token: write
     environment:
@@ -521,6 +555,14 @@ jobs:
       # the lattice before they reach the site.
       - name: Gate artefact invariants
         run: python -m pytest test_artifact_invariants.py -q
+      - name: Prepare validated optional layers
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DISCOVERY_RATE_URL: ${{ vars.DISCOVERY_RATE_URL }}
+          DISCOVERY_RATE_SHA256: ${{ vars.DISCOVERY_RATE_SHA256 }}
+          CHALLENGE_TAXA_URL: ${{ vars.CHALLENGE_TAXA_URL }}
+          CHALLENGE_TAXA_SHA256: ${{ vars.CHALLENGE_TAXA_SHA256 }}
+        run: python prepare_optional_layers.py --env-file "$GITHUB_ENV"
       - name: Rebuild webapp
         env:
           CARTO_API_KEY: ${{ secrets.CARTO_API_KEY }}
