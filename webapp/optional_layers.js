@@ -157,9 +157,17 @@ function installOptionalLayers(){
     const features=rows.map(row=>({type:'Feature',properties:{id:row.id},geometry:{type:'Point',coordinates:[row.longitude,row.latitude]}}));
     map.getSource('recent-challenge').setData({type:'FeatureCollection',features});
     status.textContent=t('recent_challenge_status',snapshot.window.start,snapshot.window.end,snapshot.as_of,rows.length)+(OptionalData.stale(snapshot.as_of)?' '+t('optional_stale'):'');
-    list.replaceChildren();
-    for(const row of rows){const button=document.createElement('button');button.type='button';button.className='optional-cell';
-      button.textContent=row.name+' · '+row.observed_on;button.onclick=()=>{map.jumpTo({center:[row.longitude,row.latitude],zoom:Math.max(7,map.getZoom())});openSighting(row);};list.appendChild(button);}
+    const focused=document.activeElement,existing=new Map([...list.children].map(el=>[el.dataset.sightingId,el])),wanted=new Set();
+    if(!list.children.length)list.textContent='';
+    for(const [index,row]of rows.entries()){
+      const button=existing.get(String(row.id))||document.createElement('button');wanted.add(button);
+      button.type='button';button.className='optional-cell';button.dataset.sightingId=String(row.id);
+      button.textContent=row.name+' · '+row.observed_on;
+      button.onclick=()=>{openSighting(row);map.jumpTo({center:[row.longitude,row.latitude],zoom:Math.max(7,map.getZoom())});};
+      if(list.children[index]!==button)list.insertBefore(button,list.children[index]||null);
+    }
+    for(const button of [...list.children])if(!wanted.has(button))button.remove();
+    if(wanted.has(focused)&&document.activeElement===document.body)focused.focus({preventScroll:true});
     if(!rows.length)list.textContent=t('recent_challenge_empty');
     paintSighting();
   }

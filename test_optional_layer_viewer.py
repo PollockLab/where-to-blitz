@@ -236,3 +236,113 @@ def test_measured_rate_shared_link_cannot_label_another_taxon_group():
     )
     assert result["opened"][0]["goal"] == "0"
     assert result["params"]["g"] == "Fungi" and result["params"]["goal"] == "0"
+
+
+def sighting_lifecycle(action):
+    """Replay real popup wiring, list reconciliation and synchronous map move events."""
+    from test_shared_context import _function
+
+    source = (ROOT / "webapp/index.html").read_text()
+    script = (
+        SCRIPT
+        + r"""
+const input=JSON.parse(process.argv[1]);
+class Element{
+ constructor(tag,connected=false){this.tag=tag;this.connected=connected;this.children=[];this.dataset={};this._text='';this.hidden=true;this.classList={contains:()=>false};}
+ get isConnected(){return this.connected||!!this.parentElement?.isConnected;}
+ set textContent(value){this.replaceChildren();this._text=value;}
+ get textContent(){return this._text;}
+ append(...children){for(const child of children)this.insertBefore(child,null);}
+ prepend(child){this.insertBefore(child,this.children[0]||null);}
+ insertBefore(child,next){if(child.parentElement)child.remove();const index=next?this.children.indexOf(next):this.children.length;this.children.splice(index,0,child);child.parentElement=this;}
+ remove(){if(!this.parentElement)return;if(this.contains(document.activeElement))document.activeElement=document.body;const items=this.parentElement.children;items.splice(items.indexOf(this),1);this.parentElement=null;}
+ replaceChildren(){for(const child of [...this.children])child.remove();}
+ contains(el){return el===this||this.children.some(c=>c.contains(el));}
+ closest(){return null;}
+ querySelector(selector){return this.children.find(el=>selector==='b'?el.tag==='b':selector==='p'?el.tag==='p':selector==='a'?el.tag==='a':el.tag==='close')||null;}
+ querySelectorAll(){return [];}
+ addEventListener(){}
+ getClientRects(){return this.isConnected?[{}]:[];}
+ focus(){if(this.isConnected&&this.tag!=='body')document.activeElement=this;}
+}
+const handlers={},nodes={},document={activeElement:null,body:new Element('body',true),
+ createElement:tag=>new Element(tag),getElementById:id=>nodes[id]||(nodes[id]=new Element(id,true)),
+ addEventListener:(event,fn)=>handlers[event]=fn};document.activeElement=document.body;
+const getComputedStyle=()=>({visibility:'visible',display:'block'});
+const canvas=new Element('canvas',true),language=new Element('language',true);
+let curPopup=null,_reselect=false,destMarker=null,destCell=null,_mapLoaded=true,_shareAction=0,overlay='priority',LANG='en';
+const state={view:'explore',taxon:'All biodiversity'},OPTIONAL_LAYERS={discovery:null,challenge:{}};
+const t=(key,...values)=>key+values.join(','),syncSharedCellUrl=()=>{},localizeMapControls=()=>{};
+const whenMap=fn=>fn(),clearSelection=()=>{},activeCellResM=()=>25000;
+const map={getCanvas:()=>canvas,getBounds:()=>({getWest:()=>-90,getEast:()=>-60,getSouth:()=>40,getNorth:()=>50}),
+ getZoom:()=>7,getSource:id=>map.sources[id],getLayer:id=>map.sources[id],sources:{},
+ addSource(id){this.sources[id]={setData(){}};},addLayer(){},setLayoutProperty(){},queryRenderedFeatures:()=>[],
+ on(event,...args){handlers[event]=args.at(-1);},jumpTo(){handlers.moveend();}};
+const maplibregl={Popup:class{
+ constructor(options){this.options=options;this.handlers={};this.root=new Element('popup',true);this.close=new Element('close');this.root.append(this.close);}
+ on(event,fn){(this.handlers[event]||(this.handlers[event]=[])).push(fn);return this;}
+ emit(event){for(const fn of this.handlers[event]||[])fn();}
+ setLngLat(){return this;}setDOMContent(el){this.root.append(el);return this;}
+ getElement(){return this.root;}addTo(){this.emit('open');return this;}
+ remove(){if(this.root.contains(document.activeElement))document.activeElement=document.body;this.root.connected=false;this.emit('close');}
+}};
+OptionalData.fetchPinned=async()=>input.snapshot;
+"""
+    )
+    for name in (
+        "popupFocusOrigin",
+        "focusPopupTarget",
+        "restorePopupFocus",
+        "onPopupOpen",
+        "onPopupClose",
+        "wirePopup",
+        "closePopup",
+    ):
+        script += _function(source, name)
+    script += source[
+        source.index("document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;") : source.index(
+            "// Raster basemaps."
+        )
+    ]
+    script += (
+        "\n(async()=>{installOptionalLayers();await optionalLayers.toggleRecent(true);"
+        + action
+        + "})().catch(e=>{console.error(e);process.exit(1);});"
+    )
+    snapshot = challenge.acquire(CONFIG, FixtureAPI([observation(1), observation(2, 20)]), AS_OF)
+    result = subprocess.run(
+        ["node", "-e", script, json.dumps({"snapshot": snapshot})], capture_output=True, text=True
+    )
+    assert result.returncode == 0, result.stderr
+    return json.loads(result.stdout)
+
+
+def test_sighting_native_activation_and_escape_restore_the_connected_invoker_after_jump():
+    result = sighting_lifecycle(
+        "const button=nodes.recentChallengeList.children[0];button.focus();button.onclick();"
+        "const opened={focused:document.activeElement===curPopup.close,sameInvoker:nodes.recentChallengeList.children[0]===button,connected:button.isConnected};"
+        "handlers.keydown({key:'Escape'});console.log(JSON.stringify({opened,closed:curPopup===null,returned:document.activeElement===button}));"
+    )
+    assert result == {
+        "opened": {"focused": True, "sameInvoker": True, "connected": True},
+        "closed": True,
+        "returned": True,
+    }
+
+
+def test_challenge_refresh_preserves_keyboard_focus_and_never_steals_focus_from_map_or_controls():
+    result = sighting_lifecycle(
+        "const button=nodes.recentChallengeList.children[0];button.focus();handlers.moveend();const preserved=document.activeElement===button;"
+        "canvas.focus();handlers.moveend();const pointerStayed=document.activeElement===canvas;"
+        "language.focus();LANG='fr';optionalLayers.refresh();"
+        "console.log(JSON.stringify({preserved,pointerStayed,controlStayed:document.activeElement===language}));"
+    )
+    assert result == {"preserved": True, "pointerStayed": True, "controlStayed": True}
+
+
+def test_sighting_close_does_not_steal_focus_after_a_pointer_map_action():
+    result = sighting_lifecycle(
+        "const button=nodes.recentChallengeList.children[0];button.focus();button.onclick();"
+        "canvas.focus();curPopup.remove();console.log(JSON.stringify({closed:curPopup===null,focusStayed:document.activeElement===canvas}));"
+    )
+    assert result == {"closed": True, "focusStayed": True}

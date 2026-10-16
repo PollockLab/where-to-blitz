@@ -1641,7 +1641,7 @@ function lngLatBounds(latlngs){const b=new maplibregl.LngLatBounds();latlngs.for
 document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;
   const fp=document.getElementById('placepanel');if(fp&&!fp.hidden)return;   // Escape closes search before the selected cell
   const hp=document.getElementById('howpanel');if(hp&&hp.classList.contains('open'))return;   // Esc closes the info panel first (handled below)
-  if(state.view==='explore'&&(destMarker||destCell)){closePopup();clearSelection();}});
+  if(state.view==='explore'&&(curPopup||destMarker||destCell)){closePopup();clearSelection();}});
 // Raster basemaps. Leaflet {s}/{r} templating isn't supported, so subdomains expand into a tiles[] array
 // (round-robined) and {r} retina is dropped. The dead vector-basemap branch (#layertoggles, never wired to a
 // real style) is gone with the maplibre-gl-leaflet shim.
