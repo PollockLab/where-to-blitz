@@ -276,7 +276,7 @@ function installOptionalLayers(){
       if(recentImages.has(count))continue;
       const canvas=document.createElement('canvas'),size=count===1?32:64;canvas.width=size;canvas.height=size;const ctx=canvas.getContext('2d');
       ctx.beginPath();ctx.arc(size/2,size/2,count===1?12:28,0,Math.PI*2);ctx.fillStyle='#d96c14';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=count===1?4:3;ctx.stroke();
-      if(count>1){ctx.fillStyle='#fff';ctx.font='bold 25px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(String(count),32,33);}
+      if(count>1){ctx.fillStyle='#111827';ctx.font='bold 25px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(String(count),32,33);}
       map.addImage('recent-count-'+count,ctx.getImageData(0,0,size,size));recentImages.add(count);
     }
   }
