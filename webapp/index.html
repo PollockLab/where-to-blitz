@@ -1763,7 +1763,7 @@ function localizeMapControls(){
 }
 function popupFocusOrigin(){
   const element=document.activeElement,row=element&&element.closest&&element.closest('#celltable tr[data-la]');
-  return {element:element,row:row?{lat:row.dataset.la,lon:row.dataset.lo}:null,discoveryCell:element?.dataset?.discoveryCell||null,historicalPoint:element?.dataset?.historicalPoint||null};
+  return {element:element,row:row?{lat:row.dataset.la,lon:row.dataset.lo}:null,discoveryCell:element?.dataset?.discoveryCell||null,historicalPoint:element?.dataset?.historicalPoint||null,sightingId:element?.dataset?.sightingId||null};
 }
 function focusPopupTarget(el){
   if(!el||!el.isConnected||typeof el.focus!=='function'||!el.getClientRects().length)return false;
@@ -1771,6 +1771,14 @@ function focusPopupTarget(el){
   el.focus();return document.activeElement===el;
 }
 function restorePopupFocus(origin){
+  if(origin.sightingId){
+    if(globalThis.optionalLayers?.recentEnabled()){
+      if(focusPopupTarget(origin.element))return;
+      const list=document.getElementById('recentChallengeList'),button=list&&Array.from(list.children).find(el=>el.dataset.sightingId===origin.sightingId);
+      if(focusPopupTarget(button)||focusPopupTarget(document.getElementById('recentChallengeSightings')?.querySelector('summary')))return;
+    }
+    if(focusPopupTarget(document.getElementById('recentChallenge')))return;
+  }
   if(focusPopupTarget(origin.element))return;
   if(origin.historicalPoint&&globalThis.optionalLayers?.isDiscovery()){
     const list=document.getElementById('historicalPointsList'),button=list&&Array.from(list.children).find(el=>el.dataset.historicalPoint===origin.historicalPoint);

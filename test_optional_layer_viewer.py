@@ -264,7 +264,7 @@ class Element{
  replaceChildren(){for(const child of [...this.children])child.remove();}
  contains(el){return el===this||this.children.some(c=>c.contains(el));}
  closest(){return null;}
- querySelector(selector){return this.children.find(el=>selector==='b'?el.tag==='b':selector==='p'?el.tag==='p':selector==='a'?el.tag==='a':el.tag==='close')||null;}
+ querySelector(selector){return this.children.find(el=>selector==='summary'?el.tag==='summary':selector==='b'?el.tag==='b':selector==='p'?el.tag==='p':selector==='a'?el.tag==='a':el.tag==='close')||null;}
  querySelectorAll(){return [];}
  addEventListener(){}
  setAttribute(key,value){this[key]=value;}
@@ -347,6 +347,47 @@ def test_sighting_native_activation_and_escape_restore_the_connected_invoker_aft
         "closed": True,
         "returned": True,
     }
+
+
+@pytest.mark.parametrize("destination", ["summary", "toggle", "elsewhere", "hidden"])
+def test_sighting_escape_restores_browser_context_after_local_cap_removes_invoker(destination):
+    snapshot = challenge.acquire(CONFIG, FixtureAPI([observation(i, 10) for i in range(1, 621)]), AS_OF)
+    before_close = {
+        "summary": "",
+        "toggle": "summary.remove();",
+        "elsewhere": "language.focus();",
+        "hidden": "summary.getClientRects=()=>[];nodes.recentChallenge.getClientRects=()=>[];",
+    }[destination]
+    result = sighting_lifecycle(
+        "const summary=document.createElement('summary');nodes.recentChallengeSightings.append(summary);"
+        "const initial=nodes.recentChallengeList.children.length,button=nodes.recentChallengeList.children[200];"
+        "button.focus();button.onclick();viewportBounds=[-76,44,-74,46];handlers.moveend();"
+        "const local=nodes.recentChallengeList.children.length,removed=!button.isConnected;"
+        + before_close
+        + "handlers.keydown({key:'Escape'});console.log(JSON.stringify({initial,local,removed,"
+        "summary:document.activeElement===summary,toggle:document.activeElement===nodes.recentChallenge,"
+        "elsewhere:document.activeElement===language,map:document.activeElement===canvas}));",
+        snapshot=snapshot,
+    )
+    assert result == {
+        "initial": 500,
+        "local": 150,
+        "removed": True,
+        "summary": destination == "summary",
+        "toggle": destination == "toggle",
+        "elsewhere": destination == "elsewhere",
+        "map": destination == "hidden",
+    }
+
+
+def test_sighting_escape_resolves_a_rebuilt_invoker_by_observation_id():
+    result = sighting_lifecycle(
+        "const button=nodes.recentChallengeList.children[0],id=button.dataset.sightingId;button.focus();button.onclick();"
+        "button.remove();handlers.moveend();const replacement=nodes.recentChallengeList.children.find(b=>b.dataset.sightingId===id);"
+        "handlers.keydown({key:'Escape'});console.log(JSON.stringify({rebuilt:replacement!==button,"
+        "returned:document.activeElement===replacement}));"
+    )
+    assert result == {"rebuilt": True, "returned": True}
 
 
 def test_challenge_refresh_preserves_keyboard_focus_and_never_steals_focus_from_map_or_controls():
