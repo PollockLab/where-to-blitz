@@ -1866,7 +1866,7 @@ taxonSel.onchange=()=>{const seq=++_taxonSeq;_shareAction++;const prev=state.tax
   syncSharedCellUrl();
   refreshProspectGroup();
   const pending=loadGroup(wanted).then(()=>{if(seq!==_taxonSeq)return;buildMarkers();if(document.getElementById('insights').style.display==='block')renderInsights();})
-    .catch(()=>{if(seq!==_taxonSeq)return;const fallback=_committedTaxon||_bootTaxon||prev;state.taxon=fallback;taxonSel.value=fallback;setCoverage();if(Array.isArray(DATA[fallback]))buildMarkers();syncSharedCellUrl();if(pr){pr.dataset.idle='1';pr.innerHTML='<div class="hd" style="margin-top:10px">'+t('prospects_idle')+'</div>';}refreshProspectGroup();})   // revert to rendered rows, not another pending request's group
+    .catch(()=>{if(seq!==_taxonSeq)return;const fallback=_committedTaxon||_bootTaxon||prev;state.taxon=fallback;taxonSel.value=fallback;setCoverage();if(Array.isArray(DATA[fallback]))buildMarkers();if(globalThis.optionalLayers&&globalThis.optionalLayers.isDiscovery()&&!globalThis.optionalLayers.supports(fallback))setOverlay('priority');syncSharedCellUrl();if(pr){pr.dataset.idle='1';pr.innerHTML='<div class="hd" style="margin-top:10px">'+t('prospects_idle')+'</div>';}refreshProspectGroup();})   // revert to rendered rows, not another pending request's group
     .finally(()=>{if(seq===_taxonSeq&&typeof showLoading==='function')showLoading(false);});
   _taxonPending={taxon:wanted,promise:pending};return pending;};
 

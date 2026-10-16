@@ -346,3 +346,46 @@ def test_sighting_close_does_not_steal_focus_after_a_pointer_map_action():
         "canvas.focus();curPopup.remove();console.log(JSON.stringify({closed:curPopup===null,focusStayed:document.activeElement===canvas}));"
     )
     assert result == {"closed": True, "focusStayed": True}
+
+
+@pytest.mark.parametrize("newer_goal", [None, "climate"])
+def test_failed_discovery_group_load_reconciles_context_and_ignores_late_overlay_paint(newer_goal):
+    later = "critSel.value='climate';critSel.onchange();" if newer_goal else ""
+    result = run_shared(
+        "?at=49.3,-123.2&g=Aves&res=25000&goal=0",
+        "await bootSeq();state.taxon='Aves';taxonSel.value='Aves';_committedTaxon='Aves';"
+        "let fail,finishData;loadGroup=()=>new Promise((_resolve,reject)=>{fail=reject;});"
+        "globalThis.optionalLayers={supports:g=>g==='All biodiversity',group:()=> 'All biodiversity',"
+        "isDiscovery:()=>overlay==='discovery',load:()=>new Promise(resolve=>{finishData=resolve;}),refresh:()=>{},recentEnabled:()=>false};"
+        "critSel.value='discovery';critSel.onchange();const groupPending=_taxonPending.promise,paintPending=_overlayReady;"
+        + later
+        + "fail(Error('HTTP503'));await groupPending;finishData();await paintPending;await _overlayReady;"
+        "console.log(JSON.stringify({taxon:state.taxon,selected:taxonSel.value,overlay,goal:critSel.value,"
+        "supported:overlay!=='discovery'||optionalLayers.supports(state.taxon),params:Object.fromEntries(location.searchParams)}));",
+        real_overlay=True,
+        real_cells=True,
+        controls=True,
+    )
+    assert result["taxon"] == result["selected"] == result["params"]["g"] == "Aves"
+    assert result["supported"] is True
+    assert result["overlay"] == ("climate" if newer_goal else "priority")
+    assert result["goal"] == result["params"]["goal"] == (newer_goal or "0")
+
+
+def test_late_failed_discovery_group_request_cannot_revert_a_newer_taxon_and_goal():
+    result = run_shared(
+        "?at=49.3,-123.2&g=Aves&res=25000&goal=0",
+        "await bootSeq();const jobs={};loadGroup=g=>new Promise((resolve,reject)=>{jobs[g]={resolve,reject};});"
+        "globalThis.optionalLayers={supports:g=>g==='All biodiversity',group:()=> 'All biodiversity',"
+        "isDiscovery:()=>overlay==='discovery',load:async()=>{},refresh:()=>{},recentEnabled:()=>false};"
+        "critSel.value='discovery';critSel.onchange();const old=_taxonPending.promise;"
+        "taxonSel.value='Fungi';taxonSel.onchange();const current=_taxonPending.promise;"
+        "critSel.value='climate';critSel.onchange();jobs.Fungi.resolve();await current;"
+        "jobs['All biodiversity'].reject(Error('late HTTP503'));await old;await _overlayReady;"
+        "console.log(JSON.stringify({taxon:state.taxon,selected:taxonSel.value,overlay,goal:critSel.value,params:Object.fromEntries(location.searchParams)}));",
+        real_overlay=True,
+        real_cells=True,
+        controls=True,
+    )
+    assert result["taxon"] == result["selected"] == result["params"]["g"] == "Fungi"
+    assert result["overlay"] == result["goal"] == result["params"]["goal"] == "climate"
