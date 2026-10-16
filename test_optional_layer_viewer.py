@@ -248,7 +248,7 @@ def sighting_lifecycle(action, discovery_product=None, snapshot=None, start_rece
         + source[source.index("const I18N=") : source.index("\nlet LANG=")]
         + source[source.index("const esc=") : source.index("const safeImg=")]
         + r"""
-const input=JSON.parse(process.argv[1]);
+const input=JSON.parse(require('node:fs').readFileSync(0,'utf8'));
 class Element{
  constructor(tag,connected=false){this.tag=tag;this.connected=connected;this.children=[];this.dataset={};this._text='';this.hidden=true;this.classList={contains:()=>false};}
  get isConnected(){return this.connected||!!this.parentElement?.isConnected;}
@@ -322,12 +322,8 @@ OptionalData.fetchPinned=async(_descriptor,kind)=>kind==='discovery'?input.disco
     if snapshot is None:
         snapshot = challenge.acquire(CONFIG, FixtureAPI([observation(1), observation(2, 20)]), AS_OF)
     result = subprocess.run(
-        [
-            "node",
-            "-e",
-            script,
-            json.dumps({"snapshot": snapshot, "discovery": discovery_product, "cellRes": cell_res}),
-        ],
+        ["node", "-e", script],
+        input=json.dumps({"snapshot": snapshot, "discovery": discovery_product, "cellRes": cell_res}),
         capture_output=True,
         text=True,
     )

@@ -4,6 +4,7 @@ import json
 import re
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
@@ -102,13 +103,16 @@ const fetchT=async(url)=>{
     script += _function(src, "fetchProspects")
     script += _function(src, "paintGapTree") + _function(src, "fetchGapTree")
     script += "\n(async()=>{" + action + "})().catch(e=>{console.error(e);process.exit(1);});"
-    result = subprocess.run(
-        ["node", "-e", script],
-        input=json.dumps({"responses": responses}),
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".cjs") as script_file:
+        script_file.write(script)
+        script_file.flush()
+        result = subprocess.run(
+            ["node", script_file.name],
+            input=json.dumps({"responses": responses}),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
     assert result.returncode == 0, result.stderr
     return json.loads(result.stdout)
 
