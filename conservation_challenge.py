@@ -9,6 +9,7 @@ import hashlib
 import json
 import math
 import os
+import re
 import tempfile
 import time
 from collections import defaultdict
@@ -22,6 +23,15 @@ API = "https://api.inaturalist.org/v1/observations"
 PER_PAGE = 200
 PLACE_ID = 6712  # Canada
 MAX_PAGES = 200
+OMISSION_REASONS = {
+    "blank_scientific_name",
+    "inactive_source_taxon",
+    "no_unique_exact_match",
+    "incomplete_search",
+    "broader_than_species",
+    "rank_mismatch",
+    "missing_species_ancestry",
+}
 
 
 def digest(value):
@@ -39,6 +49,72 @@ def iso_date(value):
     if parsed.isoformat() != value:
         raise ValueError("date must be YYYY-MM-DD")
     return parsed
+
+
+def validate_coverage(coverage, target_ids):
+    """Account for every source row, retaining each omission and duplicate mapping."""
+    if not isinstance(coverage, dict):
+        raise ValueError("invalid challenge coverage")
+    required = {
+        "source_rows",
+        "resolved_rows",
+        "unique_targets",
+        "omitted_rows",
+        "original_source_sha256",
+        "resolved",
+        "omissions",
+    }
+    if set(coverage) != required:
+        raise ValueError("challenge coverage requires complete source-row accounting")
+    for key in ("source_rows", "resolved_rows", "unique_targets", "omitted_rows"):
+        if type(coverage[key]) is not int or coverage[key] < 0:
+            raise ValueError("challenge coverage counts must be nonnegative integers")
+    fingerprint = coverage["original_source_sha256"]
+    if not isinstance(fingerprint, str) or not re.fullmatch(r"[0-9a-f]{64}", fingerprint):
+        raise ValueError("challenge coverage requires the original source SHA256")
+    resolved, omitted = coverage["resolved"], coverage["omissions"]
+    if (
+        not isinstance(resolved, list)
+        or not isinstance(omitted, list)
+        or len(resolved) != coverage["resolved_rows"]
+        or len(omitted) != coverage["omitted_rows"]
+        or coverage["source_rows"] != len(resolved) + len(omitted)
+    ):
+        raise ValueError("challenge coverage counts disagree with source rows")
+    seen_rows, resolved_ids = set(), set()
+    for row in resolved:
+        if (
+            not isinstance(row, dict)
+            or set(row) != {"csv_row", "target_id"}
+            or not positive_int(row["csv_row"])
+            or not positive_int(row["target_id"])
+        ):
+            raise ValueError("invalid resolved challenge source row")
+        if row["csv_row"] in seen_rows:
+            raise ValueError("duplicate challenge source row")
+        seen_rows.add(row["csv_row"])
+        resolved_ids.add(row["target_id"])
+    for row in omitted:
+        if (
+            not isinstance(row, dict)
+            or set(row) != {"csv_row", "raw_scientific_name", "common_name", "reason_code", "reason"}
+            or not positive_int(row["csv_row"])
+            or any(not isinstance(row[key], str) for key in ("raw_scientific_name", "common_name", "reason"))
+            or not row["reason"].strip()
+            or not isinstance(row["reason_code"], str)
+            or row["reason_code"] not in OMISSION_REASONS
+        ):
+            raise ValueError("invalid omitted challenge source row")
+        if row["csv_row"] in seen_rows:
+            raise ValueError("duplicate challenge source row")
+        seen_rows.add(row["csv_row"])
+    if (
+        seen_rows != set(range(2, coverage["source_rows"] + 2))
+        or len(resolved_ids) != coverage["unique_targets"]
+        or resolved_ids != set(target_ids)
+    ):
+        raise ValueError("challenge coverage does not match the exact approved targets or all source rows")
+    return coverage
 
 
 def validate_list(config):
@@ -80,6 +156,8 @@ def validate_list(config):
             raise ValueError("taxon list has an invalid or duplicate species")
         species[taxon["id"]] = taxon["name"]
     species_groups(config)
+    if "coverage" in config:
+        validate_coverage(config["coverage"], species)
     return species
 
 
@@ -262,6 +340,8 @@ def acquire(config, fetch, as_of):
             "eligible_count": len(first),
         },
     }
+    if "coverage" in config:
+        snapshot["coverage"] = json.loads(json.dumps(config["coverage"]))
     return validate_snapshot(snapshot)
 
 
@@ -324,6 +404,11 @@ def validate_snapshot(snapshot):
         if urlparse(source["url"]).scheme != "https" or not urlparse(source["url"]).netloc:
             raise ValueError("invalid source URL")
         filters = snapshot["filters"]
+        if "coverage" in snapshot:
+            targets = filters.get("taxon_id", "").split(",")
+            if not targets or any(not re.fullmatch(r"[1-9][0-9]*", value) for value in targets):
+                raise ValueError("invalid covered challenge target filter")
+            validate_coverage(snapshot["coverage"], [int(value) for value in targets])
         if (
             filters["place_id"] != PLACE_ID
             or filters["geoprivacy"] != "open"

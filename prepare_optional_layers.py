@@ -152,6 +152,8 @@ def prepare(
         }
         if snapshot["source"] != expected_source:
             raise ValueError("challenge snapshot provenance differs from the approved list")
+        if snapshot.get("coverage") != config.get("coverage"):
+            raise ValueError("challenge snapshot coverage differs from the approved list")
         as_of = datetime.fromisoformat(snapshot["as_of"])
         if as_of > now:
             raise ValueError("challenge snapshot is from the future")
