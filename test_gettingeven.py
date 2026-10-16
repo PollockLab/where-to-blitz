@@ -7,6 +7,7 @@ to the grey "all groups under-sampled" branch, and the map went uniformly grey u
 legend of six colours that could no longer appear. A join can fail completely and still
 look like data, so the join is what gets asserted here.
 """
+
 import hashlib
 import json
 import re
@@ -18,6 +19,8 @@ import rasterio
 import rasterio.warp
 from PIL import Image
 
+from gettingeven_inputs import observation_hash
+from gettingeven_oracle import metric
 from grid_lattice import Lattice
 
 HERE = Path(__file__).resolve().parent
@@ -124,12 +127,20 @@ def test_the_shipped_layer_is_the_published_metric():
     files rather than by calling the builder.
     """
     ge = _ge()
-    if ge.get("richness_gate"):
-        pytest.skip(f"built with the richness gate on: {ge['richness_gate']}")
     groups = _per_group_records()
     total = groups["All biodiversity"]
     floor = ge.get("min_records", 1)
     scored = [i for i, t in enumerate(total) if t >= floor]
+    excluded = np.zeros(len(total), dtype=np.uint8)
+    if ge.get("richness_gate"):
+        tier = _sidecar()["tiers"]["25000"]
+        mask = tier["gate_mask"]
+        path = CA / mask["png"]
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == mask["sha256"]
+        rowcol = _rowcol(ge["gettingeven"], _lattice(tier))
+        excluded = np.asarray(Image.open(path))[*rowcol, 0]
+        counts = np.asarray([np.sum([groups[g] for g in GE_GROUPS[cat]], axis=0) for cat in ge["cats"]])
+        assert observation_hash(rowcol, total, counts) == tier["inputs"]["observations_sha256"]
 
     z = []
     for cat in ge["cats"]:
@@ -141,14 +152,45 @@ def test_the_shipped_layer_is_the_published_metric():
 
     rows = ge["gettingeven"]
     for k, i in enumerate(scored):
-        want = min(range(len(z)), key=lambda c: z[c][k])
+        eligible = [c for c in range(len(z)) if not (int(excluded[i]) & (1 << c))]
+        want = min(eligible, key=lambda c: z[c][k]) if eligible else -1
         assert rows[i][2] == want, (
             f"cell {rows[i][0]},{rows[i][1]}: layer says {ge['cats'][rows[i][2]]}, the "
             f"published metric says {ge['cats'][want]}"
         )
-        assert rows[i][3] == pytest.approx(z[want][k], abs=5e-4), (
+        assert rows[i][3] == pytest.approx(z[want][k], abs=5e-4) if want >= 0 else rows[i][3] is None, (
             "the shipped z is not the winning category's z-score"
         )
+
+
+def test_gated_oracle_covers_both_tiers_when_stacks_are_available():
+    """Full rebuilds check actual fine-tier counts too, not just the public coarse rows."""
+    for res, tier in _sidecar()["tiers"].items():
+        if int(res) == 25000:
+            continue
+        stack_dir = CA / f"grid_{res}m"
+        if not (stack_dir / "All_biodiversity.tif").exists():
+            continue
+
+        def plane(group):
+            with rasterio.open(stack_dir / (group.replace(" ", "_") + ".tif")) as ds:
+                return ds.read(ds.descriptions.index("n_train") + 1).astype(float)
+
+        total_plane = plane("All biodiversity")
+        rowcol = np.where(np.isfinite(total_plane))
+        total = total_plane[rowcol]
+        counts = np.asarray(
+            [sum(np.nan_to_num(plane(g))[rowcol] for g in GE_GROUPS[cat]) for cat in _ge()["cats"]]
+        )
+        assert observation_hash(rowcol, total, counts) == tier["inputs"]["observations_sha256"]
+        mask = tier["gate_mask"]
+        path = CA / mask["png"]
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == mask["sha256"]
+        excluded = np.asarray(Image.open(path))[*rowcol, 0]
+        want, best = metric(total, counts, tier["min_records"], excluded)
+        with rasterio.open(stack_dir / "gettingeven.tif") as ds:
+            assert np.array_equal(ds.read(1)[rowcol], want)
+            assert np.allclose(ds.read(2)[rowcol], best, atol=1e-6, equal_nan=True)
 
 
 def test_only_the_too_sparse_cells_are_grey():

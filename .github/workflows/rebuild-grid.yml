@@ -233,6 +233,8 @@ jobs:
           fi
       - name: Compute inputs hash
         id: compute_inputs
+        env:
+          GE_MANIFEST_SHA256: ${{ vars.GE_RICHNESS_MANIFEST_SHA256 }}
         run: |
           set -euo pipefail
           REL="${GRID_INPUTS_RELEASE:-grid-inputs-v1}"
@@ -241,10 +243,11 @@ jobs:
           sha2=$(git log -n1 --pretty=format:%H -- build_fullgrid_ca.py 2>/dev/null || echo)
           sha3=$(git log -n1 --pretty=format:%H -- build_grid_values.py 2>/dev/null || echo)
           sha4=$(git log -n1 --pretty=format:%H -- rebuild_grid.sh 2>/dev/null || echo)
-          sha5=$(git log -n1 --pretty=format:%H -- build_gettingeven.py 2>/dev/null || echo)
+          sha5=$(git log -n1 --pretty=format:%H -- build_gettingeven.py gettingeven_inputs.py gettingeven_oracle.py 2>/dev/null || echo)
           sha6=$(git log -n1 --pretty=format:%H -- build_provenance.py 2>/dev/null || echo)
           sha7=$(sha256sum cluster_results/ca/ca_atrisk_richness.csv cluster_results/ca/ca_atrisk_provenance.json | sha256sum | awk '{print $1}')
-          INPUTS_HASH=$(printf "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n" "$REL" "$breaks_content" "$sha1" "$sha2" "$sha3" "$sha4" "$sha5" "$sha6" "$sha7" | sha256sum | awk '{print $1}')
+          sha8=$(sha256sum cluster_results/ca/webapp_data_*.json cluster_results/ca/grid_{25000,5000}m/*.tif | sha256sum | awk '{print $1}')
+          INPUTS_HASH=$(printf "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n" "$REL" "$breaks_content" "$sha1" "$sha2" "$sha3" "$sha4" "$sha5" "$sha6" "$sha7" "$GE_MANIFEST_SHA256" "$sha8" | sha256sum | awk '{print $1}')
           echo "inputs_hash=$INPUTS_HASH" >> $GITHUB_OUTPUT
           echo "INPUTS_HASH=$INPUTS_HASH" >> $GITHUB_ENV
       - name: Check for existing rebuilt artifact
@@ -300,12 +303,19 @@ jobs:
         # Keyed on cell centres, like us_cells.json above, and it went stale the same way:
         # the #87 lattice migration moved every cell and this file was a committed artifact
         # no build step touched, so all 31804 of its keys missed and the layer went grey.
-        # The richness rasters are on the lab SharePoint, not here, so keep the shipped gated
-        # layer rather than revert it; build_gettingeven.py still fails if it no longer fits the grid.
+        # Configure a private manifest URL and pinned checksum to reproduce both gated tiers.
+        # Without it, preserve the shipped layer only while the recorded observations still fit.
         if: ${{ steps.check_artifact.outputs.found != 'true' }}
         env:
           GE_KEEP_SHIPPED: "1"
-        run: python build_gettingeven.py
+          GE_RICHNESS_MANIFEST: ${{ secrets.GE_RICHNESS_MANIFEST_URL }}
+          GE_RICHNESS_MANIFEST_SHA256: ${{ vars.GE_RICHNESS_MANIFEST_SHA256 }}
+        run: |
+          set -euo pipefail
+          for res in 25000 5000; do
+            GRID_RES="$res" python build_gettingeven.py
+          done
+          python -m pytest test_gettingeven.py test_gettingeven_inputs.py -q
       - name: Re-freeze the provenance manifest over the rebuilt artifacts
         # Hashes what this run read and wrote. Must follow the grid build and precede the
         # upload, or the manifest describes the previous build's files.
