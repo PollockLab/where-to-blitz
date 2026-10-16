@@ -174,6 +174,13 @@ def load_optional_layers(files, environ=None):
 
 
 OPTIONAL_LAYERS = load_optional_layers(FILES)
+from historical_discovery_points import load_points
+
+HISTORICAL_DISCOVERY_POINTS = load_points(
+    Path(__file__).resolve().parent / "webapp/historical_discovery_points.json",
+    os.environ.get("DISCOVERY_RATE_FILE"),
+    OPTIONAL_LAYERS["discovery"],
+)
 OPTIONAL_LAYER_SCRIPT = (Path(__file__).resolve().parent / "webapp/optional_layers.js").read_text() + "\ninstallOptionalLayers();\n"
 BASEMAP_SCRIPT = (Path(__file__).resolve().parent / "webapp/basemaps.js").read_text()
 
@@ -185,6 +192,10 @@ out = (
         json.dumps(OPTIONAL_LAYERS, separators=(",", ":"), allow_nan=False).replace("<", "\\u003c"),
     )
     .replace("__OPTIONAL_LAYER_SCRIPT__", OPTIONAL_LAYER_SCRIPT)
+    .replace(
+        "__HISTORICAL_DISCOVERY_POINTS__",
+        json.dumps(HISTORICAL_DISCOVERY_POINTS, separators=(",", ":"), allow_nan=False).replace("<", "\\u003c"),
+    )
     .replace("__BASEMAP_SCRIPT__", BASEMAP_SCRIPT)
     .replace("__BC_PLANT_PILOT__", json.dumps(BC_PLANT_PILOT, separators=(",", ":"), allow_nan=False).replace("<", "\\u003c"))
     .replace("__OBJ__", json.dumps(OBJ))

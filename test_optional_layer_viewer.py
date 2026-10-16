@@ -238,7 +238,7 @@ def test_measured_rate_shared_link_cannot_label_another_taxon_group():
     assert result["params"]["g"] == "Fungi" and result["params"]["goal"] == "0"
 
 
-def sighting_lifecycle(action, discovery_product=None, snapshot=None, start_recent=True, cell_res=None):
+def sighting_lifecycle(action, discovery_product=None, snapshot=None, start_recent=True, cell_res=None, historical_points=None):
     """Replay real popup wiring, list reconciliation and synchronous map move events."""
     from test_shared_context import _function
 
@@ -249,8 +249,10 @@ def sighting_lifecycle(action, discovery_product=None, snapshot=None, start_rece
         + source[source.index("const esc=") : source.index("const safeImg=")]
         + r"""
 const input=JSON.parse(require('node:fs').readFileSync(0,'utf8'));
+const HISTORICAL_DISCOVERY_POINTS=input.historical||null;
 class Element{
  constructor(tag,connected=false){this.tag=tag;this.connected=connected;this.children=[];this.dataset={};this._text='';this.hidden=true;this.classList={contains:()=>false};}
+ getContext(){return {beginPath(){},moveTo(){},lineTo(){},closePath(){},fill(){},stroke(){},fillText(){},getImageData(){return {width:64,height:64,data:new Uint8Array(64*64*4)};}};}
  get isConnected(){return this.connected||!!this.parentElement?.isConnected;}
  set textContent(value){this.replaceChildren();this._text=value;}
  get textContent(){return this._text;}
@@ -269,7 +271,7 @@ class Element{
  getClientRects(){return this.isConnected?[{}]:[];}
  focus(){if(this.isConnected&&this.tag!=='body')document.activeElement=this;}
 }
-const handlers={},nodes={},document={activeElement:null,body:new Element('body',true),
+const layerHandlers={},handlers={},nodes={},document={activeElement:null,body:new Element('body',true),
  createElement:tag=>new Element(tag),getElementById:id=>nodes[id]||(nodes[id]=new Element(id,true)),
  addEventListener:(event,fn)=>handlers[event]=fn};document.activeElement=document.body;
 const getComputedStyle=()=>({visibility:'visible',display:'block'});
@@ -285,8 +287,8 @@ let originAtExplore=null;
 let viewportBounds=[-90,40,-60,50];
 const map={getCanvas:()=>canvas,getBounds:()=>({getWest:()=>viewportBounds[0],getEast:()=>viewportBounds[2],getSouth:()=>viewportBounds[1],getNorth:()=>viewportBounds[3]}),
  getZoom:()=>7,getSource:id=>map.sources[id],getLayer:id=>map.sources[id],sources:{},
- addSource(id){this.sources[id]={setData(data){this.data=data;}};},addLayer(){},setLayoutProperty(){},queryRenderedFeatures:()=>[],
- on(event,...args){handlers[event]=args.at(-1);},jumpTo(){handlers.moveend();}};
+ addImage(){},addSource(id,options){this.sources[id]={data:options.data,setData(data){this.data=data;}};},addLayer(){},setLayoutProperty(){},queryRenderedFeatures:()=>[],
+ on(event,...args){handlers[event]=args.at(-1);if(args.length>1)layerHandlers[args[0]+':'+event]=args.at(-1);},jumpTo(){handlers.moveend();}};
 const maplibregl={Popup:class{
  constructor(options){this.options=options;this.handlers={};this.root=new Element('popup',true);this.close=new Element('close');this.root.append(this.close);}
  on(event,fn){(this.handlers[event]||(this.handlers[event]=[])).push(fn);return this;}
@@ -325,7 +327,7 @@ OptionalData.fetchPinned=async(_descriptor,kind)=>kind==='discovery'?input.disco
         snapshot = challenge.acquire(CONFIG, FixtureAPI([observation(1), observation(2, 20)]), AS_OF)
     result = subprocess.run(
         ["node", "-e", script],
-        input=json.dumps({"snapshot": snapshot, "discovery": discovery_product, "cellRes": cell_res}),
+        input=json.dumps({"snapshot": snapshot, "discovery": discovery_product, "cellRes": cell_res,"historical":historical_points}),
         capture_output=True,
         text=True,
     )
@@ -1041,3 +1043,75 @@ def test_discovery_browser_waits_for_verified_data_before_reporting_counts(tmp_p
     assert ready["count"] == 30 and ready["previous"] == "true" and ready["next"] == "false"
     assert "35" in ready["status"] and "36" in ready["status"]
     assert ready["keys"][0] == f"{cell_res}:400,400"
+
+
+def historical_fixture():
+    return {"schema_version": 1, "discovery_sha256": "fixture", "points": [
+        {"event_id": str(i), "scientific_name": "<supplied name>" if i == 0 else "Name " + str(i),
+         "observed_year": 2025, "longitude": -75 if i < 27 else -75 + i / 100, "latitude": 45}
+        for i in range(62)
+    ]}
+
+
+def test_historical_shared_coordinates_preserve_all_names():
+    fixture = historical_fixture()
+    groups = run_js("console.log(JSON.stringify(OptionalData.historicalGroups(JSON.parse(process.argv[1]).points)));", fixture)
+    assert len(groups) == 36 and len(groups[0]["points"]) == 27
+    assert sum(len(group["points"]) for group in groups) == 62
+    assert groups[0]["points"][0]["scientific_name"] == "<supplied name>"
+
+
+@pytest.mark.parametrize("language", ["en", "fr"])
+def test_historical_points_are_local_grouped_inspectable_and_keyboard_accessible(tmp_path, language):
+    result = sighting_lifecycle(
+        "LANG=" + json.dumps(language) + ";overlay='discovery';await optionalLayers.load();optionalLayers.refresh();"
+        "const initial={features:map.sources['historical-discovery'].data.features,count:nodes.historicalPointsList.children.length,status:nodes.historicalPointsStatus.textContent};"
+        "const button=nodes.historicalPointsList.children[0];button.focus();button.onclick();"
+        "const body=curPopup.root.children[1];const opened={names:body.children[2].children.map(el=>el.textContent),detail:body.children[3].innerHTML,focused:document.activeElement===curPopup.close};"
+        "handlers.keydown({key:'Escape'});const returned=document.activeElement===button;"
+        "nodes.historicalPointsNext.onclick();const last=nodes.historicalPointsList.children.length;"
+        "input.cellRes=25000;handlers.moveend();const coarse=nodes.historicalPointsList.children.length;"
+        "input.cellRes=5000;handlers.moveend();nodes.historicalPointsToggle.onchange({target:{checked:false}});"
+        "console.log(JSON.stringify({initial,opened,returned,last,coarse,hidden:nodes.historicalPointsList.children.length}));",
+        rate_product(tmp_path), cell_res=5000, historical_points=historical_fixture(),
+    )
+    assert len(result["initial"]["features"]) == 36 and result["initial"]["features"][0]["properties"]["count"] == 27
+    assert result["initial"]["count"] == 30 and "36" in result["initial"]["status"]
+    assert len(result["opened"]["names"]) == 27 and result["opened"]["names"][0] == "<supplied name> · 2025"
+    assert result["opened"]["focused"] and result["returned"]
+    assert ("Observations: 10." if language == "en" else "10 observations") in result["opened"]["detail"]
+    assert result["last"] == 6 and result["coarse"] == result["hidden"] == 0
+
+
+def test_historical_markers_prevent_cell_clickthrough_and_defer_to_recent(tmp_path):
+    result = sighting_lifecycle(
+        "overlay='discovery';await optionalLayers.load();optionalLayers.refresh();let explored=0;exploreCell=()=>{explored++;};"
+        "map.queryRenderedFeatures=(_point,options)=>options.layers[0]==='historical-discovery'?[{}]:[];"
+        "layerHandlers['measured-discovery:click']({point:{},lngLat:{lat:45,lng:-75}});"
+        "layerHandlers['historical-discovery:click']({point:{},features:[{properties:{key:'-75,45'}}]});"
+        "const opened=!!curPopup;handlers.keydown({key:'Escape'});"
+        "map.queryRenderedFeatures=()=>[{}];layerHandlers['historical-discovery:click']({point:{},features:[{properties:{key:'-75,45'}}]});"
+        "console.log(JSON.stringify({explored,opened,recentPriority:curPopup===null}));",
+        rate_product(tmp_path), cell_res=5000, historical_points=historical_fixture(),
+    )
+    assert result == {"explored": 0, "opened": True, "recentPriority": True}
+
+
+def test_historical_popup_relabels_and_closes_on_tier_exit(tmp_path):
+    result = sighting_lifecycle(
+        "overlay='discovery';await optionalLayers.load();optionalLayers.refresh();"
+        "nodes.historicalPointsList.children[0].focus();nodes.historicalPointsList.children[0].onclick();"
+        "LANG='fr';optionalLayers.refresh();const title=curPopup.root.children[1].children[0].textContent;"
+        "input.cellRes=25000;handlers.moveend();console.log(JSON.stringify({title,closed:curPopup===null,"
+        "focused:document.activeElement===nodes.historicalPointsToggle}));",
+        rate_product(tmp_path), cell_res=5000, historical_points=historical_fixture(),
+    )
+    assert result == {"title": "27 points fournis à cet emplacement", "closed": True, "focused": True}
+
+
+def test_unconfigured_historical_points_add_no_map_source_or_visible_panel():
+    result = sighting_lifecycle(
+        "optionalLayers.refresh();console.log(JSON.stringify({hidden:nodes.historicalPointsPanel.hidden,"
+        "source:!!map.sources['historical-discovery']}));", start_recent=False,
+    )
+    assert result == {"hidden": True, "source": False}

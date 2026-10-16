@@ -311,7 +311,7 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
 .optional-pagination button{flex:1;white-space:normal;min-height:44px;padding:7px 8px;border:1px solid #d4dde6;border-radius:7px;background:#f4f7fa;color:var(--ink);font:inherit;font-size:12.5px;cursor:pointer}
 .optional-pagination button[aria-disabled=true]{opacity:.5;cursor:default}
 .optional-cell:hover,.optional-cell:focus-visible,.optional-pagination button:focus-visible{border-color:var(--acc);outline:2px solid var(--acc);outline-offset:-2px}
-#discoveryCells,#recentChallengeList,#recentChallengeOmissionList{max-height:260px;overflow-y:auto}
+#discoveryCells,#historicalPointsList,#recentChallengeList,#recentChallengeOmissionList{max-height:260px;overflow-y:auto}
 #discoveryEvidence summary,#recentChallengePanel summary{font-size:13px;cursor:pointer;margin:8px 0 5px}
 .optional-status{font-size:11.5px;line-height:1.45;color:var(--mut);overflow-wrap:anywhere}
 #historicalScope{font-size:12px;line-height:1.45;margin:8px 0;color:var(--mut)}
@@ -355,6 +355,11 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
     <div id="discoveryCells"></div>
     <div class="optional-pagination"><button id="discoveryPrevious" type="button" data-i18n="discovery_previous">Previous cells</button><button id="discoveryNext" type="button" data-i18n="discovery_next">Next cells</button></div>
   </details>
+  <section id="historicalPointsPanel" hidden>
+    <label class="toggle"><input id="historicalPointsToggle" type="checkbox" checked> <span data-i18n="historical_points">Historical discovery points</span></label>
+    <p id="historicalPointsHint" class="optional-status"></p>
+    <details><summary data-i18n="historical_locations">Historical locations in this view</summary><p id="historicalPointsStatus" class="optional-status" role="status"></p><div id="historicalPointsList"></div><div class="optional-pagination"><button id="historicalPointsPrevious" type="button" data-i18n="historical_previous">Previous locations</button><button id="historicalPointsNext" type="button" data-i18n="historical_next">Next locations</button></div></details>
+  </section>
   <div id="recentChallengePanel" hidden>
     <label class="toggle"><input type="checkbox" id="recentChallenge"> <span data-i18n="recent_challenge">Recent challenge sightings</span></label>
     <p id="recentChallengeStatus" class="optional-status" role="status"></p>
@@ -470,6 +475,7 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
 const FILES=__FILES__, OBJ=__OBJ__, PRESETS=__PRESETS__, DEFAULT=__DEFAULT__;
 const BC_PLANT_PILOT=__BC_PLANT_PILOT__;
 const OPTIONAL_LAYERS=__OPTIONAL_LAYERS__;
+const HISTORICAL_DISCOVERY_POINTS=__HISTORICAL_DISCOVERY_POINTS__;
 const PLAN_ENABLED=__PLAN_ENABLED__||/[?&]plan=1/.test(location.search);   // issue #17: hidden by default; ?plan=1 is a no-clutter escape hatch for the team (no rebuild)
 const COMPARE_ENABLED=__COMPARE_ENABLED__||/[?&]compare=1/.test(location.search);   // issue #71: stashed; ?compare=1 re-enables
 
@@ -481,6 +487,7 @@ const I18N={
   en:{
     discovery_rate:"Measured discovery rate", discovery_cells:"Measured cells in this view",
     discovery_loading:"Loading historical discovery evidence…",
+    historical_points:"Historical discovery points", historical_locations:"Historical locations in this view", historical_previous:"Previous locations", historical_next:"Next locations", historical_local:"Teal diamonds show supplied historical points at the 5 km tier. Numbers count supplied points sharing the exact location.", historical_zoom:"Zoom to the 5 km tier to inspect supplied historical points.", historical_hidden:"Historical points hidden.", historical_supplied_names:"Supplied scientific names. Reported positions, some obscured.", historical_location_count:n=>`${n} supplied ${n===1?"point":"points"} at this location`, historical_points_scope:(start,end,total)=>`Locations ${start} to ${end} of ${total} in this view.`, historical_empty:"No supplied historical points in this view.",
     discovery_filter:"Show measured cells", discovery_filter_all:"All measured cells", discovery_filter_positive:"With supplied points", discovery_filter_zero:"Zero supplied points",
     discovery_list_scope:(start,end,total,all)=>`Showing ${start} to ${end} of ${total} matching cells in this view (${all} measured cells).`,
     discovery_list_order:"Highest historical rates first, equal rates in grid order.", discovery_list_empty:"No cells match this filter in this view.",
@@ -720,6 +727,7 @@ const I18N={
   fr:{
     discovery_rate:"Taux de découverte mesuré", discovery_cells:"Cellules mesurées dans cette vue",
     discovery_loading:"Chargement des données historiques de découverte…",
+    historical_points:"Points de découverte historiques", historical_locations:"Lieux historiques dans cette vue", historical_previous:"Lieux précédents", historical_next:"Lieux suivants", historical_local:"Les losanges turquoise indiquent les points historiques fournis au niveau de 5 km. Les nombres comptent les points au même emplacement exact.", historical_zoom:"Zoomez au niveau de 5 km pour examiner les points historiques fournis.", historical_hidden:"Points historiques masqués.", historical_supplied_names:"Noms scientifiques fournis. Positions rapportées, parfois masquées.", historical_location_count:n=>`${n} ${n===1?"point fourni":"points fournis"} à cet emplacement`, historical_points_scope:(start,end,total)=>`Lieux ${start} à ${end} sur ${total} dans cette vue.`, historical_empty:"Aucun point historique fourni dans cette vue.",
     discovery_filter:"Afficher les cellules mesurées", discovery_filter_all:"Toutes les cellules mesurées", discovery_filter_positive:"Avec des points fournis", discovery_filter_zero:"Aucun point fourni",
     discovery_list_scope:(start,end,total,all)=>`Cellules ${start} à ${end} sur ${total} correspondantes dans cette vue (${all} cellules mesurées).`,
     discovery_list_order:"Taux historiques décroissants, puis ordre de la grille à taux égal.", discovery_list_empty:"Aucune cellule ne correspond au filtre dans cette vue.",
@@ -1723,7 +1731,7 @@ function localizeMapControls(){
 }
 function popupFocusOrigin(){
   const element=document.activeElement,row=element&&element.closest&&element.closest('#celltable tr[data-la]');
-  return {element:element,row:row?{lat:row.dataset.la,lon:row.dataset.lo}:null,discoveryCell:element?.dataset?.discoveryCell||null};
+  return {element:element,row:row?{lat:row.dataset.la,lon:row.dataset.lo}:null,discoveryCell:element?.dataset?.discoveryCell||null,historicalPoint:element?.dataset?.historicalPoint||null};
 }
 function focusPopupTarget(el){
   if(!el||!el.isConnected||typeof el.focus!=='function'||!el.getClientRects().length)return false;
@@ -1732,6 +1740,10 @@ function focusPopupTarget(el){
 }
 function restorePopupFocus(origin){
   if(focusPopupTarget(origin.element))return;
+  if(origin.historicalPoint&&globalThis.optionalLayers?.isDiscovery()){
+    const list=document.getElementById('historicalPointsList'),button=list&&Array.from(list.children).find(el=>el.dataset.historicalPoint===origin.historicalPoint);
+    if(focusPopupTarget(button)||focusPopupTarget(document.getElementById('historicalPointsToggle')))return;
+  }
   if(origin.discoveryCell&&globalThis.optionalLayers?.isDiscovery()){
     const list=document.getElementById('discoveryCells'),cell=list&&Array.from(list.children).find(el=>el.dataset.discoveryCell===origin.discoveryCell);
     if(focusPopupTarget(cell)||focusPopupTarget(document.getElementById('discoveryCellFilter')))return;
