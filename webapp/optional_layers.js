@@ -157,6 +157,7 @@ function installOptionalLayers(){
   }
   function renderDiscovery(){
     const panel=node('discoveryEvidence');if(panel)panel.hidden=!isDiscovery();
+    if(isDiscovery()&&!cache.discovery)renderDiscoveryList();
     if(!_mapLoaded)return;
     if(!isDiscovery()||!supports(state.taxon)||!cache.discovery){
       if(map.getLayer('measured-discovery'))map.setLayoutProperty('measured-discovery','visibility','none');
@@ -179,7 +180,15 @@ function installOptionalLayers(){
   }
   function renderDiscoveryList(rows=discoveryListRows,res=discoveryListRes){
     discoveryListRows=rows;discoveryListRes=res;
-    const list=node('discoveryCells'),filter=node('discoveryCellFilter').value||'all';
+    const list=node('discoveryCells'),select=node('discoveryCellFilter');
+    select.disabled=!cache.discovery;
+    if(!cache.discovery){
+      discoveryPage=0;list.textContent='';
+      node('discoveryCellStatus').textContent=t('discovery_loading');
+      for(const id of ['discoveryPrevious','discoveryNext'])node(id).setAttribute('aria-disabled','true');
+      return;
+    }
+    const filter=select.value||'all';
     const [west,south,east,north]=bounds(),view=[res,filter,west,south,east,north].join(',');
     if(view!==discoveryListView){discoveryPage=0;discoveryListView=view;}
     const inView=rows.filter(row=>{
@@ -298,7 +307,7 @@ function installOptionalLayers(){
   node('recentChallenge').addEventListener('change',e=>{_shareAction++;toggleRecent(e.target.checked);});
   node('discoveryCellFilter').onchange=()=>{discoveryPage=0;renderDiscoveryList();node('discoveryCells').scrollTop=0;};
   for(const [id,delta]of [['discoveryPrevious',-1],['discoveryNext',1]])node(id).onclick=()=>{
-    if(node(id).getAttribute('aria-disabled')==='true')return;
+    if(!cache.discovery||node(id).getAttribute('aria-disabled')==='true')return;
     discoveryPage+=delta;renderDiscoveryList();node('discoveryCells').scrollTop=0;
   };
   map.on('moveend',refresh);whenMap(refresh);
