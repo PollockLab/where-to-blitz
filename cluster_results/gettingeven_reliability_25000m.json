@@ -1,0 +1,586 @@
+{
+  "schema_version": 1,
+  "endpoint": "full_input_reference_recovery_under_simulated_thinning",
+  "res_m": 25000,
+  "categories": [
+    "Fishes",
+    "Fungi",
+    "Reptiles & Amphibians",
+    "Invertebrates",
+    "Mammals",
+    "Plants"
+  ],
+  "config": {
+    "min_reference": 300,
+    "budgets": [
+      1,
+      5,
+      20
+    ],
+    "repeats": 5,
+    "folds": 5,
+    "block_km": 100,
+    "seed": 0,
+    "strength": 10.0,
+    "posterior_draws": 64,
+    "block_bootstrap_draws": 200
+  },
+  "cells": 23214,
+  "reference_cells": 2339,
+  "folds": [
+    {
+      "fold": 0,
+      "training_cells": 8522,
+      "test_cells": 457,
+      "mean": [
+        0.017432658384166883,
+        0.08241780812572055,
+        0.0220386455190503,
+        0.18076488939428012,
+        0.08761262615104166,
+        0.4533112790791144
+      ],
+      "sd": [
+        0.08691744052931973,
+        0.1517451790059067,
+        0.08517613958796402,
+        0.22814062170953442,
+        0.20269096413063245,
+        0.30968052872803326
+      ]
+    },
+    {
+      "fold": 1,
+      "training_cells": 8550,
+      "test_cells": 421,
+      "mean": [
+        0.01690805398478731,
+        0.08219685582949596,
+        0.022374164484484538,
+        0.18094845632023054,
+        0.09118369145850591,
+        0.4494358128216883
+      ],
+      "sd": [
+        0.08243425725300137,
+        0.14964706221393487,
+        0.08457367517828265,
+        0.22736188434470056,
+        0.20709549111190145,
+        0.3077219430504019
+      ]
+    },
+    {
+      "fold": 2,
+      "training_cells": 8536,
+      "test_cells": 506,
+      "mean": [
+        0.017378460858314633,
+        0.08357699989628921,
+        0.021591157180802997,
+        0.17934327368889152,
+        0.09045013392922503,
+        0.4516162966024985
+      ],
+      "sd": [
+        0.08441526800408823,
+        0.15374301941324728,
+        0.08526332677872939,
+        0.22769961194129038,
+        0.2056097671906431,
+        0.309280228372654
+      ]
+    },
+    {
+      "fold": 3,
+      "training_cells": 8515,
+      "test_cells": 507,
+      "mean": [
+        0.016804691299991823,
+        0.08274070188725392,
+        0.022267997423713253,
+        0.18011830927806818,
+        0.08973802565738687,
+        0.45024224401684854
+      ],
+      "sd": [
+        0.08194871278617823,
+        0.15500285269713748,
+        0.08607045467588421,
+        0.22876721737704722,
+        0.2042414911599178,
+        0.30877456943671444
+      ]
+    },
+    {
+      "fold": 4,
+      "training_cells": 8593,
+      "test_cells": 448,
+      "mean": [
+        0.017531645821403503,
+        0.08204162576796488,
+        0.021774206666502555,
+        0.17691254272883436,
+        0.09207932640038016,
+        0.4516110230435547
+      ],
+      "sd": [
+        0.08683746258640758,
+        0.15138669175393032,
+        0.08528928869125524,
+        0.22811130388854836,
+        0.20913399421742268,
+        0.3108124329494866
+      ]
+    }
+  ],
+  "methods": {
+    "floor_1": {
+      "cases": 35085,
+      "blocks": 434,
+      "accepted": 35085,
+      "coverage": 1.0,
+      "recovery": 0.3911643152344307,
+      "coverage_interval": [
+        1.0,
+        1.0
+      ],
+      "recovery_interval": [
+        0.37841739485352777,
+        0.40637854591747896
+      ]
+    },
+    "floor_5": {
+      "cases": 35085,
+      "blocks": 434,
+      "accepted": 23390,
+      "coverage": 0.6666666666666666,
+      "recovery": 0.4533133817870885,
+      "coverage_interval": [
+        0.6666666666666666,
+        0.6666666666666666
+      ],
+      "recovery_interval": [
+        0.44086141091121794,
+        0.4638515802094245
+      ]
+    },
+    "floor_20": {
+      "cases": 35085,
+      "blocks": 434,
+      "accepted": 11695,
+      "coverage": 0.3333333333333333,
+      "recovery": 0.5320222317229585,
+      "coverage_interval": [
+        0.3333333333333333,
+        0.3333333333333333
+      ],
+      "recovery_interval": [
+        0.5190561622501845,
+        0.5447299708558853
+      ]
+    },
+    "shrinkage": {
+      "cases": 35085,
+      "blocks": 434,
+      "accepted": 35085,
+      "coverage": 1.0,
+      "recovery": 0.39390052729086505,
+      "coverage_interval": [
+        1.0,
+        1.0
+      ],
+      "recovery_interval": [
+        0.3784067972371213,
+        0.4070968330279418
+      ]
+    },
+    "agreement_0.5": {
+      "cases": 35085,
+      "blocks": 434,
+      "accepted": 18831,
+      "coverage": 0.5367250961949551,
+      "recovery": 0.47464287610854444,
+      "coverage_interval": [
+        0.5284656686945906,
+        0.5453728543261425
+      ],
+      "recovery_interval": [
+        0.45627557922409767,
+        0.49503498315144884
+      ]
+    },
+    "agreement_0.7": {
+      "cases": 35085,
+      "blocks": 434,
+      "accepted": 4779,
+      "coverage": 0.13621205643437367,
+      "recovery": 0.6396735718769617,
+      "coverage_interval": [
+        0.1302683978369288,
+        0.1419794750114415
+      ],
+      "recovery_interval": [
+        0.6102052453852378,
+        0.6681219759152136
+      ]
+    },
+    "agreement_0.9": {
+      "cases": 35085,
+      "blocks": 434,
+      "accepted": 861,
+      "coverage": 0.024540401881145788,
+      "recovery": 0.8466898954703833,
+      "coverage_interval": [
+        0.02154399889817351,
+        0.02738577545427356
+      ],
+      "recovery_interval": [
+        0.8199098206839033,
+        0.8709749475900637
+      ]
+    }
+  },
+  "by_budget": {
+    "1": {
+      "floor_1": {
+        "cases": 11695,
+        "blocks": 434,
+        "accepted": 11695,
+        "coverage": 1.0,
+        "recovery": 0.266866182129115,
+        "coverage_interval": [
+          1.0,
+          1.0
+        ],
+        "recovery_interval": [
+          0.24805865063755497,
+          0.2840756705919235
+        ]
+      },
+      "floor_5": {
+        "cases": 11695,
+        "blocks": 434,
+        "accepted": 0,
+        "coverage": 0.0,
+        "recovery": null,
+        "coverage_interval": [
+          0.0,
+          0.0
+        ],
+        "recovery_interval": null
+      },
+      "floor_20": {
+        "cases": 11695,
+        "blocks": 434,
+        "accepted": 0,
+        "coverage": 0.0,
+        "recovery": null,
+        "coverage_interval": [
+          0.0,
+          0.0
+        ],
+        "recovery_interval": null
+      },
+      "shrinkage": {
+        "cases": 11695,
+        "blocks": 434,
+        "accepted": 11695,
+        "coverage": 1.0,
+        "recovery": 0.2675502351432236,
+        "coverage_interval": [
+          1.0,
+          1.0
+        ],
+        "recovery_interval": [
+          0.24490760960309801,
+          0.2904902754624117
+        ]
+      },
+      "agreement_0.5": {
+        "cases": 11695,
+        "blocks": 434,
+        "accepted": 4557,
+        "coverage": 0.3896536981616075,
+        "recovery": 0.3195084485407066,
+        "coverage_interval": [
+          0.37633131610691384,
+          0.40084565028699426
+        ],
+        "recovery_interval": [
+          0.2930153835272501,
+          0.34900805459217477
+        ]
+      },
+      "agreement_0.7": {
+        "cases": 11695,
+        "blocks": 434,
+        "accepted": 58,
+        "coverage": 0.0049593843522873025,
+        "recovery": 0.3103448275862069,
+        "coverage_interval": [
+          0.003807679549127454,
+          0.006256051839153639
+        ],
+        "recovery_interval": [
+          0.2095942140296979,
+          0.41477762803234514
+        ]
+      },
+      "agreement_0.9": {
+        "cases": 11695,
+        "blocks": 434,
+        "accepted": 0,
+        "coverage": 0.0,
+        "recovery": null,
+        "coverage_interval": [
+          0.0,
+          0.0
+        ],
+        "recovery_interval": null
+      }
+    },
+    "5": {
+      "floor_1": {
+        "cases": 11695,
+        "blocks": 434,
+        "accepted": 11695,
+        "coverage": 1.0,
+        "recovery": 0.37460453185121845,
+        "coverage_interval": [
+          1.0,
+          1.0
+        ],
+        "recovery_interval": [
+          0.3584109640099582,
+          0.3908137288173217
+        ]
+      },
+      "floor_5": {
+        "cases": 11695,
+        "blocks": 434,
+        "accepted": 11695,
+        "coverage": 1.0,
+        "recovery": 0.37460453185121845,
+        "coverage_interval": [
+          1.0,
+          1.0
+        ],
+        "recovery_interval": [
+          0.35772625597679253,
+          0.3927300107300107
+        ]
+      },
+      "floor_20": {
+        "cases": 11695,
+        "blocks": 434,
+        "accepted": 0,
+        "coverage": 0.0,
+        "recovery": null,
+        "coverage_interval": [
+          0.0,
+          0.0
+        ],
+        "recovery_interval": null
+      },
+      "shrinkage": {
+        "cases": 11695,
+        "blocks": 434,
+        "accepted": 11695,
+        "coverage": 1.0,
+        "recovery": 0.3506626763574177,
+        "coverage_interval": [
+          1.0,
+          1.0
+        ],
+        "recovery_interval": [
+          0.3316121551018831,
+          0.371219974106672
+        ]
+      },
+      "agreement_0.5": {
+        "cases": 11695,
+        "blocks": 434,
+        "accepted": 5876,
+        "coverage": 0.5024369388627619,
+        "recovery": 0.4227365554799183,
+        "coverage_interval": [
+          0.48892162928288235,
+          0.5146809596269295
+        ],
+        "recovery_interval": [
+          0.39226893214838976,
+          0.44809181651569335
+        ]
+      },
+      "agreement_0.7": {
+        "cases": 11695,
+        "blocks": 434,
+        "accepted": 1306,
+        "coverage": 0.11167165455322788,
+        "recovery": 0.5444104134762634,
+        "coverage_interval": [
+          0.1025632183908046,
+          0.12133584518071065
+        ],
+        "recovery_interval": [
+          0.49994718309859154,
+          0.5804394095250819
+        ]
+      },
+      "agreement_0.9": {
+        "cases": 11695,
+        "blocks": 434,
+        "accepted": 40,
+        "coverage": 0.003420265070542967,
+        "recovery": 0.6,
+        "coverage_interval": [
+          0.0023290126461220553,
+          0.0046014870745232205
+        ],
+        "recovery_interval": [
+          0.4478797763280522,
+          0.7381211180124224
+        ]
+      }
+    },
+    "20": {
+      "floor_1": {
+        "cases": 11695,
+        "blocks": 434,
+        "accepted": 11695,
+        "coverage": 1.0,
+        "recovery": 0.5320222317229585,
+        "coverage_interval": [
+          1.0,
+          1.0
+        ],
+        "recovery_interval": [
+          0.5203482526351052,
+          0.5427775944866776
+        ]
+      },
+      "floor_5": {
+        "cases": 11695,
+        "blocks": 434,
+        "accepted": 11695,
+        "coverage": 1.0,
+        "recovery": 0.5320222317229585,
+        "coverage_interval": [
+          1.0,
+          1.0
+        ],
+        "recovery_interval": [
+          0.5193346348310779,
+          0.5436213367286615
+        ]
+      },
+      "floor_20": {
+        "cases": 11695,
+        "blocks": 434,
+        "accepted": 11695,
+        "coverage": 1.0,
+        "recovery": 0.5320222317229585,
+        "coverage_interval": [
+          1.0,
+          1.0
+        ],
+        "recovery_interval": [
+          0.5200684559036092,
+          0.5438653648744873
+        ]
+      },
+      "shrinkage": {
+        "cases": 11695,
+        "blocks": 434,
+        "accepted": 11695,
+        "coverage": 1.0,
+        "recovery": 0.5634886703719538,
+        "coverage_interval": [
+          1.0,
+          1.0
+        ],
+        "recovery_interval": [
+          0.5525037736867493,
+          0.5739019237253123
+        ]
+      },
+      "agreement_0.5": {
+        "cases": 11695,
+        "blocks": 434,
+        "accepted": 8398,
+        "coverage": 0.718084651560496,
+        "recovery": 0.5951417004048583,
+        "coverage_interval": [
+          0.7083972046750994,
+          0.7258219157855783
+        ],
+        "recovery_interval": [
+          0.5770885206395764,
+          0.6129729977600835
+        ]
+      },
+      "agreement_0.7": {
+        "cases": 11695,
+        "blocks": 434,
+        "accepted": 3415,
+        "coverage": 0.29200513039760584,
+        "recovery": 0.6816983894582723,
+        "coverage_interval": [
+          0.27987379281783953,
+          0.30573284783177856
+        ],
+        "recovery_interval": [
+          0.6565442831518454,
+          0.7067475543113878
+        ]
+      },
+      "agreement_0.9": {
+        "cases": 11695,
+        "blocks": 434,
+        "accepted": 821,
+        "coverage": 0.0702009405728944,
+        "recovery": 0.8587088915956151,
+        "coverage_interval": [
+          0.06340582293093745,
+          0.0781081689456134
+        ],
+        "recovery_interval": [
+          0.8302649454532678,
+          0.8837493087289344
+        ]
+      }
+    }
+  },
+  "release_gate": {
+    "passed": false,
+    "reason": "Research diagnostic; no approved coverage tradeoff or field validation"
+  },
+  "limits": [
+    "Reference recovery is neither ecological correctness nor recording benefit",
+    "Only originally well-recorded cells supply full-input references",
+    "Dirichlet agreement is an uncalibrated model agreement score",
+    "Source counts may be rounded density-derived proxies, not individual records",
+    "Coverage is conditional on high-count reference cells and the declared thinning budgets, not national map coverage"
+  ],
+  "inputs": {
+    "index.json": "35e16b5b606d06bef8fc0e7c37488f5a0346399e72a32365d1b73060f8299494",
+    "webapp_data_All_biodiversity.json": "b3709ef244b8db16c5f857279be555ce0d4dc2f1ddc28af88f62aac21a6462b2",
+    "webapp_data_Actinopterygii.json": "e21200ec2be2ce8e7666d1b946b37623341cea593bf3f95d92717fe90ae3cfbd",
+    "webapp_data_Fungi.json": "e01e18cfcab4fa23c471803953a86de15dfdea76bf1a1472242ab74e1932fbe3",
+    "webapp_data_Amphibia.json": "24aeda67fd0ba9477eaccd8536232f20aa0bc5d02c530ebd81648288d0bd7bbf",
+    "webapp_data_Reptilia.json": "ce089b1749c5ac3b83573de850248018ee0ab3b9fd40c9dc450affc84428b3ea",
+    "webapp_data_Arachnida.json": "04c0a5f43ee80dd738916f65215f1338704d6e8a5213430cb811287b5e2f3e89",
+    "webapp_data_Insecta.json": "ceae8f1bc581d48d566919e4ca7ab02cfa6d7c9c4e3002688580dc58986b6cf9",
+    "webapp_data_Mollusca.json": "a2cfd878e5c1a9bfaa7090a32ae77d585b57238f23427a963964fa5ad6bfd188",
+    "webapp_data_Mammalia.json": "d33257f4d3ca9fca7e220207b5496e08ce0714f98681856fa2c163bf03eef64a",
+    "webapp_data_Plantae.json": "073151b791f47b1868ee485073b8c7626ed02b261a5a78821d78589ef961b4ec"
+  },
+  "richness_gate": {
+    "sidecar_sha256": "d8001e5a13100aa81ce0ceaced99cc58a048da809a3235b2ae516c68d8319bd2",
+    "mask": "gettingeven_gate_25000m.png",
+    "mask_sha256": "3f6786ecc961b27bb44d0f2114f7c785c082c9769697c785e9dd46cc552e2037",
+    "reference": "frozen published richness exclusions"
+  },
+  "evaluator_sha256": "51b6f7535cef01f7cbf70a94e4193f6281a52379095e4f366baa3fc7fd9d0c1c"
+}
