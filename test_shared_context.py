@@ -51,6 +51,7 @@ const loads=[],opened=[],steps=[];
 let zoom=3,overlay='priority',DRAWN5=null,_mapLoaded=true;
 var _sharedCell=null,_shareContext=false,_shareAction=0,_selectionSeq=0,_taxonSeq=0,_taxonPending=null,_overlayReady=Promise.resolve();
 var _committedTaxon='All biodiversity',_bootTaxon='All biodiversity';
+let GE_LOADED=false,_geLoading=false;
 let prospectSeq=0,_lastProspect=null;
 const refreshes=[];
 const DATA={'All biodiversity':[[49.3,-123.2,0]]};
@@ -110,7 +111,7 @@ document.createElement=()=>({dataset:{},appendChild(){},setAttribute(){}});
         script += _function(src, "clearSelection")
     if real_overlay:
         script += "\nconst OVERLAY_TOGGLE={coverage:'tgCoverage',gettingeven:'tgGettingEven',climate:'tgClimateGap'};"
-        script += "\nlet _overlaySeq=0;async function loadGE(){};"
+        script += "\nlet _overlaySeq=0;async function loadGE(){GE_LOADED=true;};"
         script += _function(src, "setOverlay")
     if controls:
         if "function refreshProspectGroup(" in src:

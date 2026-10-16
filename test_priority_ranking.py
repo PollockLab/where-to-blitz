@@ -23,7 +23,7 @@ def run_js(body):
     planner = source[source.index("async function planTrip()") : source.index("function tripRow(")]
     overlays = source[source.index("function setOverlay(") : source.index("// The 25 km lattice outline")]
     harness = r"""const assert=require("node:assert/strict");
-let markers=[],overlay="priority",failed=false,requests=0,maskOK=true,scoreOverlay="priority",_overlaySeq=0;
+let markers=[],overlay="priority",failed=false,requests=0,maskOK=true,scoreOverlay="priority",_overlaySeq=0,GE_LOADED=false,_geLoading=false;
 let maskData={us_cells:["77.190,-52.080"]};
 let table={innerHTML:"",querySelectorAll:()=>[]};
 let trips={innerHTML:"",textContent:""};
