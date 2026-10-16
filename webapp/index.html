@@ -307,7 +307,10 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
 /* #84: French strings run longer — widen these two elements (desktop only; the mobile rules above already size them) so the How-scored label, legend labels and notice don't wrap to extra lines. */
 @media(min-width:641px){html[lang=fr] #howbtn{max-width:none}html[lang=fr] #maplegend{max-width:320px}}
 .optional-cell{display:block;width:100%;text-align:left;margin:4px 0;padding:7px 8px;border:1px solid #d4dde6;border-radius:7px;background:#f4f7fa;color:var(--ink);font:inherit;font-size:12.5px;cursor:pointer;white-space:pre-line;overflow-wrap:anywhere}
-.optional-cell:hover,.optional-cell:focus-visible{border-color:var(--acc);outline:2px solid var(--acc);outline-offset:-2px}
+.optional-pagination{display:flex;gap:8px;margin:8px 0}
+.optional-pagination button{flex:1;white-space:normal;min-height:44px;padding:7px 8px;border:1px solid #d4dde6;border-radius:7px;background:#f4f7fa;color:var(--ink);font:inherit;font-size:12.5px;cursor:pointer}
+.optional-pagination button[aria-disabled=true]{opacity:.5;cursor:default}
+.optional-cell:hover,.optional-cell:focus-visible,.optional-pagination button:focus-visible{border-color:var(--acc);outline:2px solid var(--acc);outline-offset:-2px}
 #discoveryCells,#recentChallengeList,#recentChallengeOmissionList{max-height:260px;overflow-y:auto}
 #discoveryEvidence summary,#recentChallengePanel summary{font-size:13px;cursor:pointer;margin:8px 0 5px}
 .optional-status{font-size:11.5px;line-height:1.45;color:var(--mut);overflow-wrap:anywhere}
@@ -344,7 +347,14 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
   <div id="challengeBlurb" style="font-size:11.5px;line-height:1.4;color:var(--mut);margin:-4px 0 8px"></div>
   <div id="goalnote" role="status" data-i18n="goal_inactive" style="display:none;font-size:11.5px;line-height:1.4;color:var(--mut);margin:-4px 0 8px">The map is showing iNaturalist records. Pick a goal to go back to the goal map.</div>
   </div>
-  <details id="discoveryEvidence" hidden><summary data-i18n="discovery_cells">Measured cells in this view</summary><div id="discoveryCells"></div></details>
+  <details id="discoveryEvidence" hidden><summary data-i18n="discovery_cells">Measured cells in this view</summary>
+    <label for="discoveryCellFilter" class="optional-status" data-i18n="discovery_filter">Show measured cells</label>
+    <select id="discoveryCellFilter" class="full"><option value="all" data-i18n="discovery_filter_all">All measured cells</option><option value="positive" data-i18n="discovery_filter_positive">With supplied points</option><option value="zero" data-i18n="discovery_filter_zero">Zero supplied points</option></select>
+    <p id="discoveryCellStatus" class="optional-status" role="status" aria-live="polite"></p>
+    <p class="optional-status" data-i18n="discovery_list_order">Highest historical rates first, equal rates in grid order.</p>
+    <div id="discoveryCells"></div>
+    <div class="optional-pagination"><button id="discoveryPrevious" type="button" data-i18n="discovery_previous">Previous cells</button><button id="discoveryNext" type="button" data-i18n="discovery_next">Next cells</button></div>
+  </details>
   <div id="recentChallengePanel" hidden>
     <label class="toggle"><input type="checkbox" id="recentChallenge"> <span data-i18n="recent_challenge">Recent challenge sightings</span></label>
     <p id="recentChallengeStatus" class="optional-status" role="status"></p>
@@ -471,6 +481,10 @@ const I18N={
   en:{
     discovery_rate:"Measured discovery rate", discovery_cells:"Measured cells in this view",
     discovery_loading:"Loading historical discovery evidence…",
+    discovery_filter:"Show measured cells", discovery_filter_all:"All measured cells", discovery_filter_positive:"With supplied points", discovery_filter_zero:"Zero supplied points",
+    discovery_list_scope:(start,end,total,all)=>`Showing ${start} to ${end} of ${total} matching cells in this view (${all} measured cells).`,
+    discovery_list_order:"Highest historical rates first, equal rates in grid order.", discovery_list_empty:"No cells match this filter in this view.",
+    discovery_previous:"Previous cells", discovery_next:"Next cells",
     map_display:"Map display", priority_map:"Recording priorities", historical_map:"Historical discovery evidence",
     historical_scope:(period,group)=>`${period} · ${group}. Switch to recording priorities to choose a goal or species group.`,
     map_filters:"Map controls", close_filters:"Done", source_details:"Source and limits", challenge_list_details:"About the target list", snapshot_details:"Snapshot details",
@@ -705,6 +719,10 @@ const I18N={
   fr:{
     discovery_rate:"Taux de découverte mesuré", discovery_cells:"Cellules mesurées dans cette vue",
     discovery_loading:"Chargement des données historiques de découverte…",
+    discovery_filter:"Afficher les cellules mesurées", discovery_filter_all:"Toutes les cellules mesurées", discovery_filter_positive:"Avec des points fournis", discovery_filter_zero:"Aucun point fourni",
+    discovery_list_scope:(start,end,total,all)=>`Cellules ${start} à ${end} sur ${total} correspondantes dans cette vue (${all} cellules mesurées).`,
+    discovery_list_order:"Taux historiques décroissants, puis ordre de la grille à taux égal.", discovery_list_empty:"Aucune cellule ne correspond au filtre dans cette vue.",
+    discovery_previous:"Cellules précédentes", discovery_next:"Cellules suivantes",
     map_display:"Affichage de la carte", priority_map:"Priorités d'observation", historical_map:"Découvertes historiques",
     historical_scope:(period,group)=>`${period} · ${group}. Passez aux priorités d'observation pour choisir un objectif ou un groupe.`,
     map_filters:"Réglages", close_filters:"Terminé", source_details:"Source et limites", challenge_list_details:"À propos de la liste", snapshot_details:"Détails des observations publiées",
@@ -1697,7 +1715,7 @@ function localizeMapControls(){
 }
 function popupFocusOrigin(){
   const element=document.activeElement,row=element&&element.closest&&element.closest('#celltable tr[data-la]');
-  return {element:element,row:row?{lat:row.dataset.la,lon:row.dataset.lo}:null};
+  return {element:element,row:row?{lat:row.dataset.la,lon:row.dataset.lo}:null,discoveryCell:element?.dataset?.discoveryCell||null};
 }
 function focusPopupTarget(el){
   if(!el||!el.isConnected||typeof el.focus!=='function'||!el.getClientRects().length)return false;
@@ -1706,6 +1724,10 @@ function focusPopupTarget(el){
 }
 function restorePopupFocus(origin){
   if(focusPopupTarget(origin.element))return;
+  if(origin.discoveryCell&&globalThis.optionalLayers?.isDiscovery()){
+    const list=document.getElementById('discoveryCells'),cell=list&&Array.from(list.children).find(el=>el.dataset.discoveryCell===origin.discoveryCell);
+    if(focusPopupTarget(cell)||focusPopupTarget(document.getElementById('discoveryCellFilter')))return;
+  }
   const table=document.getElementById('celltable');
   if(origin.row&&table){
     const row=Array.from(table.querySelectorAll('tr[data-la]')).find(el=>el.dataset.la===origin.row.lat&&el.dataset.lo===origin.row.lon);
