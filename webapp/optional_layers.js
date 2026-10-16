@@ -136,7 +136,9 @@ function installOptionalLayers(){
     }
     ensureSource('measured-discovery','fill',{'fill-color':['get','colour'],'fill-opacity':0.65,'fill-outline-color':'rgba(255,255,255,0.15)'});
     map.setLayoutProperty('measured-discovery','visibility','visible');
-    const res=activeCellResM(),rows=visibleDiscovery();
+    // Coarse support is bounded nationally. Projecting a wrapped viewport's
+    // corners can miss most of Canada, so let the map clip this small tier.
+    const res=activeCellResM(),rows=res===25000?[...indices[res].values()]:visibleDiscovery();
     const features=rows.map(row=>{
       const x=LATTICE_X0+row[1]*res,y=LATTICE_Y1-row[0]*res;
       const ring=[[x,y],[x+res,y],[x+res,y-res],[x,y-res],[x,y]].map(p=>{const ll=LAEA.inv(...p);return[ll[1],ll[0]];});
@@ -145,14 +147,19 @@ function installOptionalLayers(){
     map.getSource('measured-discovery').setData({type:'FeatureCollection',features});
     if(res===5000)DRAWN5=new Set(rows.map(r=>r[1]+','+r[0]));
     const list=node('discoveryCells');
-    const ranked=rows.slice().sort((a,b)=>b[4]-a[4]||a[0]-b[0]||a[1]-b[1]).slice(0,30);
+    const [west,south,east,north]=bounds();
+    const inView=rows.filter(row=>{
+      const [lat,lon]=LAEA.inv(LATTICE_X0+(row[1]+0.5)*res,LATTICE_Y1-(row[0]+0.5)*res);
+      return lat>=south&&lat<=north&&(west<=east?lon>=west&&lon<=east:lon>=west||lon<=east);
+    });
+    const ranked=inView.sort((a,b)=>b[4]-a[4]||a[0]-b[0]||a[1]-b[1]).slice(0,30);
     renderButtons(list,ranked,'discoveryCell',row=>res+':'+row[0]+','+row[1],(button,row)=>{
       const ll=LAEA.inv(LATTICE_X0+(row[1]+0.5)*res,LATTICE_Y1-(row[0]+0.5)*res);
       button.textContent=ll[0].toFixed(2)+', '+ll[1].toFixed(2)+' · '+fmt(row[4])+' / 10 000';
       button.setAttribute('aria-label',button.textContent+' '+discoveryUnit()+'. '+discoveryCounts(fmt(row[2]),fmt(row[3])));
       button.onclick=()=>exploreCell(ll[0],ll[1]);
     });
-    if(!rows.length)list.textContent=t('discovery_unavailable');
+    if(!ranked.length)list.textContent=t('discovery_unavailable');
   }
   function discoveryLegend(){
     return '<div class="lt">'+t('discovery_rate')+'</div><div class="ramp"></div><div class="lab"><span>0</span><span>'+fmt(maxRate)+'</span></div><div class="hint">'+discoveryUnit()+'</div><div class="hint">'+sourceText()+'</div><div class="hint">'+t(discoveryError?'optional_error':'discovery_blurb')+'</div>';

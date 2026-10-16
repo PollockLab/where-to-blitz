@@ -238,7 +238,7 @@ def test_measured_rate_shared_link_cannot_label_another_taxon_group():
     assert result["params"]["g"] == "Fungi" and result["params"]["goal"] == "0"
 
 
-def sighting_lifecycle(action, discovery_product=None, snapshot=None, start_recent=True):
+def sighting_lifecycle(action, discovery_product=None, snapshot=None, start_recent=True, cell_res=None):
     """Replay real popup wiring, list reconciliation and synchronous map move events."""
     from test_shared_context import _function
 
@@ -276,7 +276,7 @@ const canvas=new Element('canvas',true),language=new Element('language',true);
 let curPopup=null,_reselect=false,destMarker=null,destCell=null,_mapLoaded=true,_shareAction=0,overlay='priority',LANG='en';
 const state={view:'explore',taxon:'All biodiversity'},OPTIONAL_LAYERS={discovery:input.discovery?{taxon_group:'All biodiversity',scope:input.discovery.scope,metric:input.discovery.metric}:null,challenge:{}};
 const syncSharedCellUrl=()=>{},localizeMapControls=()=>{};
-const whenMap=fn=>fn(),clearSelection=()=>{},activeCellResM=()=>input.discovery?5000:25000;
+const whenMap=fn=>fn(),clearSelection=()=>{},activeCellResM=()=>input.cellRes||(input.discovery?5000:25000);
 const LATTICE_X0=-2150000,LATTICE_Y1=4300000,LATTICE_W=5500000,LATTICE_H=4525000;
 const LAEA={fwd:()=>[-150000,2300000],inv:()=>[45,-75]},virColour=()=> 'rgb(1,2,3)',snapToLattice=()=>({row:400,col:400});let DRAWN5=null;
 function exploreCell(){const origin=document.activeElement;map.jumpTo({});originAtExplore=origin;return true;}
@@ -284,7 +284,7 @@ let originAtExplore=null;
 let viewportBounds=[-90,40,-60,50];
 const map={getCanvas:()=>canvas,getBounds:()=>({getWest:()=>viewportBounds[0],getEast:()=>viewportBounds[2],getSouth:()=>viewportBounds[1],getNorth:()=>viewportBounds[3]}),
  getZoom:()=>7,getSource:id=>map.sources[id],getLayer:id=>map.sources[id],sources:{},
- addSource(id){this.sources[id]={setData(){}};},addLayer(){},setLayoutProperty(){},queryRenderedFeatures:()=>[],
+ addSource(id){this.sources[id]={setData(data){this.data=data;}};},addLayer(){},setLayoutProperty(){},queryRenderedFeatures:()=>[],
  on(event,...args){handlers[event]=args.at(-1);},jumpTo(){handlers.moveend();}};
 const maplibregl={Popup:class{
  constructor(options){this.options=options;this.handlers={};this.root=new Element('popup',true);this.close=new Element('close');this.root.append(this.close);}
@@ -322,7 +322,12 @@ OptionalData.fetchPinned=async(_descriptor,kind)=>kind==='discovery'?input.disco
     if snapshot is None:
         snapshot = challenge.acquire(CONFIG, FixtureAPI([observation(1), observation(2, 20)]), AS_OF)
     result = subprocess.run(
-        ["node", "-e", script, json.dumps({"snapshot": snapshot, "discovery": discovery_product})],
+        [
+            "node",
+            "-e",
+            script,
+            json.dumps({"snapshot": snapshot, "discovery": discovery_product, "cellRes": cell_res}),
+        ],
         capture_output=True,
         text=True,
     )
@@ -587,3 +592,34 @@ def test_subset_coverage_is_only_exposed_after_the_pinned_snapshot_is_loaded():
         start_recent=False,
     )
     assert result == {"before": True, "after": False}
+
+
+def test_national_discovery_renders_every_supported_coarse_cell_under_wrapped_canada_bounds(tmp_path):
+    product = rate_product(tmp_path)
+    product["tiers"]["25000"]["cells"] = [
+        [index // 220, index % 220, 1, 10, 1000, 25, 25] for index in range(5997)
+    ]
+    result = sighting_lifecycle(
+        "overlay='discovery';await optionalLayers.load();viewportBounds=[164.362842,41,2.637158,84];"
+        "optionalLayers.refresh();const canada={features:map.sources['measured-discovery'].data.features.length,"
+        "buttons:nodes.discoveryCells.children.length};"
+        "viewportBounds=[10,40,20,50];handlers.moveend();"
+        "console.log(JSON.stringify({canada,outsideFeatures:map.sources['measured-discovery'].data.features.length,"
+        "outsideButtons:nodes.discoveryCells.children.length,outsideText:nodes.discoveryCells.textContent}));",
+        product,
+        cell_res=25000,
+    )
+    assert result["canada"] == {"features": 5997, "buttons": 30}
+    assert result["outsideFeatures"] == 5997 and result["outsideButtons"] == 0
+    assert "No measured rate with complete observation support" in result["outsideText"]
+
+
+def test_fine_discovery_keeps_bounded_rendering_and_viewport_scoped_accessible_cells(tmp_path):
+    result = sighting_lifecycle(
+        "overlay='discovery';await optionalLayers.load();optionalLayers.refresh();"
+        "const inside=nodes.discoveryCells.children.length;viewportBounds=[10,40,20,50];handlers.moveend();"
+        "console.log(JSON.stringify({inside,features:map.sources['measured-discovery'].data.features.length,"
+        "outside:nodes.discoveryCells.children.length}));",
+        rate_product(tmp_path),
+    )
+    assert result == {"inside": 1, "features": 1, "outside": 0}
