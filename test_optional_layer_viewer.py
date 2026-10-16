@@ -238,7 +238,7 @@ def test_measured_rate_shared_link_cannot_label_another_taxon_group():
     assert result["params"]["g"] == "Fungi" and result["params"]["goal"] == "0"
 
 
-def sighting_lifecycle(action, discovery_product=None):
+def sighting_lifecycle(action, discovery_product=None, snapshot=None):
     """Replay real popup wiring, list reconciliation and synchronous map move events."""
     from test_shared_context import _function
 
@@ -279,7 +279,8 @@ const LATTICE_X0=-2150000,LATTICE_Y1=4300000,LATTICE_W=5500000,LATTICE_H=4525000
 const LAEA={fwd:()=>[-150000,2300000],inv:()=>[45,-75]},virColour=()=> 'rgb(1,2,3)';let DRAWN5=null;
 function exploreCell(){const origin=document.activeElement;map.jumpTo({});originAtExplore=origin;return true;}
 let originAtExplore=null;
-const map={getCanvas:()=>canvas,getBounds:()=>({getWest:()=>-90,getEast:()=>-60,getSouth:()=>40,getNorth:()=>50}),
+let viewportBounds=[-90,40,-60,50];
+const map={getCanvas:()=>canvas,getBounds:()=>({getWest:()=>viewportBounds[0],getEast:()=>viewportBounds[2],getSouth:()=>viewportBounds[1],getNorth:()=>viewportBounds[3]}),
  getZoom:()=>7,getSource:id=>map.sources[id],getLayer:id=>map.sources[id],sources:{},
  addSource(id){this.sources[id]={setData(){}};},addLayer(){},setLayoutProperty(){},queryRenderedFeatures:()=>[],
  on(event,...args){handlers[event]=args.at(-1);},jumpTo(){handlers.moveend();}};
@@ -314,7 +315,8 @@ OptionalData.fetchPinned=async(_descriptor,kind)=>kind==='discovery'?input.disco
         + action
         + "})().catch(e=>{console.error(e);process.exit(1);});"
     )
-    snapshot = challenge.acquire(CONFIG, FixtureAPI([observation(1), observation(2, 20)]), AS_OF)
+    if snapshot is None:
+        snapshot = challenge.acquire(CONFIG, FixtureAPI([observation(1), observation(2, 20)]), AS_OF)
     result = subprocess.run(
         ["node", "-e", script, json.dumps({"snapshot": snapshot, "discovery": discovery_product})],
         capture_output=True,
@@ -412,3 +414,32 @@ def test_measured_cell_buttons_keep_identity_and_capture_keyboard_invoker_before
         "mapStayed": True,
         "controlStayed": True,
     }
+
+
+@pytest.mark.parametrize(
+    "bounds,minimum,maximum",
+    [
+        ([-76, 44, -74, 46], 157, 158),
+        ([-80, 44, -70, 46], 785, 787),
+        ([178, 40, -178, 50], 314, 315),
+        ([-180, 40, 180, 60], 10000, 40000),
+        ([-75, 44, -75, 46], 0, 0),
+    ],
+)
+def test_viewport_width_uses_ground_distance_and_handles_wrapping(bounds, minimum, maximum):
+    result = run_js(
+        "console.log(JSON.stringify(OptionalData.viewportWidthKm(JSON.parse(process.argv[1]))));", bounds
+    )
+    assert minimum <= result <= maximum
+
+
+def test_challenge_cap_tracks_viewport_ground_width_instead_of_zoom():
+    rows = [observation(i, 10 if i % 2 else 20) for i in range(1, 621)]
+    snapshot = challenge.acquire(CONFIG, FixtureAPI(rows), AS_OF)
+    result = sighting_lifecycle(
+        "viewportBounds=[-80,44,-70,46];handlers.moveend();const broad=nodes.recentChallengeList.children.length;"
+        "viewportBounds=[-76,44,-74,46];handlers.moveend();const local=nodes.recentChallengeList.children.length;"
+        "console.log(JSON.stringify({zoom:map.getZoom(),broad,local}));",
+        snapshot=snapshot,
+    )
+    assert result == {"zoom": 7, "broad": 500, "local": 150}

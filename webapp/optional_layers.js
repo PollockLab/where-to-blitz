@@ -5,6 +5,14 @@ const OptionalData={
     const wrap=x=>((x+180)%360+360)%360-180;
     return east-west>=360?[-180,south,180,north]:[wrap(west),south,wrap(east),north];
   },
+  viewportWidthKm(bounds){
+    const [west,south,east,north]=bounds,radians=Math.PI/180,latitude=(south+north)*radians/2;
+    const span=east>=west?east-west:east+360-west,segments=Math.max(1,Math.ceil(span/90));
+    // Split wide and whole-world extents so the shortest endpoint arc cannot
+    // mistake a wrapped national view for a narrow local view.
+    const half=Math.sin(span*radians/(2*segments)),a=Math.min(1,Math.cos(latitude)**2*half**2);
+    return segments*2*6371*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+  },
   selectChallenge(snapshot,bounds,national=false){
     const groups=new Map(),[west,south,east,north]=bounds;
     for(const row of snapshot.observations){
@@ -164,7 +172,7 @@ function installOptionalLayers(){
     if(!recentOn||!cache.challenge){if(map.getLayer('recent-challenge'))map.setLayoutProperty('recent-challenge','visibility','none');return;}
     ensureSource('recent-challenge','circle',{'circle-radius':6,'circle-color':'#d96c14','circle-stroke-width':2,'circle-stroke-color':'#fff'});
     map.setLayoutProperty('recent-challenge','visibility','visible');
-    const snapshot=cache.challenge,rows=OptionalData.selectChallenge(snapshot,bounds(),map.getZoom()<5);
+    const snapshot=cache.challenge,view=bounds(),rows=OptionalData.selectChallenge(snapshot,view,OptionalData.viewportWidthKm(view)>500);
     const features=rows.map(row=>({type:'Feature',properties:{id:row.id},geometry:{type:'Point',coordinates:[row.longitude,row.latitude]}}));
     map.getSource('recent-challenge').setData({type:'FeatureCollection',features});
     status.textContent=t('recent_challenge_status',snapshot.window.start,snapshot.window.end,snapshot.as_of,rows.length)+(OptionalData.stale(snapshot.as_of)?' '+t('optional_stale'):'');
