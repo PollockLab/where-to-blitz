@@ -164,6 +164,8 @@ details.adv>summary:hover{color:var(--ink)}
 .popgrid .bdg.rare{background:#f2c200;color:#3a2a00}
 .popgrid img{box-sizing:border-box;width:100%;height:112px;object-fit:contain;border-radius:7px;border:1px solid #cdd;display:block;background:#f0f3f0}
 .popgrid .nm{font-size:12px;line-height:1.25;overflow-wrap:anywhere}
+.species-scientific{font-size:11px;line-height:1.3;font-style:italic;overflow-wrap:anywhere;color:#46566a}
+.species-external{font-size:11px;margin-left:3px}
 .popgrid .ct{font-size:11px;line-height:1.3;color:#667;margin-top:2px;overflow-wrap:anywhere}
 .popgrid .ct span{display:block}
 .popcap{font-size:11px;line-height:1.3;color:#667;margin-top:6px}
@@ -250,6 +252,9 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
 #maplegend .lab span:first-child::before{left:0}
 #maplegend .lab span:last-child::before{right:0}
 #maplegend .hint{margin-top:3px;color:#46566a;font-size:10.5px}/* #82: two sizes under the .lab labels (12.5px) */
+#maplegend .map-context{font-size:11px;line-height:1.3;color:#46566a;margin-bottom:5px;overflow-wrap:anywhere}
+#maplegend .recent-map-key{display:block;margin-top:3px;font-size:10.5px}
+#maplegend .recent-map-key::before{content:"";display:inline-block;width:7px;height:7px;margin-right:4px;border-radius:50%;background:#d96c14}
 .maplibregl-ctrl-bottom-left{left:14px;bottom:14px;z-index:1060}
 .maplibregl-ctrl-attrib a{text-decoration:underline}   /* link-in-text-block: colour alone does not separate them from the surrounding text */
 #map .maplibregl-ctrl-attrib{color:#263742;background:rgba(255,255,255,.96)}
@@ -523,6 +528,8 @@ const I18N={
     discovery_cell_label:n=>`Cell ${n}`, discovery_near_place:place=>`Near ${place}`,
     recent_challenge_all_groups:"All species groups", recent_challenge_shown:(shown,total,cap)=>`${shown} of ${total} matching sightings shown (limit ${cap}, different species first)`,
     recent_challenge_positions:n=>`Reported locations: ${n}`, sighting_position_progress:(index,total)=>`Sighting ${index} of ${total} at this position`, sighting_previous:"Previous sighting", sighting_next:"Next sighting",
+    map_context:(mode,group,tier)=>`${mode}${group?' · '+group:''} · ${tier} km cells`, recent_map_key:"Challenge sightings, all groups",
+    species_page_label:name=>`${name}, species page on iNaturalist, opens in a new tab`, species_page_hint:"Species cards open their iNaturalist pages in a new tab.",
     recent_updated_today:"Updated today", recent_updated_yesterday:"Updated yesterday", recent_updated_days:n=>`Updated ${n} days ago`, recent_exact_refresh:"Published snapshot",
     photo_credit:"Photo", photo_reference:"Species reference photo, not this sighting",
     discovery_unit:"discovery events per 10,000 observations", discovery_period:(start,end)=>`Observation period: ${start} to ${end}`,
@@ -771,6 +778,8 @@ const I18N={
     discovery_cell_label:n=>`Cellule ${n}`, discovery_near_place:place=>`Près de ${place}`,
     recent_challenge_all_groups:"Tous les groupes d'espèces", recent_challenge_shown:(shown,total,cap)=>`${shown} des ${total} observations affichées (limite ${cap}, espèces différentes en priorité)`,
     recent_challenge_positions:n=>`Emplacements signalés : ${n}`, sighting_position_progress:(index,total)=>`Observation ${index} sur ${total} à cet emplacement`, sighting_previous:"Observation précédente", sighting_next:"Observation suivante",
+    map_context:(mode,group,tier)=>`${mode}${group?' · '+group:''} · cellules de ${tier} km`, recent_map_key:"Observations du Défi, tous groupes",
+    species_page_label:name=>`${name}, fiche d'espèce sur iNaturalist, s'ouvre dans un nouvel onglet`, species_page_hint:"Les fiches d'espèces s'ouvrent sur iNaturalist dans un nouvel onglet.",
     recent_updated_today:"Mis à jour aujourd'hui", recent_updated_yesterday:"Mis à jour hier", recent_updated_days:n=>`Mis à jour il y a ${n} jours`, recent_exact_refresh:"Données publiées",
     photo_credit:"Photo", photo_reference:"Photo de référence de l'espèce, pas de cette observation",
     discovery_unit:"découvertes pour 10 000 observations", discovery_period:(start,end)=>`Période des observations : ${start} au ${end}`,
@@ -1605,13 +1614,16 @@ async function fetchProspects(lat,lon,whereKey,opts){
     if(!pilot)res.sort((a,b)=>((a._here?1:0)-(b._here?1:0))||(share(a)-share(b))||(a.reg-b.reg));
     const badge=r=>r._here?(r._near!==null&&r._near<=3?`<span class="rare">${L_rare}</span>`:''):`<span class="first">${L_new}</span>`;
     const ctline=r=>`${r._here?T_here(r.count):L_notHere}${r._near===null?'':' · '+T_near(r._near)}`;
+    const scientific=tx=>tx.preferred_common_name&&tx.preferred_common_name!==tx.name?'<div class="species-scientific">'+esc(tx.name)+'</div>':'';
+    const destinationId=toPopup?'popup-species-destination':'start-species-destination';
+    const destination='<div id="'+destinationId+'" class="popcap">'+t('species_page_hint')+'</div>';
     if(toPopup){
       // Keep all four candidates in their existing order; two columns leave names and counts readable.
       const pbadge=r=>r._here?(r._near!==null&&r._near<=3?`<span class="bdg rare">${L_rare}</span>`:''):`<span class="bdg new">${L_notHere}</span>`;
       const pcount=r=>(r._here?'<span>'+T_here(r.count)+'</span>':'')+(r._near===null?'':'<span>'+T_near(r._near)+'</span>');
       const basis=r=>r._pilot?'<div class="ct">'+t('pilot_basis',r._pilot.habitat.toLocaleString(LANG==='fr'?'fr-CA':'en-CA',{maximumFractionDigits:2}),r._pilot.season.toLocaleString(LANG==='fr'?'fr-CA':'en-CA',{maximumFractionDigits:2}))+'</div>':'';
-      pr.innerHTML='<div class="popsec">'+t(pilot?'pop_plant_pilot_hd':'pop_rare_hd')+'</div>'+method+'<div class="popgrid">'+res.slice(0,4).map(r=>{const tx=r.taxon;
-        return `<a href="https://www.inaturalist.org/taxa/${tx.id}" target="_blank" rel="noopener" title="${esc(tx.name)}"><img src="${safeImg(tx.default_photo.medium_url)||safeImg(tx.default_photo.square_url)}" data-fallback="${safeImg(tx.default_photo.square_url)}" onerror="this.onerror=null;if(this.dataset.fallback)this.src=this.dataset.fallback" loading="lazy" alt=""><div class="popsptext"><div class="nm">${esc(tx.preferred_common_name||tx.name)}</div>${pbadge(r)}<div class="ct">${pcount(r)}</div>${basis(r)}</div></a>`;}).join('')+'</div>'+cap+caveat+
+      pr.innerHTML='<div class="popsec">'+t(pilot?'pop_plant_pilot_hd':'pop_rare_hd')+'</div>'+destination+method+'<div class="popgrid">'+res.slice(0,4).map(r=>{const tx=r.taxon;
+        return `<a href="https://www.inaturalist.org/taxa/${tx.id}" target="_blank" rel="noopener" title="${esc(t('species_page_label',tx.name))}" aria-describedby="${destinationId}"><img src="${safeImg(tx.default_photo.medium_url)||safeImg(tx.default_photo.square_url)}" data-fallback="${safeImg(tx.default_photo.square_url)}" onerror="this.onerror=null;if(this.dataset.fallback)this.src=this.dataset.fallback" loading="lazy" alt=""><div class="popsptext"><div class="nm">${esc(tx.preferred_common_name||tx.name)}<span class="species-external" aria-hidden="true">↗</span></div>${scientific(tx)}${pbadge(r)}<div class="ct">${pcount(r)}</div>${basis(r)}</div></a>`;}).join('')+'</div>'+cap+caveat+
         '<details class="popdetails" data-prospect-support><summary>'+t('support_heading')+'</summary><p>'+t(pilot?'pilot_support_why':'support_why')+'</p><div data-support-body aria-live="polite"></div></details>';
       wireProspectSupport(pr,res.slice(0,4),regionalUrl,current,lat,lon);
       return;
@@ -1619,8 +1631,8 @@ async function fetchProspects(lat,lon,whereKey,opts){
     res=res.slice(0,6);
     const ex=`https://www.inaturalist.org/observations?subview=map&swlat=${lat-HH}&nelat=${lat+HH}&swlng=${lon-HH}&nelng=${lon+HH}&quality_grade=research`;
     pr.innerHTML=`<div class="hd">${t('prospects_hd','<b style="color:var(--ink)">'+(where||t('here'))+'</b>',(totalKnown?'':'≥')+total.toLocaleString(LANG==='fr'?'fr-CA':'en-CA'),nearby)}</div>`+
-      '<div class="prospects">'+res.map(r=>{const tx=r.taxon;
-        return `<a class="sp" href="https://www.inaturalist.org/taxa/${tx.id}" target="_blank" rel="noopener" title="${esc(tx.name)}"><img src="${safeImg(tx.default_photo.square_url)}" loading="lazy" alt=""><div class="nm">${esc(tx.preferred_common_name||tx.name)}${badge(r)}</div><div class="ct">${ctline(r)}</div></a>`;}).join('')+'</div>'+
+      destination+'<div class="prospects">'+res.map(r=>{const tx=r.taxon;
+        return `<a class="sp" href="https://www.inaturalist.org/taxa/${tx.id}" target="_blank" rel="noopener" title="${esc(t('species_page_label',tx.name))}" aria-describedby="${destinationId}"><img src="${safeImg(tx.default_photo.square_url)}" loading="lazy" alt=""><div class="nm">${esc(tx.preferred_common_name||tx.name)}<span class="species-external" aria-hidden="true">↗</span>${badge(r)}</div>${scientific(tx)}<div class="ct">${ctline(r)}</div></a>`;}).join('')+'</div>'+
       cap+caveat+
       `<div style="margin-top:7px;font-size:11px"><a href="${ex}" target="_blank" rel="noopener" style="color:var(--acc)">${t('explore_all')}</a> &nbsp;·&nbsp; <a href="https://www.inaturalist.org/observations/new" target="_blank" rel="noopener" style="color:var(--gd)">${t('log_sighting')}</a> &nbsp;·&nbsp; <a href="https://www.inaturalist.org/projects/${state.project}" target="_blank" rel="noopener" style="color:var(--mut)">${t('for_challenge')}</a></div>`;
   }catch(e){
@@ -1990,6 +2002,21 @@ function recolour(){
 // The viewport-relative repaint lives on the moveend handler below, next to the 5 km rebuild.
 // Swap #maplegend between the priority ramp (default) and a categorical Getting Even legend. Pale swatches get a 1px #ccc border.
 let GE_PRIORITY_LEGEND=null;
+function mapContextText(){
+  const historical=globalThis.optionalLayers?.isDiscovery(),mode=historical?t('historical_map'):geActive()?t('crit_ge'):climateOn()?t('crit_climate'):covOn()?t('density_name'):presetName(window.__activePreset||0);
+  const grouped=PRESETS[window.__activePreset||0].w.some((weight,i)=>weight>0&&['discover','staleness'].includes(OBJ[i].key));
+  const group=historical?groupName(globalThis.optionalLayers.group()):overlay==='priority'?groupName(grouped?state.taxon:'All biodiversity'):covOn()?groupName(COVPM.includes(state.taxon)?state.taxon:'All biodiversity'):'';
+  return t('map_context',mode,group,activeCellResM()/1000);
+}
+function paintMapContext(){
+  const legend=document.getElementById('maplegend');if(!legend)return;
+  let context=legend.querySelector('#mapcontext');
+  if(!context){context=document.createElement('div');context.id='mapcontext';context.className='map-context';legend.prepend(context);}
+  context.textContent=mapContextText();
+  if(globalThis.optionalLayers?.recentReady?.()){
+    const key=document.createElement('span');key.className='recent-map-key';key.textContent=t('recent_map_key');context.append(key);
+  }
+}
 // Legend low/high labels follow the dominant goal so they stay accurate per preset
 // (e.g. Conservation -> "no at-risk .. many at-risk", Species discovery -> "recently recorded .. long overdue").
 function updateLegendLabels(){const ml=document.getElementById('maplegend');if(!ml||geActive()||covOn())return;
@@ -2003,22 +2030,23 @@ function updateLegendLabels(){const ml=document.getElementById('maplegend');if(!
   if(sc)sc.textContent=t(STRETCH?'legend_scope_view':'legend_scope_ca');}
 function updateLegend(){
   const ml=document.getElementById('maplegend');if(!ml)return;
+  const paint=html=>{ml.innerHTML=html;globalThis.refreshMapContext?.();};
   if(GE_PRIORITY_LEGEND===null)GE_PRIORITY_LEGEND=ml.innerHTML;   // capture the as-built priority legend once
-  if(globalThis.optionalLayers&&globalThis.optionalLayers.isDiscovery()){ml.innerHTML=_discoveryLoading?'<div class="hint" role="status">'+t('discovery_loading')+'</div>':globalThis.optionalLayers.discoveryLegend();return;}
+  if(globalThis.optionalLayers&&globalThis.optionalLayers.isDiscovery()){paint(_discoveryLoading?'<div class="hint" role="status">'+t('discovery_loading')+'</div>':globalThis.optionalLayers.discoveryLegend());return;}
   if(geActive()){
-    if(_geLoading){ml.innerHTML='<div class="hint" role="status">'+t('ge_loading')+'</div>';return;}
+    if(_geLoading){paint('<div class="hint" role="status">'+t('ge_loading')+'</div>');return;}
     const sw=(c,lab)=>`<div style="display:flex;align-items:center;gap:6px;margin:2px 0"><span style="width:13px;height:13px;border-radius:3px;background:${c};border:1px solid #ccc;flex:none"></span><span>${lab}</span></div>`;
-    ml.innerHTML='<div class="lt">'+t('getting_even')+'</div>'+
-      t('ge_cats').map((nm,i)=>sw(GE_PAL[i],nm)).join('')+sw(GE_ALL,t('ge_all'));
+    paint('<div class="lt">'+t('getting_even')+'</div>'+
+      t('ge_cats').map((nm,i)=>sw(GE_PAL[i],nm)).join('')+sw(GE_ALL,t('ge_all')));
   }else if(covOn()){
     // The density overlay is a magma raster of iNaturalist record density, not the priority ramp — show its own scale.
-    ml.innerHTML='<div class="ramp magma"></div><div class="lab"><span>'+t('density_low')+'</span><span>'+t('density_high')+'</span></div><div class="hint">'+t('density_legend_hint')+'</div><div class="hint">'+t('density_obscured_hint')+'</div>';
+    paint('<div class="ramp magma"></div><div class="lab"><span>'+t('density_low')+'</span><span>'+t('density_high')+'</span></div><div class="hint">'+t('density_legend_hint')+'</div><div class="hint">'+t('density_obscured_hint')+'</div>');
   }else if(climateOn()){
     // Climate Gap is a raster baked outside this repo, so its ramp is neither of the two above:
     // name the layer and say what the brightness means rather than paint a swatch we cannot verify.
-    ml.innerHTML='<div class="lt">'+t('climate_gap')+'</div><div class="hint">'+t('climate_legend_hint')+'</div>';
+    paint('<div class="lt">'+t('climate_gap')+'</div><div class="hint">'+t('climate_legend_hint')+'</div>');
   }else{
-    ml.innerHTML=GE_PRIORITY_LEGEND;
+    paint(GE_PRIORITY_LEGEND);
     const hint=ml.querySelector('[data-i18n-html="legend_hint"]');if(hint)hint.innerHTML=t('legend_hint');
     updateLegendLabels();
     const lt=document.getElementById('legendtap');if(lt)lt.textContent=t(legendTapKey());
@@ -2039,11 +2067,12 @@ taxonSel.onchange=()=>{const seq=++_taxonSeq;_shareAction++;const prev=state.tax
   if(globalThis.optionalLayers&&globalThis.optionalLayers.isDiscovery()&&!globalThis.optionalLayers.supports(wanted))setOverlay('priority');
   const pr=document.getElementById('prospects');if(pr){pr.dataset.idle='0';pr.innerHTML='<div class="hd">'+t('cells_loading',groupName(state.taxon))+'</div>';}
   if(typeof showLoading==='function')showLoading(true);
+  globalThis.refreshMapContext?.();
   setCoverage();   // the density overlay needs only state.taxon, so its tiles load alongside the group's cells
   syncSharedCellUrl();
   refreshProspectGroup();
   const pending=loadGroup(wanted).then(()=>{if(seq!==_taxonSeq)return;buildMarkers();if(document.getElementById('insights').style.display==='block')renderInsights();})
-    .catch(()=>{if(seq!==_taxonSeq)return;const fallback=_committedTaxon||_bootTaxon||prev;state.taxon=fallback;taxonSel.value=fallback;setCoverage();if(Array.isArray(DATA[fallback]))buildMarkers();if(globalThis.optionalLayers&&globalThis.optionalLayers.isDiscovery()&&!globalThis.optionalLayers.supports(fallback))setOverlay('priority');syncSharedCellUrl();if(pr){pr.dataset.idle='1';pr.innerHTML='<div class="hd" style="margin-top:10px">'+t('prospects_idle')+'</div>';}refreshProspectGroup();})   // revert to rendered rows, not another pending request's group
+    .catch(()=>{if(seq!==_taxonSeq)return;const fallback=_committedTaxon||_bootTaxon||prev;state.taxon=fallback;taxonSel.value=fallback;globalThis.refreshMapContext?.();setCoverage();if(Array.isArray(DATA[fallback]))buildMarkers();if(globalThis.optionalLayers&&globalThis.optionalLayers.isDiscovery()&&!globalThis.optionalLayers.supports(fallback))setOverlay('priority');syncSharedCellUrl();if(pr){pr.dataset.idle='1';pr.innerHTML='<div class="hd" style="margin-top:10px">'+t('prospects_idle')+'</div>';}refreshProspectGroup();})   // revert to rendered rows, not another pending request's group
     .finally(()=>{if(seq===_taxonSeq&&typeof showLoading==='function')showLoading(false);});
   _taxonPending={taxon:wanted,promise:pending};return pending;};
 
@@ -2091,6 +2120,7 @@ function syncEvidenceControls(){
   if(scope){scope.hidden=!historical;if(historical){const p=OPTIONAL_LAYERS.discovery.scope.period;scope.textContent=t('historical_scope',p.start.slice(0,4)===p.end.slice(0,4)?p.start.slice(0,4):p.start+'–'+p.end,groupName(optional.group()));}}
   const summary=document.getElementById('sheetSummary');
   if(summary)summary.textContent=historical?t('historical_map'):geActive()?t('crit_ge'):climateOn()?t('crit_climate'):covOn()?t('density_name'):presetName(window.__activePreset||0);
+  globalThis.refreshMapContext?.();
 }
 async function selectEvidenceLayer(value){
   const seq=++_evidenceSeq;_shareAction++;
@@ -2416,6 +2446,7 @@ for(const[kind,id]of Object.entries(OVERLAY_TOGGLE)){const el=document.getElemen
 {const c=document.getElementById('tgCanadaOnly');if(c)c.addEventListener('change',()=>{loadUS().then(recolour);});}
 let _mvT=null,_geTier=null;
 map.on('moveend',()=>{
+  globalThis.refreshMapContext?.();
   refreshCells5();   // seq-guarded and async; it sets STRETCH from the 5 km cells it is about to draw
   // Getting Even swaps tiers rather than restretching, so the crossing itself is the repaint trigger.
   if(geActive()){const tier=activeCellResM();if(tier!==_geTier){_geTier=tier;recolour();}}
@@ -2971,6 +3002,7 @@ function showLoading(on){const el=document.getElementById('loading');if(el)el.st
 
 // language toggle: seed from navigator.language / localStorage (done above), wire buttons, apply chrome
 document.getElementById('langbtn').onclick=()=>setLang(LANG==='en'?'fr':'en');   // #69: one button toggles EN/FR
+globalThis.refreshMapContext=paintMapContext;   // all tier and coverage constants are initialized
 applyI18N();   // paint static chrome + set <html lang> for the seeded language
 
 function bootSeq(){const shared=parseSharedContext(location.search),action=_shareAction,taxonSeq=_taxonSeq,selection=_selectionSeq;
