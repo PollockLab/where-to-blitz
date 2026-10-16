@@ -80,10 +80,18 @@ function installOptionalLayers(){
     if(!isDiscovery()||!supports(state.taxon)||!indices[res])return null;
     const s=snapToLattice(lat,lon,res);return s?indices[res].get(s.row+','+s.col)||null:null;
   }
-  function sourceText(){const d=descriptors.discovery;return d?t('discovery_period',d.scope.period.start,d.scope.period.end):'';}
+  const suppliedPoints=()=>descriptors.discovery?.scope.filters.discovery_points==='lab-supplied point set; original selection unknown';
+  const discoveryUnit=()=>t(suppliedPoints()?'discovery_supplied_unit':'discovery_unit');
+  const discoveryCounts=(n,exposure)=>t(suppliedPoints()?'discovery_supplied_counts':'discovery_counts',n,exposure);
+  function sourceText(){
+    const d=descriptors.discovery;if(!d)return '';
+    const detail=d.scope.filters.discovery_points;
+    const note=typeof detail==='string'&&detail.trim()?(suppliedPoints()?t('discovery_supplied_points'):t('discovery_point_scope')+': '+detail):'';
+    return t('discovery_period',d.scope.period.start,d.scope.period.end)+(note?'<br>'+esc(note):'');
+  }
   function discoveryPopup(lat,lon,res){
     const row=discoveryCell(lat,lon,res);
-    return '<b>'+t('discovery_rate')+'</b><br>'+(row?t('discovery_counts',fmt(row[2]),fmt(row[3]))+'<br><b>'+fmt(row[4])+'</b> '+t('discovery_unit'):t('discovery_unavailable'))+'<br>'+sourceText();
+    return '<b>'+t('discovery_rate')+'</b><br>'+(row?discoveryCounts(fmt(row[2]),fmt(row[3]))+'<br><b>'+fmt(row[4])+'</b> '+discoveryUnit():t('discovery_unavailable'))+'<br>'+sourceText();
   }
   function ensureSource(id,type,paint){
     if(map.getSource(id))return;
@@ -141,13 +149,13 @@ function installOptionalLayers(){
     renderButtons(list,ranked,'discoveryCell',row=>res+':'+row[0]+','+row[1],(button,row)=>{
       const ll=LAEA.inv(LATTICE_X0+(row[1]+0.5)*res,LATTICE_Y1-(row[0]+0.5)*res);
       button.textContent=ll[0].toFixed(2)+', '+ll[1].toFixed(2)+' · '+fmt(row[4])+' / 10 000';
-      button.setAttribute('aria-label',button.textContent+' '+t('discovery_unit')+'. '+t('discovery_counts',fmt(row[2]),fmt(row[3])));
+      button.setAttribute('aria-label',button.textContent+' '+discoveryUnit()+'. '+discoveryCounts(fmt(row[2]),fmt(row[3])));
       button.onclick=()=>exploreCell(ll[0],ll[1]);
     });
     if(!rows.length)list.textContent=t('discovery_unavailable');
   }
   function discoveryLegend(){
-    return '<div class="lt">'+t('discovery_rate')+'</div><div class="ramp"></div><div class="lab"><span>0</span><span>'+fmt(maxRate)+'</span></div><div class="hint">'+t('discovery_unit')+'</div><div class="hint">'+sourceText()+'</div><div class="hint">'+t(discoveryError?'optional_error':'discovery_blurb')+'</div>';
+    return '<div class="lt">'+t('discovery_rate')+'</div><div class="ramp"></div><div class="lab"><span>0</span><span>'+fmt(maxRate)+'</span></div><div class="hint">'+discoveryUnit()+'</div><div class="hint">'+sourceText()+'</div><div class="hint">'+t(discoveryError?'optional_error':'discovery_blurb')+'</div>';
   }
   function paintSighting(){
     if(!selectedSighting||!sightingBody)return;

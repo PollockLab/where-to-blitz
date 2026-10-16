@@ -245,6 +245,8 @@ def sighting_lifecycle(action, discovery_product=None, snapshot=None):
     source = (ROOT / "webapp/index.html").read_text()
     script = (
         SCRIPT
+        + source[source.index("const I18N=") : source.index("\nlet LANG=")]
+        + source[source.index("const esc=") : source.index("const safeImg=")]
         + r"""
 const input=JSON.parse(process.argv[1]);
 class Element{
@@ -272,11 +274,11 @@ const handlers={},nodes={},document={activeElement:null,body:new Element('body',
 const getComputedStyle=()=>({visibility:'visible',display:'block'});
 const canvas=new Element('canvas',true),language=new Element('language',true);
 let curPopup=null,_reselect=false,destMarker=null,destCell=null,_mapLoaded=true,_shareAction=0,overlay='priority',LANG='en';
-const state={view:'explore',taxon:'All biodiversity'},OPTIONAL_LAYERS={discovery:input.discovery?{taxon_group:'All biodiversity'}:null,challenge:{}};
-const t=(key,...values)=>key+values.join(','),syncSharedCellUrl=()=>{},localizeMapControls=()=>{};
+const state={view:'explore',taxon:'All biodiversity'},OPTIONAL_LAYERS={discovery:input.discovery?{taxon_group:'All biodiversity',scope:input.discovery.scope,metric:input.discovery.metric}:null,challenge:{}};
+const syncSharedCellUrl=()=>{},localizeMapControls=()=>{};
 const whenMap=fn=>fn(),clearSelection=()=>{},activeCellResM=()=>input.discovery?5000:25000;
 const LATTICE_X0=-2150000,LATTICE_Y1=4300000,LATTICE_W=5500000,LATTICE_H=4525000;
-const LAEA={fwd:()=>[-150000,2300000],inv:()=>[45,-75]},virColour=()=> 'rgb(1,2,3)';let DRAWN5=null;
+const LAEA={fwd:()=>[-150000,2300000],inv:()=>[45,-75]},virColour=()=> 'rgb(1,2,3)',snapToLattice=()=>({row:400,col:400});let DRAWN5=null;
 function exploreCell(){const origin=document.activeElement;map.jumpTo({});originAtExplore=origin;return true;}
 let originAtExplore=null;
 let viewportBounds=[-90,40,-60,50];
@@ -296,6 +298,7 @@ OptionalData.fetchPinned=async(_descriptor,kind)=>kind==='discovery'?input.disco
 """
     )
     for name in (
+        "t",
         "popupFocusOrigin",
         "focusPopupTarget",
         "restorePopupFocus",
@@ -443,3 +446,37 @@ def test_challenge_cap_tracks_viewport_ground_width_instead_of_zoom():
         snapshot=snapshot,
     )
     assert result == {"zoom": 7, "broad": 500, "local": 150}
+
+
+@pytest.mark.parametrize("language", ["en", "fr"])
+def test_supplied_discovery_point_scope_is_visible_in_legend_and_popup_in_both_languages(tmp_path, language):
+    product = rate_product(tmp_path)
+    for scope in (product["scope"], *(source["scope"] for source in product["sources"].values())):
+        scope["filters"]["discovery_points"] = "lab-supplied point set; original selection unknown"
+    result = sighting_lifecycle(
+        "overlay='discovery';await optionalLayers.load();LANG=" + json.dumps(language) + ";"
+        "console.log(JSON.stringify({legend:optionalLayers.discoveryLegend(),popup:optionalLayers.discoveryPopup(45,-75,5000)}));",
+        product,
+    )
+    note = (
+        "original selection method is unknown"
+        if language == "en"
+        else "méthode de sélection initiale est inconnue"
+    )
+    unit = "supplied discovery points" if language == "en" else "points de découverte fournis"
+    for value in result.values():
+        assert note in value and unit in value
+        assert "2024-01-01" in value and "2024-12-31" in value
+
+
+def test_unknown_discovery_scope_is_escaped_and_missing_scope_adds_no_disclosure(tmp_path):
+    product = rate_product(tmp_path)
+    no_note = sighting_lifecycle(
+        "console.log(JSON.stringify(optionalLayers.discoveryLegend()));",
+        product,
+    )
+    assert "Discovery point-set scope" not in no_note and "selection method" not in no_note
+    for scope in (product["scope"], *(source["scope"] for source in product["sources"].values())):
+        scope["filters"]["discovery_points"] = '<img src=x onerror="alert(1)">'
+    result = sighting_lifecycle("console.log(JSON.stringify(optionalLayers.discoveryLegend()));", product)
+    assert "&lt;img" in result and "<img" not in result
