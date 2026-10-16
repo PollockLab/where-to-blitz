@@ -1,0 +1,58 @@
+name: Verify hosted Getting Even inputs
+
+on:
+  pull_request:
+    paths:
+      - gettingeven_richness.json
+      - gettingeven_reference.json
+      - gettingeven_inputs.py
+      - gettingeven_oracle.py
+      - build_gettingeven.py
+      - prepare_gettingeven_reference.py
+      - test_gettingeven*.py
+      - .github/workflows/verify-getting-even.yml
+      - .github/workflows/rebuild-grid.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  hosted-rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Restore published grid and checksum-pinned aggregate count bands
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir "$RUNNER_TEMP/gettingeven-source"
+          cp cluster_results/ca/gettingeven_grid.json cluster_results/ca/gettingeven_gate_{25000,5000}m.png "$RUNNER_TEMP/gettingeven-source/"
+          bash publish_grid_release.sh --restore
+          python prepare_gettingeven_reference.py --source-sidecar "$RUNNER_TEMP/gettingeven-source/gettingeven_grid.json"
+          cp "$RUNNER_TEMP/gettingeven-source/"gettingeven_gate_*m.png cluster_results/ca/
+          sha256sum cluster_results/ca/gettingeven_{grid,gate}_{25000,5000}m.png cluster_results/ca/webapp_data_gettingeven.json > "$RUNNER_TEMP/gettingeven-before.sha256"
+      - name: Rebuild both tiers using the hosted richness inputs
+        env:
+          GE_RICHNESS_MANIFEST: gettingeven_richness.json
+        run: |
+          set -euo pipefail
+          for res in 25000 5000; do
+            GRID_RES="$res" python build_gettingeven.py
+          done
+          sha256sum --check "$RUNNER_TEMP/gettingeven-before.sha256"
+          python -m pytest test_gettingeven.py test_gettingeven_inputs.py test_gettingeven_reference.py -q
+      - name: Retain rebuild provenance
+        uses: actions/upload-artifact@v4
+        with:
+          name: hosted-getting-even-proof
+          path: |
+            cluster_results/ca/gettingeven_grid.json
+            cluster_results/ca/gettingeven_*m.png
+          retention-days: 30

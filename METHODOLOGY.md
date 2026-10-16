@@ -310,10 +310,7 @@ Birds are excluded, as in the published 2025 map — eBird already covers them. 
 are grey rather than scored; `GE_MIN_RECORDS` raises that floor, at the cost of more grey. The
 metric itself is re-derived independently and asserted cell-by-cell in `test_gettingeven.py`.
 
-**What a thin cell's colour means.** At 25 km, 1,876 of the 10,679 scored cells hold exactly one
-record. Five groups then sit at a share of zero and the lowest z comes from the national mean and
-standard deviation rather than from the cell, so all 1,876 come back Plants (1,210) or
-Invertebrates (666). That is 18% of the coloured map decided by a tie-break.
+**What a thin cell's colour means.** With the richness gate off, at 25 km, 1,876 of the 10,679 scored cells hold exactly one record. Five groups then sit at a share of zero and the lowest z comes from the national mean and standard deviation rather than from the cell, so all 1,876 come back Plants (1,210) or Invertebrates (666). That is 18% of the ungated coloured map decided by a tie-break. These are the ungated comparison counts, not the gated layer's category totals below.
 
 The first version of this section read that tie-break as harmless. Of the 9,641 scored cells with
 at least three scored neighbours, 54.9% carry a different priority group from their neighbour
@@ -384,17 +381,11 @@ the scored cells to a different group:
 | gate off | 82 | 1,519 | 199 | 3,390 | 1,955 | 3,534 |
 | gate on | 208 | 1,970 | 207 | 4,218 | 1,775 | 2,301 |
 
-**The gate cannot be rebuilt in CI yet.** The rasters are on the lab SharePoint, not on the public
-`bq-io/blitz-the-gap` bucket the `Rebuild grid` workflow reads, so a CI rebuild sees no richness and
-produces a valid-looking ungated map. `_refuse_silent_ungating` in `build_gettingeven.py` turns that
-silent revert into a failed build: an ungated run refuses to overwrite a shipped layer whose
-`richness_gate` is non-empty, unless `GE_ALLOW_UNGATED=1` says to. Hosting the rasters is tracked
-separately; until that lands, a rebuild of this layer needs the three env vars set by hand.
+**Rebuilding the gate in CI.** `gettingeven_richness.json` pins the three original lab-supplied rasters to content-addressed assets on the `grid-inputs-v1` GitHub release. `Rebuild grid` uses this tracked manifest by default, includes its checksum in the rebuild cache key and rebuilds both tiers. An explicit `GE_RICHNESS_MANIFEST_URL` secret and `GE_RICHNESS_MANIFEST_SHA256` variable can override it for another pinned source. Local rebuilds use `GE_RICHNESS_MANIFEST=gettingeven_richness.json`. Every raster is checksum-verified before use; build records retain its checksum and provenance without private source locations. `_refuse_silent_ungating` still refuses to overwrite a gated layer with an ungated one unless `GE_ALLOW_UNGATED=1` explicitly allows it.
 
-Turning the gate on skips `test_the_shipped_layer_is_the_published_metric` and
-`test_methodology_quotes_the_real_thin_cell_counts`, because neither can re-derive a gated layer
-without the rasters. Both gates on this layer are therefore off in a gated build. That is the cost of
-shipping the gate before the rasters are hosted, and it goes away with them.
+`Verify hosted Getting Even inputs` checks relevant pull requests and supports manual dispatch. It saves the committed audited input provenance and gate masks before restoring the public grid bundle, whose legacy sidecar lacks observation fingerprints. Before installing any reference counts, it requires both count fingerprints to match that saved provenance, the restored public category images and 25 km JSON to match the frozen reference baseline, and the saved gate masks to match their recorded hashes. It then fetches the hosted richness rasters, rebuilds both tiers and requires byte-identical category images, gate masks and 25 km JSON. The pinned reference contains only aggregate `n_train` count bands, with no individual observations. This is a frozen-reference regression check, not a claim to reconstruct another population that happens to have the same colours. It avoids rebuilding all group grids and does not depend on expiring workflow artifacts. The full rebuild continues to use its freshly rebuilt group counts.
+
+`test_the_shipped_layer_is_the_published_metric` independently reconstructs the gated metric with verified gate masks and observation fingerprints. `test_methodology_quotes_the_real_thin_cell_counts` independently recomputes the ungated comparison above from source group counts, including when the shipped layer is gated. Neither test skips solely because the gate is on. The record floor, per-tier reference populations and richness quartile rule remain unchanged.
 
 The tap panel is a *different* calculation — a live iNaturalist query about the species in the cell
 versus its 40 km neighbourhood (see "Which species to record in a cell" above). The colours come

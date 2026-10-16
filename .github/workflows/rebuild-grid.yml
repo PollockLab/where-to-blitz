@@ -237,7 +237,7 @@ jobs:
       - name: Compute inputs hash
         id: compute_inputs
         env:
-          GE_MANIFEST_SHA256: ${{ vars.GE_RICHNESS_MANIFEST_SHA256 }}
+          GE_MANIFEST_SHA256: ${{ vars.GE_RICHNESS_MANIFEST_SHA256 || hashFiles('gettingeven_richness.json') }}
         run: |
           set -euo pipefail
           REL="${GRID_INPUTS_RELEASE:-grid-inputs-v1}"
@@ -306,12 +306,12 @@ jobs:
         # Keyed on cell centres, like us_cells.json above, and it went stale the same way:
         # the #87 lattice migration moved every cell and this file was a committed artifact
         # no build step touched, so all 31804 of its keys missed and the layer went grey.
-        # Configure a private manifest URL and pinned checksum to reproduce both gated tiers.
-        # Without it, preserve the shipped layer only while the recorded observations still fit.
+        # The tracked manifest pins the public release rasters. An explicit private manifest
+        # and checksum can override it without putting private source URLs into the build record.
         if: ${{ steps.check_artifact.outputs.found != 'true' }}
         env:
           GE_KEEP_SHIPPED: "1"
-          GE_RICHNESS_MANIFEST: ${{ secrets.GE_RICHNESS_MANIFEST_URL }}
+          GE_RICHNESS_MANIFEST: ${{ secrets.GE_RICHNESS_MANIFEST_URL || 'gettingeven_richness.json' }}
           GE_RICHNESS_MANIFEST_SHA256: ${{ vars.GE_RICHNESS_MANIFEST_SHA256 }}
         run: |
           set -euo pipefail

@@ -64,6 +64,38 @@ def test_hosted_manifest_requires_pin_before_any_network_request(monkeypatch):
         inputs.load_richness_inputs()
 
 
+def test_public_manifest_preserves_the_shipped_raster_roles_and_provenance():
+    root = Path(__file__).parent
+    doc = json.loads((root / "gettingeven_richness.json").read_text())
+    shipped = json.loads((root / "cluster_results/ca/gettingeven_grid.json").read_text())
+    assert doc["schema"] == "gettingeven-richness@1"
+    assert set(doc["sources"]) == set(inputs.RICHNESS_ENV)
+    for category, item in doc["sources"].items():
+        for tier in shipped["tiers"].values():
+            assert item["sha256"] == tier["inputs"]["richness"][category]["sha256"]
+        assert item["source"].startswith(
+            "https://github.com/PollockLab/where-to-blitz/releases/download/grid-inputs-v1/"
+        )
+        assert item["source"].endswith("-" + item["sha256"] + ".tif")
+        assert item["provenance"].strip()
+        assert "/Users/" not in json.dumps(item) and "SharePoint" not in json.dumps(item)
+
+
+def test_hosted_manifest_hash_mismatch_rejects_before_fetching_rasters(monkeypatch):
+    monkeypatch.setenv("GE_RICHNESS_MANIFEST", "https://example.org/manifest.json")
+    monkeypatch.setenv("GE_RICHNESS_MANIFEST_SHA256", "a" * 64)
+    requests = []
+
+    def read(url):
+        requests.append(url)
+        return b'{"schema":"different"}'
+
+    monkeypatch.setattr(inputs, "_read", read)
+    with pytest.raises(ValueError, match="manifest checksum mismatch"):
+        inputs.load_richness_inputs()
+    assert requests == ["https://example.org/manifest.json"]
+
+
 def test_hosted_manifest_fetches_verified_content_and_repairs_corrupt_cache(tmp_path, monkeypatch):
     data = b"raster content"
     digest = hashlib.sha256(data).hexdigest()

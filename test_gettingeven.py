@@ -238,17 +238,20 @@ def test_methodology_quotes_the_real_thin_cell_counts():
     if "thin cell's colour means" not in doc:
         pytest.skip("METHODOLOGY does not price the floor")
     ge = _ge()
-    if ge.get("richness_gate"):
-        pytest.skip(f"built with the richness gate on: {ge['richness_gate']}")
-    total = _per_group_records()["All biodiversity"]
+    groups = _per_group_records()
+    total = groups["All biodiversity"]
     floor = ge.get("min_records", 1)
-    rows = ge["gettingeven"]
+    # The prose explicitly describes the ungated counterfactual. Recompute it
+    # from source counts even when the production layer has the richness gate on.
+    assert "With the richness gate off" in doc
+    counts = np.asarray([np.sum([groups[g] for g in GE_GROUPS[cat]], axis=0) for cat in ge["cats"]])
+    priorities, _ = metric(np.asarray(total), counts, floor, np.zeros(len(total), dtype=np.uint8))
 
     scored = [i for i, t in enumerate(total) if t >= floor]
     thin = [i for i in scored if total[i] == 1]
     named = {}
     for i in thin:
-        named[ge["cats"][rows[i][2]]] = named.get(ge["cats"][rows[i][2]], 0) + 1
+        named[ge["cats"][priorities[i]]] = named.get(ge["cats"][priorities[i]], 0) + 1
 
     assert f"{len(thin):,} of the {len(scored):,} scored cells" in doc, (
         f"METHODOLOGY should say {len(thin):,} of the {len(scored):,} scored cells hold one record"

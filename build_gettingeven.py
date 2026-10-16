@@ -17,8 +17,12 @@ answered a different question from the published challenge.
 
 Richness gate (optional, off unless the rasters are supplied). Eckert dropped a group from the
 running in units whose modelled richness for that group sits in the national bottom quartile --
-a place with few herps to find is not a place to send herpers. The three source rasters live in
-the lab SharePoint, not in any public bucket, so the step runs only when it is pointed at them:
+a place with few herps to find is not a place to send herpers. The three lab-supplied rasters are
+checksum-pinned in gettingeven_richness.json, using content-addressed GitHub release assets:
+
+    GE_RICHNESS_MANIFEST=gettingeven_richness.json python build_gettingeven.py
+
+Local copies remain supported:
 
     GE_RICHNESS_HERP=ar.richness.tif GE_RICHNESS_MAMMAL=mammal.richness.tif \
     GE_RICHNESS_PLANT=plant.richness.stacks.tif python build_gettingeven.py
