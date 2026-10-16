@@ -100,6 +100,17 @@ function installOptionalLayers(){
     for(let row=r0;row<=r1;row++)for(let col=c0;col<=c1;col++){const cell=index.get(row+','+col);if(cell)result.push(cell);}
     return result;
   }
+  function renderButtons(list,rows,keyName,keyFor,paint){
+    const focused=document.activeElement,existing=new Map([...list.children].map(el=>[el.dataset[keyName],el])),wanted=new Set();
+    if(!list.children.length)list.textContent='';
+    for(const [index,row]of rows.entries()){
+      const key=keyFor(row),button=existing.get(key)||document.createElement('button');wanted.add(button);
+      button.type='button';button.className='optional-cell';button.dataset[keyName]=key;paint(button,row);
+      if(list.children[index]!==button)list.insertBefore(button,list.children[index]||null);
+    }
+    for(const button of [...list.children])if(!wanted.has(button))button.remove();
+    if(wanted.has(focused)&&document.activeElement===document.body)focused.focus({preventScroll:true});
+  }
   function renderDiscovery(){
     const panel=node('discoveryEvidence');if(panel)panel.hidden=!isDiscovery();
     if(!_mapLoaded)return;
@@ -117,14 +128,14 @@ function installOptionalLayers(){
     });
     map.getSource('measured-discovery').setData({type:'FeatureCollection',features});
     if(res===5000)DRAWN5=new Set(rows.map(r=>r[1]+','+r[0]));
-    const list=node('discoveryCells');list.replaceChildren();
-    for(const row of rows.slice().sort((a,b)=>b[4]-a[4]||a[0]-b[0]||a[1]-b[1]).slice(0,30)){
+    const list=node('discoveryCells');
+    const ranked=rows.slice().sort((a,b)=>b[4]-a[4]||a[0]-b[0]||a[1]-b[1]).slice(0,30);
+    renderButtons(list,ranked,'discoveryCell',row=>res+':'+row[0]+','+row[1],(button,row)=>{
       const ll=LAEA.inv(LATTICE_X0+(row[1]+0.5)*res,LATTICE_Y1-(row[0]+0.5)*res);
-      const button=document.createElement('button');button.type='button';button.className='optional-cell';
       button.textContent=ll[0].toFixed(2)+', '+ll[1].toFixed(2)+' · '+fmt(row[4])+' / 10 000';
       button.setAttribute('aria-label',button.textContent+' '+t('discovery_unit')+'. '+t('discovery_counts',fmt(row[2]),fmt(row[3])));
-      button.onclick=()=>{map.jumpTo({center:[ll[1],ll[0]]});exploreCell(ll[0],ll[1]);};list.appendChild(button);
-    }
+      button.onclick=()=>exploreCell(ll[0],ll[1]);
+    });
     if(!rows.length)list.textContent=t('discovery_unavailable');
   }
   function discoveryLegend(){
@@ -157,17 +168,10 @@ function installOptionalLayers(){
     const features=rows.map(row=>({type:'Feature',properties:{id:row.id},geometry:{type:'Point',coordinates:[row.longitude,row.latitude]}}));
     map.getSource('recent-challenge').setData({type:'FeatureCollection',features});
     status.textContent=t('recent_challenge_status',snapshot.window.start,snapshot.window.end,snapshot.as_of,rows.length)+(OptionalData.stale(snapshot.as_of)?' '+t('optional_stale'):'');
-    const focused=document.activeElement,existing=new Map([...list.children].map(el=>[el.dataset.sightingId,el])),wanted=new Set();
-    if(!list.children.length)list.textContent='';
-    for(const [index,row]of rows.entries()){
-      const button=existing.get(String(row.id))||document.createElement('button');wanted.add(button);
-      button.type='button';button.className='optional-cell';button.dataset.sightingId=String(row.id);
+    renderButtons(list,rows,'sightingId',row=>String(row.id),(button,row)=>{
       button.textContent=row.name+' · '+row.observed_on;
       button.onclick=()=>{openSighting(row);map.jumpTo({center:[row.longitude,row.latitude],zoom:Math.max(7,map.getZoom())});};
-      if(list.children[index]!==button)list.insertBefore(button,list.children[index]||null);
-    }
-    for(const button of [...list.children])if(!wanted.has(button))button.remove();
-    if(wanted.has(focused)&&document.activeElement===document.body)focused.focus({preventScroll:true});
+    });
     if(!rows.length)list.textContent=t('recent_challenge_empty');
     paintSighting();
   }

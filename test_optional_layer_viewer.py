@@ -238,7 +238,7 @@ def test_measured_rate_shared_link_cannot_label_another_taxon_group():
     assert result["params"]["g"] == "Fungi" and result["params"]["goal"] == "0"
 
 
-def sighting_lifecycle(action):
+def sighting_lifecycle(action, discovery_product=None):
     """Replay real popup wiring, list reconciliation and synchronous map move events."""
     from test_shared_context import _function
 
@@ -262,6 +262,7 @@ class Element{
  querySelector(selector){return this.children.find(el=>selector==='b'?el.tag==='b':selector==='p'?el.tag==='p':selector==='a'?el.tag==='a':el.tag==='close')||null;}
  querySelectorAll(){return [];}
  addEventListener(){}
+ setAttribute(key,value){this[key]=value;}
  getClientRects(){return this.isConnected?[{}]:[];}
  focus(){if(this.isConnected&&this.tag!=='body')document.activeElement=this;}
 }
@@ -271,9 +272,13 @@ const handlers={},nodes={},document={activeElement:null,body:new Element('body',
 const getComputedStyle=()=>({visibility:'visible',display:'block'});
 const canvas=new Element('canvas',true),language=new Element('language',true);
 let curPopup=null,_reselect=false,destMarker=null,destCell=null,_mapLoaded=true,_shareAction=0,overlay='priority',LANG='en';
-const state={view:'explore',taxon:'All biodiversity'},OPTIONAL_LAYERS={discovery:null,challenge:{}};
+const state={view:'explore',taxon:'All biodiversity'},OPTIONAL_LAYERS={discovery:input.discovery?{taxon_group:'All biodiversity'}:null,challenge:{}};
 const t=(key,...values)=>key+values.join(','),syncSharedCellUrl=()=>{},localizeMapControls=()=>{};
-const whenMap=fn=>fn(),clearSelection=()=>{},activeCellResM=()=>25000;
+const whenMap=fn=>fn(),clearSelection=()=>{},activeCellResM=()=>input.discovery?5000:25000;
+const LATTICE_X0=-2150000,LATTICE_Y1=4300000,LATTICE_W=5500000,LATTICE_H=4525000;
+const LAEA={fwd:()=>[-150000,2300000],inv:()=>[45,-75]},virColour=()=> 'rgb(1,2,3)';let DRAWN5=null;
+function exploreCell(){const origin=document.activeElement;map.jumpTo({});originAtExplore=origin;return true;}
+let originAtExplore=null;
 const map={getCanvas:()=>canvas,getBounds:()=>({getWest:()=>-90,getEast:()=>-60,getSouth:()=>40,getNorth:()=>50}),
  getZoom:()=>7,getSource:id=>map.sources[id],getLayer:id=>map.sources[id],sources:{},
  addSource(id){this.sources[id]={setData(){}};},addLayer(){},setLayoutProperty(){},queryRenderedFeatures:()=>[],
@@ -286,7 +291,7 @@ const maplibregl={Popup:class{
  getElement(){return this.root;}addTo(){this.emit('open');return this;}
  remove(){if(this.root.contains(document.activeElement))document.activeElement=document.body;this.root.connected=false;this.emit('close');}
 }};
-OptionalData.fetchPinned=async()=>input.snapshot;
+OptionalData.fetchPinned=async(_descriptor,kind)=>kind==='discovery'?input.discovery:input.snapshot;
 """
     )
     for name in (
@@ -311,7 +316,9 @@ OptionalData.fetchPinned=async()=>input.snapshot;
     )
     snapshot = challenge.acquire(CONFIG, FixtureAPI([observation(1), observation(2, 20)]), AS_OF)
     result = subprocess.run(
-        ["node", "-e", script, json.dumps({"snapshot": snapshot})], capture_output=True, text=True
+        ["node", "-e", script, json.dumps({"snapshot": snapshot, "discovery": discovery_product})],
+        capture_output=True,
+        text=True,
     )
     assert result.returncode == 0, result.stderr
     return json.loads(result.stdout)
@@ -389,3 +396,19 @@ def test_late_failed_discovery_group_request_cannot_revert_a_newer_taxon_and_goa
     )
     assert result["taxon"] == result["selected"] == result["params"]["g"] == "Fungi"
     assert result["overlay"] == result["goal"] == result["params"]["goal"] == "climate"
+
+
+def test_measured_cell_buttons_keep_identity_and_capture_keyboard_invoker_before_map_jump(tmp_path):
+    result = sighting_lifecycle(
+        "overlay='discovery';await optionalLayers.load();optionalLayers.refresh();"
+        "const button=nodes.discoveryCells.children[0];button.focus();button.onclick();"
+        "const afterActivation={same:nodes.discoveryCells.children[0]===button,origin:originAtExplore===button,focused:document.activeElement===button};"
+        "canvas.focus();handlers.moveend();const mapStayed=document.activeElement===canvas;"
+        "language.focus();optionalLayers.refresh();console.log(JSON.stringify({afterActivation,mapStayed,controlStayed:document.activeElement===language}));",
+        rate_product(tmp_path),
+    )
+    assert result == {
+        "afterActivation": {"same": True, "origin": True, "focused": True},
+        "mapStayed": True,
+        "controlStayed": True,
+    }
