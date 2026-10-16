@@ -106,10 +106,10 @@ function installOptionalLayers(){
     const note=typeof detail==='string'&&detail.trim()?(suppliedPoints()?t('discovery_supplied_points'):t('discovery_point_scope')+': '+detail):'';
     return t('discovery_period',d.scope.period.start,d.scope.period.end)+(note?'<br>'+esc(note):'');
   }
-  const sourceDetails=()=>'<details class="optional-source-details"><summary>'+t('source_details')+'</summary>'+sourceText()+'<p>'+t('discovery_blurb')+'</p></details>';
+  const sourceDetails=()=>'<details class="optional-source-details"><summary>'+t('source_details')+'</summary>'+sourceText()+'<p>'+discoveryUnit()+'</p><p>'+t('discovery_blurb')+'</p><p>'+t('discovery_log_scale')+' '+t('discovery_support')+'</p></details>';
   function discoveryPopup(lat,lon,res){
-    const row=discoveryCell(lat,lon,res);
-    return '<b>'+t('discovery_rate')+'</b><br>'+(row?'<b>'+fmt(row[4])+'</b> '+discoveryUnit()+'<p>'+discoveryCounts(fmt(row[2]),fmt(row[3]))+'</p><small>'+t('discovery_support')+'</small>':t('discovery_unavailable'))+sourceDetails();
+    const row=discoveryCell(lat,lon,res),context=cellContext(lat,lon,res);
+    return (context?'<div class="sighting-place">'+esc(context)+'</div>':'')+'<b>'+t('discovery_rate')+'</b><br>'+(row?'<b>'+fmt(row[4])+'</b> '+discoveryUnit()+'<p>'+discoveryCounts(fmt(row[2]),fmt(row[3]))+'</p><small>'+t('discovery_support')+'</small>':t('discovery_unavailable'))+sourceDetails();
   }
   function cellContext(lat,lon,res){
     let nearest=null,distance=Infinity;
@@ -193,8 +193,8 @@ function installOptionalLayers(){
     const limits=rateLimits[activeCellResM()]||{minimum:0,maximum:0};
     const low=Number.isFinite(limits.minimum)?limits.minimum:0;
     const start=OptionalData.rateScale(low,limits.maximum),gradient=Array.from({length:8},(_,i)=>virColour(start+(1-start)*i/7)+' '+(100*i/7)+'%').join(',');
-    const ramp=limits.maximum>0?'<div class="ramp optional-positive-ramp" style="background:linear-gradient(to right,'+gradient+')"></div><div class="lab"><span>'+fmt(low)+'</span><span>'+fmt(limits.maximum)+'</span></div><div class="hint">'+t('discovery_log_scale')+'</div>':'';
-    return '<div class="lt">'+t('discovery_rate')+'</div>'+ramp+'<div class="hint">'+discoveryUnit()+'</div><div class="optional-legend-key"><span class="optional-swatch optional-zero"></span>'+t('discovery_zero')+' <span class="optional-swatch optional-missing"></span>'+t('discovery_no_data')+'</div><div class="hint">'+t('discovery_support')+'</div>'+sourceDetails()+(discoveryError?'<div class="hint">'+t('optional_error')+'</div>':'');
+    const ramp=limits.maximum>0?'<div class="ramp optional-positive-ramp" style="background:linear-gradient(to right,'+gradient+')"></div><div class="lab"><span>'+fmt(low)+'</span><span>'+fmt(limits.maximum)+'</span></div><div class="hint">'+t('discovery_log_key')+'</div>':'';
+    return '<div class="lt">'+t('discovery_rate')+'</div>'+ramp+'<div class="hint">'+t('discovery_legend_unit')+'</div><div class="optional-legend-key"><span class="optional-swatch optional-zero"></span>'+t('discovery_zero')+' <span class="optional-swatch optional-missing"></span>'+t('discovery_no_data')+'</div>'+sourceDetails()+(discoveryError?'<div class="hint">'+t('optional_error')+'</div>':'');
   }
   function paintSighting(){
     if(!selectedSighting||!sightingBody)return;

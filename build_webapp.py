@@ -191,7 +191,6 @@ out = (
     .replace("__PRESETS__", json.dumps(PRESETS))
     .replace("__DEFAULT__", json.dumps(DEFAULT))
     .replace("__PMTILES_BASE__", PMTILES_BASE)
-    .replace("__CARTO_KEY__", CARTO_API_KEY)
     .replace("__CARTO_KEY_JSON__", json.dumps(CARTO_API_KEY).replace("<", "\\u003c"))
     .replace("__TIER_SWITCH_Z__", str(TIER_SWITCH_Z))
     # The app snaps clicks to the same lattice the tiles are cut on. These were hardcoded in
