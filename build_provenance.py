@@ -25,7 +25,7 @@ SOURCES = {
             "iNat density COG (Biodiversite Quebec STAC), CHELSA bioclimate, "
             "Hansen Global Forest Change, Weiss et al. 2018 travel-time"
         ),
-        "builder": "build_fullgrid_ca.py",
+        "builder": "build_fullgrid_ca.py -> aggregate_25km_from_5km.py -> export_popup_grid.py",
     },
     "conservation": {
         "datasets": (
@@ -50,6 +50,8 @@ INPUT_PATTERNS = [
 ]
 
 OUTPUT_PATTERNS = [
+    "cluster_results/ca/grid_25000m/*.tif",
+    "cluster_results/ca/grid_5000m/*.tif",
     "cluster_results/ca/webapp_data_*.json",
     "cluster_results/ca/breaks.json",
     "cluster_results/ca/us_cells.json",

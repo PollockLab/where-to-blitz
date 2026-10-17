@@ -2,7 +2,7 @@
   "schema": "where-to-blitz/provenance@1",
   "grid": {
     "res_m": 25000,
-    "n_cells": 23214,
+    "n_cells": 23354,
     "lattice": {
       "x0": -2150000,
       "y1": 4300000,
@@ -15,7 +15,7 @@
   "sources": {
     "discover/env/urgency/travel": {
       "datasets": "iNat density COG (Biodiversite Quebec STAC), CHELSA bioclimate, Hansen Global Forest Change, Weiss et al. 2018 travel-time",
-      "builder": "build_fullgrid_ca.py"
+      "builder": "build_fullgrid_ca.py -> aggregate_25km_from_5km.py -> export_popup_grid.py"
     },
     "conservation": {
       "datasets": "CAN-SAR (OSF DOI 10.17605/OSF.IO/E4A58, CC-BY) x GBIF Canadian occurrences",
@@ -28,179 +28,719 @@
   },
   "files": [
     {
+      "path": "cluster_results/ca/atrisk_shipping_policy.json",
+      "sha256": "6c604e10376f6d05c0bd96ad1df286bc3f27497fddc26fc6897c6d23aa430326",
+      "size_bytes": 6524,
+      "modified_date": "2026-10-17"
+    },
+    {
       "path": "cluster_results/ca/breaks.json",
       "sha256": "141c97041fdd894bed8b4e9dcffebd10f8061dde641e0c9a912437f5c7cc8831",
       "size_bytes": 57629,
-      "modified_date": "2026-08-10"
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/ca_atrisk_provenance.json",
+      "sha256": "257eb64d2782c851493171d73932225e6ab5e7d7d8210ff108cc1fc4f3dce385",
+      "size_bytes": 28070,
+      "modified_date": "2026-10-17"
     },
     {
       "path": "cluster_results/ca/ca_atrisk_richness.csv",
-      "sha256": "bacb0ce6888c7268ca41b2b28e805a74884dc40ce57b5775de94ef0ba93d16ce",
-      "size_bytes": 1288947,
-      "modified_date": "2026-06-13"
-    },
-    {
-      "path": "cluster_results/ca/ca_density_Actinopterygii.tif",
-      "sha256": "b7d3f776c4d77ef6cc90f810e4c71339ebe6f1213e9655b3ff76259e7b2f8cd0",
-      "size_bytes": 245540,
-      "modified_date": "2026-06-13"
-    },
-    {
-      "path": "cluster_results/ca/ca_density_All.tif",
-      "sha256": "74854d5b72d8549748f4edb77b61dc54d5030246047a24c758b3a3614219e1c3",
-      "size_bytes": 95395,
-      "modified_date": "2026-06-13"
-    },
-    {
-      "path": "cluster_results/ca/ca_density_Amphibia.tif",
-      "sha256": "c7dd98d959094dd5a1cf61aa7673ec3b2ec93db86a3d2a2395a9a171a4d5e4a2",
-      "size_bytes": 36267,
-      "modified_date": "2026-06-13"
-    },
-    {
-      "path": "cluster_results/ca/ca_density_Arachnida.tif",
-      "sha256": "b85a965d6ea3fd321360b2dbd4d22393fc3bcede4ad26c8122e6e6e972e1ea2b",
-      "size_bytes": 245540,
-      "modified_date": "2026-06-13"
-    },
-    {
-      "path": "cluster_results/ca/ca_density_Aves.tif",
-      "sha256": "ce85f776b7bd9e8083771eafac878613984356ab9baeb19db49957bb295bfac1",
-      "size_bytes": 62226,
-      "modified_date": "2026-06-13"
-    },
-    {
-      "path": "cluster_results/ca/ca_density_Fungi.tif",
-      "sha256": "3a83f10d8ad2d44fa19f00c1bb46e70cb5b03038bd5f1f2b531626c2b284561a",
-      "size_bytes": 245540,
-      "modified_date": "2026-06-13"
-    },
-    {
-      "path": "cluster_results/ca/ca_density_Insecta.tif",
-      "sha256": "ac94663287785d00d70aa76404bc36de196e3daa615e51d53f99334c1ae01297",
-      "size_bytes": 61257,
-      "modified_date": "2026-06-13"
-    },
-    {
-      "path": "cluster_results/ca/ca_density_Mammalia.tif",
-      "sha256": "c3919a01169fc3d45add4df7931b9c2be0df5ffa86358d37bfc51abd8ccd93f0",
-      "size_bytes": 64268,
-      "modified_date": "2026-06-13"
-    },
-    {
-      "path": "cluster_results/ca/ca_density_Mollusca.tif",
-      "sha256": "6d116a70e882654ba8a4c274208ee61bd6b2633f98650967bf31c5cdfc2b4fb2",
-      "size_bytes": 245540,
-      "modified_date": "2026-06-13"
-    },
-    {
-      "path": "cluster_results/ca/ca_density_Plantae.tif",
-      "sha256": "ec81bde6437a2181990d07ddefa397406ed6bd55247d15cfc9b7dc3e696a8fd2",
-      "size_bytes": 77453,
-      "modified_date": "2026-06-13"
-    },
-    {
-      "path": "cluster_results/ca/ca_density_Reptilia.tif",
-      "sha256": "86dcf1297f9cb23067cab1e475ab534a2a6655da8f43d07b29298ada4459040e",
-      "size_bytes": 245540,
-      "modified_date": "2026-06-13"
+      "sha256": "d74ad7110afe75d1696c3df29b4c247d34455c1d7856123425fddc98dbd1409d",
+      "size_bytes": 525125,
+      "modified_date": "2026-10-17"
     },
     {
       "path": "cluster_results/ca/ca_inat_metrics.csv",
       "sha256": "5b54dbe0ae93070e7929b23bbdbf9f7027887e831b95a1817f5cad3a25ae3860",
       "size_bytes": 567060,
-      "modified_date": "2026-06-13"
+      "modified_date": "2026-10-17"
     },
     {
       "path": "cluster_results/ca/ca_staleness.csv",
       "sha256": "02b1aefde63685fb1da0d42f4e32b1dca6ee5f0451c17801fe6dfdb87579d32f",
       "size_bytes": 769381,
-      "modified_date": "2026-06-13"
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/gettingeven_counts_25000m.png",
+      "sha256": "560959d939a8163dceaeeaff58d1f9a79cff8b0c4c693a8aeb6e971e88be108f",
+      "size_bytes": 23111,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/gettingeven_counts_5000m.png",
+      "sha256": "6c0a1644bc9cee6389bc362896ea6bebc8dd5234f12d331d0df377f0cc3b8345",
+      "size_bytes": 206356,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/gettingeven_evidence.json",
+      "sha256": "00076ba83760a33dc7c025c0da82f504870176c07e6fc827d712a4d8df312e1d",
+      "size_bytes": 4510,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/gettingeven_gate_25000m.png",
+      "sha256": "3f6786ecc961b27bb44d0f2114f7c785c082c9769697c785e9dd46cc552e2037",
+      "size_bytes": 6900,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/gettingeven_gate_5000m.png",
+      "sha256": "c923c3e11181aa905330cda4d8be0c52844fc3137962cac17af807469ee68a0d",
+      "size_bytes": 74026,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/gettingeven_grid.json",
+      "sha256": "f52877890cffd5a2926a440dfcae18651ed326991255b19a48bffa53dc9e7363",
+      "size_bytes": 4785,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/gettingeven_grid_25000m.png",
+      "sha256": "cb39585b8faacaac8f7f8a09cfd06acf293d1d50dab9639ec2c03c9fc4f9a108",
+      "size_bytes": 12311,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/gettingeven_grid_5000m.png",
+      "sha256": "1e28d91c4ac6f09ba1968ecf613b1a5ddb8947e8d3a7df0090a0b396917aa5d7",
+      "size_bytes": 137809,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/grid_25000m/Actinopterygii.tif",
+      "sha256": "fc338b43e20347f4fc1d4f546b9900064792a4ff1dc3d46562a80c7af5841c7b",
+      "size_bytes": 479455,
+      "modified_date": "2026-08-10"
+    },
+    {
+      "path": "cluster_results/ca/grid_25000m/All_biodiversity.tif",
+      "sha256": "546bca43fe25df8a9d119b113a0dfee7a292511b3f5a913e1daeedcc300a3866",
+      "size_bytes": 497036,
+      "modified_date": "2026-08-10"
+    },
+    {
+      "path": "cluster_results/ca/grid_25000m/Amphibia.tif",
+      "sha256": "db88cd28c0b257d8a3a03d47bb0de192d0a6bc338ae82851b2fed44f529d2ca8",
+      "size_bytes": 479368,
+      "modified_date": "2026-08-10"
+    },
+    {
+      "path": "cluster_results/ca/grid_25000m/Arachnida.tif",
+      "sha256": "9e4b1d9366322289fbd8dc17cdd1cf26350219cc297765132baf129eb9fdf8f4",
+      "size_bytes": 480127,
+      "modified_date": "2026-08-10"
+    },
+    {
+      "path": "cluster_results/ca/grid_25000m/Aves.tif",
+      "sha256": "c0c7ffcd609d1c58e6bd9562f824bd537fe31a729530d8e0ded92426293258bc",
+      "size_bytes": 486618,
+      "modified_date": "2026-08-10"
+    },
+    {
+      "path": "cluster_results/ca/grid_25000m/Fungi.tif",
+      "sha256": "0643cd0e582a47927aa70d48c64cf1546c22a487ed01bcf82808699c44c2e49b",
+      "size_bytes": 485719,
+      "modified_date": "2026-08-10"
+    },
+    {
+      "path": "cluster_results/ca/grid_25000m/Insecta.tif",
+      "sha256": "09f9de390907d06426aee2ea9b188e4ea8bdc30b5dcfdac6ec61ca02df0f9d1c",
+      "size_bytes": 487012,
+      "modified_date": "2026-08-10"
+    },
+    {
+      "path": "cluster_results/ca/grid_25000m/Mammalia.tif",
+      "sha256": "2e2566a700a2039f66bc8e949e8dc71c29d05aa65be43e8ccb7f1c4dc033dfdf",
+      "size_bytes": 486207,
+      "modified_date": "2026-08-10"
+    },
+    {
+      "path": "cluster_results/ca/grid_25000m/Mollusca.tif",
+      "sha256": "9382e8f1fea9d3f3f75774923e8152e8788871e1635a82dcf5a6f65616f06127",
+      "size_bytes": 478094,
+      "modified_date": "2026-08-10"
+    },
+    {
+      "path": "cluster_results/ca/grid_25000m/Plantae.tif",
+      "sha256": "9a0c3f3e7bcccd8e65fb5a4215abb08168b33ade4af32b9954bf1cfddc1c8850",
+      "size_bytes": 492654,
+      "modified_date": "2026-08-10"
+    },
+    {
+      "path": "cluster_results/ca/grid_25000m/Reptilia.tif",
+      "sha256": "c636fcb87a77ba11aff9ae98ec4bae636a04f976d76c5e0fb7371bb1354b5fec",
+      "size_bytes": 476713,
+      "modified_date": "2026-08-10"
+    },
+    {
+      "path": "cluster_results/ca/grid_25000m/gettingeven.tif",
+      "sha256": "64f6f7da06367c36894edb5b6298eb460c4727b70e44143dd753eebe8ecf594d",
+      "size_bytes": 40166,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/grid_5000m/Actinopterygii.tif",
+      "sha256": "95b589327bbd688d129b2a46e9ed0360bcf0a2235c4432e2ec0f4d04b1affd9d",
+      "size_bytes": 8828392,
+      "modified_date": "2026-08-06"
+    },
+    {
+      "path": "cluster_results/ca/grid_5000m/All_biodiversity.tif",
+      "sha256": "95886f0da584d11550635b8fa4c71bdee4756297352d313129c4709da246f0e1",
+      "size_bytes": 9078910,
+      "modified_date": "2026-08-06"
+    },
+    {
+      "path": "cluster_results/ca/grid_5000m/Amphibia.tif",
+      "sha256": "34e62b3d7399f44cee1bfcac5a4a3114c7b5e3e2160a1f2646f3d53a6ce53a24",
+      "size_bytes": 8847408,
+      "modified_date": "2026-08-06"
+    },
+    {
+      "path": "cluster_results/ca/grid_5000m/Arachnida.tif",
+      "sha256": "c0976418deac0a775a72c850186668ddcfa671e61f4501a6da7feaf0647fce15",
+      "size_bytes": 8846695,
+      "modified_date": "2026-08-06"
+    },
+    {
+      "path": "cluster_results/ca/grid_5000m/Aves.tif",
+      "sha256": "b2c063612c70b2dd2c93669ff50dfb1f1f1be9f759e79381456cd8b7b3d441ad",
+      "size_bytes": 8925059,
+      "modified_date": "2026-08-06"
+    },
+    {
+      "path": "cluster_results/ca/grid_5000m/Fungi.tif",
+      "sha256": "ecf40b20384327c83a0825bb4aee49b2b2e618c0442820ffada5933a94e95725",
+      "size_bytes": 8918009,
+      "modified_date": "2026-08-06"
+    },
+    {
+      "path": "cluster_results/ca/grid_5000m/Insecta.tif",
+      "sha256": "cd3aff73c915eee6656ddc49f6c1f602a5f89aa42451502f5f49884e1c343df9",
+      "size_bytes": 8941637,
+      "modified_date": "2026-08-06"
+    },
+    {
+      "path": "cluster_results/ca/grid_5000m/Mammalia.tif",
+      "sha256": "cc50381156bd8793b7d8b3c8dba56e38f69b5cbec44059fab58e0a8141f6c666",
+      "size_bytes": 8922772,
+      "modified_date": "2026-08-06"
+    },
+    {
+      "path": "cluster_results/ca/grid_5000m/Mollusca.tif",
+      "sha256": "e892f4a8103802527f9f3406681dc5945211e5fa6666e09aad285636c9d25c36",
+      "size_bytes": 8800503,
+      "modified_date": "2026-08-06"
+    },
+    {
+      "path": "cluster_results/ca/grid_5000m/Plantae.tif",
+      "sha256": "294fb779c04190326492044caafc19488def3eee647eb42efb967be3135fc2bd",
+      "size_bytes": 9021186,
+      "modified_date": "2026-08-06"
+    },
+    {
+      "path": "cluster_results/ca/grid_5000m/Reptilia.tif",
+      "sha256": "2d55756cd1d5805c4cb3c5a8610d9d01efa1659f6fccb244196e1547d9c1cabc",
+      "size_bytes": 8819924,
+      "modified_date": "2026-08-06"
+    },
+    {
+      "path": "cluster_results/ca/grid_5000m/gettingeven.tif",
+      "sha256": "98881aefa9fa38d1a0e2ab6ac58e253ac19fd81d6c29af79acaf91b6048ca4df",
+      "size_bytes": 351080,
+      "modified_date": "2026-10-17"
     },
     {
       "path": "cluster_results/ca/index.json",
-      "sha256": "35e16b5b606d06bef8fc0e7c37488f5a0346399e72a32365d1b73060f8299494",
-      "size_bytes": 3920,
-      "modified_date": "2026-08-10"
+      "sha256": "f199a79de76f5c4064ba43a589cd26fcff8302e420128454dd1be59b29093e3c",
+      "size_bytes": 3526,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/land_sea_5000m.png",
+      "sha256": "809249f9ce89699a29cddcfc9e0f19a681686d208735651039554c8a5040b5ea",
+      "size_bytes": 35667,
+      "modified_date": "2026-10-17"
     },
     {
       "path": "cluster_results/ca/us_cells.json",
-      "sha256": "df02332e6c9a379c75ed60aace2879330abc0927d01953f1d263bcba8e6fc6fa",
-      "size_bytes": 86017,
-      "modified_date": "2026-08-10"
+      "sha256": "77e76ad602ef86140f1095a1ff1357229f1a80609cd12692667ffd0dbb170c80",
+      "size_bytes": 87362,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Actinopterygii_conservation_grid_25000m.png",
+      "sha256": "9308003383039718d68e18cddca155965b99e7f17575fac7a53af10914247e4a",
+      "size_bytes": 25157,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Actinopterygii_conservation_grid_5000m.png",
+      "sha256": "2b7aec124423efc1f337e71beb7c3ba93b78c758ff400da7fe2c182104ae49ba",
+      "size_bytes": 408010,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Actinopterygii_spatial_gap_grid_25000m.png",
+      "sha256": "29b806bb2fda6f677ce1303ad80754987c06d15c3d4e943eb32fccc81771eb29",
+      "size_bytes": 38110,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Actinopterygii_spatial_gap_grid_5000m.png",
+      "sha256": "8d47bacdd906721d4c8bcef4cf05b7033c4a7c2e3ce10d28d73e5078e4be4366",
+      "size_bytes": 578467,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Actinopterygii_species_discovery_grid_25000m.png",
+      "sha256": "4adf66d3f57737e58fd69a535373d434de217a35d9ec71d28122f811d0c798c8",
+      "size_bytes": 46145,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Actinopterygii_species_discovery_grid_5000m.png",
+      "sha256": "58627ebe5bd79510abc96a69ad6d87be7dba1e0abd1f86592731231959ef832d",
+      "size_bytes": 595445,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/All_biodiversity_conservation_grid_25000m.png",
+      "sha256": "9308003383039718d68e18cddca155965b99e7f17575fac7a53af10914247e4a",
+      "size_bytes": 25157,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/All_biodiversity_conservation_grid_5000m.png",
+      "sha256": "2b7aec124423efc1f337e71beb7c3ba93b78c758ff400da7fe2c182104ae49ba",
+      "size_bytes": 408010,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/All_biodiversity_spatial_gap_grid_25000m.png",
+      "sha256": "a4e15520e92e63aa0f752edd4982543a7c90e984c0e41192c324936833b189f5",
+      "size_bytes": 45725,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/All_biodiversity_spatial_gap_grid_5000m.png",
+      "sha256": "05de2dc9698f29589c65765728a4b0faab289030a62b0468f703854a649850ae",
+      "size_bytes": 618471,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/All_biodiversity_species_discovery_grid_25000m.png",
+      "sha256": "4c1cd4c9f0c51e325f61194caba6f83d06367238e9deeae58da0dd6633aaee28",
+      "size_bytes": 48354,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/All_biodiversity_species_discovery_grid_5000m.png",
+      "sha256": "da74d7cdbd7aa7df7a7dd9ee2fdf7141e260fc8a835ec1daa63303c20b473703",
+      "size_bytes": 641516,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Amphibia_conservation_grid_25000m.png",
+      "sha256": "9308003383039718d68e18cddca155965b99e7f17575fac7a53af10914247e4a",
+      "size_bytes": 25157,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Amphibia_conservation_grid_5000m.png",
+      "sha256": "2b7aec124423efc1f337e71beb7c3ba93b78c758ff400da7fe2c182104ae49ba",
+      "size_bytes": 408010,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Amphibia_spatial_gap_grid_25000m.png",
+      "sha256": "60262bcca8cff803bec3119af6c47cf1d1c1d87ffca5aaf8f42dba7412fbb293",
+      "size_bytes": 38178,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Amphibia_spatial_gap_grid_5000m.png",
+      "sha256": "e2fc837641df8bf4e77c01797d93269ba469d4f7b0d6fbee2aff302da3783719",
+      "size_bytes": 579001,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Amphibia_species_discovery_grid_25000m.png",
+      "sha256": "b31930a0bedbbee5cbf49367ab4af45678aa8491a4bfe75faf02a09768334016",
+      "size_bytes": 46191,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Amphibia_species_discovery_grid_5000m.png",
+      "sha256": "b6b81c1f1bd641081f8a8dd2dd8dc292bd7d475d7c8c228dac04b491765b3772",
+      "size_bytes": 597885,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Arachnida_conservation_grid_25000m.png",
+      "sha256": "9308003383039718d68e18cddca155965b99e7f17575fac7a53af10914247e4a",
+      "size_bytes": 25157,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Arachnida_conservation_grid_5000m.png",
+      "sha256": "2b7aec124423efc1f337e71beb7c3ba93b78c758ff400da7fe2c182104ae49ba",
+      "size_bytes": 408010,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Arachnida_spatial_gap_grid_25000m.png",
+      "sha256": "8e36bb607e4dd25f5d5f475ac372d5ca39340db9a3b2f5f83281a33464577ec8",
+      "size_bytes": 38611,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Arachnida_spatial_gap_grid_5000m.png",
+      "sha256": "bb67c67fe687a7367e93b1862323d7567a0ef063f9a73edec6089265b3493e70",
+      "size_bytes": 581759,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Arachnida_species_discovery_grid_25000m.png",
+      "sha256": "78a6a85f96562c394e934cbb590ca9d0bf6aa66f5544912b66f64b9a7d27be84",
+      "size_bytes": 46239,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Arachnida_species_discovery_grid_5000m.png",
+      "sha256": "9e98a48418a8891c37d97bf7dd742444859d1132fee5bfaf09ffa7f6f798b373",
+      "size_bytes": 597588,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Aves_conservation_grid_25000m.png",
+      "sha256": "9308003383039718d68e18cddca155965b99e7f17575fac7a53af10914247e4a",
+      "size_bytes": 25157,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Aves_conservation_grid_5000m.png",
+      "sha256": "2b7aec124423efc1f337e71beb7c3ba93b78c758ff400da7fe2c182104ae49ba",
+      "size_bytes": 408010,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Aves_spatial_gap_grid_25000m.png",
+      "sha256": "4a0581b78b4cfa893677101aad2465a8c0da21a6417c60e4ed8bf64a1ac0ef77",
+      "size_bytes": 41765,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Aves_spatial_gap_grid_5000m.png",
+      "sha256": "e724bdca6bcf0d01a824981898e825031248b5576ab9b777f0d698cfeae3929c",
+      "size_bytes": 599138,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Aves_species_discovery_grid_25000m.png",
+      "sha256": "82eb8fbb47d1ec74badd3990434e71f0dcc82f17f2b5a3e030e22a2bf0dca63f",
+      "size_bytes": 46999,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Aves_species_discovery_grid_5000m.png",
+      "sha256": "6f82b0c938b595e254ebd1f33bb1337ac3952d11e7c528beaa6368c13b1b7e98",
+      "size_bytes": 616596,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Fungi_conservation_grid_25000m.png",
+      "sha256": "9308003383039718d68e18cddca155965b99e7f17575fac7a53af10914247e4a",
+      "size_bytes": 25157,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Fungi_conservation_grid_5000m.png",
+      "sha256": "2b7aec124423efc1f337e71beb7c3ba93b78c758ff400da7fe2c182104ae49ba",
+      "size_bytes": 408010,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Fungi_spatial_gap_grid_25000m.png",
+      "sha256": "6bee369a00d5de0449b706c5ac6d94c700226212426de6d8782353463d722dd7",
+      "size_bytes": 40809,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Fungi_spatial_gap_grid_5000m.png",
+      "sha256": "bbaa37eeadccd7c96130d12442f373f90087f7655cb18d4e59cae717c4445e50",
+      "size_bytes": 599836,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Fungi_species_discovery_grid_25000m.png",
+      "sha256": "a63cdb971e1b1ad66cbec8ed3e00f5a484233ecb726ec5989048047f31c01118",
+      "size_bytes": 46538,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Fungi_species_discovery_grid_5000m.png",
+      "sha256": "c277b69ea6ed28dac17256ea593a8655d3ec449e773405ab377ae4bafb6c610e",
+      "size_bytes": 616142,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Insecta_conservation_grid_25000m.png",
+      "sha256": "9308003383039718d68e18cddca155965b99e7f17575fac7a53af10914247e4a",
+      "size_bytes": 25157,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Insecta_conservation_grid_5000m.png",
+      "sha256": "2b7aec124423efc1f337e71beb7c3ba93b78c758ff400da7fe2c182104ae49ba",
+      "size_bytes": 408010,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Insecta_spatial_gap_grid_25000m.png",
+      "sha256": "28bb9516e34845633e154a4530720a2737c905eb7a19abe3de4080ca7481e4f3",
+      "size_bytes": 41637,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Insecta_spatial_gap_grid_5000m.png",
+      "sha256": "789e2a71ba2f71da342a2300f08cc83d4b986efa9652a36291928fca4f222b09",
+      "size_bytes": 609089,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Insecta_species_discovery_grid_25000m.png",
+      "sha256": "f273e86a060813fe0c48ea57f5e58deae6a1629a72d0479fee5d4881cb17a95b",
+      "size_bytes": 46937,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Insecta_species_discovery_grid_5000m.png",
+      "sha256": "431e321d7e2d9067bb8bf7ceba3bb4441d6d6da06617d0b8cd4ec3eeecbf96d6",
+      "size_bytes": 622280,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Mammalia_conservation_grid_25000m.png",
+      "sha256": "9308003383039718d68e18cddca155965b99e7f17575fac7a53af10914247e4a",
+      "size_bytes": 25157,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Mammalia_conservation_grid_5000m.png",
+      "sha256": "2b7aec124423efc1f337e71beb7c3ba93b78c758ff400da7fe2c182104ae49ba",
+      "size_bytes": 408010,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Mammalia_spatial_gap_grid_25000m.png",
+      "sha256": "10b5b80b14ad2af2839037178070958f61e197e91ef86203177228395d974d7d",
+      "size_bytes": 41920,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Mammalia_spatial_gap_grid_5000m.png",
+      "sha256": "a016cb332e54d408d23e6cdd7bfec0fb7033643d42854c3b21889ffffb7af44c",
+      "size_bytes": 600011,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Mammalia_species_discovery_grid_25000m.png",
+      "sha256": "17a2b5bc7a0fef8fcc345b7fba9d8426efbe59a001980dd57a8882dfacb4f848",
+      "size_bytes": 47027,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Mammalia_species_discovery_grid_5000m.png",
+      "sha256": "bcdaa02199444bc031c1ec2079cbe3059611f31eb7c0938072a5b5f17ec880cd",
+      "size_bytes": 622004,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Mollusca_conservation_grid_25000m.png",
+      "sha256": "9308003383039718d68e18cddca155965b99e7f17575fac7a53af10914247e4a",
+      "size_bytes": 25157,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Mollusca_conservation_grid_5000m.png",
+      "sha256": "2b7aec124423efc1f337e71beb7c3ba93b78c758ff400da7fe2c182104ae49ba",
+      "size_bytes": 408010,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Mollusca_spatial_gap_grid_25000m.png",
+      "sha256": "587a07ad721608d65571c6c4922693ea336edf3c53498c12edc10e0d33aa06db",
+      "size_bytes": 37301,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Mollusca_spatial_gap_grid_5000m.png",
+      "sha256": "5cb77387a8498a7b09c160d724a85240e8c5bc3678dfe3aa53812e4a2f9d5542",
+      "size_bytes": 563526,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Mollusca_species_discovery_grid_25000m.png",
+      "sha256": "baf17ee2794a9f9ca1fe2dfb3a915614a7d667d3656641aeb44d1bb1fa98514f",
+      "size_bytes": 46037,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Mollusca_species_discovery_grid_5000m.png",
+      "sha256": "77273acb42379341d2807ba0661401abd77ce7fcc1a61b32248378fdd0c0b01f",
+      "size_bytes": 579449,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Plantae_conservation_grid_25000m.png",
+      "sha256": "9308003383039718d68e18cddca155965b99e7f17575fac7a53af10914247e4a",
+      "size_bytes": 25157,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Plantae_conservation_grid_5000m.png",
+      "sha256": "2b7aec124423efc1f337e71beb7c3ba93b78c758ff400da7fe2c182104ae49ba",
+      "size_bytes": 408010,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Plantae_spatial_gap_grid_25000m.png",
+      "sha256": "5b83216893b2dee7cb9089a4707e59d57c65e5c14777aeed804063c47009372c",
+      "size_bytes": 43919,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Plantae_spatial_gap_grid_5000m.png",
+      "sha256": "0a80377b601949d086eda0a829371d398386c09c3de6be4be116420b0d0f440f",
+      "size_bytes": 623830,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Plantae_species_discovery_grid_25000m.png",
+      "sha256": "0f3edc227458a9c9cc845f931f28c667326eadd52a7d794921ff7afdc727c92e",
+      "size_bytes": 47877,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Plantae_species_discovery_grid_5000m.png",
+      "sha256": "bdc71bd1904337bd82b905bbbe0f8ea3854532888db93f3a42711c266806269f",
+      "size_bytes": 641431,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Reptilia_conservation_grid_25000m.png",
+      "sha256": "9308003383039718d68e18cddca155965b99e7f17575fac7a53af10914247e4a",
+      "size_bytes": 25157,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Reptilia_conservation_grid_5000m.png",
+      "sha256": "2b7aec124423efc1f337e71beb7c3ba93b78c758ff400da7fe2c182104ae49ba",
+      "size_bytes": 408010,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Reptilia_spatial_gap_grid_25000m.png",
+      "sha256": "124786ae046aa8549277be1b17a1926d2536fe7e780ecf3319ce15c671e83d00",
+      "size_bytes": 37472,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Reptilia_spatial_gap_grid_5000m.png",
+      "sha256": "01fb2045effaeaee7e663852b15944f1cba5ccfc0457fc6a7bbc94a1d05bd220",
+      "size_bytes": 580302,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Reptilia_species_discovery_grid_25000m.png",
+      "sha256": "4e9973ef49eec684f8ff566b5e068b028121e8f4a0831f5cc39d605b046b8cb5",
+      "size_bytes": 46423,
+      "modified_date": "2026-10-17"
+    },
+    {
+      "path": "cluster_results/ca/values/Reptilia_species_discovery_grid_5000m.png",
+      "sha256": "921886386b01f570ffe0fbd565179243ea4ac17a3ccfdc718a283796bd25dcbe",
+      "size_bytes": 595700,
+      "modified_date": "2026-10-17"
     },
     {
       "path": "cluster_results/ca/webapp_data_Actinopterygii.json",
-      "sha256": "e21200ec2be2ce8e7666d1b946b37623341cea593bf3f95d92717fe90ae3cfbd",
-      "size_bytes": 1194110,
-      "modified_date": "2026-08-10"
+      "sha256": "44bc8c4e21626f3a1fed81cf2bef138d2c68daf7589f1b1fddf1c95aa22d4b4a",
+      "size_bytes": 2650499,
+      "modified_date": "2026-10-17"
     },
     {
       "path": "cluster_results/ca/webapp_data_All_biodiversity.json",
-      "sha256": "b3709ef244b8db16c5f857279be555ce0d4dc2f1ddc28af88f62aac21a6462b2",
-      "size_bytes": 1207364,
-      "modified_date": "2026-08-10"
+      "sha256": "4639b5cbe2449b06a3117d5946d110d85028659b85cde7b9df6ae1f66485c3f8",
+      "size_bytes": 2673989,
+      "modified_date": "2026-10-17"
     },
     {
       "path": "cluster_results/ca/webapp_data_Amphibia.json",
-      "sha256": "24aeda67fd0ba9477eaccd8536232f20aa0bc5d02c530ebd81648288d0bd7bbf",
-      "size_bytes": 1194394,
-      "modified_date": "2026-08-10"
+      "sha256": "5e18e44739bd516e9387ae4b5fa9b677abb1193f7b2e8dbbc6b99062c62de3df",
+      "size_bytes": 2650760,
+      "modified_date": "2026-10-17"
     },
     {
       "path": "cluster_results/ca/webapp_data_Arachnida.json",
-      "sha256": "04c0a5f43ee80dd738916f65215f1338704d6e8a5213430cb811287b5e2f3e89",
-      "size_bytes": 1194056,
-      "modified_date": "2026-08-10"
+      "sha256": "c48b5595f74529a5bdd97e29441e25cd3ba2dc5bcbd8996ad984d21498b13cf2",
+      "size_bytes": 2651010,
+      "modified_date": "2026-10-17"
     },
     {
       "path": "cluster_results/ca/webapp_data_Aves.json",
-      "sha256": "18fb226877372b5402cc18bd8546a02882d093ee5caf0a6f6504f86daea18d57",
-      "size_bytes": 1199067,
-      "modified_date": "2026-08-10"
+      "sha256": "7c0f1f0002fa516d4739459041f15947364f17f5f55dab8a5f6cfb0c710ca0fd",
+      "size_bytes": 2654859,
+      "modified_date": "2026-10-17"
     },
     {
       "path": "cluster_results/ca/webapp_data_Fungi.json",
-      "sha256": "e01e18cfcab4fa23c471803953a86de15dfdea76bf1a1472242ab74e1932fbe3",
-      "size_bytes": 1198075,
-      "modified_date": "2026-08-10"
+      "sha256": "d9f963b5794f42ea831f9038d18e1d6b9d311c60cbeabb6886438f7d55cb4b0f",
+      "size_bytes": 2653552,
+      "modified_date": "2026-10-17"
     },
     {
       "path": "cluster_results/ca/webapp_data_Insecta.json",
-      "sha256": "ceae8f1bc581d48d566919e4ca7ab02cfa6d7c9c4e3002688580dc58986b6cf9",
-      "size_bytes": 1200055,
-      "modified_date": "2026-08-10"
+      "sha256": "17236d9e60c849c3521777e81cb183fddb856ab71d0d8f9d1bb7296f3a2f8f0c",
+      "size_bytes": 2656568,
+      "modified_date": "2026-10-17"
     },
     {
       "path": "cluster_results/ca/webapp_data_Mammalia.json",
-      "sha256": "d33257f4d3ca9fca7e220207b5496e08ce0714f98681856fa2c163bf03eef64a",
-      "size_bytes": 1197418,
-      "modified_date": "2026-08-10"
+      "sha256": "953d891b090d75d6bf617d950bf555ab754484ce403b5e6a049d66dfeb3d32ad",
+      "size_bytes": 2653074,
+      "modified_date": "2026-10-17"
     },
     {
       "path": "cluster_results/ca/webapp_data_Mollusca.json",
-      "sha256": "a2cfd878e5c1a9bfaa7090a32ae77d585b57238f23427a963964fa5ad6bfd188",
-      "size_bytes": 1193519,
-      "modified_date": "2026-08-10"
+      "sha256": "b17c24fcf573d3ec5c2e0794175c5d4ca956f7204185a094144c60ea494e2112",
+      "size_bytes": 2650838,
+      "modified_date": "2026-10-17"
     },
     {
       "path": "cluster_results/ca/webapp_data_Plantae.json",
-      "sha256": "073151b791f47b1868ee485073b8c7626ed02b261a5a78821d78589ef961b4ec",
-      "size_bytes": 1204903,
-      "modified_date": "2026-08-10"
+      "sha256": "5d63d05d0df285aca593bb7fdbfd87abc2366d1e936302cdb3d326f2f92771e2",
+      "size_bytes": 2662630,
+      "modified_date": "2026-10-17"
     },
     {
       "path": "cluster_results/ca/webapp_data_Reptilia.json",
-      "sha256": "ce089b1749c5ac3b83573de850248018ee0ab3b9fd40c9dc450affc84428b3ea",
-      "size_bytes": 1193819,
-      "modified_date": "2026-08-10"
+      "sha256": "e9dda4eb501f6562f18acdf1df16a95b8efd4e1b215f1ba8b6a87a646c67ba06",
+      "size_bytes": 2651003,
+      "modified_date": "2026-10-17"
     },
     {
       "path": "cluster_results/ca/webapp_data_gettingeven.json",
-      "sha256": "5de259120b5d48f7ce551dc98a5c806afd6ceb2d8a2d167d3f81de1467311ab9",
-      "size_bytes": 557245,
-      "modified_date": "2026-08-13"
+      "sha256": "efd0791b931550de984e23f09599f3b0c1b371bfbfd479a4365a468fff912df3",
+      "size_bytes": 599710,
+      "modified_date": "2026-10-17"
     }
   ],
-  "manifest_hash": "f67acf37faa748c9f6ce61984f6f5c44018f5dc5ff87ea35b82f38ac8164e40b"
+  "manifest_hash": "2985d6eb69d5dfa14f8b1f3e75373974b6ab63e026a4f2bae4a1a58eb29afd3c"
 }

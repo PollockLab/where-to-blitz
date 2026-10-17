@@ -19,7 +19,8 @@
     "observations_sha256": {
       "25000": "4386610c845d98ebd4d6bd206dbf877069ab117a71f7bbd428afbaa5726c540e",
       "5000": "0b76c15c2ea23906ee43e9c6360bb269ef422ed6cabe7fb2f734fa67a0e43e25"
-    }
+    },
+    "source_commit": "d11b9e6f2d951e630d3735c1eb12fad061e6c09a"
   },
   "published_outputs_sha256": {
     "gettingeven_grid_25000m.png": "f530bf8147942b7bc120b8840b14d05f1d41dbf47974d7979df74745a0c30af3",

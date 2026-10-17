@@ -12,6 +12,7 @@ on:
       - prepare_gettingeven_evidence.py
       - build_gettingeven.py
       - prepare_gettingeven_reference.py
+      - tests/fixtures/gettingeven-reference/**
       - test_gettingeven*.py
       - .github/workflows/verify-getting-even.yml
       - .github/workflows/rebuild-grid.yml
@@ -25,20 +26,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
       - name: Install dependencies
         run: pip install -r requirements.txt
-      - name: Restore published grid and checksum-pinned aggregate count bands
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Restore immutable archived grid and checksum-pinned aggregate count bands
         run: |
           set -euo pipefail
           python -m pytest test_gettingeven_inputs.py test_gettingeven_reference.py -q
           mkdir "$RUNNER_TEMP/gettingeven-source"
-          cp cluster_results/ca/gettingeven_grid.json cluster_results/ca/gettingeven_gate_{25000,5000}m.png "$RUNNER_TEMP/gettingeven-source/"
-          bash publish_grid_release.sh --restore
+          cp tests/fixtures/gettingeven-reference/* "$RUNNER_TEMP/gettingeven-source/"
+          SOURCE_COMMIT=$(python -c 'import json; print(json.load(open("gettingeven_reference.json"))["provenance"]["source_commit"])')
+          git archive "$SOURCE_COMMIT" cluster_results/ca | tar -x
           python prepare_gettingeven_reference.py --source-sidecar "$RUNNER_TEMP/gettingeven-source/gettingeven_grid.json"
           cp "$RUNNER_TEMP/gettingeven-source/"gettingeven_gate_*m.png cluster_results/ca/
           mkdir "$RUNNER_TEMP/gettingeven-before"
@@ -65,7 +67,8 @@ jobs:
                   assert (expected.mode, expected.size, expected.tobytes()) == (actual.mode, actual.size, actual.tobytes()), path.name
               print(path.name + ": identical decoded cells")
           PY
-          python -m pytest test_gettingeven.py -q
+          # This job verifies the archived metric, not the current producer's prose counts.
+          python -m pytest test_gettingeven.py -q -k "not methodology_quotes_the_real_thin_cell_counts"
       - name: Produce and verify both source-count evidence tiers
         run: |
           python gettingeven_evidence.py --output-dir cluster_results/ca

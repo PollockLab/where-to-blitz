@@ -18,7 +18,11 @@ def reference(tmp_path, change=None):
     output, saved = tmp_path / "output", tmp_path / "saved"
     output.mkdir()
     saved.mkdir()
-    source = json.loads((ROOT / "cluster_results/ca/gettingeven_grid.json").read_bytes())
+    # This fixture represents the frozen release, independent of the current producer's grid.
+    source = {"tiers": {res: {"png": f"gettingeven_grid_{res}m.png",
+                               "inputs": {"observations_sha256": fingerprint},
+                               "gate_mask": {"png": f"gettingeven_gate_{res}m.png"}}
+                         for res, fingerprint in doc["provenance"]["observations_sha256"].items()}}
     for name in doc["published_outputs_sha256"]:
         data = name.encode()
         (output / name).write_bytes(data)
@@ -50,15 +54,28 @@ def reference(tmp_path, change=None):
     return path, content, files, source_path
 
 
-def test_reference_provenance_matches_both_shipped_observation_populations():
+def test_frozen_reference_provenance_and_gate_masks_match_the_archive():
     doc = json.loads((ROOT / "gettingeven_reference.json").read_bytes())
-    sidecar = json.loads((ROOT / "cluster_results/ca/gettingeven_grid.json").read_bytes())
+    frozen = ROOT / "tests/fixtures/gettingeven-reference"
+    source = json.loads((frozen / "gettingeven_grid.json").read_bytes())
     assert doc["provenance"]["observations_sha256"] == {
-        res: tier["inputs"]["observations_sha256"] for res, tier in sidecar["tiers"].items()
+        res: tier["inputs"]["observations_sha256"] for res, tier in source["tiers"].items()
     }
-    for name, checksum in doc["published_outputs_sha256"].items():
-        assert hashlib.sha256((ROOT / "cluster_results/ca" / name).read_bytes()).hexdigest() == checksum
+    for tier in source["tiers"].values():
+        assert tier["sha256"] == doc["published_outputs_sha256"][tier["png"]]
+        mask = tier["gate_mask"]
+        assert hashlib.sha256((frozen / mask["png"]).read_bytes()).hexdigest() == mask["sha256"]
+
+
+def test_archived_reference_rejects_the_rebuilt_observation_population(tmp_path):
+    doc = json.loads((ROOT / "gettingeven_reference.json").read_bytes())
+    sidecar_path = ROOT / "cluster_results/ca/gettingeven_grid.json"
+    sidecar = json.loads(sidecar_path.read_bytes())
     assert doc["source"].endswith("-" + doc["sha256"] + ".tar.gz")
+    assert doc["provenance"]["observations_sha256"]["25000"] != sidecar["tiers"]["25000"]["inputs"]["observations_sha256"]
+    with pytest.raises(ValueError, match="observations differ"):
+        prepare(ROOT / "gettingeven_reference.json", tmp_path, source_sidecar=sidecar_path,
+                fetch=lambda _: pytest.fail("archived counts must not overwrite the rebuilt grid"))
 
 
 def test_verified_reference_restores_exact_count_bands(tmp_path):

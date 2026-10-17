@@ -30,6 +30,7 @@ import numpy as np
 import rasterio
 
 import border_mask
+from fullgrid_outputs import NON_PRIORITY_STACKS
 from goal_presets import AXES, PRESETS
 from grid_schema import BAND_INDEX
 
@@ -83,7 +84,7 @@ def main():
         res_label = rdir.name
         res_m = int(res_label.split("_")[1].replace("m", ""))
         for tif in sorted(rdir.glob("*.tif")):
-            if tif.stem == "index":
+            if tif.stem in NON_PRIORITY_STACKS:
                 continue
             group = tif.stem
             if args.group and group != args.group.replace(" ", "_"):
