@@ -103,14 +103,14 @@ def test_popup_does_not_show_previous_goals_score_on_other_layers(kind):
 
 
 @pytest.mark.parametrize(
-    ("lang", "averaged_inputs", "native_score"),
+    ("lang", "shared_inputs", "precision"),
     [
-        ("en", "mean of the finer cells' scoring inputs", "native 25&nbsp;km score"),
-        ("fr", "moyenne des indicateurs des cellules fines", "score natif de 25&nbsp;km"),
+        ("en", "same aggregated scoring inputs", "full stored score"),
+        ("fr", "mêmes indicateurs agrégés", "score stocké sans arrondi"),
     ],
 )
-def test_colour_help_distinguishes_aggregated_fill_from_native_national_rank(
-    lang, averaged_inputs, native_score
+def test_colour_help_explains_shared_inputs_and_display_quantization(
+    lang, shared_inputs, precision
 ):
     text = _run("console.log(JSON.stringify(t('colour_expl')));", lang)
-    assert averaged_inputs in text and native_score in text
+    assert shared_inputs in text and precision in text

@@ -44,6 +44,7 @@ fi
 GRID_RES=25000 "$PY" build_fullgrid_ca.py
 GRID_RES=5000  "$PY" build_fullgrid_ca.py
 "$PY" aggregate_25km_from_5km.py
+"$PY" export_popup_grid.py
 # 3b) re-tag out-of-Canada cells for the Canada-only view mask (us_cells.json). MUST follow the grid build:
 #     if the grid's cell set changes, a stale mask leaks US coastal cells into the default view (#58 follow-up).
 "$PY" build_canada_mask.py
@@ -61,6 +62,7 @@ done
 #    build: a manifest whose hashes predate the artifacts is worse than none, since it is the
 #    file a reader consults to trust the numbers.
 "$PY" build_provenance.py
+"$PY" -m pytest test_export_popup_grid.py test_artifact_invariants.py -q
 # 7) regenerate the deployed single-page app
 "$PY" build_webapp.py
 echo "done — cluster_results/ca/ + index.html regenerated."

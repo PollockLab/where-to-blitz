@@ -12,7 +12,7 @@ Blitz the Gap campaign at McGill — a planning aid, not ground truth.
 
 ## What it does
 
-- An equal-area grid of Canada: **23,214 cells of 25 km**, and **536,164 of 5 km** when you zoom in. Each cell is scored by a preset mix of goals.
+- An equal-area grid of Canada: **23,354 cells of 25 km**, and **536,164 of 5 km** when you zoom in. Each cell is scored by a preset mix of goals.
 - **Explore** three recording-priority maps, Getting Even's group recommendations, and Climate Gap's coverage overlay. Trip planning and side-by-side goal comparison are optional development views.
 - Tap a cell for live iNaturalist recording suggestions and group comparisons. A recording gap means no matching record under the query's filters, not biological absence.
 - English / Canadian-French toggle; geolocation; recording presets with a join link to the current general Blitz the Gap iNaturalist project.

@@ -1,8 +1,8 @@
 """Artifact writes for build_fullgrid_ca (stage 2 of the build).
 
 The 7-band GeoTIFF stacks, the per-group webapp JSON, and the two index.json files.
-Extracted from build_fullgrid_ca.py; output paths, file formats, and rounding are
-unchanged.
+The JSON retains the stack's float32 axes and travel values; only cell coordinates
+are rounded for the existing coordinate-key joins.
 """
 import json
 import os
@@ -14,13 +14,17 @@ import national_breaks as nb
 from fullgrid_fields import GROUP_TO_COG, GROUPS, OUT_DIR
 from grid_schema import BANDS
 
+# Getting Even carries its own two-band categorical schema and is built separately.
+NON_PRIORITY_STACKS = {"index", "gettingeven"}
+
 
 def _sr(x):
-    return round(float(x), 3) if np.isfinite(x) else 0.0
+    # Match the stack precision without introducing colour-bin changes or false rank ties.
+    return float(np.float32(x)) if np.isfinite(x) else 0.0
 
 
 def _tr(x):
-    return round(float(x), 0) if np.isfinite(x) else -1.0
+    return float(np.float32(x)) if np.isfinite(x) else -1.0
 
 
 def write_stack(f, group, bands):
@@ -39,15 +43,15 @@ def write_stack(f, group, bands):
     return path
 
 
-def write_webapp_json(f, group, bands):
+def write_webapp_json(f, group, bands, output_dir=OUT_DIR):
     """Per-cell rows for the app's vector/popup layer; returns the file size in bytes."""
-    os.makedirs(OUT_DIR, exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True)
     rows_out = [[round(float(f.clat[i]), 3), round(float(f.clon[i]), 3),
                  _sr(bands["discover"][i]), _sr(bands["conservation"][i]), _sr(bands["env"][i]),
-                 _sr(bands["staleness"][i]), _sr(bands["urgency"][i]), _tr(f.travel_min[i]),
+                 _sr(bands["staleness"][i]), _sr(bands["urgency"][i]), _tr(bands["travel_min"][i]),
                  int(bands["n_train"][i])]
                 for i in range(f.n)]
-    fn = os.path.join(OUT_DIR, f"webapp_data_{group.replace(' ', '_')}.json")
+    fn = os.path.join(output_dir, f"webapp_data_{group.replace(' ', '_')}.json")
     with open(fn, "w") as _fh:
         json.dump({group: rows_out}, _fh, separators=(",", ":"))
     return os.path.getsize(fn)

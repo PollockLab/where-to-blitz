@@ -28,6 +28,7 @@ import numpy as np
 import rasterio
 from rasterio.errors import NotGeoreferencedWarning
 
+from fullgrid_outputs import NON_PRIORITY_STACKS
 from goal_presets import PRESETS
 from grid_lattice import mean_pool_block, sum_pool_block
 from grid_schema import SUM_BAND_INDICES as SUM_BANDS  # 1-based; n_train is extensive
@@ -139,7 +140,9 @@ def find_tif_groups(dir_path: Path) -> dict[str, Path]:
         return {}
     out = {}
     for p in sorted(dir_path.glob("*.tif")):
-        out[p.stem] = p
+        # Getting Even has its own two-band schema and tier-specific category tests.
+        if p.stem not in NON_PRIORITY_STACKS:
+            out[p.stem] = p
     return out
 
 

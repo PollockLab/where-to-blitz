@@ -13,7 +13,7 @@ Per-band rules (band order = build_fullgrid_ca.BANDS):
   discover / conservation / env / staleness / urgency / travel_min  -> NaN-aware mean
   n_train (implied record count, an extensive quantity)             -> NaN-aware sum
 
-The 25 km webapp JSON and national ramps come from the native 25 km build (fit-25km job). Popup components and national ranks use that native JSON, while 25 km colours use axes aggregated from 5 km. These products can have different axis values before colour quantisation or viewport stretching.
+National ramps are fitted by the native 25 km build (fit-25km job). After all groups have been aggregated, export_popup_grid.py replaces the intermediate JSON with the final stacks' cell inventory and full float32 axes. Popup components, national ranks and 25 km colours then use the same inputs.
 
 Usage: python aggregate_25km_from_5km.py [--group Aves]
 Reads  cluster_results/ca/grid_5000m/<Group>.tif
@@ -25,6 +25,7 @@ from pathlib import Path
 import numpy as np
 import rasterio
 
+from fullgrid_outputs import NON_PRIORITY_STACKS
 from grid_lattice import Lattice, mean_pool_block, sum_pool_block
 from grid_schema import BANDS, SUM_BANDS
 
@@ -40,7 +41,7 @@ COARSE = HERE / "cluster_results" / "ca" / "grid_25000m"
 COARSE.mkdir(parents=True, exist_ok=True)
 
 # CRS comes from a local 5 km stack (same lattice CRS; no network read needed).
-_first = next(p for p in sorted(FINE.glob("*.tif")) if p.stem != "index")
+_first = next(p for p in sorted(FINE.glob("*.tif")) if p.stem not in NON_PRIORITY_STACKS)
 with rasterio.open(_first) as _src:
     crs = _src.crs
 LAT5 = Lattice(5000, crs)
@@ -49,7 +50,7 @@ K = 25000 // 5000
 assert LAT25.nrow * K == LAT5.nrow and LAT25.ncol * K == LAT5.ncol, "lattices must align 5x5"
 
 for tif in sorted(FINE.glob("*.tif")):
-    if tif.stem == "index" or (GROUP and tif.stem != GROUP):
+    if tif.stem in NON_PRIORITY_STACKS or (GROUP and tif.stem != GROUP):
         continue
     out = COARSE / tif.name
     with rasterio.open(tif) as src:

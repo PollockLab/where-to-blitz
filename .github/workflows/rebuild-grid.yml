@@ -234,6 +234,16 @@ jobs:
             echo "$missing"
             exit 1
           fi
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}-py-3.11
+      - name: Install deps
+        run: pip install -r requirements.txt
+      - name: Export popup scores and inventory from the final aggregated stacks
+        run: python export_popup_grid.py
       - name: Compute inputs hash
         id: compute_inputs
         env:
@@ -281,16 +291,6 @@ jobs:
           else
             echo "found=false" >> $GITHUB_OUTPUT
           fi
-      - name: Cache pip
-        if: ${{ steps.check_artifact.outputs.found != 'true' }}
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}-py-3.11
-      - name: Install deps
-        if: ${{ steps.check_artifact.outputs.found != 'true' }}
-        run: pip install -r requirements.txt
       - name: Regenerate the Canada-only view mask from the rebuilt grid
         # us_cells.json is the vector half of the border mask; the raster half is baked into
         # the values PNGs' alpha by build_grid_values.py. Both come from border_mask.py, but only the
@@ -324,7 +324,9 @@ jobs:
         # Hashes what this run read and wrote. Must follow the grid build and precede the
         # upload, or the manifest describes the previous build's files.
         if: ${{ steps.check_artifact.outputs.found != 'true' }}
-        run: python build_provenance.py
+        run: |
+          python build_provenance.py
+          python -m pytest test_export_popup_grid.py test_artifact_invariants.py -q
       - name: Rebuild webapp (index.html)
         if: ${{ steps.check_artifact.outputs.found != 'true' }}
         env:

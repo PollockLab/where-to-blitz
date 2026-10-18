@@ -25,7 +25,7 @@
     "Arachnida": "webapp_data_Arachnida.json",
     "Mollusca": "webapp_data_Mollusca.json"
   },
-  "n_cells": 23214,
+  "n_cells": 23354,
   "res_m": 25000,
   "crs": "PROJCS[\"WGS_1984_Lambert_Azimuthal_Equal_Area\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Lambert_Azimuthal_Equal_Area\"],PARAMETER[\"latitude_of_center\",45],PARAMETER[\"longitude_of_center\",-100],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
   "lattice": {
@@ -47,11 +47,11 @@
     "n_train"
   ],
   "geometry": "equal-area cells on the density COGs' own WGS84 Lambert Azimuthal Equal Area lattice at 25000 m (#87). Cells are square and 25 km on both axes everywhere; the 25 km tier is an exact 5x5 aggregate of the 5 km tier. lat/lon are the WGS84 coordinates of the projected cell centre.",
-  "land_mask": "iNaturalist density COG footprint (Biodiversite Quebec, current vintage); keeps every in-footprint cell with Weiss land coverage or non-zero density, incl. data-bearing water-edge urban cells (#58).",
-  "discover_method": "under-sampling score (fewer records per km2 = higher); zero-record cells on top, ordered among themselves by climate distinctiveness (env).",
+  "land_mask": "Union of supported 5 km child cells in the final aggregated all-taxa stack",
+  "discover_method": "NaN-aware mean of the 5 km under-sampling scores, including their climate ordering",
   "staleness_method": "iNaturalist recent-vs-all-time density (ca_staleness.csv); inverse-density proxy where absent.",
-  "ramps": "discover, env, urgency and the staleness proxy are mapped to 0..1 through the national ramps in breaks.json, fitted once on the 25 km tier (see national_breaks.py). A cell's value is a function of its own raw quantity, so the two zoom tiers agree.",
-  "resample_note": "every raster layer is an area-weighted cell mean over the equal-area cell. conservation and staleness are joined from CSVs keyed on the legacy 0.25-deg lattice, so each cell inherits its 0.25-deg parent's value (nearest-neighbour resample of a coarser layer).",
+  "ramps": "National ramps fitted on native 25 km fields and applied at 5 km; displayed 25 km axes aggregate the scored children",
+  "resample_note": "25 km axes and travel are means of supported 5 km child values; n_train sums child counts",
   "axes_status": {
     "discover": "REAL (under-sampling rank from iNaturalist density COG)",
     "conservation": "REAL (COSEWIC/SARA at-risk richness, CAN-SAR x GBIF; 0.25-deg source)",
@@ -59,7 +59,7 @@
     "staleness": "REAL (iNaturalist recent vs all-time density; 0.25-deg source)",
     "urgency": "REAL (Hansen loss fraction)",
     "travel_min": "REAL (Weiss 2018 travel-time)",
-    "n_train": "REAL-proxy (cell-mean density x cell km2)"
+    "n_train": "REAL-proxy (sum of rounded 5 km density-derived record counts)"
   },
   "group_to_cog": {
     "All biodiversity": "All",
@@ -74,5 +74,6 @@
     "Arachnida": "Arachnida",
     "Mollusca": "Mollusca"
   },
-  "density_vintage": "iNaturalist (Biodiversite Quebec) inat_canada_heatmaps, current public vintage, exact 25x25 block mean of the 1 km LAEA COG"
+  "density_vintage": "iNaturalist (Biodiversite Quebec) inat_canada_heatmaps; n_train sums the rounded 5 km child counts",
+  "popup_source": "final grid_25000m stacks, aggregated from 5 km; float32 axes retained"
 }
