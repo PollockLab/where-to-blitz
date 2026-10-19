@@ -120,7 +120,7 @@ How a question becomes a map you can act on:
 
 ![Flowchart: question → public data → five axes per 25 km square → fixed preset → Canada percentile among eligible 25 km cells → map; retrospective record check, prospective field performance untested]({_ZOOMOUT_PNG})
 
-The tool combines six public datasets into priority scores for 25 km cells. Its goals express different reasons to record biodiversity. The retrospective backtest compares those priorities with sampled bioblitz records; it does not establish prospective field performance. The rest of this notebook shows the inputs, formulas and evidence behind each part.
+The tool combines seven public sources into priority scores for 25 km cells. Its goals express different reasons to record biodiversity. The retrospective backtest compares those priorities with sampled bioblitz records; it does not establish prospective field performance. The rest of this notebook shows the inputs, formulas and evidence behind each part.
 
 <details><summary>Mermaid source (diagram above)</summary>
 
@@ -133,8 +133,12 @@ The tool combines six public datasets into priority scores for 25 km cells. Its 
 | Module | Responsible for |
 |---|---|
 | `build_fullgrid_ca.py`, `fullgrid_fields.py` | Density, climate, forest loss and travel fields, plus `n_train`, on the equal-area lattice and its footprint/land mask. |
-| `build_atrisk_layer.py`, joined in `fullgrid_fields.py` | CAN-SAR listings × GBIF occurrences under the selected policy → status-weighted richness on a 0.25° source grid, joined by each drawn cell's centre. |
-| cluster DuckDB → `ca_inat_metrics.csv` → `ca_staleness.csv`; `fullgrid_fields.py` | All-time vs last-5-years iNaturalist history on a 0.25° source grid; missing source parents use a group-specific inverse-density fallback. |
+| `build_atrisk_layer.py`, joined in `fullgrid_fields.py` | CAN-SAR listings × GBIF occurrences under the selected policy → status-weighted richness on a 0.25° source grid, joined to each 5 km cell by its centre. |
+| cluster DuckDB → `ca_inat_metrics.csv` → `ca_staleness.csv`; `fullgrid_fields.py` | All-time vs last-5-years iNaturalist history on a 0.25° source grid, joined to each 5 km cell by its centre. Source cells with 1 to 19 records score 0; cells absent from the history file use a group-specific inverse-density fallback. |
+| `aggregate_25km_from_5km.py`, `export_popup_grid.py` | The 25 km tier: NaN-aware means of the 25 child 5 km cells (record counts are summed), then the final cell inventory and float32 axes that popups and national ranks read. |
+| `build_gettingeven.py` | Getting Even: the taxonomic group most under-represented in each cell, birds excluded. |
+| `build_discovery_layer.py` | Historical discovery evidence: supplied discovery points per 10,000 research-grade observations, per 5 km cell and summed to 25 km. |
+| `conservation_challenge.py` | Conservation Challenge sightings: a snapshot of recent open iNaturalist observations of the challenge target taxa in Canada. |
 | `goal_presets.py`, `build_grid_values.py`, `webapp/index.html`, `build_webapp.py` | Fixed blends and baked colours; runtime ranks, viewport colours, live popup queries and trip planning; template assembly into `index.html`. |
 | `build_provenance.py` | Freezes the national build to a hashed manifest (`provenance.json`). |
 | `voi_backtest.py`, `backtest_appscore.py` | The validation layer: retrospective associations with new taxon IDs in sampled project records |
@@ -239,9 +243,9 @@ print(f"  {(ALL['conservation']>0).sum():,} inventory cells have a nonzero conse
 md(r"""
 ## 2 · The data
 
-Six public sources, each chosen because it is **fetchable without credentials** and
-**national in coverage** — a hard constraint, because the tool must be reproducible by
-anyone and must not depend on the private McGill iNat-Canada parquet.
+Seven public sources (the conservation row combines CAN-SAR and GBIF), each chosen because it is **fetchable without credentials** and
+**national in coverage**. For the five priority axes this is a hard constraint: they must be reproducible by
+anyone and must not depend on the private McGill iNat-Canada parquet. The historical discovery layer (§5.1) is the exception: its raw shapefile and Parquet inputs are private, and only the derived rate artifact is published.
 
 | Axis | Source | What it is | Resolution | Licence / access |
 |---|---|---|---|---|
@@ -251,6 +255,8 @@ anyone and must not depend on the private McGill iNat-Canada parquet.
 | staleness | **iNaturalist open-data** dump; density fallback | all-time vs recent history where available, inverse density otherwise | 0.25° history source grid | public AWS dump and density COG |
 | urgency | **Hansen** Global Forest Change | forest-loss fraction (logging / fire / dieback) | 0.05° | public |
 | travel | **Weiss et al. 2018** accessibility | minutes to the nearest city | ~1 km | public (MalariaAtlas) |
+
+**As of:** the GBIF at-risk download was created 2026-10-14, and the iNaturalist history in `ca_inat_metrics.csv` ends with last observation 2026-05-27.
 
 A subtle but load-bearing data choice: the **land mask**. A cell is kept if it sits inside the
 iNat density COG footprint *and* either the Weiss raster calls it land or it carries records.
@@ -303,11 +309,13 @@ print("→ Most US cells are gaps only because the Canadian density COG stops at
 band = (ALL.lon > -125) & (ALL.lon < -100)
 print("Transect across the 49°N border (the visible seam):")
 print(f"{'lat':>6} {'n_train':>9} {'%zero-obs':>10} {'discover':>9}")
+edge = []
 for lo in [47.5, 48.0, 48.5, 49.0, 49.5]:
     m = band & (ALL.lat >= lo) & (ALL.lat < lo + 0.5)
     side = "US " if lo < 49 else "CA "
-    print(f"{side}{lo:5.1f} {ALL.n_train[m].mean():9.0f} {(ALL.n_train[m]==0).mean()*100:9.0f}% {ALL.discover[m].mean():9.2f}")
-print("→ density 0→thousands and zero-obs 95%→0% across the line = a data-footprint edge, not ecology.")
+    edge.append((ALL.n_train[m].mean(), (ALL.n_train[m]==0).mean()*100))
+    print(f"{side}{lo:5.1f} {edge[-1][0]:9.0f} {edge[-1][1]:9.0f}% {ALL.discover[m].mean():9.2f}")
+print(f"→ n_train {edge[0][0]:.0f}→{edge[-1][0]:.0f} and zero-obs {edge[0][1]:.0f}%→{edge[-1][1]:.0f}% from the southernmost to the northernmost band = a data-footprint edge, not ecology.")
 """)
 
 # ---------------------------------------------------------------- the five axes, visual
@@ -321,7 +329,7 @@ Every square has five underlying **0–1 axes**. They summarize different kinds 
 | `discover` | Go where few people have looked | Hardly any iNaturalist records nearby |
 | `conservation` | Recorded conservation concern | More status-weighted species records under the shipped policy |
 | `env` | Cover every habitat | The square's *climate type* is barely sampled anywhere |
-| `staleness` | Revisit recorded gaps | Old records with few recent ones, or inverse density where history is missing |
+| `staleness` | Revisit recorded gaps | Old records with few recent ones (0 below 20 historical records), or inverse density where the source cell is absent from the history file |
 | `urgency` | Document changed forest habitat | Greater cumulative mapped forest loss, 2001–2023 |
 
 Below they are side by side — read each map as *"where would this goal send me?"* They send you
@@ -352,13 +360,13 @@ md(r"""
 
 **Measures:** how under-sampled a square is — fewer records, higher discover.
 
-**The choice (why it's a *ranking*, not just "1 ÷ records").** The obvious formula is
+**The choice (why it's a *ramp*, not just "1 ÷ records").** The obvious formula is
 `norm(1 / (density + ε))`. We *don't* ship it. On the
 real national density it is violently bimodal: ~half the cells have zero research-grade
 records and pin at 1.0, while every recorded cell collapses to near-zero — the map becomes a
 binary "recorded / not", with no gradient to plan a trip on. The shipped axis is instead a
-**smooth under-sampling rank**, with zero-observation ties broken by climate distinctiveness
-(`env`). The figure shows why the rank is the better content.
+**smooth under-sampling ramp**: records per km² mapped through a fixed national quantile ramp, with zero-record cells ordered by climate distinctiveness
+(`env`). Within one 5 km cell, recorded cells score below zero-record cells. A 25 km cell is the mean of its 25 children, so the two groups overlap there; the cell below prints by how much. The figure shows why the ramp is the better content.
 """)
 code(r"""
 # n_train ≈ density × cell-area, so it's a faithful stand-in for the raw density the
@@ -371,12 +379,15 @@ shipped = ALL["discover"].to_numpy(float)                      # the de-saturate
 fig, axs = plt.subplots(1, 3, figsize=(14, 3.8))
 axs[0].hist(naive, bins=60, color="#c0392b"); axs[0].set_title("Naive  norm(1/density)\nbimodal: a binary mask")
 axs[0].set_xlabel("axis value"); axs[0].set_ylabel("cells")
-axs[1].hist(shipped, bins=60, color="#2980b9"); axs[1].set_title("Shipped  under-sampling rank\nsmooth: a plannable gradient")
+axs[1].hist(shipped, bins=60, color="#2980b9"); axs[1].set_title("Shipped  under-sampling ramp\nsmooth: a plannable gradient")
 axs[1].set_xlabel("axis value")
 canada_map(axs[2], shipped, "Shipped discover over Canada", cmap="magma")
 frac_pinned = (naive > 0.99).mean()
-fig.suptitle(f"Why a rank, not 1/density:  {frac_pinned*100:.0f}% of cells pin at the max under the naive transform", y=1.03)
+fig.suptitle(f"Why a ramp, not 1/density:  {frac_pinned*100:.0f}% of cells pin at the max under the naive transform", y=1.03)
 plt.tight_layout(); plt.show()
+zero = (ALL["n_train"] == 0).to_numpy()
+above = (shipped[~zero] > shipped[zero].min()).mean()
+print(f"25 km cells: {(~zero).sum():,} recorded, {zero.sum():,} zero-record; {above*100:.0f}% of recorded cells score above the lowest zero-record cell.")
 """)
 
 # ---- conservation
@@ -387,7 +398,7 @@ md(r"""
 
 **Measures:** recorded conservation concern. **Formula:** in each source cell, sum the maximum applicable status weight once per retained species (**Endangered 3 · Threatened 2 · Special Concern 1**), then min–max to 0–1.
 
-**The design choice:** expose a coarse all-taxa score. Pollock et al. 2025 (*Nat Rev Biodiversity*, Box 3) warns that fine-grained threatened-species maps can aid poaching or collection. The download aggregates records to 0.01° for policy checks; `build_atrisk_layer.py` then counts retained species in 0.25° source cells. Their normalized score is joined by the drawn cell's centre. A 5 km square can therefore display a value inherited from the same coarse source cell as its neighbours, not a new 5 km inventory of species at risk.
+**The design choice:** expose a coarse all-taxa score. Pollock et al. 2025 (*Nat Rev Biodiversity*, Box 3) warns that fine-grained threatened-species maps can aid poaching or collection. The download aggregates records to 0.01° for policy checks; `build_atrisk_layer.py` then counts retained species in 0.25° source cells. Their normalized score is joined to each 5 km cell by its centre, and a 25 km cell is the mean of its 25 children. A 5 km square can therefore display a value inherited from the same coarse source cell as its neighbours, and a 25 km value can blend several neighbouring source cells, so the national maximum falls below 1.0 (printed below). Neither is a new inventory of species at risk.
 
 **What the snapshot can establish:** its CAN-SAR names and statuses, COL XR matches, GBIF record filters, and selected allowlist are traceable below. It retains species-level counting for most listings, so separate populations can still be combined. Matching a name also does not settle a changed biological concept: the crosswalk's historical *Bartramia stricta* match remains ambiguous against the revised Canadian *Bartramia aprica* concept in the [COSEWIC 2023 report](https://www.canada.ca/en/environment-climate-change/services/species-risk-public-registry/cosewic-assessments-status-reports/rigid-apple-moss-2023.html). A zero score means no retained record under this policy, not absence. The exact filters, safeguards and build checks are in the conservation reference in `METHODOLOGY.md`.
 """)
@@ -402,6 +413,7 @@ n_retained = len(policy["retained_listing_ids"])
 n_guarded = len(policy["required_polygon_listing_ids"])
 snapshot = pd.DataFrame([
     ("GBIF occurrence download DOI", atrisk_prov["doi"]),
+    ("GBIF download created", atrisk_prov["created"][:10]),
     ("Catalogue of Life release", atrisk_prov["taxonomy"]["shortName"]),
     ("Catalogue of Life DOI", atrisk_prov["taxonomy"]["doi"]),
     ("Listed names in crosswalk", len(crosswalk)),
@@ -438,6 +450,7 @@ tbl = axs[1].table(cellText=top.round(2).values, colLabels=top.columns, loc="cen
 tbl.auto_set_font_size(False); tbl.set_fontsize(8); tbl.scale(1, 1.5)
 fig.suptitle("Recorded conservation concern, pooled across taxa on a coarse source grid", y=1.0)
 plt.tight_layout(); plt.show()
+print(f"Maximum 25 km conservation value: {ALL.conservation.max():.2f} (a mean of 25 child cells)")
 print("Reference labels are the nearest of six named places, not independent hotspot validation.")
 print("Caveat: CAN-SAR is an assessment snapshot; under-assessed groups and taxon-concept ambiguity remain.")
 """)
@@ -474,9 +487,9 @@ md(r"""
 
 > **In plain terms:** the observed-history component highlights places recorded heavily in the past and rarely in the last five years. Where history is unavailable, the axis falls back to sparse recording density.
 
-**Observed-history component:** a 0.25° source cell with ≥20 historical records uses `staleness = (1 − recent/all-time) · log(1 + all-time records)`, scaled 0–1. Lots of old records and few in the last five years give a high value. The drawn 25 km or 5 km cell takes its source value by its centre.
+**Observed-history component:** a 0.25° source cell with ≥20 historical records uses `staleness = (1 − recent/all-time) · log(1 + all-time records)`, scaled 0–1. Lots of old records and few in the last five years give a high value. A source cell with 1 to 19 records scores 0 and does not fall back. Each 5 km cell takes its source value by its centre, and a 25 km cell is the mean of its 25 children. The history ends with last observation 2026-05-27.
 
-**The source choice:** use iNaturalist history for an iNaturalist recording objective, rather than treating GBIF's mix of iNaturalist, eBird and museum dates as equivalent. **The missing-data choice:** where that historical source parent has no value, the builder substitutes the selected group's normalized inverse observation density. A high fallback value therefore means sparse records, not proven recent silence. The figure inspects the combined shipped axis and example observed-history counts; it does not independently validate both components or predict a revisit's outcome.
+**The source choice:** use iNaturalist history for an iNaturalist recording objective, rather than treating GBIF's mix of iNaturalist, eBird and museum dates as equivalent. **The missing-data choice:** where the source cell is absent from the history file, the builder substitutes the selected group's normalized inverse observation density. A high fallback value therefore means sparse records, not proven recent silence. The figure inspects the combined shipped axis and example observed-history counts; it does not independently validate both components or predict a revisit's outcome.
 """)
 code(r"""
 met = pd.read_csv(CA / "ca_inat_metrics.csv")
@@ -489,7 +502,8 @@ r = np.corrcoef(ALL["discover"], ALL["staleness"])[0,1]
 axs[0].set_title(f"Distinct, not a mirror — corr = {r:+.2f}\n(well-recorded ≠ recently-recorded)")
 busy_then_quiet = met[(met.n_all >= 200)].assign(recent_frac=lambda d: d.n_recent/d.n_all).nsmallest(8, "recent_frac")
 axs[1].axis("off"); axs[1].set_title("Recorded a lot all-time, almost nothing recently", fontsize=10)
-show = busy_then_quiet[["lat","lon","n_all","n_recent"]].round(2) if "lat" in busy_then_quiet else busy_then_quiet[["n_all","n_recent"]]
+# 0.25° source-cell centres from the gi/gj indices, so the coordinates stay in the table
+show = busy_then_quiet.assign(lat=(busy_then_quiet.gi + 0.5) * 0.25, lon=(busy_then_quiet.gj + 0.5) * 0.25)[["lat","lon","n_all","n_recent"]].round(2)
 t = axs[1].table(cellText=show.values, colLabels=show.columns, loc="center"); t.auto_set_font_size(False); t.set_fontsize(8); t.scale(1,1.5)
 plt.tight_layout(); plt.show()
 """)
@@ -500,7 +514,7 @@ md(r"""
 
 This axis measures the Hansen forest-loss fraction accumulated over **2001–2023**, normalized to 0–1. High values indicate more cumulative mapped forest loss from causes such as logging, fire or dieback. It is not a measurement of current loss or a forecast of imminent habitat change.
 
-The Fort McMurray fire scar scores ~0.75; saturated southern cities ~0.
+The Fort McMurray fire scar scores about 0.65, as printed below; saturated southern cities ~0.
 """)
 code(r"""
 fig, ax = plt.subplots(figsize=(7.5, 4.2))
@@ -552,7 +566,7 @@ md(r"""
 
 A where-to-go map expresses a recording objective. **Spatial Gap**, **Species discovery**, and **Conservation** use the fixed blends below and a national priority percentile. **Getting Even** instead recommends a taxonomic group, and **Climate Gap** is a separate climate-coverage raster. Those two views have their own legends, and show no numeric preset percentile. The five menu choices are distinct from the five underlying axes shown in §3.
 
-`env` has zero direct weight in all three presets, but climate coverage orders the zero-density cells inside `discover`. Species discovery's `staleness` term also includes the inverse-density fallback where observed history is missing. The join links resolve the current general Blitz the Gap iNaturalist project; the table shows their frozen fallback slug, not five independent campaign projects.
+`env` has zero direct weight in all three presets, but climate coverage orders the zero-density cells inside `discover`. That order is set per 5 km cell; a 25 km cell averages 25 children, so its recorded and zero-record cells overlap in score. Species discovery's `staleness` term scores 0 for source cells with 1 to 19 records and includes the inverse-density fallback where a source cell is absent from the history file. Each of the three presets has a join link. The links resolve the current general Blitz the Gap iNaturalist project; the table shows their frozen fallback slug, not three independent campaign projects.
 """)
 code(r"""
 # straight from goal_presets.py, the same list build_webapp.py injects into index.html
@@ -574,6 +588,15 @@ for ax,p in zip(axs, PRESETS):
 fig.suptitle("Same cells, different values \u2192 different trips (" + " \u00b7 ".join(p["name"] for p in PRESETS) + ")", y=1.03)
 plt.tight_layout(); plt.show()
 """)
+md(r"""
+### 5.1 · Three more shipped layers
+
+The Map display control also carries layers that are not numeric presets and show no priority percentile.
+
+- **Getting Even count cutoffs.** The viewer can hide Getting Even recommendations in cells with fewer aggregate records than a cutoff of 1, 5, 10, 20, 30 or 100, without recalculating any group score. The default is 1. Counts belong to the displayed tier, include all taxa, and may be rounded density-derived proxies rather than verified observations.
+- **Historical discovery evidence.** A separate measured layer: a lab-supplied 2025 point set (826 features) per 10,000 research-grade observations in each 5 km cell, summed to 25 km as a ratio of sums. It is not the Species discovery preset, and it is not a forecast.
+- **Conservation Challenge sightings.** Recent open iNaturalist sightings of the 335 challenge target taxa (313 species, 10 genus, 9 variety and 3 subspecies, from `webapp/challenge_taxa.json`), plotted at their reported coordinates. The snapshot query (`conservation_challenge.py`, built by the `conservation-challenge.yml` workflow) uses the Canada place, the last 14 days, `geoprivacy=open` and `taxon_geoprivacy=open`. It applies no `threatened` filter.
+""")
 
 # ---------------------------------------------------------------- disagreement
 md(r"""
@@ -583,7 +606,7 @@ md(r"""
 
 (Computed over squares that actually have records, `n_train > 0`.)
 
-> The population matters: `discover` orders zero-density cells by `env`, so their whole-grid association includes an intentional shared component. Restricting to recorded cells removes those zero-density cells and changes the comparison; it does not remove observer or habitat bias.
+> The population matters: `discover` orders zero-density cells by `env` (per 5 km cell; 25 km averaging overlaps the recorded and zero-record groups), so their whole-grid association includes an intentional shared component. Restricting to recorded cells removes those zero-density cells and changes the comparison; it does not remove observer or habitat bias.
 """)
 code(r"""
 rec = ALL[ALL["n_train"] > 0]
@@ -667,7 +690,7 @@ md(r"""
 
 **A smaller sampled history makes novelty easier to obtain.** That is useful for finding record gaps, but it does not by itself establish ecological discovery skill beyond the coverage already recorded. The inverse training-count score is the same ordering reversed and is not an independent negative control.
 
-**Each goal needs an outcome matching its purpose.** The Species discovery blend includes the published staleness axis and has its own result below. Conservation prioritizes status and habitat change; a novelty association does not validate or invalidate that objective.
+**Each goal needs an outcome matching its purpose.** The Species discovery blend (`discover` plus `staleness`) has its own archived result, the third bar in the chart above and the third column in the Eastern table below. Its correlations with expected record novelty are about zero, from -0.07 to 0.13 across the five BC taxa and from -0.06 to 0.00 across the three Eastern taxa. In this sampled-record test it showed no association with record novelty. Conservation prioritizes status and habitat change; a novelty association does not validate or invalidate that objective.
 """)
 code(r"""
 east = json.load(open(RES / "voi_appscore_east_results.json"))
@@ -717,6 +740,11 @@ ax.set_xlabel(""); ax.legend(fontsize=9)
 plt.xticks(rotation=25, ha="right"); plt.tight_layout(); plt.show()
 display(paired.round(2))
 """)
+md(r"""
+### Spatial sensitivity
+
+The archived spatial sensitivity report (`cluster_results/appscore_spatial_sensitivity.json`) checks whether that paired association change depends on one geographic cluster. It deletes each occupied projected block in turn, at widths of 50, 100 and 200 km and with zero and half-width row and column offsets, and recomputes both correlations on identical retained cells. Across every deletion the scarcity change stays negative in all six qualifying cohorts, from -0.698 to -0.217. These are descriptive envelopes, not confidence intervals. BC amphibians and reptiles stay unavailable with five and eight paired cells. The check is an influence diagnostic, not blocked cross-validation, and it does not remove spatial dependence.
+""")
 
 # ---------------------------------------------------------------- responsible use
 md(r"""
@@ -725,14 +753,15 @@ md(r"""
 These constraints shaped the contents above; they are the reason some things are *coarse* or
 *absent* on purpose:
 
-- **Species-at-risk are gated out of suggestions.** Every live iNaturalist fetch carries
+- **Species-at-risk are gated out of the popup's suggestions.** Every live iNaturalist fetch carries
   `taxon_geoprivacy=open` and the "fill the gap" suggestions add `threatened=false`. The tool
   will not point a stranger at a rare orchid.
-- **The conservation axis is coarse by design** (Section 3.2): an all-taxa score inherited from a 0.25° source bin, including when drawn in a 5 km square. It does not identify individual species or precise locations. Dual-use mitigation (Pollock et al. 2025, Box 3) remains a constraint on finer source layers.
+- **The conservation axis is coarse by design** (Section 3.2): an all-taxa score from a 0.25° source bin, joined to 5 km cells by centre and averaged to 25 km. It does not identify individual species or precise locations. Dual-use mitigation (Pollock et al. 2025, Box 3) remains a constraint on finer source layers.
 - **Indigenous data sovereignty.** Obscure sensitive locations and respect
   [Indigenous data sovereignty](https://native-land.ca) before any public use; a territory
   acknowledgment is linked in-app.
-- **It is a prototype, flagged in-app**, and a *planning aid, not a census*. iNaturalist counts
+- **Point layers are not coarse.** Conservation Challenge sightings are open observations plotted at their reported coordinates with no `threatened` filter, and the historical discovery markers sit at supplied reported positions, some of them source-obscured. Unlike the conservation axis, neither is aggregated to a coarse source cell.
+- **It is a companion tool, not an official project page** (the in-app wording), and a *planning aid, not a census*. iNaturalist counts
   are sampling effort, not ground-truth abundance, and are labelled that way throughout.
 """)
 
@@ -751,6 +780,9 @@ Python builds the lattice and fills it; `build_webapp.py` inlines the result int
 | Cell colours | One PNG per (group, goal, tier), **one pixel per cell**, painted onto those polygons | `build_grid_values.py` |
 | Density overlay | Raster PMTiles, magma baked in at build time | `build_density_pmtiles.py` |
 | Climate Gap overlay | Separate climate-coverage raster PMTiles, with its own legend | Release asset, built outside this repository |
+| Getting Even | One category PNG per tier, with count and richness-gate images | `build_gettingeven.py` |
+| Historical discovery | Published rate artifact; at 5 km, a point-inspection derivative | `build_discovery_layer.py`, `historical_discovery_points.py` |
+| Conservation Challenge | Sightings snapshot JSON, staged for the Pages build | `conservation_challenge.py`, `prepare_optional_layers.py` |
 
 Colours are a PNG rather than tiles because warping rotated LAEA cells into Mercator pixels
 left a staircase that never matched the lattice (#116). Both docstrings carry the full reasoning.
@@ -764,10 +796,14 @@ md(r"""
 # 1. environment (no credentials needed; all sources public)
 uv venv --python 3.11 .venv && uv pip install --python .venv/bin/python -r requirements.txt
 
-# 2. regenerate the national build from cluster_results/ca/ (deterministic, byte-identical)
+# 2. optional layers: stage the discovery rate and Conservation Challenge snapshot before the build
+#    (reads DISCOVERY_RATE_URL/_SHA256 and CHALLENGE_TAXA_URL/_SHA256; no configuration means no activation)
+.venv/bin/python prepare_optional_layers.py
+
+# 3. regenerate the national build from cluster_results/ca/ (deterministic, byte-identical)
 .venv/bin/python build_webapp.py          # → index.html
 
-# 3. rebuild + execute THIS walkthrough, then render the HTML the in-app link points to
+# 4. rebuild + execute THIS walkthrough, then render the HTML the in-app link points to
 .venv/bin/python _build_walkthrough.py
 export WTB_CA_DIR=/path/to/validated/cluster_results/ca
 .venv/bin/python -m nbconvert --to notebook --execute --inplace where-to-blitz-walkthrough.ipynb
@@ -776,7 +812,7 @@ export WTB_CA_DIR=/path/to/validated/cluster_results/ca
 
 Select a coherent grid directory with `WTB_CA_DIR`; leaving it unset uses `cluster_results/ca`. The render verifies consumed JSON/CSV inputs against available provenance entries before drawing figures and prints the manifest plus all consumed input hashes in Section 1. A checkout mixing older grid provenance with newer conservation CSVs fails clearly. The published figures were refreshed from the validated rebuild snapshot; `WTB_CA_DIR` does not change the archived backtest files in `cluster_results/`.
 
-Section 8 displays the archived results without rerunning them and prints their original group-JSON and record-input hashes. Download archived `inat_*.csv` from `grid-inputs-v1` to recover record inputs, and restore the original grid hashes from each result's `run.grid.source_sha256` before reproducing those evaluations. A fresh API pull or a newer grid is a new evaluation. The optional cell below queries today's iNaturalist API.
+Section 8 displays the archived results without rerunning them and prints their original group-JSON and record-input hashes. `.venv/bin/python verify_appscore_results.py --download` fetches the archived record inputs from `grid-inputs-v1`, checks their hashes and replays the eight benchmarks without replacing the archived results; add `--inputs-dir` to keep the downloads. A fresh API pull or a newer grid is a new evaluation. The optional cell below queries today's iNaturalist API.
 """)
 code(r"""
 # OPTIONAL — live iNaturalist "fill the gap" near a chosen cell. Guarded: skips cleanly offline.
