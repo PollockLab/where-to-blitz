@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: Please cite this tool as below. Using the data? Also cite the source datasets listed in https://github.com/PollockLab/where-to-blitz/blob/main/METHODOLOGY.md
+title: Where to Blitz the Gap
+type: software
+authors:
+  - family-names: Suijker
+    given-names: Wietze
+  - name: Pollock Lab, McGill University
+year: 2026
+url: https://pollocklab.github.io/where-to-blitz/
+repository-code: https://github.com/PollockLab/where-to-blitz
