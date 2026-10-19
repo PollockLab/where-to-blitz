@@ -256,6 +256,8 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
 #maplegend .recent-map-key{display:block;margin-top:3px;font-size:10.5px}
 #maplegend .recent-map-key::before{content:"";display:inline-block;width:7px;height:7px;margin-right:4px;border-radius:50%;background:#d96c14}
 .maplibregl-ctrl-bottom-left{left:14px;bottom:14px;z-index:1060}
+/* the open panel (12px + 300px) covers the bottom-left corner on desktop; sit beside it, and wrap short of the legend */
+@media(min-width:641px){body:not(.panel-collapsed) .maplibregl-ctrl-bottom-left{left:324px;max-width:calc(100% - 600px)}}
 .maplibregl-ctrl-attrib a{text-decoration:underline}   /* link-in-text-block: colour alone does not separate them from the surrounding text */
 #map .maplibregl-ctrl-attrib{color:#263742;background:rgba(255,255,255,.96)}
 @media(max-width:640px){#maplegend{left:auto;right:8px;bottom:104px;top:auto;min-width:0;max-width:210px;max-height:30dvh;overflow-y:auto;overscroll-behavior:contain;padding:8px 10px}}
