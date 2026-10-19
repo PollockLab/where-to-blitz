@@ -31,6 +31,20 @@ Each priority axis is scored **0–1 per cell**. A numeric preset fixes the weig
 | **VOI** | Value of information — how much a new observation would improve what we know. The intended end state for species suggestions; today's ranking is an interpretable stand-in (see "Which species to record in a cell" below). |
 | **appscore** | The composite the app actually ships, read straight from `goal_presets.PRESETS`, as distinct from the generic proxy `voi_backtest.py` tests. `backtest_appscore.py` scores it so the backtest cannot drift from the dropdown. |
 
+## Data snapshot
+
+One line per input, with the date, version or DOI the repo records. "Not recorded" means no repo file states it.
+
+- **GBIF at-risk download:** created 2026-10-14, DOI [10.15468/dl.6hqdyd](https://doi.org/10.15468/dl.6hqdyd) (`cluster_results/ca/ca_atrisk_provenance.json`).
+- **CAN-SAR:** OSF DOI [10.17605/OSF.IO/E4A58](https://doi.org/10.17605/OSF.IO/E4A58), release date not recorded (`cluster_results/ca/provenance.json`).
+- **Catalogue of Life:** release COL26.6 XR, taxonomy DOI [10.48580/dgyy9](https://doi.org/10.48580/dgyy9) (this file, "Find species at risk").
+- **iNaturalist open data history:** last observation 2026-05-27 (`_build_walkthrough.py`, the "As of" line).
+- **Biodiversité Québec density COG:** build date not recorded (`cluster_results/ca/provenance.json` names the source but gives no date).
+- **CHELSA:** v2.1, 1981-2010 climatology, BIO1, BIO4 and BIO12 (`clip_chelsa_ca.py`).
+- **Hansen Global Forest Change:** GFC-2023-v1.11 (`build_hansen_ca.py`).
+- **Weiss et al. 2018 travel time:** DOI [10.1038/nature25181](https://doi.org/10.1038/nature25181). The repo names the source in `cluster_results/ca/provenance.json` without a DOI.
+- **ESA WorldCover:** 2021 v200, DOI [10.5281/zenodo.7254221](https://doi.org/10.5281/zenodo.7254221), used only by the gated BC plant pilot (this file, "BC plants pilot").
+
 ---
 
 ## The five priority axes
@@ -441,14 +455,14 @@ An optional map layer of recent sightings of the Conservation Challenge target t
 
 ## Provenance (where each layer is built)
 
-| Axis | Builder / source file | External source |
-|------|----------------------|-----------------|
-| discover, env, urgency | `build_fullgrid_ca.py` | iNat density COG (Biodiversité Québec STAC), CHELSA, Hansen, Weiss 2018 |
-| conservation | `build_atrisk_layer.py`, joined in `fullgrid_fields.py` | CAN-SAR (OSF) + GBIF SQL download on Catalogue of Life XR, release COL26.6 XR (DOI and taxonomy release in `ca_atrisk_provenance.json`) |
-| staleness | iNat open-data (cluster DuckDB job, not in this repo) → `cluster_results/ca/ca_staleness.csv` | iNaturalist open-data (AWS) |
-| Getting Even | `build_gettingeven.py`, `gettingeven_evidence.py` | per-group iNat density COGs, via the grid build; Eckert 2025 metric; richness rasters pinned in `gettingeven_richness.json` |
-| historical discovery | `build_discovery_layer.py`, `prepare_optional_layers.py` | lab-supplied 2025 point set and frozen lab Canada Parquet export (private); published rate artifact |
-| Conservation Challenge | `conservation_challenge.py`, `conservation-challenge.yml` | iNaturalist API, Canada place, last 14 days; targets in `webapp/challenge_taxa.json` |
-| Climate Gap | not built here: baked from CHELSA outside the repo | release asset `climate_gap.pmtiles`, repacked to z0-8 by `repack_pmtiles.py` |
-| BC plant pilot | `evaluate_plant_pilot.py` | CHELSA v2.1, ESA WorldCover 2021; shipped artifact is gated off and expired |
-| composite + display | `goal_presets.py`, `build_grid_values.py`, `webapp/index.html` (`impact`, `recolour`), assembled by `build_webapp.py` | — |
+| Axis | Builder / source file | External source | DOI / version |
+|------|----------------------|-----------------|---------------|
+| discover, env, urgency | `build_fullgrid_ca.py` | iNat density COG (Biodiversité Québec STAC), CHELSA, Hansen, Weiss 2018 | CHELSA v2.1; GFC-2023-v1.11; Weiss 10.1038/nature25181; COG build date not recorded |
+| conservation | `build_atrisk_layer.py`, joined in `fullgrid_fields.py` | CAN-SAR (OSF) + GBIF SQL download on Catalogue of Life XR, release COL26.6 XR (DOI and taxonomy release in `ca_atrisk_provenance.json`) | 10.15468/dl.6hqdyd; COL26.6 XR; 10.17605/OSF.IO/E4A58 |
+| staleness | iNat open-data (cluster DuckDB job, not in this repo) → `cluster_results/ca/ca_staleness.csv` | iNaturalist open-data (AWS) | last observation 2026-05-27 |
+| Getting Even | `build_gettingeven.py`, `gettingeven_evidence.py` | per-group iNat density COGs, via the grid build; Eckert 2025 metric; richness rasters pinned in `gettingeven_richness.json` | not recorded |
+| historical discovery | `build_discovery_layer.py`, `prepare_optional_layers.py` | lab-supplied 2025 point set and frozen lab Canada Parquet export (private); published rate artifact | not recorded |
+| Conservation Challenge | `conservation_challenge.py`, `conservation-challenge.yml` | iNaturalist API, Canada place, last 14 days; targets in `webapp/challenge_taxa.json` | not applicable (live API) |
+| Climate Gap | not built here: baked from CHELSA outside the repo | release asset `climate_gap.pmtiles`, repacked to z0-8 by `repack_pmtiles.py` | not recorded |
+| BC plant pilot | `evaluate_plant_pilot.py` | CHELSA v2.1, ESA WorldCover 2021; shipped artifact is gated off and expired | CHELSA v2.1; WorldCover 2021 v200, 10.5281/zenodo.7254221 |
+| composite + display | `goal_presets.py`, `build_grid_values.py`, `webapp/index.html` (`impact`, `recolour`), assembled by `build_webapp.py` | — | — |
