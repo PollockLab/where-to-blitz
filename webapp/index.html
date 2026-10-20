@@ -2968,15 +2968,15 @@ function cellRecordsUrl(lat,lon,resM,taxon){
   return 'https://www.inaturalist.org/observations?'+params.toString();
 }
 function popupActionsHtml(lat,lon,resM,taxon){
-  return '<a href="'+esc(cellRecordsUrl(lat,lon,resM,taxon))+'" target="_blank" rel="noopener">'+t('view_cell_records')+'</a><a href="https://www.inaturalist.org/observations/new" target="_blank" rel="noopener">'+t('record_sighting')+'</a><a href="#" download="where-to-blitz-cell.gpx">'+t('save_gpx')+'</a>';
+  return '<a href="'+esc(cellRecordsUrl(lat,lon,resM,taxon))+'" target="_blank" rel="noopener">'+t('view_cell_records')+'</a><a href="https://www.inaturalist.org/observations/new" target="_blank" rel="noopener">'+t('record_sighting')+'</a><a href="#" download="where-to-blitz-cell-'+lat.toFixed(3)+'_'+lon.toFixed(3)+'.gpx">'+t('save_gpx')+'</a>';
 }
 // Offline field export: centre waypoint plus the cell boundary as a closed track. opts={facts,names,url} come from the live popup.
 function cellGpx(lat,lon,resM,taxon,opts){
-  const o=opts||{},km=resM/1000,pts=cellPoly(lat,lon,resM).map(p=>'<trkpt lat="'+p[1]+'" lon="'+p[0]+'"/>').join('');
+  const o=opts||{},km=resM/1000,name='Blitz the Gap '+km+' km cell '+lat.toFixed(3)+', '+lon.toFixed(3),pts=cellPoly(lat,lon,resM).map(p=>'<trkpt lat="'+p[1]+'" lon="'+p[0]+'"/>').join('');
   const desc=[o.facts,taxon,o.url].concat(o.names||[]).filter(Boolean).join('\n');
   return '<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="where-to-blitz" xmlns="http://www.topografix.com/GPX/1/1"><metadata><link href="'+esc(o.url)+'"/></metadata>'
-    +'<wpt lat="'+lat+'" lon="'+lon+'"><name>'+esc('Blitz the Gap '+km+' km cell')+'</name><desc>'+esc(desc)+'</desc></wpt>'
-    +'<trk><name>'+esc('Blitz the Gap '+km+' km cell')+'</name><trkseg>'+pts+'</trkseg></trk></gpx>';
+    +'<wpt lat="'+lat+'" lon="'+lon+'"><name>'+esc(name)+'</name><desc>'+esc(desc)+'</desc></wpt>'
+    +'<trk><name>'+esc(name)+'</name><trkseg>'+pts+'</trkseg></trk></gpx>';
 }
 function refreshPopupActions(el,lat,lon,resM,taxon){
   const links=el.querySelectorAll('a');
