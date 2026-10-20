@@ -35,7 +35,7 @@ def test_waypoint_and_closed_boundary_track():
     assert root.find("g:metadata/g:link", NS).get("href") == "https://x.test/?at=49.5,-123.5"
     (wpt,) = root.findall("g:wpt", NS)
     assert (float(wpt.get("lat")), float(wpt.get("lon"))) == (49.5, -123.5)
-    assert "25 km cell" in wpt.find("g:name", NS).text
+    assert wpt.find("g:name", NS).text.endswith("25 km cell 49.500, -123.500")
     desc = wpt.find("g:desc", NS).text
     assert desc.splitlines() == ["Score 80", "Birds", "https://x.test/?at=49.5,-123.5", "Robin", "Wren"]
     (seg,) = root.findall("g:trk/g:trkseg", NS)
