@@ -788,7 +788,7 @@ def test_evidence_and_locale_refresh_preserve_the_focused_record_action():
         [],
         "fetchGapTree=()=>{};jget=async()=>({total_results:0,results:[]});"
         "const first={href:'',textContent:''},second={href:'https://www.inaturalist.org/observations/new',textContent:''};"
-        "actionsEl.querySelectorAll=()=>[first,second];document.activeElement=first;let replacements=0;"
+        "const third={textContent:''};actionsEl.querySelectorAll=()=>[first,second,third];document.activeElement=first;let replacements=0;"
         "Object.defineProperty(actionsEl,'innerHTML',{set(){replacements++;document.activeElement=null;}});"
         "state.taxon='Aves';await fetchProspects(49,-123,'destination',{toPopup:true,spEl,actionsEl,resM:5000});"
         "const en=first.textContent;LANG='fr';state.taxon='Fungi';"

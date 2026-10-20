@@ -593,7 +593,7 @@ const I18N={
     place_loading:"Searching Canadian place names…", place_empty:"No matching places. Try a nearby town or another name.",
     place_error:"Place search is unavailable. Search again to retry.", place_found:n=>`${n} places found. Use the arrow keys or choose a result.`,
     place_source:"Place names: Natural Resources Canada", search_empty:"No places found", search_error:"Search unavailable. Submit again to retry.",
-    view_cell_records:"View matching records", record_sighting:"Record a sighting",
+    view_cell_records:"View matching records", record_sighting:"Record a sighting", save_gpx:"Save cell for the field (GPX)",
     province_name:{10:"Newfoundland and Labrador",11:"Prince Edward Island",12:"Nova Scotia",13:"New Brunswick",24:"Quebec",35:"Ontario",46:"Manitoba",47:"Saskatchewan",48:"Alberta",59:"British Columbia",60:"Yukon",61:"Northwest Territories",62:"Nunavut"},
     search_ph:"Search a town or address",
     my_location:"Locate me",
@@ -851,7 +851,7 @@ const I18N={
     place_loading:"Recherche de noms de lieux au Canada…", place_empty:"Aucun lieu trouvé. Essayez une ville voisine ou un autre nom.",
     place_error:"La recherche de lieu est indisponible. Recherchez à nouveau pour réessayer.", place_found:n=>`${n} lieux trouvés. Utilisez les flèches ou choisissez un résultat.`,
     place_source:"Noms de lieux : Ressources naturelles Canada", search_empty:"Aucun lieu trouvé", search_error:"Recherche indisponible. Réessayez en soumettant la recherche.",
-    view_cell_records:"Voir les observations retenues", record_sighting:"Noter une observation",
+    view_cell_records:"Voir les observations retenues", record_sighting:"Noter une observation", save_gpx:"Enregistrer la cellule pour le terrain (GPX)",
     province_name:{10:"Terre-Neuve-et-Labrador",11:"Île-du-Prince-Édouard",12:"Nouvelle-Écosse",13:"Nouveau-Brunswick",24:"Québec",35:"Ontario",46:"Manitoba",47:"Saskatchewan",48:"Alberta",59:"Colombie-Britannique",60:"Yukon",61:"Territoires du Nord-Ouest",62:"Nunavut"},
     search_ph:"Rechercher une ville ou une adresse",
     my_location:"Me localiser",
@@ -2968,14 +2968,22 @@ function cellRecordsUrl(lat,lon,resM,taxon){
   return 'https://www.inaturalist.org/observations?'+params.toString();
 }
 function popupActionsHtml(lat,lon,resM,taxon){
-  return '<a href="'+esc(cellRecordsUrl(lat,lon,resM,taxon))+'" target="_blank" rel="noopener">'+t('view_cell_records')+'</a><a href="https://www.inaturalist.org/observations/new" target="_blank" rel="noopener">'+t('record_sighting')+'</a>';
+  return '<a href="'+esc(cellRecordsUrl(lat,lon,resM,taxon))+'" target="_blank" rel="noopener">'+t('view_cell_records')+'</a><a href="https://www.inaturalist.org/observations/new" target="_blank" rel="noopener">'+t('record_sighting')+'</a><a href="#" download="where-to-blitz-cell.gpx">'+t('save_gpx')+'</a>';
+}
+// Offline field export: centre waypoint plus the cell boundary as a closed track. opts={facts,names,url} come from the live popup.
+function cellGpx(lat,lon,resM,taxon,opts){
+  const o=opts||{},km=resM/1000,pts=cellPoly(lat,lon,resM).map(p=>'<trkpt lat="'+p[1]+'" lon="'+p[0]+'"/>').join('');
+  const desc=[o.facts,taxon,o.url].concat(o.names||[]).filter(Boolean).join('\n');
+  return '<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="where-to-blitz" xmlns="http://www.topografix.com/GPX/1/1"><metadata><link href="'+esc(o.url)+'"/></metadata>'
+    +'<wpt lat="'+lat+'" lon="'+lon+'"><name>'+esc('Blitz the Gap '+km+' km cell')+'</name><desc>'+esc(desc)+'</desc></wpt>'
+    +'<trk><name>'+esc('Blitz the Gap '+km+' km cell')+'</name><trkseg>'+pts+'</trkseg></trk></gpx>';
 }
 function refreshPopupActions(el,lat,lon,resM,taxon){
   const links=el.querySelectorAll('a');
-  if(links.length!==2){el.innerHTML=popupActionsHtml(lat,lon,resM,taxon);return;}
+  if(links.length!==3){el.innerHTML=popupActionsHtml(lat,lon,resM,taxon);return;}
   // MapLibre can focus the first action on open. Preserve its node during evidence and locale refreshes.
   links[0].href=cellRecordsUrl(lat,lon,resM,taxon);links[0].textContent=t('view_cell_records');
-  links[1].textContent=t('record_sighting');
+  links[1].textContent=t('record_sighting');links[2].textContent=t('save_gpx');
 }
 function exploreCell(lat,lon){
   if(!markers.length)return;   // map tapped before cell data loaded
@@ -3010,6 +3018,10 @@ function exploreCell(lat,lon){
   const help=document.createElement('a');help.href='#how-evidence';help.className='pophelp';help.dataset.i18n='pop_help';help.textContent=t('pop_help');help.onclick=ev=>{ev.preventDefault();openHowSection('how-evidence',help);};
   const popActions=document.createElement('div');popActions.className='popactions';
   popActions.innerHTML=popupActionsHtml(dest[0],dest[1],resM,state.taxon);
+  popActions.onclick=ev=>{const a=ev.target.closest&&ev.target.closest('a[download]');if(!a)return;
+    const names=[...popSp.querySelectorAll('.popgrid a')].map(c=>{const nm=c.querySelector('.nm').firstChild.textContent,sc=c.querySelector('.species-scientific');return sc?nm+' ('+sc.textContent+')':nm;});   // firstChild skips the arrow span
+    const gpx=cellGpx(dest[0],dest[1],resM,state.taxon,{facts:(popScore.innerText||popScore.textContent).trim(),names,url:location.href});
+    const u=URL.createObjectURL(new Blob([gpx],{type:'application/gpx+xml'}));a.href=u;setTimeout(()=>URL.revokeObjectURL(u),1000);};
   popDiv.appendChild(popScore);popDiv.appendChild(popSp);popDiv.appendChild(popActions);popDiv.appendChild(groups);popDiv.appendChild(components);popDiv.appendChild(help);
   const pop=wirePopup(new maplibregl.Popup({offset:30,maxWidth:'380px',anchor:'bottom',focusAfterOpen:false}).setDOMContent(popDiv));
   destMarker=destMarkerAt(dest[0],dest[1]).addTo(map);destMarker.setPopup(pop);
