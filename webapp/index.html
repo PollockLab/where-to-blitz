@@ -1050,7 +1050,7 @@ function modeName(k){return t('modes')[k]||k;}
 function goalMethodsHtml(selected){
   const basis=t('axis_basis');
   const numeric=PRESETS.map((p,i)=>selected!==undefined&&selected!==i?'':'<p><b style="color:var(--ink)">'+presetName(i)+'</b> = '+
-    p.w.map((w,k)=>w>0?w.toLocaleString(LANG==='fr'?'fr-CA':'en-CA')+' × '+basis[k]:null).filter(Boolean).join(' + ')+'.</p>').join('');
+    p.w.map((w,k)=>w>0?w+' × '+basis[k]:null).filter(Boolean).join(' + ')+'.</p>').join('');
   if(selected!==undefined){
     if(selected==='ge')return t('method_ge');
     if(selected==='climate')return t('method_climate');
