@@ -32,7 +32,9 @@ function presetBlurb(i){return t('preset_blurb')[i];}
 let overlay='priority';
 function geActive(){return overlay==='gettingeven';}
 function climateOn(){return overlay==='climate';}
+function clActive(){return overlay==='checklist';}
 function contribStr(){return 'source contribution';}
+function clPopup(){return 'checklist status';}
 const elements={goalmethods:{},challengeBlurb:{},plansource:{style:{}}};
 const document={getElementById:id=>elements[id]};
 const window={__activePreset:1};
@@ -64,7 +66,7 @@ def test_context_switches_with_overlay_and_preserves_planner_help(lang):
     context = _run(
         """
 const output={};
-for(const kind of ['gettingeven','climate','coverage']){
+for(const kind of ['gettingeven','climate','checklist','coverage']){
   overlay=kind;renderGoalContext();output[kind]=elements.challengeBlurb.textContent;
 }
 output.explore=elements.plansource.style.display;
@@ -73,7 +75,7 @@ console.log(JSON.stringify(output));
 """,
         lang,
     )
-    assert len({context[k] for k in ("gettingeven", "climate", "coverage")}) == 3
+    assert len({context[k] for k in ("gettingeven", "climate", "checklist", "coverage")}) == 4
     assert "CHELSA" in context["climate"]
     assert "Biodiversité Québec" in context["coverage"]
     assert context["explore"] == "none" and context["plan"] == ""
@@ -95,7 +97,7 @@ def test_popup_does_not_coerce_missing_or_invalid_percentiles(score):
     assert "No national score" in text
 
 
-@pytest.mark.parametrize("kind", ["gettingeven", "climate", "coverage"])
+@pytest.mark.parametrize("kind", ["gettingeven", "climate", "checklist", "coverage"])
 def test_popup_does_not_show_previous_goals_score_on_other_layers(kind):
     text = _run(f"overlay={json.dumps(kind)};console.log(JSON.stringify(popScoreHtml({{t:0.8,r:[]}},5000)));")
     assert "/100" not in text

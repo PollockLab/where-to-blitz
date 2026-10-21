@@ -46,7 +46,7 @@ const window={__activePreset:2},critSel=document.getElementById('criteria'),bmSe
 critSel.value='2';bmSel.value='Satellite';document.getElementById('placepanel').hidden=true;
 let overlay='priority',_mapLoaded=true,_selectionSeq=0,_shareAction=0,_taxonSeq=0,_taxonPending=null;
 let _sharedCell={lat:49,lon:-123,resM:5000},_shareContext=true,_lastProspect=null,_popScoreEl=null;
-const geActive=()=>overlay==='gettingeven',climateOn=()=>overlay==='climate',covOn=()=>overlay==='coverage';
+const geActive=()=>overlay==='gettingeven',climateOn=()=>overlay==='climate',clActive=()=>overlay==='checklist',covOn=()=>overlay==='coverage';
 const TIER_SWITCH_Z=9,canvas=new Element('canvas'),map={jumpTo:o=>steps.push({jump:o}),getCanvas:()=>canvas};
 const focusPopupTarget=el=>el.focus(),closePopup=()=>steps.push('close'),clearRoute=()=>steps.push('clear');
 const renderCellTable=()=>steps.push('nearby cells');
@@ -269,7 +269,7 @@ let LANG='en',GE_PRIORITY_LEGEND=null;
 function t(id){return I18N[LANG][id];}
 const hint={innerHTML:''},tap={textContent:''},legend={innerHTML:'cached English markup',querySelector:()=>hint};
 const document={getElementById:id=>id==='maplegend'?legend:tap};
-const geActive=()=>false,covOn=()=>false,climateOn=()=>false,updateLegendLabels=()=>{},legendTapKey=()=> 'legendtap_explore';
+const geActive=()=>false,covOn=()=>false,climateOn=()=>false,clActive=()=>false,updateLegendLabels=()=>{},legendTapKey=()=> 'legendtap_explore';
 """
     script += _function(src, "updateLegend")
     script += "updateLegend();const en=hint.innerHTML;LANG='fr';updateLegend();console.log(JSON.stringify({en,fr:hint.innerHTML}));"

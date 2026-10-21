@@ -1,0 +1,267 @@
+{
+ "bands": {
+  "close": 0.7,
+  "complete": 0.9
+ },
+ "built": "2026-10-21",
+ "crs": "PROJCRS[\"WGS_1984_Lambert_Azimuthal_Equal_Area\",BASEGEOGCRS[\"WGS 84\",DATUM[\"World Geodetic System 1984\",ELLIPSOID[\"WGS 84\",6378137,298.257223563,LENGTHUNIT[\"metre\",1]]],PRIMEM[\"Greenwich\",0,ANGLEUNIT[\"degree\",0.0174532925199433]],ID[\"EPSG\",4326]],CONVERSION[\"unnamed\",METHOD[\"Lambert Azimuthal Equal Area\",ID[\"EPSG\",9820]],PARAMETER[\"Latitude of natural origin\",45,ANGLEUNIT[\"degree\",0.0174532925199433],ID[\"EPSG\",8801]],PARAMETER[\"Longitude of natural origin\",-100,ANGLEUNIT[\"degree\",0.0174532925199433],ID[\"EPSG\",8802]],PARAMETER[\"False easting\",0,LENGTHUNIT[\"metre\",1],ID[\"EPSG\",8806]],PARAMETER[\"False northing\",0,LENGTHUNIT[\"metre\",1],ID[\"EPSG\",8807]]],CS[Cartesian,2],AXIS[\"easting\",east,ORDER[1],LENGTHUNIT[\"metre\",1]],AXIS[\"northing\",north,ORDER[2],LENGTHUNIT[\"metre\",1]]]",
+ "encoding": "R=round(completeness*250); G*256+B=observer-days (cap 65535); A=255 Canadian cell with records",
+ "kind": "checklist-completeness",
+ "method": "Chao2 (bias-corrected) incidence estimate per cell; sampling unit = one observer on one day; completeness = S_obs / S_est",
+ "min_units": 10,
+ "rule_of_thumb_units": 30,
+ "schema_version": 1,
+ "source": {
+  "export_date": "2026-09-27",
+  "filters": "research grade; species rank or below, rolled up to species; dated; positional accuracy unknown or <= cell size",
+  "name": "iNaturalist open data (inaturalist-open-data S3 export)",
+  "records_used": 31644832,
+  "url": "https://inaturalist-open-data.s3.amazonaws.com/observations.csv.gz"
+ },
+ "tiers": {
+  "25000": {
+   "groups": {
+    "Actinopterygii": {
+     "cells": {
+      "close": 383,
+      "complete": 186,
+      "far": 284,
+      "too_few": 2666
+     },
+     "png": "checklist_25000m_Actinopterygii.png",
+     "sha256": "66eccfb7ad42b55fd672ddc0825e1d90641a6badfc406118fc9a71d51a2fb45b"
+    },
+    "All biodiversity": {
+     "cells": {
+      "close": 206,
+      "complete": 2,
+      "far": 4448,
+      "too_few": 4786
+     },
+     "png": "checklist_25000m_All.png",
+     "sha256": "78e20f8f6ab9d7f162ad227bfbdc23dc347a555a036656fe7a59f5386ac8aca5"
+    },
+    "Amphibia": {
+     "cells": {
+      "close": 204,
+      "complete": 1048,
+      "far": 56,
+      "too_few": 2427
+     },
+     "png": "checklist_25000m_Amphibia.png",
+     "sha256": "787826964118b26b54c538b35340e5d7515637cbc7c015969c1c91188403a982"
+    },
+    "Arachnida": {
+     "cells": {
+      "close": 360,
+      "complete": 30,
+      "far": 683,
+      "too_few": 1958
+     },
+     "png": "checklist_25000m_Arachnida.png",
+     "sha256": "da53652e547d96bc51fc7e78362e32c2c9f5a9bc8749b90d822b3d76a6b0a47c"
+    },
+    "Aves": {
+     "cells": {
+      "close": 873,
+      "complete": 149,
+      "far": 1638,
+      "too_few": 3642
+     },
+     "png": "checklist_25000m_Aves.png",
+     "sha256": "cd7da8cb0ac4e0fe2826aa9b3455771f1ef53ab2ac22cb4329153a4bd6a06b39"
+    },
+    "Fungi": {
+     "cells": {
+      "close": 52,
+      "complete": 3,
+      "far": 1551,
+      "too_few": 2807
+     },
+     "png": "checklist_25000m_Fungi.png",
+     "sha256": "07550434be33e3d87f817e62ab05beba52976085de0c504310195c82d0ebb7fe"
+    },
+    "Insecta": {
+     "cells": {
+      "close": 133,
+      "complete": 5,
+      "far": 2573,
+      "too_few": 3065
+     },
+     "png": "checklist_25000m_Insecta.png",
+     "sha256": "3cec593b732b0163f8ef9c7429408fdbda4d6a18392b6b48149592c1c71ae434"
+    },
+    "Mammalia": {
+     "cells": {
+      "close": 911,
+      "complete": 630,
+      "far": 530,
+      "too_few": 3986
+     },
+     "png": "checklist_25000m_Mammalia.png",
+     "sha256": "0ac74a385b98b872565bec5524aba8dc1163ce53f0b3153dd23ac1de5842660a"
+    },
+    "Mollusca": {
+     "cells": {
+      "close": 331,
+      "complete": 145,
+      "far": 257,
+      "too_few": 1673
+     },
+     "png": "checklist_25000m_Mollusca.png",
+     "sha256": "4bbd8b19a99fc658236dac1529030413395cb787f24bf60893564031f7549050"
+    },
+    "Plantae": {
+     "cells": {
+      "close": 807,
+      "complete": 4,
+      "far": 2900,
+      "too_few": 3769
+     },
+     "png": "checklist_25000m_Plantae.png",
+     "sha256": "5d2255fcfd1ffd15676cfddbef14a641e10191d3d4b9b63e2716c90ba2a3d10a"
+    },
+    "Reptilia": {
+     "cells": {
+      "close": 97,
+      "complete": 758,
+      "far": 16,
+      "too_few": 1426
+     },
+     "png": "checklist_25000m_Reptilia.png",
+     "sha256": "0581229d0316e4a162ab39f4ef161c46fec89cc1d47956ab2f85acadcfcc9623"
+    }
+   },
+   "lattice": {
+    "ncol": 220,
+    "nrow": 181,
+    "res_m": 25000,
+    "x0": -2150000,
+    "y1": 4300000
+   },
+   "max_accuracy_m": 25000
+  },
+  "5000": {
+   "groups": {
+    "Actinopterygii": {
+     "cells": {
+      "close": 482,
+      "complete": 279,
+      "far": 417,
+      "too_few": 10823
+     },
+     "png": "checklist_5000m_Actinopterygii.png",
+     "sha256": "2f62a21c050f6a25be86c96da46e1579833d2a57c3cfa38eadfa477d57c41b9c"
+    },
+    "All biodiversity": {
+     "cells": {
+      "close": 361,
+      "complete": 28,
+      "far": 20730,
+      "too_few": 49730
+     },
+     "png": "checklist_5000m_All.png",
+     "sha256": "1845dd3fbcd2f0973eb73b93dd5023720dfbc13c538d9c68b8c7d655750d4ff5"
+    },
+    "Amphibia": {
+     "cells": {
+      "close": 680,
+      "complete": 2084,
+      "far": 259,
+      "too_few": 15460
+     },
+     "png": "checklist_5000m_Amphibia.png",
+     "sha256": "111e5ae1430a3b2902af6b73569a53faa270f281d19f5fc5e4b46ad77bf83186"
+    },
+    "Arachnida": {
+     "cells": {
+      "close": 718,
+      "complete": 106,
+      "far": 1551,
+      "too_few": 11473
+     },
+     "png": "checklist_5000m_Arachnida.png",
+     "sha256": "f4443f714c3e6ce6f3eb09385a406902344b53b625882a9081be4da614e9df74"
+    },
+    "Aves": {
+     "cells": {
+      "close": 2268,
+      "complete": 192,
+      "far": 6365,
+      "too_few": 28223
+     },
+     "png": "checklist_5000m_Aves.png",
+     "sha256": "359b128aa17daaaa45cdb96836ffe10ba78e6dc9e90ffcbbfe544e80366ae6f6"
+    },
+    "Fungi": {
+     "cells": {
+      "close": 217,
+      "complete": 23,
+      "far": 3735,
+      "too_few": 18020
+     },
+     "png": "checklist_5000m_Fungi.png",
+     "sha256": "bec1f12868cb578928a76a65d01e3627e71968d6c24ff6ff7890c735e3289e43"
+    },
+    "Insecta": {
+     "cells": {
+      "close": 274,
+      "complete": 13,
+      "far": 9860,
+      "too_few": 25805
+     },
+     "png": "checklist_5000m_Insecta.png",
+     "sha256": "43990886097dee7f93dbf7ec550f5d5b4e8e361a795bf011af91267aad6b00ea"
+    },
+    "Mammalia": {
+     "cells": {
+      "close": 1756,
+      "complete": 1510,
+      "far": 1349,
+      "too_few": 24314
+     },
+     "png": "checklist_5000m_Mammalia.png",
+     "sha256": "c1712709af34918c01fa3e31849c1ad3df3cc5a179782ee375a340c4f3ad3300"
+    },
+    "Mollusca": {
+     "cells": {
+      "close": 495,
+      "complete": 389,
+      "far": 510,
+      "too_few": 7675
+     },
+     "png": "checklist_5000m_Mollusca.png",
+     "sha256": "40bcaa6bd283eb0c3da50ef377a2c7d68afc6150eb196b3c6dd375899fb4a607"
+    },
+    "Plantae": {
+     "cells": {
+      "close": 1610,
+      "complete": 12,
+      "far": 12457,
+      "too_few": 39164
+     },
+     "png": "checklist_5000m_Plantae.png",
+     "sha256": "52e7f79e8b7ff14081d8c4c7375f016818e80f929699c09b84f14ac16ac59bac"
+    },
+    "Reptilia": {
+     "cells": {
+      "close": 324,
+      "complete": 1874,
+      "far": 100,
+      "too_few": 10075
+     },
+     "png": "checklist_5000m_Reptilia.png",
+     "sha256": "8106fa10d6dee78d9092fa03b01ca8a33f2db88f15c51bdc4cef2163c1fd9c4f"
+    }
+   },
+   "lattice": {
+    "ncol": 1100,
+    "nrow": 905,
+    "res_m": 5000,
+    "x0": -2150000,
+    "y1": 4300000
+   },
+   "max_accuracy_m": 5000
+  }
+ }
+}

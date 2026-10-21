@@ -25,9 +25,9 @@ const nodes={baseop:node(1),bople:node(),bopv:node(),opacityRow:node(),
 const document={getElementById:id=>nodes[id]||null};
 const t=k=>I18N[LANG][k],window={__activePreset:0},state={taxon:'All biodiversity'};
 const CELL_LAYER='cells-fill',TIER_SWITCH_Z=9,PM_BASE='',PM_TILE=256,COVPM=['All'];
-const OVERLAY_TOGGLE={coverage:'tgCoverage',gettingeven:'tgGettingEven',climate:'tgClimateGap'};
+const OVERLAY_TOGGLE={coverage:'tgCoverage',gettingeven:'tgGettingEven',climate:'tgClimateGap',checklist:''};
 let overlay='priority',_overlaySeq=0,_overlayReady,zoom=3,_mapLoaded=true;
-let GE_LOADED=true,_geLoading=false,_discoveryLoading=false;
+let GE_LOADED=true,_geLoading=false,_clLoading=false,_discoveryLoading=false;
 let DRAWN5=null,_gridSeq=0,STRETCH=null,_lineFilterIds=-1;
 const sources={cells:{setData(){}}},layers={'cells-fill':{paint:{}},basemap:{paint:{'raster-opacity':1}}};
 const writes=[],cellStates={};
@@ -60,6 +60,7 @@ function input(value){nodes.baseop.value=String(value);nodes.baseop.input({targe
         "geActive",
         "covOn",
         "climateOn",
+        "clActive",
         "setCellState",
         "applyCanadaMask",
         "priorityPercentiles",

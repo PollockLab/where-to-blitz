@@ -23,11 +23,13 @@ Each priority axis is scored **0–1 per cell**. A numeric preset fixes the weig
 | **cell** | One square of the grid. The unit everything is scored on: 25 km by default, 5 km from zoom 9. |
 | **lattice** | The projected equal-area grid the cells sit on (`grid_lattice.py`). WGS84 Lambert Azimuthal Equal Area, 45°N 100°W, snapped to a 25 km multiple so the 25 km tier is an exact 5×5 aggregate of the 5 km tier. |
 | **axis** | One underlying priority signal, scored 0–1 per cell. The five keys are `discover`, `conservation`, `env`, `staleness`, `urgency` (`goal_presets.py`). |
-| **Goal menu** | Five display choices: the three numeric presets, Getting Even's group recommendation, and the separate Climate Gap overlay. These choices are distinct from the five axes. |
+| **Goal menu** | Six display choices: the three numeric presets, Getting Even's group recommendation, Complete a checklist, and the separate Climate Gap overlay. These choices are distinct from the five axes. |
 | **impact / priority percentile** | The preset's raw blend ranked from 0–100 among Canada-eligible 25 km cells for the selected species group, with equal values assigned their average rank. Panning and zooming preserve this number; at 5 km it belongs to the enclosing 25 km cell. A locally bright cell can have a low national percentile because the colour is stretched separately to the view. |
 | **preset** | A named, fixed weight mix over the five axes (`goal_presets.py`). The three numeric presets share the current general Blitz the Gap iNaturalist project, resolved live with a frozen fallback slug. |
 | **gap** | A cell that is under-recorded for the goal in play. "Blitz the gap" = go to one and record there. |
 | **Getting Even** | A separate Goal-menu layer, not a numeric axis: it colours each cell by the taxonomic group most under-represented there, birds excluded (`build_gettingeven.py`). It answers what group to record in a cell. |
+| **checklist** | A cell whose species list for a group is close to complete, so a species missing from it is probably absent rather than unrecorded. The Complete a checklist layer scores how close each cell is (`build_checklist.py`). |
+| **observer-day** | One observer recording on one day in a cell, the sampling unit of the checklist layer. |
 | **VOI** | Value of information — how much a new observation would improve what we know. The intended end state for species suggestions; today's ranking is an interpretable stand-in (see "Which species to record in a cell" below). |
 | **appscore** | The composite the app actually ships, read straight from `goal_presets.PRESETS`, as distinct from the generic proxy `voi_backtest.py` tests. `backtest_appscore.py` scores it so the backtest cannot drift from the dropdown. |
 
@@ -39,6 +41,7 @@ One line per input, with the date, version or DOI the repo records. "Not recorde
 - **CAN-SAR:** OSF DOI [10.17605/OSF.IO/E4A58](https://doi.org/10.17605/OSF.IO/E4A58), release date not recorded (`cluster_results/ca/provenance.json`).
 - **Catalogue of Life:** release COL26.6 XR, taxonomy DOI [10.48580/dgyy9](https://doi.org/10.48580/dgyy9) (this file, "Find species at risk").
 - **iNaturalist open data history:** last observation 2026-05-27 (`_build_walkthrough.py`, the "As of" line).
+- **iNaturalist open-data export (checklist layer):** export of 2026-09-27, `observations.csv.gz` and `taxa.csv.gz` (`cluster_results/checklist/checklist.json`).
 - **Biodiversité Québec density COG:** build date not recorded (`cluster_results/ca/provenance.json` names the source but gives no date).
 - **CHELSA:** v2.1, 1981-2010 climatology, BIO1, BIO4 and BIO12 (`clip_chelsa_ca.py`).
 - **Hansen Global Forest Change:** GFC-2023-v1.11 (`build_hansen_ca.py`).
@@ -439,6 +442,32 @@ The tap panel is a *different* calculation — a live iNaturalist query about th
 versus its 40 km neighbourhood (see "Which species to record in a cell" above). The colours come
 from this offline layer; the ranking in the panel does not.
 
+## The Complete a checklist layer
+
+A Goal-menu layer that answers a different question from the priority presets: how close is this cell to a complete species list for the selected group? Opportunistic records are presence-only, so a species missing from a cell might be absent or merely unrecorded. Where a cell's list is close to complete, a missing species is probably absent. Such cells supply the real zeros that let distribution models estimate prevalence instead of relative suitability (Phillips & Elith 2013, *Ecology* 94:1409–1419), so they are worth finishing.
+
+### Inputs and calculation
+
+- **Records:** the public iNaturalist open-data export (`observations.csv.gz`, `taxa.csv.gz`), research grade, identified to species or below with subspecies rolled up to species, with an observation date, and with positional accuracy unknown or no coarser than the cell (5 km or 25 km). Groups use iNaturalist's iconic taxa; All biodiversity takes every species.
+- **Sampling unit:** one observer on one day in the cell, a distinct `(observer_id, observed_on)`. Repeat records of a species by the same observer on the same day count once.
+- **Estimate:** the bias-corrected Chao2 incidence estimator (Chao 1987, *Biometrics* 43:783–791), `S_est = S_obs + ((m − 1)/m) · Q1(Q1 − 1) / (2(Q2 + 1))`, with `m` observer-days, `Q1` species seen on exactly one and `Q2` on exactly two. **Completeness** is `S_obs / S_est`. Scoring each cell's completeness from its own records follows KnowBR (Lobo et al. 2018, *Ecological Indicators* 91:241–248).
+- **Status:** complete at 90% or more, close at 70–90%, far below 70%. Cells with fewer than 10 observer-days are shown as too few records, because Chao2 is unstable on a handful of units. The popup also shows the cell's observer-days next to a rule of thumb of about 30 observer-days for a complete checklist.
+- **Tiers:** each tier is computed from the records in its own cells, so a 25 km value is not an average of its 5 km children.
+
+### Limits
+
+Chao2 is a lower bound on richness. Where sampling is uneven, for example a single trail or a single season, rare species can be missed by every unit and completeness is overstated. Completeness does not correct for detectability or identification bias, and a complete checklist covers the species observers report, not every species present. Bands and the minimum effort are planning choices, not published standards.
+
+### Provenance and reproduction
+
+`build_checklist.py` streams the export, projects records onto the lattice, applies the Canada border mask and writes `cluster_results/checklist/checklist_<res>m_<group>.png` per tier and group, plus `checklist.json`, which records the export date, filters, bands, minimum effort, per-group status counts and PNG hashes. The files live outside `cluster_results/ca/`, so a deploy copies them as committed. `test_checklist.py` checks the Chao2 arithmetic, the observer-day unit, the species roll-up, the pixel encoding and the shipped hashes.
+
+```bash
+curl -O https://inaturalist-open-data.s3.amazonaws.com/observations.csv.gz   # ~13 GB
+curl -O https://inaturalist-open-data.s3.amazonaws.com/taxa.csv.gz
+.venv/bin/python build_checklist.py --observations observations.csv.gz --taxa taxa.csv.gz --export-date 2026-09-27
+```
+
 ## Conservation Challenge sightings
 
 An optional map layer of recent sightings of the Conservation Challenge target taxa, separate from the five axes and from the `conservation` score. `conservation_challenge.py` queries the iNaturalist API for Canada (place 6712) over the last 14 days, with `geoprivacy=open` and `taxon_geoprivacy=open`. The query has no `threatened=false` filter, and sightings are shown at their reported coordinates. The targets in `webapp/challenge_taxa.json` are 335 taxa: 313 species, 10 genus, 9 variety and 3 subspecies, resolved from the challenge list with reviewed synonyms. The `conservation-challenge.yml` workflow publishes the snapshot. These are recent observations of listed targets, not abundance, absence or a prediction of where to find them.
@@ -461,6 +490,7 @@ An optional map layer of recent sightings of the Conservation Challenge target t
 | conservation | `build_atrisk_layer.py`, joined in `fullgrid_fields.py` | CAN-SAR (OSF) + GBIF SQL download on Catalogue of Life XR, release COL26.6 XR (DOI and taxonomy release in `ca_atrisk_provenance.json`) | 10.15468/dl.6hqdyd; COL26.6 XR; 10.17605/OSF.IO/E4A58 |
 | staleness | iNat open-data (cluster DuckDB job, not in this repo) → `cluster_results/ca/ca_staleness.csv` | iNaturalist open-data (AWS) | last observation 2026-05-27 |
 | Getting Even | `build_gettingeven.py`, `gettingeven_evidence.py` | per-group iNat density COGs, via the grid build; Eckert 2025 metric; richness rasters pinned in `gettingeven_richness.json` | not recorded |
+| Complete a checklist | `build_checklist.py` | iNaturalist open-data export (AWS), `observations.csv.gz` + `taxa.csv.gz` | export 2026-09-27 |
 | historical discovery | `build_discovery_layer.py`, `prepare_optional_layers.py` | lab-supplied 2025 point set and frozen lab Canada Parquet export (private); published rate artifact | not recorded |
 | Conservation Challenge | `conservation_challenge.py`, `conservation-challenge.yml` | iNaturalist API, Canada place, last 14 days; targets in `webapp/challenge_taxa.json` | not applicable (live API) |
 | Climate Gap | not built here: baked from CHELSA outside the repo | release asset `climate_gap.pmtiles`, repacked to z0-8 by `repack_pmtiles.py` | not recorded |

@@ -16,7 +16,7 @@ let LANG='en',overlay='priority',tier=25000,recentReady=false;
 const state={taxon:'Aves'},window={__activePreset:0},COVPM=['All biodiversity','Aves','Plantae'];
 const OBJ=[{key:'discover'},{key:'conservation'},{key:'env'},{key:'staleness'},{key:'urgency'}];
 const PRESETS=[{w:[1,0,0,0,0]},{w:[0,1,0,0,1]}];
-const geActive=()=>overlay==='gettingeven',covOn=()=>overlay==='coverage',climateOn=()=>overlay==='climate';
+const geActive=()=>overlay==='gettingeven',covOn=()=>overlay==='coverage',climateOn=()=>overlay==='climate',clActive=()=>overlay==='checklist';
 const activeCellResM=()=>tier,presetName=()=>LANG==='en'?'Spatial Gap':'Lacune spatiale';
 const groupName=key=>I18N[LANG].group[key]||key;
 globalThis.optionalLayers={isDiscovery:()=>overlay==='discovery',recentReady:()=>recentReady,group:()=>"Plantae"};

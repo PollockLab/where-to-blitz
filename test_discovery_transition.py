@@ -14,12 +14,12 @@ def replay(previous, outcome, language="en"):
     script += r"""
 const input=JSON.parse(process.argv[1]);let LANG=input.language;
 const t=(key,...args)=>{const value=I18N[LANG][key];return typeof value==='function'?value(...args):value;};
-let overlay=input.previous,_overlaySeq=0,_overlayReady,GE_PRIORITY_LEGEND='PRIORITY LEGEND',GE_LOADED=false,_geLoading=false;
+let overlay=input.previous,_overlaySeq=0,_overlayReady,GE_PRIORITY_LEGEND='PRIORITY LEGEND',GE_LOADED=false,_geLoading=false,_clLoading=false;
 const state={taxon:'All biodiversity'},window={__activePreset:0};
-const OVERLAY_TOGGLE={coverage:'tgCoverage',gettingeven:'tgGettingEven',climate:'tgClimateGap'};
+const OVERLAY_TOGGLE={coverage:'tgCoverage',gettingeven:'tgGettingEven',climate:'tgClimateGap',checklist:''};
 const nodes={criteria:{value:'discovery'},basemap:{value:'Standard'},challengeBlurb:{},maplegend:{innerHTML:'OLD LEGEND',querySelector:()=>null}};
 const document={getElementById:id=>nodes[id]||null};
-const geActive=()=>overlay==='gettingeven',covOn=()=>overlay==='coverage',climateOn=()=>overlay==='climate';
+const geActive=()=>overlay==='gettingeven',covOn=()=>overlay==='coverage',climateOn=()=>overlay==='climate',clActive=()=>overlay==='checklist';
 const renderCellTable=()=>{},paintPopScore=()=>{},setGridLines=()=>{},renderGoalContext=()=>{},syncSharedCellUrl=()=>{},updateLegendLabels=()=>{};
 const GE_PAL=['a','b','c'],GE_ALL='all';
 let painted=input.previous,verified=false,resolve,reject;
