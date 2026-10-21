@@ -7,6 +7,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -277,7 +278,7 @@ const layerHandlers={},handlers={},nodes={},document={activeElement:null,body:ne
  addEventListener:(event,fn)=>handlers[event]=fn};document.activeElement=document.body;
 const getComputedStyle=()=>({visibility:'visible',display:'block'});
 const canvas=new Element('canvas',true),language=new Element('language',true);
-let curPopup=null,_reselect=false,destMarker=null,destCell=null,_mapLoaded=true,_shareAction=0,overlay='priority',LANG='en',GE_PRIORITY_LEGEND=null,_discoveryLoading=false,_geLoading=false;
+let curPopup=null,_reselect=false,destMarker=null,destCell=null,_mapLoaded=true,_shareAction=0,overlay='priority',LANG='en',GE_PRIORITY_LEGEND=null,_discoveryLoading=false,_geLoading=false,_clLoading=false;
 const state={view:'explore',taxon:'All biodiversity'},OPTIONAL_LAYERS={discovery:input.discovery?{taxon_group:'All biodiversity',scope:input.discovery.scope,metric:input.discovery.metric}:null,challenge:{catalog:input.catalog}};
 const syncSharedCellUrl=()=>{},localizeMapControls=()=>{};
 const whenMap=fn=>fn(),clearSelection=()=>{},activeCellResM=()=>input.cellRes||(input.discovery?5000:25000);
@@ -326,12 +327,16 @@ OptionalData.fetchPinned=async(_descriptor,kind)=>kind==='discovery'?input.disco
     )
     if snapshot is None:
         snapshot = challenge.acquire(CONFIG, FixtureAPI([observation(1), observation(2, 20)]), AS_OF)
-    result = subprocess.run(
-        ["node", "-e", script],
-        input=json.dumps({"snapshot": snapshot, "discovery": discovery_product, "cellRes": cell_res,"historical":historical_points,"catalog":challenge_catalog}),
-        capture_output=True,
-        text=True,
-    )
+    # A file, not `node -e`: the script exceeds Linux's 128 KiB per-argument limit.
+    with tempfile.TemporaryDirectory() as tmp:
+        path = Path(tmp, "lifecycle.js")
+        path.write_text(script)
+        result = subprocess.run(
+            ["node", path],
+            input=json.dumps({"snapshot": snapshot, "discovery": discovery_product, "cellRes": cell_res,"historical":historical_points,"catalog":challenge_catalog}),
+            capture_output=True,
+            text=True,
+        )
     assert result.returncode == 0, result.stderr
     return json.loads(result.stdout)
 

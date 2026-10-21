@@ -256,6 +256,8 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
 #maplegend .recent-map-key{display:block;margin-top:3px;font-size:10.5px}
 #maplegend .recent-map-key::before{content:"";display:inline-block;width:7px;height:7px;margin-right:4px;border-radius:50%;background:#d96c14}
 .maplibregl-ctrl-bottom-left{left:14px;bottom:14px;z-index:1060}
+/* body.ctrl-dodge: the panel (12px + 300px) reaches down over the corner controls, so sit beside it and wrap short of the legend */
+@media(min-width:641px){body.ctrl-dodge .maplibregl-ctrl-bottom-left{left:324px;max-width:calc(100% - 600px)}}
 .maplibregl-ctrl-attrib a{text-decoration:underline}   /* link-in-text-block: colour alone does not separate them from the surrounding text */
 #map .maplibregl-ctrl-attrib{color:#263742;background:rgba(255,255,255,.96)}
 @media(max-width:640px){#maplegend{left:auto;right:8px;bottom:104px;top:auto;min-width:0;max-width:210px;max-height:30dvh;overflow-y:auto;overscroll-behavior:contain;padding:8px 10px}}
@@ -497,7 +499,7 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
   <button id="howclose" type="button" data-i18n-aria="aria_close" data-i18n-title="aria_close" aria-label="Close" title="Close">×</button>
   <p class="howintro" data-i18n="how_intro">Choose a goal, compare places, then tap a cell for species worth recording. Scores guide recording effort; they do not predict what a visit will find.</p>
   <details id="how-goals" class="howsec"><summary data-i18n="how_goals">Current goal and scoring</summary><p id="howcurrent" class="howcurrent"></p><div id="goalmethods"></div></details>
-  <details id="how-evidence" class="howsec"><summary data-i18n="how_evidence">Species suggestions and group comparison</summary><p data-i18n="inat_caveat"></p><p data-i18n="evidence_method"></p><p data-i18n-html="ge_method"></p></details>
+  <details id="how-evidence" class="howsec"><summary data-i18n="how_evidence">Species suggestions and group comparison</summary><p data-i18n="inat_caveat"></p><p data-i18n="evidence_method"></p><p data-i18n-html="ge_method"></p><p data-i18n="method_cl"></p></details>
   <details id="how-ranks" class="howsec"><summary data-i18n="how_ranks">Map colour and national percentile</summary><p data-i18n-html="impact_expl"></p><p data-i18n-html="colour_expl"></p></details>
   <details id="how-sources" class="howsec"><summary data-i18n="how_sources">Data sources and limits</summary><div data-i18n-html="source_expl"></div><p data-i18n="grid_limits"></p><p data-i18n="method_limits"></p><p data-i18n-html="leak_note"></p><p class="howcurrent" data-i18n="conservation_source">Current Conservation dataset</p><div id="conservationinfo" role="status" aria-live="polite"></div><p><a href="https://pollocklab.github.io/where-to-blitz/where-to-blitz-walkthrough.html" target="_blank" rel="noopener" data-i18n="methodology_link">Full methodology and data</a></p><p><a href="cluster_results/ca/provenance.json" target="_blank" rel="noopener" data-i18n="provenance_link">Grid provenance manifest</a></p></details>
   <details id="how-about" class="howsec"><summary data-i18n="how_about">Blitz the Gap and responsible recording</summary><div class="foot" data-i18n-html="foot"></div></details>
@@ -591,7 +593,7 @@ const I18N={
     place_loading:"Searching Canadian place names…", place_empty:"No matching places. Try a nearby town or another name.",
     place_error:"Place search is unavailable. Search again to retry.", place_found:n=>`${n} places found. Use the arrow keys or choose a result.`,
     place_source:"Place names: Natural Resources Canada", search_empty:"No places found", search_error:"Search unavailable. Submit again to retry.",
-    view_cell_records:"View matching records", record_sighting:"Record a sighting",
+    view_cell_records:"View matching records", record_sighting:"Record a sighting", save_gpx:"Save cell for the field (GPX)",
     province_name:{10:"Newfoundland and Labrador",11:"Prince Edward Island",12:"Nova Scotia",13:"New Brunswick",24:"Quebec",35:"Ontario",46:"Manitoba",47:"Saskatchewan",48:"Alberta",59:"British Columbia",60:"Yukon",61:"Northwest Territories",62:"Nunavut"},
     search_ph:"Search a town or address",
     my_location:"Locate me",
@@ -702,6 +704,17 @@ const I18N={
     pop_layer_ge:"Getting Even: group recommendation, no national percentile.",
     pop_layer_climate:"Climate Gap: no national percentile.",
     pop_layer_density:"Sampling density: no national percentile.",
+    crit_cl:"Complete a checklist", cl_loading:"Loading checklist completeness…", cl_opacity:"Checklist cell opacity", aria_cl_opacity:"Checklist cell opacity",
+    cl_status:["Complete","Close","Far","Too few records"],
+    cl_legend:(complete,close,min)=>[`Complete (≥${complete}% of estimated species recorded)`,`Close (${close}–${complete}%)`,`Far (<${close}%)`,`Too few records (<${min} observer-days)`],
+    cl_blurb:"How complete each cell's species list is for the selected group. Colours show inventory completeness, not a priority score.",
+    method_cl:"A cell is a complete checklist when nearly all species there have been recorded, so a species missing from its list is probably absent rather than unrecorded. Completeness = observed ÷ estimated species, with the estimate from Chao2 (Chao 1987, Biometrics 43:783–791) computed per cell as in KnowBR (Lobo et al. 2018, Ecological Indicators 91:241–248). The sampling unit is one observer on one day. Chao2 is a lower bound on richness, so completeness can be overstated where sampling is uneven. Each cell's popup adds a 95% interval (Chao 1987 variance, log-transformed as in Chao & Colwell 2017) and sample coverage (Chao & Jost 2012, Ecology 93:2533–2547), which stays reliable on small samples where the richness estimate does not.",
+    pop_layer_cl:"Complete a checklist: inventory completeness, no national percentile.",
+    cl_pop_pct:p=>`${p}% of the estimated species recorded`,
+    cl_pop_ci:(lo,hi)=>`95% interval: ${lo}–${hi}%`,
+    cl_pop_cov:c=>`Sample coverage ${c}%: species not yet recorded make up about ${100-c}% of detections`,
+    cl_pop_days:(n,k)=>`${n} observer-day${n===1?'':'s'} (one person on one day); a complete checklist typically needs about ${k}`,
+    cl_pop_note:d=>`Estimate: Chao2 from iNaturalist research-grade records, export of ${d}.`,
     leak_note:`The walkthrough compares the all-time density blend with a separate score using earlier observations. This retrospective comparison does not establish how many species a visit to this cell will discover.`,
     foot:`<b style="color:var(--ink)">How it works:</b> <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">Blitz the Gap</a> is a Canada-wide bioblitz, go to a high-priority cell, record what you see on <a href="https://www.inaturalist.org" target="_blank" rel="noopener" style="color:var(--acc)">iNaturalist</a>, and your research-grade sightings flow into the <a href="https://www.inaturalist.org/projects/blitz-the-gap-2026-general" target="_blank" rel="noopener" style="color:var(--acc)">2026 project</a>. Led by the <a href="https://pollocklab.github.io/blitz-the-gap/" target="_blank" rel="noopener" style="color:var(--acc)">Pollock Lab</a> at McGill; a companion tool, not an official project page.<br><br><b style="color:var(--ink)">iNaturalist records show where people looked, not what lives there</b>, a planning aid, not a census.<br><br>This map spans many <b style="color:var(--ink)">Indigenous territories</b>, see whose at <a href="https://native-land.ca" target="_blank" rel="noopener" style="color:var(--acc)">native-land.ca</a>, obscure sensitive-species locations, and seek consent before recording on their lands.`,
     top_cells:"Top cells (accessible list)",
@@ -849,7 +862,7 @@ const I18N={
     place_loading:"Recherche de noms de lieux au Canada…", place_empty:"Aucun lieu trouvé. Essayez une ville voisine ou un autre nom.",
     place_error:"La recherche de lieu est indisponible. Recherchez à nouveau pour réessayer.", place_found:n=>`${n} lieux trouvés. Utilisez les flèches ou choisissez un résultat.`,
     place_source:"Noms de lieux : Ressources naturelles Canada", search_empty:"Aucun lieu trouvé", search_error:"Recherche indisponible. Réessayez en soumettant la recherche.",
-    view_cell_records:"Voir les observations retenues", record_sighting:"Noter une observation",
+    view_cell_records:"Voir les observations retenues", record_sighting:"Noter une observation", save_gpx:"Enregistrer la cellule pour le terrain (GPX)",
     province_name:{10:"Terre-Neuve-et-Labrador",11:"Île-du-Prince-Édouard",12:"Nouvelle-Écosse",13:"Nouveau-Brunswick",24:"Québec",35:"Ontario",46:"Manitoba",47:"Saskatchewan",48:"Alberta",59:"Colombie-Britannique",60:"Yukon",61:"Territoires du Nord-Ouest",62:"Nunavut"},
     search_ph:"Rechercher une ville ou une adresse",
     my_location:"Me localiser",
@@ -960,6 +973,17 @@ const I18N={
     pop_layer_ge:"Combler l'écart : groupe recommandé, aucun centile national.",
     pop_layer_climate:"Lacune climatique : aucun centile national.",
     pop_layer_density:"Densité d'observations : aucun centile national.",
+    crit_cl:"Compléter une liste d'espèces", cl_loading:"Chargement de la complétude des listes…", cl_opacity:"Opacité des cellules Liste d'espèces", aria_cl_opacity:"Opacité des cellules Liste d'espèces",
+    cl_status:["Complète","Presque","Loin","Trop peu d'observations"],
+    cl_legend:(complete,close,min)=>[`Complète (≥ ${complete} % des espèces estimées observées)`,`Presque (${close}–${complete} %)`,`Loin (< ${close} %)`,`Trop peu d'observations (< ${min} jours-observateur)`],
+    cl_blurb:"Le degré de complétude de la liste d'espèces de chaque cellule pour le groupe choisi. Les couleurs montrent la complétude de l'inventaire, pas un score de priorité.",
+    method_cl:"Une cellule a une liste complète quand presque toutes ses espèces ont été observées : une espèce absente de la liste est alors probablement absente, et non simplement non observée. Complétude = espèces observées ÷ espèces estimées, l'estimation venant de Chao2 (Chao 1987, Biometrics 43:783–791) calculé par cellule comme dans KnowBR (Lobo et al. 2018, Ecological Indicators 91:241–248). L'unité d'échantillonnage est un observateur pendant une journée. Chao2 est une borne inférieure de la richesse : la complétude peut être surestimée là où l'échantillonnage est inégal. La fiche de chaque cellule ajoute un intervalle à 95 % (variance de Chao 1987, transformée en log comme dans Chao et Colwell 2017) et la couverture de l'échantillon (Chao et Jost 2012, Ecology 93:2533–2547), qui reste fiable sur de petits échantillons, contrairement à l'estimation de la richesse.",
+    pop_layer_cl:"Compléter une liste d'espèces : complétude de l'inventaire, aucun centile national.",
+    cl_pop_pct:p=>`${p} % des espèces estimées observées`,
+    cl_pop_ci:(lo,hi)=>`Intervalle à 95 % : ${lo}–${hi} %`,
+    cl_pop_cov:c=>`Couverture de l'échantillon ${c} % : les espèces pas encore observées représentent environ ${100-c} % des détections`,
+    cl_pop_days:(n,k)=>`${n} jour${n===1?'':'s'}-observateur (une personne pendant une journée); une liste complète en demande généralement environ ${k}`,
+    cl_pop_note:d=>`Estimation : Chao2 à partir des observations iNaturalist de qualité recherche, export du ${d}.`,
     leak_note:`Le guide compare la combinaison fondée sur la densité toutes périodes à un score distinct utilisant des observations antérieures. Cette comparaison rétrospective ne mesure pas combien d'espèces une visite permettra de découvrir.`,
     foot:`<b style="color:var(--ink)">Fonctionnement&nbsp;:</b> <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">Blitz the Gap</a> est un bioblitz pancanadien, rendez-vous dans une cellule prioritaire, notez ce que vous voyez sur <a href="https://www.inaturalist.org" target="_blank" rel="noopener" style="color:var(--acc)">iNaturalist</a>, et vos observations de qualité recherche alimentent le <a href="https://www.inaturalist.org/projects/blitz-the-gap-2026-general" target="_blank" rel="noopener" style="color:var(--acc)">projet 2026</a>. Mené par le <a href="https://pollocklab.github.io/blitz-the-gap/" target="_blank" rel="noopener" style="color:var(--acc)">Pollock Lab</a> de l'Université McGill; un outil complémentaire, non officiel.<br><br><b style="color:var(--ink)">Les observations iNaturalist montrent où les gens ont cherché, pas ce qui vit là</b>, un outil de planification, pas un inventaire.<br><br>Cette carte couvre de nombreux <b style="color:var(--ink)">territoires autochtones</b>, voyez lesquels sur <a href="https://native-land.ca" target="_blank" rel="noopener" style="color:var(--acc)">native-land.ca</a>, masquez les lieux d'espèces sensibles, et obtenez le consentement avant d'observer sur leurs terres.`,
     top_cells:"Meilleures cellules (liste accessible)",
@@ -1054,11 +1078,13 @@ function goalMethodsHtml(selected){
   if(selected!==undefined){
     if(selected==='ge')return t('method_ge');
     if(selected==='climate')return t('method_climate');
+    if(selected==='cl')return t('method_cl');
     if(selected==='coverage')return t('density_blurb');
     return t('axis_method')+numeric;
   }
   return t('axis_method')+numeric+'<br>• <b style="color:var(--ink)">'+t('crit_ge')+'</b>: '+t('method_ge')+
-    '<br>• <b style="color:var(--ink)">'+t('crit_climate')+'</b>: '+t('method_climate');
+    '<br>• <b style="color:var(--ink)">'+t('crit_climate')+'</b>: '+t('method_climate')+
+    '<br>• <b style="color:var(--ink)">'+t('crit_cl')+'</b>: '+t('method_cl');
 }
 function renderGoalContext(){
   if(typeof syncEvidenceControls==='function')syncEvidenceControls();
@@ -1066,11 +1092,11 @@ function renderGoalContext(){
     const methods=document.getElementById('goalmethods'),current=document.getElementById('howcurrent'),blurb=document.getElementById('challengeBlurb');
     if(methods)methods.textContent=t('discovery_blurb');if(current)current.textContent=t('current_goal',t('discovery_rate'));if(blurb)blurb.textContent=t('discovery_blurb');return;
   }
-  const selected=overlay==='priority'?(window.__activePreset||0):geActive()?'ge':climateOn()?'climate':'coverage';
+  const selected=overlay==='priority'?(window.__activePreset||0):geActive()?'ge':climateOn()?'climate':clActive()?'cl':'coverage';
   const methods=document.getElementById('goalmethods');if(methods)methods.innerHTML=goalMethodsHtml(selected);
-  const current=document.getElementById('howcurrent');if(current)current.textContent=t('current_goal',typeof selected==='number'?presetName(selected):t(selected==='ge'?'crit_ge':selected==='climate'?'crit_climate':'density_name'));
+  const current=document.getElementById('howcurrent');if(current)current.textContent=t('current_goal',typeof selected==='number'?presetName(selected):t(selected==='ge'?'crit_ge':selected==='climate'?'crit_climate':selected==='cl'?'crit_cl':'density_name'));
   const cb=document.getElementById('challengeBlurb');if(cb){
-    if(overlay!=='priority')cb.textContent=t(geActive()?'ge_blurb':climateOn()?'climate_blurb':'density_blurb');
+    if(overlay!=='priority')cb.textContent=t(geActive()?'ge_blurb':climateOn()?'climate_blurb':clActive()?'cl_blurb':'density_blurb');
     else{const i=window.__activePreset||0,p=PRESETS[i];
       cb.innerHTML=presetBlurb(i)+' <a href="https://www.inaturalist.org/projects/'+p.proj+'" target="_blank" rel="noopener" style="color:var(--acc);white-space:nowrap">'+t('join')+'</a>';}
   }
@@ -1213,23 +1239,71 @@ function geCat(v,col,row){
   const k=(row*v.w+col)*4;
   return (v.d[k+3]<128||v.d[k]===GE_UNSCORED)?-1:v.d[k];
 }
+// Complete a checklist: Chao2 inventory completeness per cell for the SELECTED group (build_checklist.py).
+// One PNG per (tier, group), same lattice index space as Getting Even: R=round(completeness*250),
+// G*256+B=observer-days, A=255 where the group has records, 64 for a Canadian cell without any, 0 outside
+// Canada. A second _ci PNG holds the 95% interval and sample coverage for the popup. Bands and the effort
+// floor come from the sidecar, so a threshold change is not a rebuild. CVD-safe ColorBrewer RdBu stops;
+// too few = GE's grey.
+const CL_DIR='cluster_results/checklist/', CL_PAL=['#2166AC','#67A9CF','#EF8A62',GE_ALL], CL_FEW=3, CL_VALS={};
+let CL_META=null,clOpacity=0.62;
+async function loadCLMeta(){
+  if(CL_META)return CL_META;
+  const r=await fetchT(CL_DIR+'checklist.json',15000);if(!r.ok)throw new Error('HTTP '+r.status+' loading checklist.json');
+  const j=await r.json();
+  if(!j||j.schema_version!==2||!j.bands||!j.tiers||!Number.isFinite(j.min_units))throw new Error('Invalid checklist sidecar');
+  return CL_META=j;
+}
+async function loadCLVals(res){
+  const g=state.taxon,meta=await loadCLMeta(),entry=meta.tiers[String(res)]?.groups?.[g];
+  if(!entry)throw new Error('No checklist layer for '+g+' at '+res+' m');
+  return cachedPng(CL_VALS,res+'|'+g,CL_DIR+entry.png);
+}
+function clImage(res){return CL_META&&CL_VALS[res+'|'+state.taxon];}
+async function loadCLCI(res){
+  const g=state.taxon,entry=(await loadCLMeta()).tiers[String(res)]?.groups?.[g];
+  if(!entry?.ci_png)throw new Error('No checklist interval layer for '+g+' at '+res+' m');
+  return cachedPng(CL_VALS,res+'|'+g+'|ci',CL_DIR+entry.ci_png);
+}
+// 0 complete, 1 close, 2 far, CL_FEW too few observer-days (or no records); -1 outside Canada or off the raster.
+// Unlike Getting Even, "too few records" is true of every Canadian cell it is drawn on, so 5 km draws it too.
+// Compares in the pixel's own 0..250 units so 0.9 and 0.7 land exactly on 225 and 175.
+function clStatus(v,col,row){
+  if(col<0||row<0||col>=v.w||row>=v.h)return -1;
+  const k=(row*v.w+col)*4,b=CL_META.bands;
+  if(v.d[k+3]<32)return -1;
+  if(v.d[k+3]<128||v.d[k+1]*256+v.d[k+2]<CL_META.min_units)return CL_FEW;
+  return v.d[k]>=Math.round(b.complete*250)?0:v.d[k]>=Math.round(b.close*250)?1:2;
+}
+function clPopup(lat,lon,resM){
+  const v=clImage(resM),s=v&&snapToLattice(lat,lon,resM);
+  if(!v){loadCLVals(resM).then(paintPopScore,()=>{});return t('cl_loading');}
+  const status=s?clStatus(v,s.col,s.row):-1;if(status<0)return t('cl_status')[CL_FEW];
+  const k=(s.row*v.w+s.col)*4,days=v.d[k+3]<128?0:v.d[k+1]*256+v.d[k+2];
+  const judged=status!==CL_FEW,ci=judged&&CL_VALS[resM+'|'+state.taxon+'|ci'];if(judged&&!ci)loadCLCI(resM).then(paintPopScore,()=>{});
+  const iv=ci&&ci.d[k+3]>=128?'<br>'+t('cl_pop_ci',Math.round(ci.d[k]*0.4),Math.round(ci.d[k+1]*0.4))+'<br>'+t('cl_pop_cov',Math.round(ci.d[k+2]*0.4)):'';
+  return '<b>'+t('cl_status')[status]+'</b>'+(days?'<br>'+t('cl_pop_pct',Math.round(v.d[k]*0.4)):'')+iv+
+    '<br>'+t('cl_pop_days',days,CL_META.rule_of_thumb_units)+'<br><span class="hint">'+t('cl_pop_note',esc(CL_META.source?.export_date??'?'))+'</span>';
+}
 // One data overlay at a time. Coverage used to read its own hidden checkbox, Getting Even read
 // its own, and the priority grid was whatever was left, so every listener had to reach across and
 // clear the others by hand and each new overlay cost a fresh pairing against every existing one.
 // `overlay` is the single source of truth and setOverlay is its only writer: the checkboxes and
 // the style dropdown follow it, never the reverse.
-const OVERLAY_TOGGLE={coverage:'tgCoverage',gettingeven:'tgGettingEven',climate:'tgClimateGap'};
-let overlay='priority';   // 'priority' (the goal grid) | 'coverage' | 'gettingeven' | 'climate'
-let _overlaySeq=0,_overlayReady=Promise.resolve(),_discoveryLoading=false,_geLoading=false;
+const OVERLAY_TOGGLE={coverage:'tgCoverage',gettingeven:'tgGettingEven',climate:'tgClimateGap',checklist:''};   // checklist has no checkbox, only the goal menu
+let overlay='priority';   // 'priority' (the goal grid) | 'coverage' | 'gettingeven' | 'climate' | 'checklist'
+let _overlaySeq=0,_overlayReady=Promise.resolve(),_discoveryLoading=false,_geLoading=false,_clLoading=false;
 function geActive(){return overlay==='gettingeven';}
 function covOn(){return overlay==='coverage';}
 function climateOn(){return overlay==='climate';}
+function clActive(){return overlay==='checklist';}
 function setOverlay(kind){
   const seq=++_overlaySeq;
-  overlay=kind==='discovery'&&globalThis.optionalLayers&&globalThis.optionalLayers.supports(state.taxon)?kind:OVERLAY_TOGGLE[kind]?kind:'priority';
+  overlay=kind==='discovery'&&globalThis.optionalLayers&&globalThis.optionalLayers.supports(state.taxon)?kind:Object.hasOwn(OVERLAY_TOGGLE,kind)?kind:'priority';
   _discoveryLoading=overlay==='discovery';
   _geLoading=geActive()&&!GE_LOADED;
-  if(overlay==='priority'){const cs=document.getElementById('criteria');if(cs&&(cs.value==='ge'||cs.value==='climate'||cs.value==='discovery'))cs.value=String(window.__activePreset||0);}
+  _clLoading=clActive()&&!clImage(activeCellResM());
+  if(overlay==='priority'){const cs=document.getElementById('criteria');if(cs&&(cs.value==='ge'||cs.value==='climate'||cs.value==='cl'||cs.value==='discovery'))cs.value=String(window.__activePreset||0);}
   renderCellTable();paintPopScore();   // invalidate previous priority evidence before an overlay's async load
   for(const[k,id]of Object.entries(OVERLAY_TOGGLE)){const el=document.getElementById(id);if(el)el.checked=(overlay===k);}
   // the style dropdown's iNat entry is the coverage overlay under another name; keep the two agreed.
@@ -1257,6 +1331,12 @@ function setOverlay(kind){
     paint();   // clear old colours and disable GE opacity until its categories are available
     if(!_geLoading)return _overlayReady=Promise.resolve();
     return _overlayReady=loadGE().then(()=>{if(seq!==_overlaySeq)return;_geLoading=false;paint();},()=>{if(seq!==_overlaySeq)return;setOverlay('priority');
+      const cs=document.getElementById('criteria');if(cs)cs.value=String(window.__activePreset||0);syncSharedCellUrl();});
+  }
+  if(clActive()){
+    paint();
+    if(!_clLoading)return _overlayReady=Promise.resolve();
+    return _overlayReady=loadCLVals(activeCellResM()).then(()=>{if(seq!==_overlaySeq)return;_clLoading=false;paint();},()=>{if(seq!==_overlaySeq)return;setOverlay('priority');
       const cs=document.getElementById('criteria');if(cs)cs.value=String(window.__activePreset||0);syncSharedCellUrl();});
   }
   return _overlayReady=Promise.resolve(paint());
@@ -1331,6 +1411,7 @@ function paintPopScore(){
 function popScoreHtml(m,resM,lat,lon){
   const cell=t('pop_cell',(resM||25000)/1000);
   if(globalThis.optionalLayers&&globalThis.optionalLayers.isDiscovery())return cell+'<br>'+globalThis.optionalLayers.discoveryPopup(lat,lon,resM);
+  if(clActive())return cell+'<br>'+t('pop_layer_cl')+'<br>'+clPopup(lat,lon,resM);
   if(overlay!=='priority')return cell+'<br>'+t(geActive()?'pop_layer_ge':climateOn()?'pop_layer_climate':'pop_layer_density')+(geActive()&&typeof geEvidencePopup==='function'?geEvidencePopup(lat,lon,resM):'');
   const goal='<br>'+t('current_goal',presetName(window.__activePreset||0));
   if(!m||!Number.isFinite(m.t))return cell+goal+'<br>'+t('pop_noscore');
@@ -1763,12 +1844,19 @@ function haversine(a,b,c,d){const R=6371,r=Math.PI/180,x=(c-a)*r,y=(d-b)*r,h=Mat
 
 // MapLibre zoom = Leaflet zoom - 1 (256-px raster tiles): the old Leaflet zoom 4 maps to 3 here.
 const map=new maplibregl.Map({container:'map',style:{version:8,sources:{},layers:[]},center:[-96,58],zoom:3,minZoom:1,maxZoom:18,attributionControl:false});
-map.addControl(new maplibregl.NavigationControl({showCompass:false}),'bottom-left');   // issue #54: clear of the floating panel
-// Attribution joins the zoom buttons bottom-left, added second so it sits under them. Bottom-right
-// belongs to #maplegend: the legend grows with its content (the Getting Even categorical list is a
-// title plus seven swatches) and the expanded attribution panel is wider than either, so sharing
-// that corner meant retuning a fixed dodge every time the legend changed shape.
+// Attribution joins the zoom buttons bottom-left; MapLibre stacks bottom corners upward in add order, so
+// adding it first keeps it on the bottom row. Bottom-right belongs to #maplegend: the legend grows with
+// its content (the Getting Even categorical list is a title plus seven swatches) and the expanded
+// attribution panel is wider than either, so sharing that corner meant retuning a fixed dodge every time
+// the legend changed shape.
 map.addControl(new maplibregl.AttributionControl({compact:false,customAttribution:'routing &copy; OSRM'}),'bottom-left');
+map.addControl(new maplibregl.NavigationControl({showCompass:false}),'bottom-left');   // issue #54: clear of the floating panel
+{ // corner by default; step beside the panel only while it is tall enough to cover the controls
+  const panel=document.getElementById('panel'),ctrls=map.getContainer().querySelector('.maplibregl-ctrl-bottom-left');
+  const dodge=()=>{const p=panel.getBoundingClientRect(),m=map.getContainer().getBoundingClientRect();
+    document.body.classList.toggle('ctrl-dodge',p.height>0&&p.bottom+8>m.bottom-14-ctrls.offsetHeight);};
+  new ResizeObserver(dodge).observe(panel);new ResizeObserver(dodge).observe(map.getContainer());new ResizeObserver(dodge).observe(ctrls);
+}
 map.dragRotate.disable();map.touchZoomRotate.disableRotation();   // a 2-D priority map has no use for bearing/pitch
 const CELL_LAYER='cells-fill';
 // Layer stack bottom->top: basemap -> density (cov) -> cells-fill -> route lines; DOM markers sit above the canvas.
@@ -2032,7 +2120,14 @@ function paintGECells(){
   markers.forEach(m=>{const cell=globalThis.geEvidence&&snapToLattice(m.r[0],m.r[1],25000),shown=!cell||globalThis.geEvidence.visible(25000,cell.col,cell.row);setCellState(m.i,_geLoading?null:geColour(m),shown?op:0);});
   applyCanadaMask();
 }
+function paintCLCells(){
+  const v=clImage(25000),op=_clLoading||(map&&map.getZoom&&map.getZoom()>=TIER_SWITCH_Z)?0:clOpacity;
+  if(!v&&!_clLoading)loadCLVals(25000).then(()=>{if(clActive())recolour();},()=>{});   // a group change lands here first
+  markers.forEach(m=>{const s=v&&snapToLattice(m.r[0],m.r[1],25000),k=s?clStatus(v,s.col,s.row):-1;setCellState(m.i,k<0?null:CL_PAL[k],k<0?0:op);});
+  applyCanadaMask();
+}
 function recolour(){
+  if(clActive()){paintCLCells();renderCellTable();setGridFill();paintPopScore();return;}
   if(geActive()){
     // Categorical colour names the most under-represented group; opacity carries no magnitude.
     paintGECells();renderCellTable();setGridFill();paintPopScore();return;
@@ -2060,9 +2155,9 @@ function recolour(){
 // Swap #maplegend between the priority ramp (default) and a categorical Getting Even legend. Pale swatches get a 1px #ccc border.
 let GE_PRIORITY_LEGEND=null;
 function mapContextText(){
-  const historical=globalThis.optionalLayers?.isDiscovery(),mode=historical?t('historical_map'):geActive()?t('crit_ge'):climateOn()?t('crit_climate'):covOn()?t('density_name'):presetName(window.__activePreset||0);
+  const historical=globalThis.optionalLayers?.isDiscovery(),mode=historical?t('historical_map'):geActive()?t('crit_ge'):climateOn()?t('crit_climate'):clActive()?t('crit_cl'):covOn()?t('density_name'):presetName(window.__activePreset||0);
   const grouped=PRESETS[window.__activePreset||0].w.some((weight,i)=>weight>0&&['discover','staleness'].includes(OBJ[i].key));
-  const group=historical?groupName(globalThis.optionalLayers.group()):overlay==='priority'?groupName(grouped?state.taxon:'All biodiversity'):covOn()?groupName(COVPM.includes(state.taxon)?state.taxon:'All biodiversity'):'';
+  const group=historical?groupName(globalThis.optionalLayers.group()):overlay==='priority'?groupName(grouped?state.taxon:'All biodiversity'):clActive()?groupName(state.taxon):covOn()?groupName(COVPM.includes(state.taxon)?state.taxon:'All biodiversity'):'';
   return t('map_context',mode,group,activeCellResM()/1000);
 }
 function paintMapContext(){
@@ -2090,9 +2185,13 @@ function updateLegend(){
   const paint=html=>{ml.innerHTML=html;globalThis.refreshMapContext?.();};
   if(GE_PRIORITY_LEGEND===null)GE_PRIORITY_LEGEND=ml.innerHTML;   // capture the as-built priority legend once
   if(globalThis.optionalLayers&&globalThis.optionalLayers.isDiscovery()){paint(_discoveryLoading?'<div class="hint" role="status">'+t('discovery_loading')+'</div>':globalThis.optionalLayers.discoveryLegend());return;}
-  if(geActive()){
+  const sw=(c,lab)=>`<div style="display:flex;align-items:center;gap:6px;margin:2px 0"><span style="width:13px;height:13px;border-radius:3px;background:${c};border:1px solid #ccc;flex:none"></span><span>${lab}</span></div>`;
+  if(clActive()){
+    if(_clLoading||!CL_META){paint('<div class="hint" role="status">'+t('cl_loading')+'</div>');return;}
+    const b=CL_META.bands;
+    paint('<div class="lt">'+t('crit_cl')+'</div>'+t('cl_legend',Math.round(b.complete*100),Math.round(b.close*100),CL_META.min_units).map((nm,i)=>sw(CL_PAL[i],nm)).join(''));
+  }else if(geActive()){
     if(_geLoading){paint('<div class="hint" role="status">'+t('ge_loading')+'</div>');return;}
-    const sw=(c,lab)=>`<div style="display:flex;align-items:center;gap:6px;margin:2px 0"><span style="width:13px;height:13px;border-radius:3px;background:${c};border:1px solid #ccc;flex:none"></span><span>${lab}</span></div>`;
     paint('<div class="lt">'+t('getting_even')+'</div>'+
       t('ge_cats').map((nm,i)=>sw(GE_PAL[i],nm)).join('')+sw(GE_ALL,t('ge_all')));
   }else if(covOn()){
@@ -2614,6 +2713,7 @@ function rebuildCriteria(){if(!critSel)return;const cur=critSel.value;critSel.in
   PRESETS.forEach((p,i)=>{const o=document.createElement('option');o.value=String(i);o.textContent=presetName(i);o.title=presetBlurb(i);critSel.appendChild(o);});
   const ge=document.createElement('option');ge.value='ge';ge.textContent=t('crit_ge');critSel.appendChild(ge);
   const clim=document.createElement('option');clim.value='climate';clim.textContent=t('crit_climate');critSel.appendChild(clim);
+  const cl=document.createElement('option');cl.value='cl';cl.textContent=t('crit_cl');critSel.appendChild(cl);
   if(globalThis.optionalLayers){globalThis.optionalLayers.appendCriteria(critSel);const legacy=Array.from(critSel.options).find(o=>o.value==='discovery');if(legacy){legacy.hidden=true;legacy.disabled=true;}}
   if(cur)critSel.value=cur;}
 rebuildCriteria();
@@ -2628,6 +2728,8 @@ if(critSel)critSel.onchange=()=>{_shareAction++;const v=critSel.value;
     setOverlay('gettingeven');
   }else if(v==='climate'){
     setOverlay('climate');
+  }else if(v==='cl'){
+    setOverlay('checklist');   // follows the group dropdown, unlike Getting Even
   }else{
     if(overlay!=='priority')setOverlay('priority');   // covOn() included: picking a goal means show the goal grid
     applyChallenge(PRESETS[+v]);
@@ -2647,7 +2749,7 @@ function syncEvidenceControls(){
   const scope=document.getElementById('historicalScope');
   if(scope){scope.hidden=!historical;if(historical){const p=OPTIONAL_LAYERS.discovery.scope.period;scope.textContent=t('historical_scope',p.start.slice(0,4)===p.end.slice(0,4)?p.start.slice(0,4):p.start+'–'+p.end,groupName(optional.group()));}}
   const summary=document.getElementById('sheetSummary');
-  if(summary)summary.textContent=historical?t('historical_map'):geActive()?t('crit_ge'):climateOn()?t('crit_climate'):covOn()?t('density_name'):presetName(window.__activePreset||0);
+  if(summary)summary.textContent=historical?t('historical_map'):geActive()?t('crit_ge'):climateOn()?t('crit_climate'):clActive()?t('crit_cl'):covOn()?t('density_name'):presetName(window.__activePreset||0);
   globalThis.refreshMapContext?.();
 }
 async function selectEvidenceLayer(value){
@@ -2794,12 +2896,12 @@ function setGridFill(){
   ['grid25','grid5'].forEach(id=>{if(map.getLayer(id))map.removeLayer(id);});
   if(map.getSource('cells5'))map.removeSource('cells5');
   DRAWN5=null;
-  if(_geLoading||covOn()||climateOn()||(globalThis.optionalLayers&&globalThis.optionalLayers.isDiscovery()))return;   // data overlays replace the priority grid fill
+  if(_geLoading||_clLoading||covOn()||climateOn()||(globalThis.optionalLayers&&globalThis.optionalLayers.isDiscovery()))return;   // data overlays replace the priority grid fill
   if(!markers.length)return;
   // Getting Even keeps its 25 km fill on the cells-fill feature-state that recolour() paints, so
   // only the 5 km tier is built here (#122). Everything below the switch is untouched by that.
-  const ge=geActive();
-  if(!ge){
+  const ge=geActive(),cl=clActive();
+  if(!ge&&!cl){
     // 25 km tier: feature-state colour on the existing 23k-cell source (same mechanism Getting Even uses).
     map.addLayer({id:'grid25',type:'fill',source:'cells',maxzoom:TIER_SWITCH_Z,paint:{
       'fill-color':['coalesce',['feature-state','gc'],'rgba(0,0,0,0)'],
@@ -2811,8 +2913,8 @@ function setGridFill(){
   map.addLayer({id:'grid5',type:'fill',source:'cells5',minzoom:TIER_SWITCH_Z,paint:{
     'fill-color':['get','c'],
     'fill-color-transition':{duration:250},
-    'fill-opacity':ge&&globalThis.geEvidence?globalThis.geEvidence.opacityExpression(geOpacity):ge?geOpacity:gridOpacity}},CELL_LAYER);
-  if(!ge)loadVals(25000).then(v=>{
+    'fill-opacity':ge&&globalThis.geEvidence?globalThis.geEvidence.opacityExpression(geOpacity):ge?geOpacity:cl?clOpacity:gridOpacity}},CELL_LAYER);
+  if(!ge&&!cl)loadVals(25000).then(v=>{
     if(seq!==_gridSeq)return;
     if(map.getZoom()<TIER_SWITCH_Z)STRETCH=makeStretch(sample25(v));   // above the switch the 5 km tier is the visible one and sets STRETCH itself
     paintGrid25(v);
@@ -2845,8 +2947,8 @@ var DRAWN5=null;   // var, not let: setGridFill can reset it before this line ha
 async function refreshCells5(){
   if(!_mapLoaded||!map.getSource('cells5')||map.getZoom()<TIER_SWITCH_Z)return;
   const seq=++_c5seq;
-  const ge=geActive();
-  let v;try{v=await (ge?loadGEVals(5000):loadVals(5000));}catch(e){return;}
+  const ge=geActive(),cl=clActive();
+  let v;try{v=await (ge?loadGEVals(5000):cl?loadCLVals(5000):loadVals(5000));}catch(e){return;}
   if(seq!==_c5seq||!map.getSource('cells5'))return;
   const R=5000,b=map.getBounds(),W=b.getWest(),E=b.getEast(),S=b.getSouth(),N=b.getNorth();
   // Viewport extent in LAEA: corners + edge midpoints (a Mercator rectangle's edges bow in LAEA).
@@ -2859,16 +2961,16 @@ async function refreshCells5(){
   const cells=[];
   if((c1-c0+1)*(r1-r0+1)<=40000){   // z >= TIER_SWITCH_Z keeps this in the low thousands; the cap guards pathological viewports
     for(let row=r0;row<=r1;row++)for(let col=c0;col<=c1;col++){
-      const g=ge?geCat(v,col,row):valG(v,col,row);if(g<0)continue;   // GE: no cell, or too few records -> draw nothing
+      const g=ge?geCat(v,col,row):cl?clStatus(v,col,row):valG(v,col,row);if(g<0)continue;   // no cell (GE: or too few records to name a group) -> draw nothing
       cells.push([col,row,g]);
     }
   }
-  if(!ge)STRETCH=makeStretch(cells.map(c=>c[2]));   // the cells about to be drawn ARE the view, so they define the scale
+  if(!ge&&!cl)STRETCH=makeStretch(cells.map(c=>c[2]));   // the cells about to be drawn ARE the view, so they define the scale
   const feats=cells.map(c=>{
     const col=c[0],row=c[1];
     const x=LATTICE_X0+col*R,y=LATTICE_Y1-row*R;   // exact lattice corners -> neighbours share vertices, no seams
     const ring=[[x,y],[x+R,y],[x+R,y-R],[x,y-R],[x,y]].map(q=>{const g=LAEA.inv(q[0],q[1]);return[g[1],g[0]];});
-    const fill=ge?(GE_PAL[c[2]]||GE_ALL):(STRETCH?virColour(stretchT(c[2])):valColor(v,col,row));
+    const fill=ge?(GE_PAL[c[2]]||GE_ALL):cl?CL_PAL[c[2]]:(STRETCH?virColour(stretchT(c[2])):valColor(v,col,row));
     return{type:'Feature',properties:{c:fill,...(ge&&globalThis.geEvidence?{geCount:globalThis.geEvidence.countAt(5000,col,row)??-1}:{})},geometry:{type:'Polygon',coordinates:[ring]}};
   });
   map.getSource('cells5').setData({type:'FeatureCollection',features:feats});
@@ -2938,7 +3040,8 @@ function setClimate(){
 function setClimateOpacity(v){climateOpacity=v;if(_mapLoaded&&map.getLayer('climate-gap'))map.setPaintProperty('climate-gap','raster-opacity',v);}
 // The shared slider remembers each active data layer's opacity. The priority grid keeps its
 // fixed 0.5 fill (#46); Getting Even adjusts only its categorical cells (#121).
-function dataOverlayActive(){return covOn()||climateOn()||geActive();}
+function dataOverlayActive(){return covOn()||climateOn()||geActive()||clActive();}
+function setCLOpacity(v){clOpacity=v;if(!_mapLoaded||!clActive())return;paintCLCells();if(map.getLayer('grid5'))map.setPaintProperty('grid5','fill-opacity',v);}
 function setGEOpacity(v){
   if(_geLoading)return;
   geOpacity=v;
@@ -2952,14 +3055,14 @@ function updateOpacityControl(){
   const sl=document.getElementById('baseop'),lab=document.getElementById('bople'),val=document.getElementById('bopv');
   if(!sl||!lab||!val)return;
   const ov=dataOverlayActive();
-  sl.disabled=_geLoading;
+  sl.disabled=_geLoading||_clLoading;
   const row=document.getElementById('opacityRow');
   if(row)row.style.display=ov?'':'none';
   if(!ov)setBaseOpacity(1);
-  const v=covOn()?covOpacity:climateOn()?climateOpacity:geActive()?geOpacity:baseOpacity;
-  sl.step=geActive()?'0.01':'0.05';   // the existing 0.62 GE default must be representable by the native range
+  const v=covOn()?covOpacity:climateOn()?climateOpacity:geActive()?geOpacity:clActive()?clOpacity:baseOpacity;
+  sl.step=geActive()||clActive()?'0.01':'0.05';   // the existing 0.62 GE default must be representable by the native range
   sl.value=v;
-  const key=covOn()?'data_opacity':climateOn()?'climate_opacity':geActive()?'ge_opacity':'map_brightness';
+  const key=covOn()?'data_opacity':climateOn()?'climate_opacity':geActive()?'ge_opacity':clActive()?'cl_opacity':'map_brightness';
   lab.textContent=t(key);
   sl.setAttribute('aria-label',t('aria_'+key));
   lab.setAttribute('data-i18n',key);   // keep applyI18N repaint in sync with the active target
@@ -2979,7 +3082,7 @@ map.on('moveend',()=>{
   globalThis.refreshGEEvidence?.();
   refreshCells5();   // seq-guarded and async; it sets STRETCH from the 5 km cells it is about to draw
   // Getting Even swaps tiers rather than restretching, so the crossing itself is the repaint trigger.
-  if(geActive()){const tier=activeCellResM();if(tier!==_geTier){_geTier=tier;recolour();}}
+  if(geActive()||clActive()){const tier=activeCellResM();if(tier!==_geTier){_geTier=tier;recolour();}}
   if(_mvT)clearTimeout(_mvT);
   _mvT=setTimeout(()=>{restretch25();renderCellTable();},150);   // let popup invocation retain the focused row before rebuilding the nearby list
 });
@@ -3012,10 +3115,11 @@ function openHowSection(id,origin){
   const toggle=()=>{document.body.classList.toggle('panel-collapsed');refresh();setTimeout(()=>{try{map.resize();}catch(e){}},0);};
   globalThis.refreshPanelControls=refresh;refresh();tog.addEventListener('click',toggle);if(sheet)sheet.addEventListener('click',toggle);
 })();
-document.getElementById('baseop').addEventListener('input',e=>{if(_geLoading)return;const v=parseFloat(e.target.value);
+document.getElementById('baseop').addEventListener('input',e=>{if(_geLoading||_clLoading)return;const v=parseFloat(e.target.value);
   if(covOn())setCovOpacity(v);   // #39: fade the magma data
   else if(climateOn())setClimateOpacity(v);
   else if(geActive())setGEOpacity(v);
+  else if(clActive())setCLOpacity(v);
   else return;
   const bopv=document.getElementById('bopv');bopv.textContent=Math.round(v*100)+'%';
   e.target.setAttribute('aria-valuetext',bopv.textContent);});
@@ -3380,7 +3484,7 @@ var _sharedCell=null,_shareContext=false,_shareAction=0,_selectionSeq=0;   // va
 function parseSharedContext(search){
   const u=new URLSearchParams(search),g=u.get('g'),v=u.get('goal'),r=u.get('res');
   const taxon=Object.hasOwn(FILES,g)?g:(FILES['All biodiversity']?'All biodiversity':Object.keys(FILES)[0]);
-  const goal=v==='discovery'&&globalThis.optionalLayers&&globalThis.optionalLayers.supports(taxon)?v:v==='ge'||v==='climate'?v:(/^(0|[1-9]\d*)$/.test(v||'')&&+v<PRESETS.length?v:'0');
+  const goal=v==='discovery'&&globalThis.optionalLayers&&globalThis.optionalLayers.supports(taxon)?v:v==='ge'||v==='climate'||v==='cl'?v:(/^(0|[1-9]\d*)$/.test(v||'')&&+v<PRESETS.length?v:'0');
   const styles={standard:'Standard',satellite:'Satellite',terrain:'Terrain',density:'__inat__'},s=u.get('style');
   const style=Object.hasOwn(styles,s)?styles[s]:'Standard';
   const p=(u.get('at')||'').split(',');
@@ -3400,7 +3504,7 @@ function syncSharedCellUrl(force){
   if(!_shareContext&&!_sharedCell&&!force)return;
   _shareContext=true;
   const cs=document.getElementById('criteria'),sel=document.getElementById('basemap');
-  const v=cs&&cs.value,goal=globalThis.optionalLayers&&globalThis.optionalLayers.isDiscovery()?'discovery':geActive()?'ge':climateOn()?'climate':(covOn()&&v==='ge'||covOn()&&v==='climate'||/^(0|[1-9]\d*)$/.test(v||''))?v:String(window.__activePreset||0);
+  const v=cs&&cs.value,goal=globalThis.optionalLayers&&globalThis.optionalLayers.isDiscovery()?'discovery':geActive()?'ge':climateOn()?'climate':clActive()?'cl':(covOn()&&v==='ge'||covOn()&&v==='climate'||covOn()&&v==='cl'||/^(0|[1-9]\d*)$/.test(v||''))?v:String(window.__activePreset||0);
   const style=covOn()?'density':((sel&&sel.value)==='__inat__'?'density':(sel&&sel.value||'Standard').toLowerCase());
   try{history.replaceState(null,'',new URL(sharedCellUrl(_sharedCell,state.taxon,goal,style,location.href),location.href).href);}catch(e){}
 }
@@ -3419,9 +3523,9 @@ async function restoreSharedCell(shared,action,loadedTaxon,selection){
   buildMarkers();setView('explore');
   if(action===_shareAction){
     critSel.value=shared.goal;
-    if(shared.goal!=='ge'&&shared.goal!=='climate'&&shared.goal!=='discovery')applyChallenge(PRESETS[+shared.goal]);
+    if(shared.goal!=='ge'&&shared.goal!=='climate'&&shared.goal!=='cl'&&shared.goal!=='discovery')applyChallenge(PRESETS[+shared.goal]);
     bmSel.value=shared.style;setBase(shared.style==='__inat__'?'Light':shared.style);
-    const kind=shared.style==='__inat__'?'coverage':shared.goal==='ge'?'gettingeven':shared.goal==='climate'?'climate':shared.goal==='discovery'?'discovery':'priority';
+    const kind=shared.style==='__inat__'?'coverage':shared.goal==='ge'?'gettingeven':shared.goal==='climate'?'climate':shared.goal==='cl'?'checklist':shared.goal==='discovery'?'discovery':'priority';
     if(kind==='gettingeven')globalThis.geEvidence?.restore(shared.geCount||1);
     await setOverlay(kind);
     if(action===_shareAction&&globalThis.optionalLayers&&shared.recent)await globalThis.optionalLayers.toggleRecent(true);
@@ -3454,14 +3558,22 @@ function cellRecordsUrl(lat,lon,resM,taxon){
   return 'https://www.inaturalist.org/observations?'+params.toString();
 }
 function popupActionsHtml(lat,lon,resM,taxon){
-  return '<a href="'+esc(cellRecordsUrl(lat,lon,resM,taxon))+'" target="_blank" rel="noopener">'+t('view_cell_records')+'</a><a href="https://www.inaturalist.org/observations/new" target="_blank" rel="noopener">'+t('record_sighting')+'</a>';
+  return '<a href="'+esc(cellRecordsUrl(lat,lon,resM,taxon))+'" target="_blank" rel="noopener">'+t('view_cell_records')+'</a><a href="https://www.inaturalist.org/observations/new" target="_blank" rel="noopener">'+t('record_sighting')+'</a><a href="#" download="where-to-blitz-cell-'+lat.toFixed(3)+'_'+lon.toFixed(3)+'.gpx">'+t('save_gpx')+'</a>';
+}
+// Offline field export: centre waypoint plus the cell boundary as a closed track. opts={facts,names,url} come from the live popup.
+function cellGpx(lat,lon,resM,taxon,opts){
+  const o=opts||{},km=resM/1000,name='Blitz the Gap '+km+' km cell '+lat.toFixed(3)+', '+lon.toFixed(3),pts=cellPoly(lat,lon,resM).map(p=>'<trkpt lat="'+p[1]+'" lon="'+p[0]+'"/>').join('');
+  const desc=[o.facts,taxon,o.url].concat(o.names||[]).filter(Boolean).join('\n');
+  return '<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="where-to-blitz" xmlns="http://www.topografix.com/GPX/1/1"><metadata><link href="'+esc(o.url)+'"/></metadata>'
+    +'<wpt lat="'+lat+'" lon="'+lon+'"><name>'+esc(name)+'</name><desc>'+esc(desc)+'</desc></wpt>'
+    +'<trk><name>'+esc(name)+'</name><trkseg>'+pts+'</trkseg></trk></gpx>';
 }
 function refreshPopupActions(el,lat,lon,resM,taxon){
   const links=el.querySelectorAll('a');
-  if(links.length!==2){el.innerHTML=popupActionsHtml(lat,lon,resM,taxon);return;}
+  if(links.length!==3){el.innerHTML=popupActionsHtml(lat,lon,resM,taxon);return;}
   // MapLibre can focus the first action on open. Preserve its node during evidence and locale refreshes.
   links[0].href=cellRecordsUrl(lat,lon,resM,taxon);links[0].textContent=t('view_cell_records');
-  links[1].textContent=t('record_sighting');
+  links[1].textContent=t('record_sighting');links[2].textContent=t('save_gpx');
 }
 function exploreCell(lat,lon){
   if(!markers.length)return;   // map tapped before cell data loaded
@@ -3496,6 +3608,10 @@ function exploreCell(lat,lon){
   const help=document.createElement('a');help.href='#how-evidence';help.className='pophelp';help.dataset.i18n='pop_help';help.textContent=t('pop_help');help.onclick=ev=>{ev.preventDefault();openHowSection('how-evidence',help);};
   const popActions=document.createElement('div');popActions.className='popactions';
   popActions.innerHTML=popupActionsHtml(dest[0],dest[1],resM,state.taxon);
+  popActions.onclick=ev=>{const a=ev.target.closest&&ev.target.closest('a[download]');if(!a)return;
+    const names=[...popSp.querySelectorAll('.popgrid a')].map(c=>{const nm=c.querySelector('.nm').firstChild.textContent,sc=c.querySelector('.species-scientific');return sc?nm+' ('+sc.textContent+')':nm;});   // firstChild skips the arrow span
+    const gpx=cellGpx(dest[0],dest[1],resM,state.taxon,{facts:(popScore.innerText||popScore.textContent).trim(),names,url:location.href});
+    const u=URL.createObjectURL(new Blob([gpx],{type:'application/gpx+xml'}));a.href=u;setTimeout(()=>URL.revokeObjectURL(u),1000);};
   popDiv.appendChild(popScore);popDiv.appendChild(popSp);popDiv.appendChild(popActions);popDiv.appendChild(groups);popDiv.appendChild(components);popDiv.appendChild(help);
   const pop=wirePopup(new maplibregl.Popup({offset:30,maxWidth:'380px',anchor:'bottom',focusAfterOpen:false}).setDOMContent(popDiv));
   destMarker=destMarkerAt(dest[0],dest[1]).addTo(map);destMarker.setPopup(pop);

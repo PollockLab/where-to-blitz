@@ -40,11 +40,11 @@ let e=GettingEvenEvidence.create({descriptor,lattice,decode,fetcher,subtle:crypt
     if viewer:
         script += TEMPLATE[TEMPLATE.index("const I18N=") : TEMPLATE.index("\nlet LANG=")]
         script += r"""
-let LANG='en',overlay='gettingeven',_geLoading=false,_mapLoaded=true,geOpacity=.62,_shareAction=0,zoom=10;
+let LANG='en',overlay='gettingeven',_geLoading=false,_clLoading=false,_mapLoaded=true,geOpacity=.62,_shareAction=0,zoom=10;
 const FILES={'All biodiversity':'all.json',Aves:'birds.json'},PRESETS=[{}],BB={minlat:-90,maxlat:90,minlon:-180,maxlon:180};
 const state={taxon:'Aves'},GE={},GE_ALL='grey',GE_PAL=['a','b','c','d','e','f'],GE_UNSCORED=255;
 const TIER_SWITCH_Z=9,LATTICE_X0=0,LATTICE_Y1=10000,LATTICE_W=20000,LATTICE_H=10000;
-const geActive=()=>overlay==='gettingeven',covOn=()=>overlay==='coverage',climateOn=()=>overlay==='climate';
+const geActive=()=>overlay==='gettingeven',covOn=()=>overlay==='coverage',climateOn=()=>overlay==='climate',clActive=()=>overlay==='checklist';
 const activeCellResM=()=>zoom>=9?5000:25000;
 const snapToLattice=(lat,lon,res)=>({col:lon,row:lat});
 const esc=s=>s,gekey=(lat,lon)=>lat+','+lon;

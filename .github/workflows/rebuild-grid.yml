@@ -514,6 +514,8 @@ jobs:
           # 5 km layer rather than the deploy failing.
           cp cluster_results/ca/*.png _site/cluster_results/ca/
           cp -R cluster_results/ca/values _site/cluster_results/ca/
+          # "Complete a checklist" layer (build_checklist.py); guarded until its first build is committed.
+          if [ -d cluster_results/checklist ]; then mkdir -p _site/cluster_results/checklist && cp -R cluster_results/checklist/. _site/cluster_results/checklist/; fi
           du -sh _site
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
@@ -599,6 +601,8 @@ jobs:
           cp cluster_results/ca/*.json _site/cluster_results/ca/
           cp cluster_results/ca/*.png _site/cluster_results/ca/   # the Getting Even fill (#122) and the land/sea mask
           cp -R cluster_results/ca/values _site/cluster_results/ca/
+          # "Complete a checklist" layer (build_checklist.py); guarded until its first build is committed.
+          if [ -d cluster_results/checklist ]; then mkdir -p _site/cluster_results/checklist && cp -R cluster_results/checklist/. _site/cluster_results/checklist/; fi
           du -sh _site
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

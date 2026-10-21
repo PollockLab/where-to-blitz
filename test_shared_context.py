@@ -51,7 +51,7 @@ const loads=[],opened=[],steps=[];
 let zoom=3,overlay='priority',DRAWN5=null,_mapLoaded=true;
 var _sharedCell=null,_shareContext=false,_shareAction=0,_selectionSeq=0,_taxonSeq=0,_taxonPending=null,_overlayReady=Promise.resolve();
 var _committedTaxon='All biodiversity',_bootTaxon='All biodiversity';
-let GE_LOADED=false,_geLoading=false;
+let GE_LOADED=false,_geLoading=false,_clLoading=false;
 let prospectSeq=0,_lastProspect=null;
 const refreshes=[];
 const DATA={'All biodiversity':[[49.3,-123.2,0]]};
@@ -71,7 +71,7 @@ const applyWeights=()=>{};
 const setBase=v=>{steps.push('base:'+v);};
 const setCoverage=()=>{},setClimate=()=>{},setGridLines=()=>{},updateLegend=()=>{},recolour=()=>{};
 const renderGoalContext=()=>{},renderCellTable=()=>{},paintPopScore=()=>{};
-const geActive=()=>overlay==='gettingeven',covOn=()=>overlay==='coverage',climateOn=()=>overlay==='climate';
+const geActive=()=>overlay==='gettingeven',covOn=()=>overlay==='coverage',climateOn=()=>overlay==='climate',clActive=()=>overlay==='checklist';
 async function setOverlay(kind){overlay=kind;steps.push('overlay:'+kind);}
 let loadUS=async()=>{steps.push('mask');};
 async function refreshCells5(){await Promise.resolve();DRAWN5=new Set(['cell']);steps.push('draw5');}
@@ -110,8 +110,9 @@ document.createElement=()=>({dataset:{},appendChild(){},setAttribute(){}});
         script += _function(src, "wireGroupComparison") + _function(src, "exploreCell")
         script += _function(src, "clearSelection")
     if real_overlay:
-        script += "\nconst OVERLAY_TOGGLE={coverage:'tgCoverage',gettingeven:'tgGettingEven',climate:'tgClimateGap'};"
+        script += "\nconst OVERLAY_TOGGLE={coverage:'tgCoverage',gettingeven:'tgGettingEven',climate:'tgClimateGap',checklist:''};"
         script += "\nlet _overlaySeq=0;async function loadGE(){GE_LOADED=true;};"
+        script += "\nlet CL_LOADED=false;const clImage=()=>CL_LOADED;async function loadCLVals(){CL_LOADED=true;}"
         script += _function(src, "setOverlay")
     if controls:
         if "function refreshProspectGroup(" in src:
@@ -208,6 +209,7 @@ def test_open_cell_url_follows_group_goal_and_density_changes():
         ("2", "satellite", "priority"),
         ("ge", "standard", "gettingeven"),
         ("climate", "terrain", "climate"),
+        ("cl", "satellite", "checklist"),
         ("2", "density", "coverage"),
     ],
 )

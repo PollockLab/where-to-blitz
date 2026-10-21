@@ -23,7 +23,7 @@ def run_js(body):
     planner = source[source.index("async function planTrip()") : source.index("function tripRow(")]
     overlays = source[source.index("function setOverlay(") : source.index("// The 25 km lattice outline")]
     harness = r"""const assert=require("node:assert/strict");
-let markers=[],overlay="priority",failed=false,requests=0,maskOK=true,scoreOverlay="priority",_overlaySeq=0,GE_LOADED=false,_geLoading=false;
+let markers=[],overlay="priority",failed=false,requests=0,maskOK=true,scoreOverlay="priority",_overlaySeq=0,GE_LOADED=false,_geLoading=false,_clLoading=false;
 let maskData={us_cells:["77.190,-52.080"]};
 let table={innerHTML:"",querySelectorAll:()=>[]};
 let trips={innerHTML:"",textContent:""};
@@ -31,11 +31,11 @@ const document={getElementById:id=>id==="celltable"?table:id==="trips"?trips:nul
 const gekey=(lat,lon)=>lat.toFixed(3)+","+lon.toFixed(3);
 const t=key=>key,impact=r=>r[2];
 const DATA_DIR="";
-const geActive=()=>overlay==="gettingeven";
+const geActive=()=>overlay==="gettingeven",clActive=()=>overlay==="checklist";
 const geColour=()=>"grey",TIER_SWITCH_Z=9;
 const _mapLoaded=false,map={getZoom:()=>3};
 const setCellState=()=>{},setGridFill=()=>{},paintPopScore=()=>{scoreOverlay=overlay;};
-const OVERLAY_TOGGLE={gettingeven:"tgGettingEven",climate:"tgClimateGap",coverage:"tgCoverage"};
+const OVERLAY_TOGGLE={gettingeven:"tgGettingEven",climate:"tgClimateGap",coverage:"tgCoverage",checklist:""};
 const covOn=()=>overlay==="coverage",setGridLines=()=>{},setCoverage=()=>{},setClimate=()=>{},updateLegend=()=>{},renderGoalContext=()=>{},syncSharedCellUrl=()=>{};
 let loadGE=()=>new Promise(()=>{});
 const routeRequests=[];
