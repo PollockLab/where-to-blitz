@@ -7,6 +7,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -326,12 +327,16 @@ OptionalData.fetchPinned=async(_descriptor,kind)=>kind==='discovery'?input.disco
     )
     if snapshot is None:
         snapshot = challenge.acquire(CONFIG, FixtureAPI([observation(1), observation(2, 20)]), AS_OF)
-    result = subprocess.run(
-        ["node", "-e", script],
-        input=json.dumps({"snapshot": snapshot, "discovery": discovery_product, "cellRes": cell_res,"historical":historical_points,"catalog":challenge_catalog}),
-        capture_output=True,
-        text=True,
-    )
+    # A file, not `node -e`: the script exceeds Linux's 128 KiB per-argument limit.
+    with tempfile.TemporaryDirectory() as tmp:
+        path = Path(tmp, "lifecycle.js")
+        path.write_text(script)
+        result = subprocess.run(
+            ["node", path],
+            input=json.dumps({"snapshot": snapshot, "discovery": discovery_product, "cellRes": cell_res,"historical":historical_points,"catalog":challenge_catalog}),
+            capture_output=True,
+            text=True,
+        )
     assert result.returncode == 0, result.stderr
     return json.loads(result.stdout)
 
