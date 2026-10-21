@@ -127,8 +127,8 @@ def chao2_interval(s_obs, q1, q2, m, e1, e2, qe1):
         sd = np.sqrt(np.maximum(e1 - e2 - qe1**2 / m, 0))
         lo_fb = np.maximum(s_obs, (s_obs - Z95 * sd) / (1 - p))
         hi_fb = (s_obs + Z95 * sd) / (1 - p)
-    log_form = d > 0  # iNEXT's first two branches; m = 1 (NaN there) falls back instead
-    lo, hi = np.where(log_form, s_obs + d / k, lo_fb), np.where(log_form, s_obs + d * k, hi_fb)
+        log_form = d > 0  # iNEXT's first two branches; m = 1 (NaN there) falls back instead
+        lo, hi = np.where(log_form, s_obs + d / k, lo_fb), np.where(log_form, s_obs + d * k, hi_fb)
     # The fallback can exclude its own estimate on a single unit; such cells are "too few" anyway.
     return np.minimum(lo, est), np.maximum(hi, est)
 
