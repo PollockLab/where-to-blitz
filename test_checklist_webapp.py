@@ -94,7 +94,8 @@ def test_popup_reports_completeness_effort_and_source(lang):
         lang,
     )
     assert ("Complete" if lang == "en" else "Complète") in out
-    assert "90" in out and "14" in out and "30" in out and "2026-10-01" in out and "Chao2" in out
+    assert "90" in out and "14" in out and "2026-10-01" in out and "Chao2" in out
+    assert "30" not in out  # a complete cell needs no rule of thumb
 
 
 @needs_node
@@ -126,8 +127,9 @@ def test_popup_gives_effort_to_complete_for_unfinished_cells(lang):
         lang,
     )
     rough, near = out
-    assert "300" in rough and "40" in rough and ("Rough" if lang == "en" else "Approximatif") in rough
-    assert "12" in near and ("Rough" not in near and "Approximatif" not in near)
+    # Past double the effort so far iNEXT does not extrapolate reliably, so no point figure is shown.
+    assert "300" not in rough and "40" in rough and ("More than 40" if lang == "en" else "Plus de 40") in rough
+    assert "12" in near and "40" in near and ("More than" not in near and "Plus de" not in near)
     assert (
         "about 30" not in near and "environ 30" not in near
     )  # the per-cell figure replaces the rule of thumb
@@ -145,5 +147,4 @@ def test_popup_does_not_print_the_encoding_cap(lang):
         lang,
     )
     assert "65535" not in out.replace(",", "").replace(" ", "")
-    assert ("Over 65,000" if lang == "en" else "Plus de 65 000") in out
-    assert ("Rough" if lang == "en" else "Approximatif") in out
+    assert ("More than 65,000" if lang == "en" else "Plus de 65 000") in out
