@@ -67,7 +67,7 @@ def test_context_switches_with_overlay_and_preserves_planner_help(lang):
         """
 const output={};
 for(const kind of ['gettingeven','climate','checklist','coverage']){
-  overlay=kind;renderGoalContext();output[kind]=elements.challengeBlurb.textContent;
+  elements.challengeBlurb={};overlay=kind;renderGoalContext();output[kind]=elements.challengeBlurb.innerHTML??elements.challengeBlurb.textContent;
 }
 output.explore=elements.plansource.style.display;
 state.view='plan';renderGoalContext();output.plan=elements.plansource.style.display;
@@ -77,6 +77,7 @@ console.log(JSON.stringify(output));
     )
     assert len({context[k] for k in ("gettingeven", "climate", "checklist", "coverage")}) == 4
     assert "CHELSA" in context["climate"]
+    assert "openHowSection('how-goals'" in context["checklist"]
     assert "Biodiversité Québec" in context["coverage"]
     assert context["explore"] == "none" and context["plan"] == ""
 
