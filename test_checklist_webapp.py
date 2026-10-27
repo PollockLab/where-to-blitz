@@ -13,7 +13,7 @@ from test_template_wiring import _i18n_keys, _i18n_segments
 
 CL_KEYS = (
     "crit_cl", "cl_loading", "cl_opacity", "aria_cl_opacity", "cl_status", "cl_legend", "cl_blurb",
-    "method_cl", "cl_how", "pop_layer_cl", "cl_pop_pct", "cl_pop_days", "cl_pop_note", "cl_pop_ci", "cl_pop_cov",
+    "method_cl", "cl_how", "pop_layer_cl", "cl_pop_pct", "cl_pop_days", "cl_pop_note", "cl_pop_ci",
     "cl_pop_effort",
 )  # fmt: skip
 needs_node = pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
@@ -100,7 +100,7 @@ def test_popup_reports_completeness_effort_and_source(lang):
 
 @needs_node
 @pytest.mark.parametrize("lang", ["en", "fr"])
-def test_popup_reports_interval_and_coverage(lang):
+def test_popup_reports_interval(lang):
     meta = {"min_units": 10, "bands": {"complete": 0.9, "close": 0.7}, "rule_of_thumb_units": 30,
             "source": {"export_date": "2026-10-01"}}  # fmt: skip
     out = _node(
@@ -109,7 +109,7 @@ def test_popup_reports_interval_and_coverage(lang):
         "const snapToLattice=()=>({col:0,row:0});console.log(JSON.stringify(clPopup(45,-75,25000)));",
         lang,
     )
-    assert "80" in out and "60" in out and "96" in out and "98" in out and "2" in out
+    assert "80" in out and "60–96" in out
     assert ("may already be complete" if lang == "en" else "peut-être déjà complète") in out  # 96% upper bound
 
 
@@ -128,8 +128,8 @@ def test_popup_gives_effort_to_complete_for_unfinished_cells(lang):
     )
     rough, near = out
     # Past double the effort so far iNEXT does not extrapolate reliably, so no point figure is shown.
-    assert "300" not in rough and "40" in rough and ("More than 40" if lang == "en" else "Plus de 40") in rough
-    assert "12" in near and "40" in near and ("More than" not in near and "Plus de" not in near)
+    assert "300" not in rough and "40" in rough and ("Over 40" if lang == "en" else "Plus de 40") in rough
+    assert "12" in near and "40" in near and ("Over" not in near and "Plus de" not in near)
     assert (
         "about 30" not in near and "environ 30" not in near
     )  # the per-cell figure replaces the rule of thumb
@@ -147,4 +147,4 @@ def test_popup_does_not_print_the_encoding_cap(lang):
         lang,
     )
     assert "65535" not in out.replace(",", "").replace(" ", "")
-    assert ("More than 65,000" if lang == "en" else "Plus de 65 000") in out
+    assert ("Over 65,000" if lang == "en" else "Plus de 65 000") in out
