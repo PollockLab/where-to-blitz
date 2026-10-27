@@ -16,6 +16,10 @@ Method (incidence-based, Chao 1987; per cell as in KnowBR, Lobo et al. 2018):
                      (Chao & Colwell 2017, eq. 3c), so completeness gets [S_obs/upper, S_obs/lower]
   6. coverage        sample coverage, 1 - (Q1 / U) (m - 1) Q1 / ((m - 1) Q1 + 2 Q2), with U the
                      total incidence count (Chao & Jost 2012; Chao et al. 2014, eq. C.7)
+  7. effort          extra sampling units t for the iNEXT incidence extrapolation (Chao et al.
+                     2014), S_obs + Q0 [1 - (1 - Q1 / (m Q0 + Q1))^t] with Q0 = S_est - S_obs, to
+                     reach the "complete" band, i.e. BANDS["complete"] * S_est: the sufficient-
+                     sampling idea of Chao et al. 2009 (Ecology 90:1125-1133) on the iNEXT curve
 
 Records: iNaturalist research grade, identified to species (subspecies roll up), with an
 observation date, positional accuracy unknown or no coarser than the cell. Source is the
@@ -44,6 +48,10 @@ checklist_<res>m_<cog>_ci.png holds what only the popup reads, A=255 where the g
     R  round(completeness lower 95% bound * 250)
     G  round(completeness upper 95% bound * 250)
     B  round(sample coverage * 250)
+
+checklist_<res>m_<cog>_effort.png holds the popup's effort estimate, A=255 where the group has records:
+
+    R*256+G  extra observer-days to reach the complete band (0 when already there, cap 65535)
 """
 
 import argparse
@@ -144,6 +152,16 @@ def coverage(q1, q2, u, m):
         )
         c = 1 - q1 / u * tail
     return np.where((q1 > 0) & (u > 0), c, 1.0)
+
+
+def effort_to_complete(s_obs, q1, q2, m, target=BANDS["complete"]):
+    """Extra sampling units until the iNEXT incidence extrapolation reaches target * Chao2, vectorised."""
+    s_obs, q1, q2, m = _arrays(s_obs, q1, q2, m)
+    est = chao2(s_obs, q1, q2, m)
+    q0 = est - s_obs
+    with np.errstate(divide="ignore", invalid="ignore"):
+        t = np.log((1 - target) * est / q0) / np.log1p(-q1 / (m * q0 + q1))
+    return np.where(s_obs >= target * est, 0.0, np.ceil(t))
 
 
 def species_lookup(taxa):
@@ -277,6 +295,16 @@ def encode_ci(lat, cells, comp_lo, comp_hi, cov, hidden):
     return rgba
 
 
+def encode_effort(lat, cells, effort, hidden):
+    """The popup's _effort pixels, see the module docstring."""
+    rgba = np.zeros((lat.nrow * lat.ncol, 4), np.uint8)
+    t = np.minimum(np.nan_to_num(effort, nan=65535), 65535).astype(np.int64)
+    rgba[cells, 0], rgba[cells, 1], rgba[cells, 3] = t // 256, t % 256, 255
+    rgba = rgba.reshape(lat.nrow, lat.ncol, 4)
+    rgba[hidden] = 0
+    return rgba
+
+
 def _q250(v):
     return np.round(np.clip(np.nan_to_num(v, nan=0.0), 0, 1) * 250).astype(np.uint8)
 
@@ -326,10 +354,16 @@ def build(rec, crs, source, out_dir=OUT_DIR):
             lo, hi = chao2_interval(s_obs, q1, q2, m, st["e1"], st["e2"], st["qe1"])
             canadian = ~hidden.reshape(-1)[cells]
             png, ci_png = f"checklist_{res}m_{cog}.png", f"checklist_{res}m_{cog}_ci.png"
+            effort_png = f"checklist_{res}m_{cog}_effort.png"
             matplotlib.image.imsave(os.path.join(out_dir, png), encode(lat, cells, comp, m, hidden))
             matplotlib.image.imsave(
                 os.path.join(out_dir, ci_png),
                 encode_ci(lat, cells, s_obs / hi, s_obs / lo, coverage(q1, q2, st["u"], m), hidden),
+            )
+            # Zero where the quantised completeness already reads complete, so popup and status agree.
+            effort = np.where(comp >= BANDS["complete"], 0, effort_to_complete(s_obs, q1, q2, m))
+            matplotlib.image.imsave(
+                os.path.join(out_dir, effort_png), encode_effort(lat, cells, effort, hidden)
             )
             counts = status_counts(comp[canadian], m[canadian])
             counts["no_records"] = int((~hidden).sum()) - int(canadian.sum())
@@ -338,6 +372,8 @@ def build(rec, crs, source, out_dir=OUT_DIR):
                 "sha256": sha256_file(os.path.join(out_dir, png)),
                 "ci_png": ci_png,
                 "ci_sha256": sha256_file(os.path.join(out_dir, ci_png)),
+                "effort_png": effort_png,
+                "effort_sha256": sha256_file(os.path.join(out_dir, effort_png)),
                 "cells": counts,
             }
             print(f"{res} m {name}: {groups[name]['cells']}", flush=True)
@@ -347,7 +383,7 @@ def build(rec, crs, source, out_dir=OUT_DIR):
             "groups": groups,
         }
     doc = {
-        "schema_version": 2,
+        "schema_version": 3,
         "kind": "checklist-completeness",
         "method": "Chao2 incidence estimate per cell as in iNEXT 3.0.2, with its 95% interval; "
         "sampling unit = one observer on one day; completeness = S_obs / S_est; sample coverage "
@@ -359,6 +395,8 @@ def build(rec, crs, source, out_dir=OUT_DIR):
         "A=255 Canadian cell with records, 64 Canadian cell without, 0 outside Canada",
         "ci_encoding": "R=round(completeness lower 95% bound*250); G=upper bound; "
         "B=round(sample coverage*250); A=255 where the group has records",
+        "effort_encoding": "R*256+G=extra observer-days to reach the complete band (cap 65535); "
+        "A=255 where the group has records",
         "crs": crs.to_wkt(),
         "source": source,
         "built": datetime.now(timezone.utc).strftime("%Y-%m-%d"),

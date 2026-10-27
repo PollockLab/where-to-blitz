@@ -40,6 +40,19 @@ def test_matches_inext(name):
     assert bc.coverage(st["q1"], st["q2"], st["u"], t) == pytest.approx(cov, rel=1e-8)
 
 
+# iNEXT 3.0.2 estimateD(q = 0, base = "size") at T + t - 1 and T + t straddles 0.9 * Chao2:
+# A 9.898 < 9.956 <= 10.024, B 10.196 < 10.260 <= 10.279, E 62.222 < 62.280 <= 62.292. C is complete.
+@pytest.mark.parametrize(("name", "effort"), [("A", 6), ("B", 22), ("C", 0), ("E", 171)])
+def test_effort_reaches_the_complete_band_on_the_inext_curve(name, effort):
+    t, counts, *_ = INEXT[name]
+    st = _stats(t, counts)
+    assert bc.effort_to_complete(st["s_obs"], st["q1"], st["q2"], t) == effort
+
+
+def test_effort_is_zero_without_unseen_species():
+    assert bc.effort_to_complete([7, 3], [0, 3], [2, 0], [15, 1]).tolist() == [0, 0]
+
+
 def test_no_singletons_is_complete_with_a_finite_interval():
     st = _stats(15, [2, 2, 3, 3, 5, 8, 15])
     assert bc.chao2(st["s_obs"], st["q1"], st["q2"], 15) == 7
@@ -112,6 +125,14 @@ def test_encode_round_trip_and_hidden():
     assert comp[1, 1] == 1.0
 
 
+def test_effort_encoding_caps_and_hides():
+    hidden = np.zeros((2, 3), bool)
+    hidden[1, 2] = True
+    rgba = bc.encode_effort(_Lat, np.array([0, 1, 4, 5]), np.array([0, 300, 1e6, np.nan]), hidden).astype(int)
+    assert (rgba[..., 0] * 256 + rgba[..., 1]).ravel()[[0, 1, 4]].tolist() == [0, 300, 65535]
+    assert rgba[..., 3].tolist() == [[255, 255, 0], [0, 255, 0]]
+
+
 def test_status_counts_respect_min_units():
     comp = np.array([0.95, 0.95, 0.8, 0.5])
     m = np.array([bc.MIN_UNITS, bc.MIN_UNITS - 1, 50, 50])
@@ -127,3 +148,4 @@ def test_shipped_sidecar_matches_pngs():
         for g in tier["groups"].values():
             assert bc.sha256_file(os.path.join(OUT, g["png"])) == g["sha256"]
             assert bc.sha256_file(os.path.join(OUT, g["ci_png"])) == g["ci_sha256"]
+            assert bc.sha256_file(os.path.join(OUT, g["effort_png"])) == g["effort_sha256"]
