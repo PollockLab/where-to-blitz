@@ -289,7 +289,7 @@ let originAtExplore=null;
 let viewportBounds=[-90,40,-60,50];
 const map={getCanvas:()=>canvas,getBounds:()=>({getWest:()=>viewportBounds[0],getEast:()=>viewportBounds[2],getSouth:()=>viewportBounds[1],getNorth:()=>viewportBounds[3]}),
  getZoom:()=>7,getSource:id=>map.sources[id],getLayer:id=>map.sources[id],sources:{},
- addImage(){},addSource(id,options){this.sources[id]={data:options.data,setData(data){this.data=data;}};},addLayer(){},setLayoutProperty(){},queryRenderedFeatures:()=>[],
+ addImage(){},addSource(id,options){this.sources[id]={data:options.data,tiles:options.tiles,setData(data){this.data=data;}};},addLayer(layer){this.layers.push(layer);},layers:[],visibility:{},setLayoutProperty(id,key,value){this.visibility[id]=value;},queryRenderedFeatures:()=>[],
  on(event,...args){handlers[event]=args.at(-1);if(args.length>1)layerHandlers[args[0]+':'+event]=args.at(-1);},jumpTo(){handlers.moveend();}};
 const maplibregl={Popup:class{
  constructor(options){this.options=options;this.handlers={};this.root=new Element('popup',true);this.close=new Element('close');this.root.append(this.close);}
@@ -1377,3 +1377,37 @@ def test_data_dependent_disclosures_start_hidden_in_actual_template():
     source = (ROOT / "webapp/index.html").read_text()
     for identity in ("recentChallengeDetails", "recentChallengeSightings", "historicalPointsDetails"):
         assert re.search(r'<details\b[^>]*\bid="' + identity + r'"[^>]*\bhidden(?:\s|>)', source), identity
+
+
+CATALOG = {"taxa": [{"id": 9, "name": "Zeta", "rank": "species"}, {"id": 3, "name": "Alpha", "rank": "genus"}]}
+
+
+def test_all_years_requests_live_inaturalist_tiles_without_the_date_window_and_recent_keeps_the_snapshot():
+    result = sighting_lifecycle(
+        "const recentSource=!!map.sources['recent-challenge'];await optionalLayers.toggleRecent(true,true);"
+        "console.log(JSON.stringify({recentSource,all:optionalLayers.recentAll(),tiles:Object.fromEntries(Object.entries(map.sources).filter(([id])=>id.startsWith('all-years')).map(([id,s])=>[id,s.tiles])),"
+        "layers:map.layers.filter(l=>l.id.startsWith('all-years')).map(l=>[l.id,l.minzoom,l.maxzoom]),link:nodes.recentAllYearsLink.href,"
+        "status:nodes.recentChallengeStatus.textContent,snapshotVisibility:map.visibility['recent-challenge'],note:nodes.recentAllYearsNote.hidden,"
+        "back:(await optionalLayers.toggleRecent(true,false),{all:optionalLayers.recentAll(),visibility:map.visibility})}));",
+        challenge_catalog=CATALOG,
+    )
+    assert result["recentSource"] is True and result["all"] is True and result["note"] is False
+    for kind, url in {k.removeprefix("all-years-"): v[0] for k, v in result["tiles"].items()}.items():
+        assert url.startswith(f"https://api.inaturalist.org/v1/{kind}/{{z}}/{{x}}/{{y}}.png?")
+        assert "taxon_id=9,3&" in url and "place_id=6712" in url and "geoprivacy=open&taxon_geoprivacy=open" in url
+        assert "color=%23d96c14" in url and not re.search(r"[?&](d1|d2|created_d2|order|per_page)=", url)
+    assert set(result["tiles"]) == {"all-years-grid", "all-years-points"}
+    assert result["layers"] == [["all-years-grid", 0, 10], ["all-years-points", 10, 24]]
+    assert result["link"] == "https://www.inaturalist.ca/observations?place_id=6712&taxon_id=9,3&geoprivacy=open&taxon_geoprivacy=open"
+    assert result["status"] == "All years: live from iNaturalist. Orange squares and dots, all species groups."
+    assert result["snapshotVisibility"] == "none"
+    assert result["back"]["all"] is False and result["back"]["visibility"]["recent-challenge"] == "visible"
+    assert result["back"]["visibility"]["all-years-grid"] == "none"
+
+
+def test_all_years_is_unavailable_without_the_species_catalog_and_has_both_languages():
+    result = sighting_lifecycle("await optionalLayers.toggleRecent(true,true);console.log(JSON.stringify({all:optionalLayers.recentAll(),tiles:Object.keys(map.sources).filter(id=>id.startsWith('all-years'))}));")
+    assert result == {"all": False, "tiles": []}
+    source = (ROOT / "webapp/index.html").read_text()
+    for key in ("recent_years_label", "recent_years_recent", "recent_years_all", "recent_all_years_status", "recent_all_years_note", "recent_all_years_link"):
+        assert len(re.findall(rf"\b{key}:", source)) == 2

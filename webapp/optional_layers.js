@@ -75,6 +75,11 @@ const OptionalData={
     const day=value=>Math.floor(value/86400000),days=day(now)-day(Date.parse(asOf));
     return days<=0?['recent_updated_today']:days===1?['recent_updated_yesterday']:['recent_updated_days',days];
   },
+  // Live iNaturalist tiles (kind 'grid'|'points') or the equivalent observations search (no kind), same filters as the snapshot minus the date window.
+  allYears(ids,kind){
+    const q='place_id=6712&taxon_id='+ids.join(',')+'&geoprivacy=open&taxon_geoprivacy=open';
+    return kind?'https://api.inaturalist.org/v1/'+kind+'/{z}/{x}/{y}.png?'+q+'&color=%23d96c14':'https://www.inaturalist.ca/observations?'+q;
+  },
   photoUrl(url){
     try{const u=new URL(url);return u.protocol==='https:'&&!u.port&&!u.username&&!u.password&&!u.search&&!u.hash&&['static.inaturalist.org','inaturalist-open-data.s3.amazonaws.com'].includes(u.hostname)&&/^\/photos\/[1-9]\d*\/(square|small|medium)\.(jpg|jpeg|png)$/i.test(u.pathname)?u.href:'';}catch{return '';}
   },
@@ -85,7 +90,7 @@ const OptionalData={
 
 function installOptionalLayers(){
   const descriptors=OPTIONAL_LAYERS,cache={},pending={},indices={};
-  let recentOn=false,recentError=false,discoveryError=false,selectedSighting=null,sightingBody=null;
+  let recentOn=false,recentAll=false,recentError=false,discoveryError=false,selectedSighting=null,sightingBody=null;
   const catalog=descriptors.challenge?.catalog||null;
   const catalogTaxa=catalog?[...catalog.taxa].sort((a,b)=>a.name.localeCompare(b.name,'en')||a.id-b.id):[];
   let catalogPage=0,catalogQuery='',catalogRendered='';
@@ -353,13 +358,27 @@ function installOptionalLayers(){
   function renderChallenge(){
     const panel=node('recentChallengePanel');panel.hidden=!descriptors.challenge;
     const status=node('recentChallengeStatus'),list=node('recentChallengeList');renderCoverage();
-    const ready=recentOn&&!!cache.challenge&&_mapLoaded;
+    const all=recentOn&&recentAll,ready=recentOn&&!all&&!!cache.challenge&&_mapLoaded;
     for(const id of ['recentChallengeDetails','recentChallengeSightings'])node(id).hidden=!ready;
+    node('recentAllYearsNote').hidden=!all;
+    if(all){
+      const ids=catalog.taxa.map(row=>row.id);node('recentAllYearsLink').href=OptionalData.allYears(ids);
+      list.replaceChildren();status.textContent=t('recent_all_years_status');status.title='';
+      if(_mapLoaded)for(const [kind,min,max] of [['grid',0,10],['points',10,24]]){
+        const id='all-years-'+kind;
+        if(!map.getSource(id)){
+          map.addSource(id,{type:'raster',tiles:[OptionalData.allYears(ids,kind)],tileSize:256,attribution:'iNaturalist'});
+          map.addLayer({id,type:'raster',source:id,minzoom:min,maxzoom:max});
+        }
+        map.setLayoutProperty(id,'visibility','visible');
+      }
+    }else if(_mapLoaded)for(const kind of ['grid','points'])if(map.getLayer('all-years-'+kind))map.setLayoutProperty('all-years-'+kind,'visibility','none');
     globalThis.refreshMapContext?.();
     if(!recentOn){status.textContent=t('recent_challenge_hint');list.replaceChildren();}
+    else if(all);
     else if(!cache.challenge)status.textContent=t(recentError?'optional_error':'optional_loading');
     if(!_mapLoaded)return;
-    if(!recentOn||!cache.challenge){if(map.getLayer('recent-challenge'))map.setLayoutProperty('recent-challenge','visibility','none');return;}
+    if(!recentOn||all||!cache.challenge){if(map.getLayer('recent-challenge'))map.setLayoutProperty('recent-challenge','visibility','none');return;}
     const snapshot=cache.challenge,view=bounds(),national=OptionalData.viewportWidthKm(view)>500,rows=OptionalData.selectChallenge(snapshot,view,national),matching=OptionalData.matchingChallenge(snapshot,view).length;
     // Reuse exact-coordinate grouping only after viewport filtering and the observation cap.
     const groups=OptionalData.historicalGroups(rows);recentPositions=new Map(groups.map(group=>[group.key,group]));ensureRecentImages(groups);
@@ -384,9 +403,10 @@ function installOptionalLayers(){
     }
     paintSighting();
   }
-  async function toggleRecent(enabled){
-    recentOn=!!enabled&&!!descriptors.challenge;recentError=false;if(!recentOn&&selectedSighting)closePopup();node('recentChallenge').checked=recentOn;renderChallenge();syncSharedCellUrl(true);if(isDiscovery())updateLegend();
-    if(recentOn)try{await load('challenge');}catch(e){recentError=true;}
+  async function toggleRecent(enabled,all){
+    if(all!==undefined)recentAll=!!all&&!!catalog;
+    recentOn=!!enabled&&!!descriptors.challenge;recentError=false;node('recentYearsAll').checked=recentAll;node('recentYearsRecent').checked=!recentAll;if(!recentOn&&selectedSighting)closePopup();node('recentChallenge').checked=recentOn;renderChallenge();syncSharedCellUrl(true);if(isDiscovery())updateLegend();
+    if(recentOn&&!recentAll)try{await load('challenge');}catch(e){recentError=true;}
     renderChallenge();renderDiscovery();renderHistorical();
   }
   function historicalVisible(){return !!historical&&historicalOn&&isDiscovery()&&supports(state.taxon)&&activeCellResM()===5000&&!!cache.discovery;}
@@ -453,9 +473,11 @@ function installOptionalLayers(){
   function appendCriteria(select){if(!descriptors.discovery)return;const option=document.createElement('option');option.value='discovery';option.textContent=t('discovery_rate');select.appendChild(option);}
   function hitRecent(point){return recentOn&&_mapLoaded&&!!map.getLayer('recent-challenge')&&map.queryRenderedFeatures(point,{layers:['recent-challenge']}).length>0;}
   globalThis.optionalLayers={setPlaceContext(context){placeContext=context&&Number.isFinite(context.lat)&&Number.isFinite(context.lon)&&typeof context.name==='string'?{latitude:context.lat,longitude:context.lon,place_name:context.name}:null;renderDiscovery();},isDiscovery,supports,load:prepareDiscovery,refresh,appendCriteria,discoveryCell,discoveryPopup,discoveryLegend,hitRecent,toggleRecent,
-    recentEnabled:()=>recentOn,recentReady:()=>recentOn&&!!cache.challenge&&_mapLoaded,hasChallenge:()=>!!descriptors.challenge,group:()=>descriptors.discovery&&descriptors.discovery.taxon_group};
+    recentEnabled:()=>recentOn,recentAll:()=>recentAll,recentReady:()=>recentOn&&!recentAll&&!!cache.challenge&&_mapLoaded,hasChallenge:()=>!!descriptors.challenge,group:()=>descriptors.discovery&&descriptors.discovery.taxon_group};
   node('recentChallengePanel').hidden=!descriptors.challenge;
   node('recentChallenge').addEventListener('change',e=>{_shareAction++;toggleRecent(e.target.checked);});
+  node('recentYearsAll').disabled=!catalog;
+  for(const id of ['recentYearsRecent','recentYearsAll'])node(id).addEventListener('change',e=>{_shareAction++;toggleRecent(recentOn,e.target.value==='all');});
   node('discoveryCellFilter').onchange=()=>{discoveryPage=0;renderDiscoveryList();node('discoveryCells').scrollTop=0;};
   for(const [id,delta]of [['discoveryPrevious',-1],['discoveryNext',1]])node(id).onclick=()=>{
     if(!cache.discovery||node(id).getAttribute('aria-disabled')==='true')return;

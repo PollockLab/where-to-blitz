@@ -372,8 +372,13 @@ h2.sec{margin:14px 0 8px}   /* the section headings are h2 for screen-reader nav
   </section>
   <div id="recentChallengePanel" hidden>
     <label class="toggle"><input type="checkbox" id="recentChallenge"> <span data-i18n="recent_challenge">Recent sightings of selected species</span></label>
+    <div id="recentYears" role="radiogroup" data-i18n-aria="recent_years_label" aria-label="Years shown">
+      <label class="toggle"><input type="radio" id="recentYearsRecent" name="recentYears" value="recent" checked> <span data-i18n="recent_years_recent">Recent</span></label>
+      <label class="toggle"><input type="radio" id="recentYearsAll" name="recentYears" value="all"> <span data-i18n="recent_years_all">All years</span></label>
+    </div>
     <p class="optional-status" data-i18n="recent_challenge_purpose">See what people have recently recorded in this area.</p>
     <p id="recentChallengeStatus" class="optional-status" role="status"></p>
+    <p id="recentAllYearsNote" class="optional-status" hidden><span data-i18n="recent_all_years_note">All years is live from iNaturalist and includes all public observations with open locations. The map shows grid squares when zoomed out and individual points when zoomed in.</span> <a id="recentAllYearsLink" href="https://www.inaturalist.ca/observations" target="_blank" rel="noopener" data-i18n="recent_all_years_link">List these observations on iNaturalist</a></p>
     <details id="recentChallengeAbout" class="optional-source-details"><summary data-i18n="recent_challenge_about">About these sightings</summary>
       <p data-i18n="recent_challenge_context">The orange dots show public iNaturalist reports for species selected for this project's Conservation Challenge.</p>
       <p data-i18n="recent_challenge_use">The dots provide recent local examples alongside the map you are viewing. A number on a dot shows how many displayed sightings share that reported location. Select it to browse them.</p>
@@ -557,6 +562,10 @@ const I18N={
     discovery_supplied_unit:"supplied discovery points per 10,000 research-grade observations",
     discovery_supplied_counts:(n,exposure)=>`Supplied discovery points: ${n}. Research-grade observations: ${exposure}.`,
     recent_challenge:"Recent Conservation Challenge sightings", recent_challenge_list:"Sightings in this view",
+    recent_years_label:"Years shown", recent_years_recent:"Recent", recent_years_all:"All years",
+    recent_all_years_status:"All years: live from iNaturalist. Orange squares and dots, all species groups.",
+    recent_all_years_note:"All years is live from iNaturalist and includes all public observations with open locations. The map shows grid squares when zoomed out and individual points when zoomed in.",
+    recent_all_years_link:"List these observations on iNaturalist",
     recent_challenge_purpose:"See what people have recently recorded in this area.", recent_challenge_about:"About these sightings",
     recent_challenge_context:"The orange dots show public iNaturalist reports for species selected for this project's Conservation Challenge.",
     recent_challenge_use:"The dots provide recent local examples alongside the map you are viewing. A number on a dot shows how many displayed sightings share that reported location. Select it to browse them.",
@@ -826,6 +835,10 @@ const I18N={
     discovery_supplied_unit:"points de découverte fournis pour 10 000 observations de niveau recherche",
     discovery_supplied_counts:(n,exposure)=>`Points de découverte fournis : ${n}. Observations de niveau recherche : ${exposure}.`,
     recent_challenge:"Observations récentes du Défi de conservation", recent_challenge_list:"Observations dans cette vue",
+    recent_years_label:"Années affichées", recent_years_recent:"Récentes", recent_years_all:"Toutes les années",
+    recent_all_years_status:"Toutes les années : en direct depuis iNaturalist. Carrés et points orange, tous groupes d'espèces.",
+    recent_all_years_note:"Toutes les années est en direct depuis iNaturalist et comprend toutes les observations publiques dont la localisation est ouverte. La carte montre des carrés de grille en dézoomant et des points individuels en zoomant.",
+    recent_all_years_link:"Lister ces observations sur iNaturalist",
     recent_challenge_purpose:"Voyez ce que des gens ont récemment observé dans cette zone.", recent_challenge_about:"À propos de ces observations",
     recent_challenge_context:"Les points orange montrent des observations publiques sur iNaturalist pour des espèces choisies pour le défi de conservation de ce projet.",
     recent_challenge_use:"Les points donnent des exemples récents dans la zone affichée, en complément de la carte. Un nombre sur un point indique combien d'observations affichées partagent cet emplacement signalé. Sélectionnez-le pour les parcourir.",
@@ -2290,6 +2303,11 @@ const OptionalData={
     const day=value=>Math.floor(value/86400000),days=day(now)-day(Date.parse(asOf));
     return days<=0?['recent_updated_today']:days===1?['recent_updated_yesterday']:['recent_updated_days',days];
   },
+  // Live iNaturalist tiles (kind 'grid'|'points') or the equivalent observations search (no kind), same filters as the snapshot minus the date window.
+  allYears(ids,kind){
+    const q='place_id=6712&taxon_id='+ids.join(',')+'&geoprivacy=open&taxon_geoprivacy=open';
+    return kind?'https://api.inaturalist.org/v1/'+kind+'/{z}/{x}/{y}.png?'+q+'&color=%23d96c14':'https://www.inaturalist.ca/observations?'+q;
+  },
   photoUrl(url){
     try{const u=new URL(url);return u.protocol==='https:'&&!u.port&&!u.username&&!u.password&&!u.search&&!u.hash&&['static.inaturalist.org','inaturalist-open-data.s3.amazonaws.com'].includes(u.hostname)&&/^\/photos\/[1-9]\d*\/(square|small|medium)\.(jpg|jpeg|png)$/i.test(u.pathname)?u.href:'';}catch{return '';}
   },
@@ -2300,7 +2318,7 @@ const OptionalData={
 
 function installOptionalLayers(){
   const descriptors=OPTIONAL_LAYERS,cache={},pending={},indices={};
-  let recentOn=false,recentError=false,discoveryError=false,selectedSighting=null,sightingBody=null;
+  let recentOn=false,recentAll=false,recentError=false,discoveryError=false,selectedSighting=null,sightingBody=null;
   const catalog=descriptors.challenge?.catalog||null;
   const catalogTaxa=catalog?[...catalog.taxa].sort((a,b)=>a.name.localeCompare(b.name,'en')||a.id-b.id):[];
   let catalogPage=0,catalogQuery='',catalogRendered='';
@@ -2568,13 +2586,27 @@ function installOptionalLayers(){
   function renderChallenge(){
     const panel=node('recentChallengePanel');panel.hidden=!descriptors.challenge;
     const status=node('recentChallengeStatus'),list=node('recentChallengeList');renderCoverage();
-    const ready=recentOn&&!!cache.challenge&&_mapLoaded;
+    const all=recentOn&&recentAll,ready=recentOn&&!all&&!!cache.challenge&&_mapLoaded;
     for(const id of ['recentChallengeDetails','recentChallengeSightings'])node(id).hidden=!ready;
+    node('recentAllYearsNote').hidden=!all;
+    if(all){
+      const ids=catalog.taxa.map(row=>row.id);node('recentAllYearsLink').href=OptionalData.allYears(ids);
+      list.replaceChildren();status.textContent=t('recent_all_years_status');status.title='';
+      if(_mapLoaded)for(const [kind,min,max] of [['grid',0,10],['points',10,24]]){
+        const id='all-years-'+kind;
+        if(!map.getSource(id)){
+          map.addSource(id,{type:'raster',tiles:[OptionalData.allYears(ids,kind)],tileSize:256,attribution:'iNaturalist'});
+          map.addLayer({id,type:'raster',source:id,minzoom:min,maxzoom:max});
+        }
+        map.setLayoutProperty(id,'visibility','visible');
+      }
+    }else if(_mapLoaded)for(const kind of ['grid','points'])if(map.getLayer('all-years-'+kind))map.setLayoutProperty('all-years-'+kind,'visibility','none');
     globalThis.refreshMapContext?.();
     if(!recentOn){status.textContent=t('recent_challenge_hint');list.replaceChildren();}
+    else if(all);
     else if(!cache.challenge)status.textContent=t(recentError?'optional_error':'optional_loading');
     if(!_mapLoaded)return;
-    if(!recentOn||!cache.challenge){if(map.getLayer('recent-challenge'))map.setLayoutProperty('recent-challenge','visibility','none');return;}
+    if(!recentOn||all||!cache.challenge){if(map.getLayer('recent-challenge'))map.setLayoutProperty('recent-challenge','visibility','none');return;}
     const snapshot=cache.challenge,view=bounds(),national=OptionalData.viewportWidthKm(view)>500,rows=OptionalData.selectChallenge(snapshot,view,national),matching=OptionalData.matchingChallenge(snapshot,view).length;
     // Reuse exact-coordinate grouping only after viewport filtering and the observation cap.
     const groups=OptionalData.historicalGroups(rows);recentPositions=new Map(groups.map(group=>[group.key,group]));ensureRecentImages(groups);
@@ -2599,9 +2631,10 @@ function installOptionalLayers(){
     }
     paintSighting();
   }
-  async function toggleRecent(enabled){
-    recentOn=!!enabled&&!!descriptors.challenge;recentError=false;if(!recentOn&&selectedSighting)closePopup();node('recentChallenge').checked=recentOn;renderChallenge();syncSharedCellUrl(true);if(isDiscovery())updateLegend();
-    if(recentOn)try{await load('challenge');}catch(e){recentError=true;}
+  async function toggleRecent(enabled,all){
+    if(all!==undefined)recentAll=!!all&&!!catalog;
+    recentOn=!!enabled&&!!descriptors.challenge;recentError=false;node('recentYearsAll').checked=recentAll;node('recentYearsRecent').checked=!recentAll;if(!recentOn&&selectedSighting)closePopup();node('recentChallenge').checked=recentOn;renderChallenge();syncSharedCellUrl(true);if(isDiscovery())updateLegend();
+    if(recentOn&&!recentAll)try{await load('challenge');}catch(e){recentError=true;}
     renderChallenge();renderDiscovery();renderHistorical();
   }
   function historicalVisible(){return !!historical&&historicalOn&&isDiscovery()&&supports(state.taxon)&&activeCellResM()===5000&&!!cache.discovery;}
@@ -2668,9 +2701,11 @@ function installOptionalLayers(){
   function appendCriteria(select){if(!descriptors.discovery)return;const option=document.createElement('option');option.value='discovery';option.textContent=t('discovery_rate');select.appendChild(option);}
   function hitRecent(point){return recentOn&&_mapLoaded&&!!map.getLayer('recent-challenge')&&map.queryRenderedFeatures(point,{layers:['recent-challenge']}).length>0;}
   globalThis.optionalLayers={setPlaceContext(context){placeContext=context&&Number.isFinite(context.lat)&&Number.isFinite(context.lon)&&typeof context.name==='string'?{latitude:context.lat,longitude:context.lon,place_name:context.name}:null;renderDiscovery();},isDiscovery,supports,load:prepareDiscovery,refresh,appendCriteria,discoveryCell,discoveryPopup,discoveryLegend,hitRecent,toggleRecent,
-    recentEnabled:()=>recentOn,recentReady:()=>recentOn&&!!cache.challenge&&_mapLoaded,hasChallenge:()=>!!descriptors.challenge,group:()=>descriptors.discovery&&descriptors.discovery.taxon_group};
+    recentEnabled:()=>recentOn,recentAll:()=>recentAll,recentReady:()=>recentOn&&!recentAll&&!!cache.challenge&&_mapLoaded,hasChallenge:()=>!!descriptors.challenge,group:()=>descriptors.discovery&&descriptors.discovery.taxon_group};
   node('recentChallengePanel').hidden=!descriptors.challenge;
   node('recentChallenge').addEventListener('change',e=>{_shareAction++;toggleRecent(e.target.checked);});
+  node('recentYearsAll').disabled=!catalog;
+  for(const id of ['recentYearsRecent','recentYearsAll'])node(id).addEventListener('change',e=>{_shareAction++;toggleRecent(recentOn,e.target.value==='all');});
   node('discoveryCellFilter').onchange=()=>{discoveryPage=0;renderDiscoveryList();node('discoveryCells').scrollTop=0;};
   for(const [id,delta]of [['discoveryPrevious',-1],['discoveryNext',1]])node(id).onclick=()=>{
     if(!cache.discovery||node(id).getAttribute('aria-disabled')==='true')return;
@@ -3493,7 +3528,7 @@ function parseSharedContext(search){
   const style=Object.hasOwn(styles,s)?styles[s]:'Standard';
   const p=(u.get('at')||'').split(',');
   const valid=p.length===2&&p.every(x=>x.trim()!==''&&Number.isFinite(+x))&&+p[0]>=BB.minlat&&+p[0]<=BB.maxlat&&+p[1]>=BB.minlon&&+p[1]<=BB.maxlon;
-  return{taxon,goal,style,...(goal==='ge'&&['1','5','10','20','30','100'].includes(u.get('ge_count'))?{geCount:+u.get('ge_count')}:{}),recent:u.get('recent')==='1',linked:['at','g','res','goal','style','recent','ge_count'].some(k=>u.has(k)),cell:valid?{lat:+p[0],lon:+p[1],resM:r==='5000'?5000:25000}:null};
+  return{taxon,goal,style,...(goal==='ge'&&['1','5','10','20','30','100'].includes(u.get('ge_count'))?{geCount:+u.get('ge_count')}:{}),recent:u.get('recent')==='1',recentAll:u.get('years')==='all',linked:['at','g','res','goal','style','recent','ge_count'].some(k=>u.has(k)),cell:valid?{lat:+p[0],lon:+p[1],resM:r==='5000'?5000:25000}:null};
 }
 function sharedCellUrl(cell,taxon,goal,style,href){
   const u=new URL(href),p=u.searchParams;
@@ -3502,6 +3537,7 @@ function sharedCellUrl(cell,taxon,goal,style,href){
   p.set('g',taxon);p.set('goal',goal);p.set('style',style);
   const count=globalThis.geEvidence?.cutoff()||1;if(goal==='ge'&&count!==1)p.set('ge_count',String(count));else p.delete('ge_count');
   if(globalThis.optionalLayers&&globalThis.optionalLayers.recentEnabled())p.set('recent','1');else p.delete('recent');
+  if(globalThis.optionalLayers?.recentEnabled()&&globalThis.optionalLayers.recentAll?.())p.set('years','all');else p.delete('years');
   return u.pathname+u.search+u.hash;
 }
 function syncSharedCellUrl(force){
@@ -3532,7 +3568,7 @@ async function restoreSharedCell(shared,action,loadedTaxon,selection){
     const kind=shared.style==='__inat__'?'coverage':shared.goal==='ge'?'gettingeven':shared.goal==='climate'?'climate':shared.goal==='cl'?'checklist':shared.goal==='discovery'?'discovery':'priority';
     if(kind==='gettingeven')globalThis.geEvidence?.restore(shared.geCount||1);
     await setOverlay(kind);
-    if(action===_shareAction&&globalThis.optionalLayers&&shared.recent)await globalThis.optionalLayers.toggleRecent(true);
+    if(action===_shareAction&&globalThis.optionalLayers&&shared.recent)await globalThis.optionalLayers.toggleRecent(true,shared.recentAll);
     if(!currentSelection())return;
   }
   await loadUS();
