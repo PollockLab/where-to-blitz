@@ -35,6 +35,7 @@ function climateOn(){return overlay==='climate';}
 function clActive(){return overlay==='checklist';}
 function contribStr(){return 'source contribution';}
 function clPopup(){return 'checklist status';}
+const CL_META={source:{export_date:'2026-11-01'}};
 const elements={goalmethods:{},challengeBlurb:{},plansource:{style:{}}};
 const document={getElementById:id=>elements[id]};
 const window={__activePreset:1};
@@ -78,6 +79,7 @@ console.log(JSON.stringify(output));
     assert len({context[k] for k in ("gettingeven", "climate", "checklist", "coverage")}) == 4
     assert "CHELSA" in context["climate"]
     assert "openHowSection('how-goals'" in context["checklist"]
+    assert "2026-11-01" in context["checklist"]
     assert "Biodiversité Québec" in context["coverage"]
     assert context["explore"] == "none" and context["plan"] == ""
 

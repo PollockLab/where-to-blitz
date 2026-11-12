@@ -31,10 +31,14 @@ on:
   workflow_run:
     workflows: ["Conservation Challenge snapshot"]
     types: [completed]
+  # rebuild-checklist.yml sends this only after publishing a new snapshot: a workflow_run trigger
+  # would also redeploy after its early-exit runs, which succeed without publishing.
+  repository_dispatch:
+    types: [checklist-published]
 
 jobs:
   validate-light:
-    if: github.event_name == 'push' || github.event_name == 'pull_request' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == github.event.repository.default_branch && github.event.workflow_run.head_repository.full_name == github.repository)
+    if: github.event_name == 'push' || github.event_name == 'pull_request' || github.event_name == 'repository_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == github.event.repository.default_branch && github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -514,8 +518,14 @@ jobs:
           # 5 km layer rather than the deploy failing.
           cp cluster_results/ca/*.png _site/cluster_results/ca/
           cp -R cluster_results/ca/values _site/cluster_results/ca/
-          # "Complete a checklist" layer (build_checklist.py); guarded until its first build is committed.
-          if [ -d cluster_results/checklist ]; then mkdir -p _site/cluster_results/checklist && cp -R cluster_results/checklist/. _site/cluster_results/checklist/; fi
+          # "Complete a checklist" layer: rebuild-checklist.yml's monthly release asset, else the committed build.
+          mkdir -p _site/cluster_results/checklist
+          if gh release download checklist-outputs-v1 --pattern checklist.tar.gz --dir "$RUNNER_TEMP" --repo "$GITHUB_REPOSITORY" --clobber; then
+            tar -xzf "$RUNNER_TEMP/checklist.tar.gz" -C _site/cluster_results/checklist
+          else
+            cp -R cluster_results/checklist/. _site/cluster_results/checklist/
+          fi
+          test -s _site/cluster_results/checklist/checklist.json
           # Old checklist light-up page, now a redirect to ?goal=cl so shared links keep working.
           cp -R checklist _site/
           du -sh _site
@@ -530,7 +540,7 @@ jobs:
   deploy-site-fast:
     # On push to main: redeploy the site without rebuilding tiles (use latest release assets).
     # Lint validation already passed. This job rebuilds the webapp (index.html) and deploys.
-    if: github.event_name == 'push' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == github.event.repository.default_branch && github.event.workflow_run.head_repository.full_name == github.repository)
+    if: github.event_name == 'push' || github.event_name == 'repository_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == github.event.repository.default_branch && github.event.workflow_run.head_repository.full_name == github.repository)
     needs: validate-light
     runs-on: ubuntu-latest
     # One Pages deployment at a time: deploy-site (dispatch) and deploy-site-fast (push to
@@ -603,8 +613,14 @@ jobs:
           cp cluster_results/ca/*.json _site/cluster_results/ca/
           cp cluster_results/ca/*.png _site/cluster_results/ca/   # the Getting Even fill (#122) and the land/sea mask
           cp -R cluster_results/ca/values _site/cluster_results/ca/
-          # "Complete a checklist" layer (build_checklist.py); guarded until its first build is committed.
-          if [ -d cluster_results/checklist ]; then mkdir -p _site/cluster_results/checklist && cp -R cluster_results/checklist/. _site/cluster_results/checklist/; fi
+          # "Complete a checklist" layer: rebuild-checklist.yml's monthly release asset, else the committed build.
+          mkdir -p _site/cluster_results/checklist
+          if gh release download checklist-outputs-v1 --pattern checklist.tar.gz --dir "$RUNNER_TEMP" --repo "$GITHUB_REPOSITORY" --clobber; then
+            tar -xzf "$RUNNER_TEMP/checklist.tar.gz" -C _site/cluster_results/checklist
+          else
+            cp -R cluster_results/checklist/. _site/cluster_results/checklist/
+          fi
+          test -s _site/cluster_results/checklist/checklist.json
           # Old checklist light-up page, now a redirect to ?goal=cl so shared links keep working.
           cp -R checklist _site/
           du -sh _site

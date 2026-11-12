@@ -1,0 +1,98 @@
+name: Rebuild checklist
+# Rebuilds the "Complete a checklist" layer (build_checklist.py) from GBIF's latest monthly
+# occurrence snapshot, iNaturalist research grade, and uploads it to the checklist-outputs-v1
+# release, the way rebuild-grid.yml publishes grid-outputs-v1. A full rebuild every run: the
+# snapshot is a full copy, not a diff. A run whose newest snapshot is already in the release asset
+# stops early with success and publishes nothing, so the site is not redeployed.
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Upload the built layer to the checklist-outputs-v1 release"
+        type: boolean
+        default: true
+      force:
+        description: "Rebuild even if the newest snapshot is already published"
+        type: boolean
+        default: false
+  schedule:
+    - cron: "0 6 2,5,10 * *"   # GBIF writes the snapshot on the 1st, sometimes days late
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: write   # release asset upload
+    steps:
+      - name: Pick the newest GBIF snapshot
+        id: snap
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          snapshot=$(curl -sf "https://gbif-open-data-us-east-1.s3.amazonaws.com/?list-type=2&prefix=occurrence/&delimiter=/" \
+            | grep -o 'occurrence/[0-9-]*/' | sort | tail -1)
+          date=$(basename "$snapshot")
+          # The published asset's checklist.json records the snapshot it was built from; empty if none yet.
+          published=$( (gh release download checklist-outputs-v1 --repo "$GITHUB_REPOSITORY" --pattern checklist.tar.gz -O - \
+            | tar -xzO ./checklist.json | jq -r '.source.export_date // empty') 2>/dev/null || true)
+          echo "newest GBIF snapshot $date, published ${published:-none}"
+          echo "snapshot=${snapshot%/}" >> "$GITHUB_OUTPUT"
+          echo "date=$date" >> "$GITHUB_OUTPUT"
+          if [ -n "$published" ] && [[ ! "$date" > "$published" ]] && [ "${{ inputs.force }}" != true ]; then
+            echo "skip: snapshot $date is already published"
+            echo "new=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "new=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v4
+        if: steps.snap.outputs.new == 'true'
+      - uses: actions/setup-python@v5
+        if: steps.snap.outputs.new == 'true'
+        with:
+          python-version: "3.11"
+      - name: Cache pip
+        if: steps.snap.outputs.new == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}-py-3.11
+      - name: Install deps
+        if: steps.snap.outputs.new == 'true'
+        run: pip install -r requirements.txt
+      - name: Build from the newest GBIF snapshot
+        if: steps.snap.outputs.new == 'true'
+        env:
+          SNAPSHOT: ${{ steps.snap.outputs.snapshot }}
+          SNAPSHOT_DATE: ${{ steps.snap.outputs.date }}
+        run: |
+          set -euo pipefail
+          rx=$(cat /sys/class/net/eth0/statistics/rx_bytes)
+          (while sleep 60; do free -m | awk 'NR==2 {print "memory used " $3 " of " $2 " MB"}'; done) &
+          python build_checklist.py --gbif "s3://gbif-open-data-us-east-1/$SNAPSHOT" --export-date "$SNAPSHOT_DATE"
+          echo "received $(( ($(cat /sys/class/net/eth0/statistics/rx_bytes) - rx) / 1000000 )) MB"
+          tar -czf checklist.tar.gz -C cluster_results/checklist .
+          ls -la cluster_results/checklist checklist.tar.gz
+      - uses: actions/upload-artifact@v4
+        if: steps.snap.outputs.new == 'true'
+        with:
+          name: checklist
+          path: checklist.tar.gz
+          retention-days: 7
+      - name: Publish to release
+        if: steps.snap.outputs.new == 'true' && (github.event_name == 'schedule' || inputs.publish)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REL: checklist-outputs-v1
+        run: |
+          set -euo pipefail
+          if ! gh release view "$REL" >/dev/null 2>&1; then
+            gh release create "$REL" --prerelease --title "Checklist outputs (auto-built)" \
+              --notes "build_checklist.py output from GBIF's monthly occurrence snapshot (iNaturalist research grade), rebuilt by rebuild-checklist.yml."
+          fi
+          gh release upload "$REL" checklist.tar.gz --clobber
+          # Redeploy the site with the new asset (rebuild-grid.yml). GITHUB_TOKEN may send this event.
+          if [ "$GITHUB_REF" = "refs/heads/${{ github.event.repository.default_branch }}" ]; then
+            gh api "repos/$GITHUB_REPOSITORY/dispatches" -f event_type=checklist-published
+          fi
