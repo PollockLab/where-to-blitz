@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Complete checklists · Where to Blitz</title>
+<title>Well-observed cells · Where to Blitz</title>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
@@ -28,6 +28,10 @@ h1{font-size:20.5px;line-height:1.16;margin:0 0 2px}
 .presets button:hover{border-color:var(--acc);color:var(--acc)}
 #panel .presets button.on{border-color:var(--acc);background:var(--acc);color:#fff}
 .hint{color:var(--mut);font-size:12.5px;line-height:1.4;margin:4px 0 0}
+#maplegend .keys{display:flex;gap:10px;font-size:12px;color:var(--mut);margin:4px 0 2px}
+#maplegend .k{display:inline-block;width:10px;height:10px;margin-right:4px;vertical-align:-1px;border:1.5px solid #5d6b7a}
+#maplegend .k.close{border-style:dashed;opacity:.6}#maplegend .k.not{border:1px solid #c3cbd3}
+#maplegend .tg{display:flex;gap:6px;align-items:center;font-size:12.5px;margin:2px 0}
 #latest{list-style:none;margin:0;padding:0}
 #latest li button{display:flex;gap:8px;align-items:center;width:100%;text-align:left;background:#f4f7fa;border:1px solid #d4dde6;border-radius:7px;padding:6px 8px;margin:0 0 5px;font:inherit;font-size:13.5px;color:var(--ink);cursor:pointer}
 #latest li button:hover{border-color:var(--acc)}
@@ -66,9 +70,9 @@ h1{font-size:20.5px;line-height:1.16;margin:0 0 2px}
 <body>
 <div id="app">
 <div id="panel" role="main"><div id="panelInner">
-  <h1>Complete checklists</h1>
-  <p class="sub">A cell lights up once its list for a group counts as complete. Research preview, iNaturalist research-grade records, export of 2026-09-27.</p>
-  <div class="sec">Latest checklists</div>
+  <h1>Well-observed cells</h1>
+  <p class="sub">A cell lights up once it has at least 30 observer-days for a group. Research preview, iNaturalist research-grade records, export of 2026-09-27.</p>
+  <div class="sec">Latest well-observed cells</div>
   <ol id="latest"></ol>
   <p class="hint" id="latestnote"></p>
   <div class="sec">Lit when</div>
@@ -88,21 +92,25 @@ h1{font-size:20.5px;line-height:1.16;margin:0 0 2px}
 </div></div>
 <div id="map"></div>
 </div>
-<div id="maplegend"><div class="lt">Complete checklists</div><div class="hint">Preview. Cells are lit by a rule under review; a lit cell is well observed, not proven complete.</div><div id="groups"></div><div class="hint" id="legendnote"></div></div>
+<div id="maplegend"><div class="lt">Well-observed cells</div><div class="hint">Preview. Cells are lit by a rule under review; a lit cell is well observed, not proven complete.</div><div id="groups"></div>
+<div class="keys"><span><i class="k lit"></i>lit</span><span><i class="k close"></i>close</span><span><i class="k not"></i>not yet</span></div>
+<label class="tg"><input type="checkbox" id="tgUnlit"> Show cells not lit yet</label>
+<div class="hint" id="legendnote"></div></div>
 <script>
 'use strict';
 const DATA='../cluster_results/checklist/lightup/';
 const TIER_SWITCH_Z=9;   // the viewer's 25 km / 5 km switch (goal_presets.py)
 const TIER100_Z=4.5;     // 100 km below this zoom when the tier follows zoom
 const KM={5000:'5 km',25000:'25 km',100000:'100 km'};
-let META,cells={},st={rule:'effort',tier:'auto',on:[]},popup=null;
+let META,cells={},st={rule:'effort',tier:'auto',on:[],unlit:true},popup=null;
 
 const hp=()=>new URLSearchParams(location.hash.slice(1));
 function readHash(){const p=hp();
   if(['effort','chao2'].includes(p.get('rule')))st.rule=p.get('rule');
   if(['auto','5000','25000','100000'].includes(p.get('tier')))st.tier=p.get('tier');
+  st.unlit=p.get('unlit')!=='0';
   st.on=p.has('groups')?p.get('groups').split(',').filter(g=>g in META.groups):[...META.default_on];}
-function writeHash(){const p=hp();p.set('rule',st.rule);p.set('tier',st.tier);p.set('groups',st.on.join(','));
+function writeHash(){const p=hp();p.set('rule',st.rule);p.set('tier',st.tier);p.set('groups',st.on.join(','));if(st.unlit)p.delete('unlit');else p.set('unlit','0');
   history.replaceState(null,'','#'+p.toString().replace(/%2C/g,',').replace(/%2F/g,'/'));}
 const tier=()=>st.tier!=='auto'?+st.tier:map.getZoom()<TIER100_Z?100000:map.getZoom()<=TIER_SWITCH_Z?25000:5000;
 const bit=()=>st.rule==='chao2'?1:2;
@@ -121,12 +129,33 @@ const ring=c=>[0,2,4,6,0].map(k=>[c[k],c[k+1]]);
 async function footprint(q){let data={type:'FeatureCollection',features:[]};
   if(q)data={type:'Feature',geometry:{type:'Polygon',coordinates:[ring((await load(q.t))[q.g][q.i][9])]},properties:{g:q.g}};
   map.getSource('cell').setData(data);}
+// Unlit cells come as NW and SE corners; NE and SW are the diagonal turned 90 degrees in a local metric frame.
+function square(a,b,c,d){const cx=(a+c)/2,cy=(b+d)/2,k=Math.cos(cy*Math.PI/180),vx=(a-cx)*k,vy=b-cy,
+  pt=(x,y)=>[cx+x/k,cy+y];return[pt(vx,vy),pt(vy,-vx),pt(-vx,-vy),pt(-vy,vx),pt(vx,vy)];}
+const unlitCells={};
+// One file per tier and group, fetched only for ticked groups.
+function loadUnlit(t,g){const k=t+g;if(!unlitCells[k])unlitCells[k]=fetch(DATA+t+'_unlit_'+META.groups[g][0].replace(/ /g,'_')+'.json')
+  .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+  .then(list=>list.map(u=>({type:'Feature',geometry:{type:'Polygon',coordinates:[square(u[2],u[3],u[4],u[5])]},properties:{g,t,m:u[0],c:u[1]??-1}})));
+  return unlitCells[k];}
+let unlitShown=null;
+// Close under the active rule: 15 to 29 observer-days, or Chao2 0.7 to 0.9 with the minimum effort.
+const closeExpr=()=>st.rule==='effort'?['all',['>=',['get','m'],META.effort_lit/2],['<',['get','m'],META.effort_lit]]
+  :['all',['>=',['get','m'],META.min_units],['>=',['get','c'],0.7],['<',['get','c'],META.complete]];
+async function drawUnlit(t){const on=st.unlit&&big();
+  ['unlit','close','unlithit'].forEach(id=>map.setLayoutProperty(id,'visibility',on?'visible':'none'));
+  if(!on)return;
+  const key=t+'|'+st.on.join(',');
+  if(unlitShown!==key){unlitShown=key;const parts=await Promise.all(st.on.map(g=>loadUnlit(t,g)));
+    if(unlitShown===key)map.getSource('unlit').setData({type:'FeatureCollection',features:parts.flat()});}
+  const g=['in',['get','g'],['literal',st.on]];
+  map.setFilter('close',['all',g,closeExpr()]);map.setFilter('unlit',['all',g,['!',closeExpr()]]);map.setFilter('unlithit',g);}
 // One object per lit cell: its true outline once the cell is wider on screen than the marker, else the marker.
 const MARKER_PX=14;
 function big(){const c=map.getCenter(),mpp=156543.03*Math.cos(c.lat*Math.PI/180)/2**map.getZoom();return tier()/mpp>MARKER_PX;}
 function showMode(){const b=big();
   ['cells','cellhit','cell'].forEach(id=>map.setLayoutProperty(id,'visibility',b?'visible':'none'));
-  map.setLayoutProperty('lit','visibility',b?'none':'visible');}
+  map.setLayoutProperty('lit','visibility',b?'none':'visible');drawUnlit(tier());}
 async function load(t){if(!cells[t])cells[t]=fetch(DATA+t+'.json').then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(j=>cells[t+'_raw']=j);return cells[t];}
 const fc=(rows,t)=>({type:'FeatureCollection',features:Object.entries(rows).flatMap(([g,list])=>list.map(p=>({type:'Feature',
   geometry:{type:'Point',coordinates:[p[0],p[1]]},properties:{g,t,i:list.indexOf(p),m:p[2],s:p[3],c:p[4],lo:p[5],hi:p[6],d:p[7]||'',f:p[8]}})))});
@@ -205,6 +234,7 @@ function openPopup(q,ll){
     l.insertAdjacentHTML('beforeend',`<span>${META.groups[g][0]}</span><span class="n"></span>`);
     l.querySelector('input').onchange=e=>{st.on=Object.keys(META.groups).filter(k=>k===g?e.target.checked:st.on.includes(k));render();};
     box.appendChild(l);});
+  const tu=document.getElementById('tgUnlit');tu.checked=st.unlit;tu.onchange=()=>{st.unlit=tu.checked;render();};
   document.querySelectorAll('#rule button').forEach(b=>b.onclick=()=>{st.rule=b.dataset.v;render();});
   document.querySelectorAll('#tier button').forEach(b=>b.onclick=()=>{st.tier=b.dataset.v;render();});
   const ready=()=>new Promise(r=>map.loaded()?r():map.once('load',r));
@@ -217,6 +247,10 @@ function openPopup(q,ll){
   map.addSource('cell',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
   map.addSource('cells',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
   const col=['match',['get','g']];groups.forEach(g=>col.push(g,META.groups[g][1]));col.push('#787878');
+  map.addSource('unlit',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
+  map.addLayer({id:'unlithit',type:'fill',source:'unlit',paint:{'fill-color':'#000','fill-opacity':0}});
+  map.addLayer({id:'unlit',type:'line',source:'unlit',paint:{'line-color':'#8a96a3','line-width':0.7,'line-opacity':0.35}});
+  map.addLayer({id:'close',type:'line',source:'unlit',paint:{'line-color':col,'line-width':1.3,'line-opacity':0.6,'line-dasharray':[3,2]}});
   map.addLayer({id:'cellhit',type:'fill',source:'cells',paint:{'fill-color':'#000','fill-opacity':0}});
   map.addLayer({id:'cells',type:'line',source:'cells',paint:{'line-color':col,'line-width':1.5}});
   map.addLayer({id:'cell',type:'line',source:'cell',paint:{'line-color':col,'line-width':3.5}});
@@ -224,6 +258,13 @@ function openPopup(q,ll){
   map.addLayer({id:'lit',type:'symbol',source:'lit',layout:{'icon-image':['concat','sym-',['get','g']],'icon-allow-overlap':true,
     'icon-size':['interpolate',['linear'],['zoom'],3,0.55,6,0.8,9,1,12,1.2]}});
   map.on('click','lit',e=>openPopup(e.features[0].properties,e.features[0].geometry.coordinates));
+  map.on('click','unlithit',e=>{if(map.queryRenderedFeatures(e.point,{layers:['cellhit','lit']}).length)return;
+    const q=e.features[0].properties,left=META.effort_lit-q.m,pct=v=>Math.round(v*100)+'%';
+    if(popup)popup.remove();footprint(null);
+    popup=new maplibregl.Popup({maxWidth:'290px'}).setLngLat(e.lngLat).setHTML(`<div class="popbody"><div class="popsec">${META.groups[q.g][0]} · ${KM[q.t]} cell · not lit yet</div>`+
+      `<div class="poprow"><span>Observer-days so far</span><b>${q.m.toLocaleString('en')}</b></div>`+
+      `<div class="poprow"><span>To light up (${META.effort_lit}-day rule)</span><b>${left} more observer-day${left===1?'':'s'}</b></div>`+
+      (q.c>=0?`<div class="poprow"><span>Chao2 completeness</span><span>${pct(q.c)}</span></div>`:'')+'</div>').addTo(map);});
   map.on('click','cellhit',e=>{const q=e.features[0].properties;openPopup(q,e.lngLat);});
   map.on('mouseenter','lit',()=>map.getCanvas().style.cursor='pointer');
   map.on('mouseleave','lit',()=>map.getCanvas().style.cursor='');

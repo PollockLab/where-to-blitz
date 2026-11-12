@@ -131,7 +131,7 @@ def main(records_path, climate_path):
 
     gates, rows, agree, tally = [], [], [], []
     for res in TIERS:
-        markers = {}
+        markers, unlit = {}, {}
         for g in GROUPS:
             lat, hidden, df = tier_cells(rec, res, crs, g)
             built = doc["tiers"][str(res)]["groups"][g]["cells"]["complete"]
@@ -171,9 +171,19 @@ def main(records_path, climate_path):
                     lon[lit], latd[lit], *(df[k].to_numpy()[lit] for k in ("m", "s_obs", "comp", "comp_lo", "comp_hi",
                                                                             "lit_day")), flags[lit], ring[lit])
             ]
+            # Assessed but unlit cells, faint on the page so gaps read as "not yet": [observer-days,
+            # completeness or null, NW lon, NW lat, SE lon, SE lat]; the page rebuilds NE and SW.
+            comp = df.comp.to_numpy()
+            unlit[g] = [[int(mm), None if cp != cp else round(float(cp), 2), *rg[[0, 1, 4, 5]].tolist()]
+                        for mm, cp, rg in zip(df.m.to_numpy()[~lit], comp[~lit], ring[~lit].reshape(-1, 8))]
+            assert len(unlit[g]) + len(markers[g]) == n
         os.makedirs(DATA, exist_ok=True)
         with open(os.path.join(DATA, f"{res}.json"), "w") as fh:
             json.dump(markers, fh, separators=(",", ":"))
+        # One unlit file per group, so the page fetches only the ticked groups.
+        for g, cells in unlit.items():
+            with open(os.path.join(DATA, f"{res}_unlit_{SYMBOL[g][0].replace(' ', '_')}.json"), "w") as fh:
+                json.dump(cells, fh, separators=(",", ":"))
     write_outputs(gates, rows, agree, tally, dd_cuts, cmd_cuts, int(land.sum()))
 
 
