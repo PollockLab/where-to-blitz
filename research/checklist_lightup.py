@@ -16,7 +16,7 @@ applied unchanged at every tier. A cell takes the mean of the CHELSA samples who
     python research/checklist_lightup.py RECORDS.npz CHELSA.npz
 
 RECORDS.npz holds build_checklist.read_records' arrays. Writes research/results/checklist_lightup.md and
-.png, and research/checklist_lightup_data/ (per-tier lit cells and meta.json) that research/checklist_lightup.html
+.png, and cluster_results/checklist/lightup/ (per-tier lit cells and meta.json) that checklist/index.html
 loads; it also rebuilds
 the layer into cluster_results/lightup/checklist/ (not the shipped cluster_results/checklist/).
 """
@@ -42,7 +42,7 @@ TIERS = (5000, 25000, 100000)
 EFFORT_LIT = bc.RULE_OF_THUMB_UNITS
 TARGETS = (25, 50)
 SHIPPED = os.path.join(ROOT, "cluster_results", "checklist", "checklist.json")
-DATA = os.path.join(HERE, "checklist_lightup_data")
+DATA = os.path.join(os.path.dirname(HERE), "cluster_results", "checklist", "lightup")
 BOUNDARIES = os.path.join(ROOT, "cluster_results", "ca", "na_boundaries.geojson")
 CMD_LABELS = ("moist", "medium", "dry")
 

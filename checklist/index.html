@@ -88,10 +88,10 @@ h1{font-size:20.5px;line-height:1.16;margin:0 0 2px}
 </div></div>
 <div id="map"></div>
 </div>
-<div id="maplegend"><div class="lt">Complete checklists</div><div id="groups"></div><div class="hint" id="legendnote"></div></div>
+<div id="maplegend"><div class="lt">Complete checklists</div><div class="hint">Preview. Cells are lit by a rule under review; a lit cell is well observed, not proven complete.</div><div id="groups"></div><div class="hint" id="legendnote"></div></div>
 <script>
 'use strict';
-const DATA='checklist_lightup_data/';
+const DATA='../cluster_results/checklist/lightup/';
 const TIER_SWITCH_Z=9;   // the viewer's 25 km / 5 km switch (goal_presets.py)
 const TIER100_Z=4.5;     // 100 km below this zoom when the tier follows zoom
 const KM={5000:'5 km',25000:'25 km',100000:'100 km'};
@@ -115,14 +115,23 @@ function symbol(g,px){const c=document.createElement('canvas');c.width=c.height=
   else x.strokeRect(px*0.2,px*0.2,px*0.6,px*0.6);
   return c;}
 
-// The true cell as a thin square; the marker sits at the mean position of the group's records inside it.
+// Corners run NW NE SE SW, so a positive line-offset insets the outline into the cell.
+const ring=c=>[0,2,4,6,0].map(k=>[c[k],c[k+1]]);
+// A click thickens the clicked cell's outline (footprint view only).
 async function footprint(q){let data={type:'FeatureCollection',features:[]};
-  if(q){const c=(await load(q.t))[q.g][q.i][9],ring=[0,2,4,6,0].map(k=>[c[k],c[k+1]]);
-    data={type:'Feature',geometry:{type:'Polygon',coordinates:[ring]},properties:{}};}
+  if(q)data={type:'Feature',geometry:{type:'Polygon',coordinates:[ring((await load(q.t))[q.g][q.i][9])]},properties:{g:q.g}};
   map.getSource('cell').setData(data);}
-async function load(t){if(!cells[t])cells[t]=fetch(DATA+t+'.json').then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();});return cells[t];}
+// One object per lit cell: its true outline once the cell is wider on screen than the marker, else the marker.
+const MARKER_PX=14;
+function big(){const c=map.getCenter(),mpp=156543.03*Math.cos(c.lat*Math.PI/180)/2**map.getZoom();return tier()/mpp>MARKER_PX;}
+function showMode(){const b=big();
+  ['cells','cellhit','cell'].forEach(id=>map.setLayoutProperty(id,'visibility',b?'visible':'none'));
+  map.setLayoutProperty('lit','visibility',b?'none':'visible');}
+async function load(t){if(!cells[t])cells[t]=fetch(DATA+t+'.json').then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(j=>cells[t+'_raw']=j);return cells[t];}
 const fc=(rows,t)=>({type:'FeatureCollection',features:Object.entries(rows).flatMap(([g,list])=>list.map(p=>({type:'Feature',
   geometry:{type:'Point',coordinates:[p[0],p[1]]},properties:{g,t,i:list.indexOf(p),m:p[2],s:p[3],c:p[4],lo:p[5],hi:p[6],d:p[7]||'',f:p[8]}})))});
+const fcCells=pts=>({type:'FeatureCollection',features:pts.features.map(f=>({...f,
+  geometry:{type:'Polygon',coordinates:[ring(cells[f.properties.t+'_raw'][f.properties.g][f.properties.i][9])]}}))});
 
 const map=new maplibregl.Map({container:'map',center:[-96,58],zoom:3,minZoom:1,maxZoom:14,attributionControl:false,hash:'map',
   style:{version:8,sources:{osm:{type:'raster',tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],tileSize:256,maxzoom:19,
@@ -139,8 +148,13 @@ async function render(){
   document.querySelectorAll('#tier button').forEach(b=>b.classList.toggle('on',b.dataset.v===st.tier));
   document.getElementById('tiernote').textContent=st.tier==='auto'?'Showing '+KM[t]+' cells; zoom in for finer cells.':'Fixed at '+KM[t]+'.';
   const rows=await load(t);
-  if(shown!==t){map.getSource('lit').setData(fc(rows,t));shown=t;}
-  map.setFilter('lit',['all',['in',['get','g'],['literal',st.on]],['!=',['%',['floor',['/',['get','f'],bit()]],2],0]]);
+  if(shown!==t){const pts=fc(rows,t);map.getSource('lit').setData(pts);map.getSource('cells').setData(fcCells(pts));shown=t;footprint(null);}
+  const f=['all',['in',['get','g'],['literal',st.on]],['!=',['%',['floor',['/',['get','f'],bit()]],2],0]];
+  ['lit','cells','cellhit'].forEach(id=>map.setFilter(id,f));
+  // Inset by rank among ticked groups (fixed legend order), so groups lit in one cell nest instead of overlapping.
+  const off=['match',['get','g']];st.on.forEach((g,i)=>off.push(g,1+2*i));off.push(1);
+  ['cells','cell'].forEach(id=>map.setPaintProperty(id,'line-offset',st.on.length?off:1));
+  showMode();
   document.querySelectorAll('#groups label').forEach(l=>{const g=l.dataset.g;
     l.querySelector('.n').textContent=(rows[g]||[]).filter(p=>p[8]&bit()).length.toLocaleString('en');
     l.querySelector('input').checked=st.on.includes(g);});
@@ -184,7 +198,7 @@ function openPopup(q,ll){
   document.querySelector('#rule [data-v=effort]').textContent='≥ '+META.effort_lit+' observer-days';
   document.querySelector('#rule [data-v=chao2]').textContent='Chao2 ≥ '+Math.round(META.complete*100)+'%';
   document.getElementById('rulenote').textContent='Observer-days: one observer on one day in the cell. Chao2: species seen over species estimated, with at least '+META.min_units+' observer-days.';
-  document.getElementById('legendnote').textContent='Click a marker for its numbers.';
+  document.getElementById('legendnote').textContent='Each square is one grid cell (5, 25 or 100 km) whose list counts as well observed. Zoomed out, a cell shrinks to a small marker. Click one for its numbers.';
   const box=document.getElementById('groups');
   Object.keys(META.groups).forEach(g=>{const l=document.createElement('label');l.dataset.g=g;
     l.innerHTML='<input type="checkbox">';l.appendChild(symbol(g,24)).className='sym';
@@ -201,14 +215,20 @@ function openPopup(q,ll){
   groups.forEach(g=>map.addImage('sym-'+g,symbol(g,28).getContext('2d').getImageData(0,0,28,28),{pixelRatio:2}));
   map.addSource('lit',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
   map.addSource('cell',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
-  map.addLayer({id:'cell',type:'line',source:'cell',paint:{'line-color':'#16202c','line-width':1.2,'line-dasharray':[2,1]}});
+  map.addSource('cells',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
+  const col=['match',['get','g']];groups.forEach(g=>col.push(g,META.groups[g][1]));col.push('#787878');
+  map.addLayer({id:'cellhit',type:'fill',source:'cells',paint:{'fill-color':'#000','fill-opacity':0}});
+  map.addLayer({id:'cells',type:'line',source:'cells',paint:{'line-color':col,'line-width':1.5}});
+  map.addLayer({id:'cell',type:'line',source:'cell',paint:{'line-color':col,'line-width':3.5}});
   // Smaller when zoomed out so dense areas stay readable; 0.55 of 14 px is about 8 px, still clickable.
   map.addLayer({id:'lit',type:'symbol',source:'lit',layout:{'icon-image':['concat','sym-',['get','g']],'icon-allow-overlap':true,
     'icon-size':['interpolate',['linear'],['zoom'],3,0.55,6,0.8,9,1,12,1.2]}});
   map.on('click','lit',e=>openPopup(e.features[0].properties,e.features[0].geometry.coordinates));
+  map.on('click','cellhit',e=>{const q=e.features[0].properties;openPopup(q,e.lngLat);});
   map.on('mouseenter','lit',()=>map.getCanvas().style.cursor='pointer');
   map.on('mouseleave','lit',()=>map.getCanvas().style.cursor='');
-  map.on('zoomend',()=>{if(st.tier==='auto'&&tier()!==shown)render();});
+  map.on('zoomend',()=>{if(st.tier==='auto'&&tier()!==shown)render();else showMode();});
+  map.on('moveend',showMode);
   await render();
   document.body.dataset.ready='1';
 })();
