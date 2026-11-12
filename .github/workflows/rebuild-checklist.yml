@@ -39,6 +39,7 @@ jobs:
           snapshot_date=$(basename "$snapshot")
           echo "snapshot $snapshot_date"
           rx=$(cat /sys/class/net/eth0/statistics/rx_bytes)
+          (while sleep 60; do free -m | awk 'NR==2 {print "memory used " $3 " of " $2 " MB"}'; done) &
           python build_checklist.py --gbif "s3://gbif-open-data-us-east-1/${snapshot%/}" --export-date "$snapshot_date"
           echo "received $(( ($(cat /sys/class/net/eth0/statistics/rx_bytes) - rx) / 1000000 )) MB"
           tar -czf checklist.tar.gz -C cluster_results/checklist .

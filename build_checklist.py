@@ -281,12 +281,14 @@ def read_gbif(snapshot, lat5):
 
     `snapshot` is a snapshot folder such as s3://gbif-open-data-us-east-1/occurrence/2026-11-01.
     Species are GBIF backbone species keys and observers are recordedBy (the iNaturalist display
-    name, else login), both renumbered to dense ints; groups come from GBIF_GROUP's ranks.
+    name, else login), both hashed in DuckDB so no strings reach Python (a 64-bit collision among the
+    ~4x10^5 observers is ~10^-8 likely) and renumbered to dense ints; groups come from GBIF_GROUP's ranks.
     """
     import duckdb
 
     con = duckdb.connect()
-    con.execute("INSTALL httpfs; LOAD httpfs; SET s3_region = 'us-east-1'")
+    # A cap well under a 16 GB CI runner, which leaves room for the arrays built from the result.
+    con.execute("INSTALL httpfs; LOAD httpfs; SET s3_region = 'us-east-1'; SET memory_limit = '4GB'")
     # The snapshot's ~10k files are grouped by dataset, and a query reads its selected columns
     # from every file it scans, so find iNaturalist's ~1.2k files from datasetkey alone first.
     files = [
@@ -296,26 +298,27 @@ def read_gbif(snapshot, lat5):
             {"glob": f"{snapshot}/occurrence.parquet/*", "key": GBIF_INAT},
         ).fetchall()
     ]
+    print(f"{len(files)} iNaturalist files", flush=True)
     group = " ".join(
         f'WHEN "{rank}" IN ({", ".join(repr(n) for n in names)}) THEN {GROUP_CODE[g]}'
         for g, (rank, names) in GBIF_GROUP.items()
     )
     df = con.execute(
         f"""SELECT decimallongitude AS lon, decimallatitude AS lat, make_date(year, month, day) AS day,
-                   specieskey, CASE {group} ELSE 0 END AS grp, recordedby[1] AS observer,
+                   hash(specieskey) AS species, CASE {group} ELSE 0 END AS grp, hash(recordedby[1]) AS observer,
                    coordinateuncertaintyinmeters AS acc
             FROM read_parquet($files)
             WHERE datasetkey = $key AND specieskey IS NOT NULL AND recordedby[1] IS NOT NULL
               AND decimallongitude BETWEEN $w AND $e AND decimallatitude BETWEEN $s AND $n""",
         {"files": files, "key": GBIF_INAT, "w": BBOX[0], "s": BBOX[1], "e": BBOX[2], "n": BBOX[3]},
     ).df()
-    print(f"{len(files)} files, {len(df):,} records", flush=True)
+    print(f"{len(df):,} records", flush=True)
     return lattice_records(
         lat5,
         df.lon.to_numpy(),
         df.lat.to_numpy(),
         df.day.to_numpy(),
-        pd.factorize(df.specieskey)[0] + 1,
+        pd.factorize(df.species)[0] + 1,
         df.grp.to_numpy(),
         pd.factorize(df.observer)[0],
         df.acc.to_numpy(float),
