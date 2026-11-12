@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Complete checklists: light-up view</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<style>
+body{margin:0;font:14px system-ui,sans-serif;color:#222;display:flex;height:100vh}
+#map{flex:1}
+#side{width:290px;padding:14px 16px;border-left:1px solid #ddd;overflow:auto;background:#fff}
+h2{font-size:15px;margin:14px 0 6px;border-bottom:1px solid #999;padding-bottom:2px}
+label{display:block;margin:3px 0;cursor:pointer}
+.sq{display:inline-block;width:10px;height:10px;border:1.5px solid;margin:0 6px 0 4px;vertical-align:-1px}
+#latest li{margin:3px 0}
+.note{color:#666;font-size:12px}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="side">
+  <h2>Latest checklists</h2>
+  <ol id="latest"></ol>
+  <p id="latestnote" class="note"></p>
+  <h2>Complete checklists</h2>
+  <div id="legend"></div>
+  <h2>Lit when</h2>
+  <label><input type="radio" name="rule" value="effort" checked> <span id="effortlabel"></span></label>
+  <label><input type="radio" name="rule" value="chao2"> Chao2 completeness &ge; 0.9</label>
+  <h2>Cell size</h2>
+  <label><input type="radio" name="tier" value="5000"> 5 km</label>
+  <label><input type="radio" name="tier" value="25000"> 25 km</label>
+  <label><input type="radio" name="tier" value="100000" checked> 100 km</label>
+</div>
+<script>
+const D=__DATA__;
+const groups=Object.keys(D.groups);
+document.getElementById('effortlabel').textContent='≥ '+D.effort_lit+' observer-days';
+document.getElementById('legend').innerHTML=groups.map(g=>`<label><input type="checkbox" value="${g}" checked>`+
+  `<span class="sq" style="border-color:${D.groups[g][1]}"></span>${D.groups[g][0]} <span id="n-${g}" class="note"></span></label>`).join('');
+const state=()=>({rule:document.querySelector('[name=rule]:checked').value,
+  tier:document.querySelector('[name=tier]:checked').value,
+  on:[...document.querySelectorAll('#legend input:checked')].map(e=>e.value)});
+const fc=(g,s)=>({type:'FeatureCollection',features:(D.markers[`${s.tier}|${g}|${s.rule}`]||[]).map(p=>
+  ({type:'Feature',geometry:{type:'Point',coordinates:[p[0],p[1]]},properties:{date:p[2]}}))});
+function square(colour){
+  const c=document.createElement('canvas');c.width=c.height=14;const x=c.getContext('2d');
+  x.strokeStyle=colour;x.lineWidth=2;x.strokeRect(2,2,10,10);return x.getImageData(0,0,14,14);
+}
+const map=new maplibregl.Map({container:'map',center:[-96,62],zoom:2.4,attributionControl:false,
+  preserveDrawingBuffer:true,style:{version:8,sources:{},layers:[{id:'bg',type:'background',paint:{'background-color':'#fff'}}]}});
+map.on('load',()=>{
+  map.addSource('outline',{type:'geojson',data:D.outline});
+  map.addLayer({id:'outline',type:'line',source:'outline',paint:{'line-color':'#555','line-width':1}});
+  groups.forEach((g,i)=>{
+    map.addImage('sq-'+g,square(D.groups[g][1]));
+    map.addSource(g,{type:'geojson',data:fc(g,state())});
+    // Offset so two groups lit in the same cell sit side by side, as in the sketch.
+    map.addLayer({id:g,type:'symbol',source:g,layout:{'icon-image':'sq-'+g,'icon-allow-overlap':true,
+      'icon-offset':[i?8:-8,0]}});
+  });
+  update();
+  document.body.dataset.ready='1';
+});
+function update(){
+  const s=state();
+  groups.forEach(g=>{
+    map.getSource(g).setData(fc(g,s));
+    map.setLayoutProperty(g,'visibility',s.on.includes(g)?'visible':'none');
+    document.getElementById('n-'+g).textContent='('+fc(g,s).features.length+')';
+  });
+  const ol=document.getElementById('latest'),note=document.getElementById('latestnote');
+  if(s.rule!=='effort'){ol.innerHTML='';
+    note.textContent='Dates are shown for the observer-days rule only: Chao2 completeness can fall as well as rise, so a Chao2 cell has no single date it lit.';return;}
+  const ev=s.on.flatMap(g=>(D.markers[`${s.tier}|${g}|effort`]||[]).map(p=>({g,lon:p[0],lat:p[1],date:p[2]})));
+  ev.sort((a,b)=>b.date.localeCompare(a.date));
+  ol.innerHTML=ev.slice(0,8).map(e=>`<li><span class="sq" style="border-color:${D.groups[e.g][1]}"></span>`+
+    `${e.date} ${D.groups[e.g][0].toLowerCase()} near ${e.lat.toFixed(1)}, ${e.lon.toFixed(1)}</li>`).join('');
+  note.textContent='Date a cell reached its '+D.effort_lit+'th observer-day.';
+}
+document.querySelectorAll('input').forEach(e=>e.addEventListener('change',update));
+</script>
+</body>
+</html>
