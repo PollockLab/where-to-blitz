@@ -723,6 +723,8 @@ const I18N={
     cl_pop_far:(lit,unlit)=>`A species missing from this list turned up later ${lit}% of the time (${unlit}% in cells not yet well observed; next 10 observer-days, 2025–26 test).`,
     cl_pop_days:(n,need)=>`${n>=65535?'Over 65,000':n.toLocaleString('en')} observer-day${n===1?'':'s'} so far`+(need?`; <b>${need} more to light up</b>`:''),
     cl_pop_note:d=>`From iNaturalist research-grade records, ${d} export.`,
+    cl_need:"Observer-days to light up", cl_table_caption:"Up to 40 cells of 25 km closest to lighting up for this group, fewest observer-days first. Select a row to open its cell.",
+    cl_rank_aria:(i,la,lo,n)=>`Rank ${i}: latitude ${la}, longitude ${lo}, ${n} more observer-days to light up`,
     leak_note:`The walkthrough compares the all-time density blend with a separate score using earlier observations. This retrospective comparison does not establish how many species a visit to this cell will discover.`,
     foot:`<b style="color:var(--ink)">How it works:</b> <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">Blitz the Gap</a> is a Canada-wide bioblitz, go to a high-priority cell, record what you see on <a href="https://www.inaturalist.org" target="_blank" rel="noopener" style="color:var(--acc)">iNaturalist</a>, and your research-grade sightings flow into the <a href="https://www.inaturalist.org/projects/blitz-the-gap-2026-general" target="_blank" rel="noopener" style="color:var(--acc)">2026 project</a>. Led by the <a href="https://pollocklab.github.io/blitz-the-gap/" target="_blank" rel="noopener" style="color:var(--acc)">Pollock Lab</a> at McGill; a companion tool, not an official project page.<br><br><b style="color:var(--ink)">iNaturalist records show where people looked, not what lives there</b>, a planning aid, not a census.<br><br>This map spans many <b style="color:var(--ink)">Indigenous territories</b>, see whose at <a href="https://native-land.ca" target="_blank" rel="noopener" style="color:var(--acc)">native-land.ca</a>, obscure sensitive-species locations, and seek consent before recording on their lands.`,
     top_cells:"Top cells (accessible list)",
@@ -995,6 +997,8 @@ const I18N={
     cl_pop_far:(lit,unlit)=>`Une espèce absente de cette liste a été trouvée plus tard dans ${String(lit).replace('.',',')} % des cas (${String(unlit).replace('.',',')} % dans les cellules pas encore bien observées; 10 jours-observateur suivants, test 2025–2026).`,
     cl_pop_days:(n,need)=>`${n>=65535?'Plus de 65 000':n.toLocaleString('fr')} jour${n<2?'':'s'}-observateur jusqu'ici`+(need?`; <b>encore ${need} pour s'allumer</b>`:''),
     cl_pop_note:d=>`D'après les observations iNaturalist de qualité recherche, exportation du ${d}.`,
+    cl_need:"Jours-observateur pour s'allumer", cl_table_caption:"Jusqu'à 40 cellules de 25 km les plus proches de s'allumer pour ce groupe, du plus petit nombre de jours-observateur manquants au plus grand. Sélectionnez une ligne pour ouvrir sa cellule.",
+    cl_rank_aria:(i,la,lo,n)=>`Rang ${i} : latitude ${la}, longitude ${lo}, encore ${n} jours-observateur pour s'allumer`,
     leak_note:`Le guide compare la combinaison fondée sur la densité toutes périodes à un score distinct utilisant des observations antérieures. Cette comparaison rétrospective ne mesure pas combien d'espèces une visite permettra de découvrir.`,
     foot:`<b style="color:var(--ink)">Fonctionnement&nbsp;:</b> <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">Blitz the Gap</a> est un bioblitz pancanadien, rendez-vous dans une cellule prioritaire, notez ce que vous voyez sur <a href="https://www.inaturalist.org" target="_blank" rel="noopener" style="color:var(--acc)">iNaturalist</a>, et vos observations de qualité recherche alimentent le <a href="https://www.inaturalist.org/projects/blitz-the-gap-2026-general" target="_blank" rel="noopener" style="color:var(--acc)">projet 2026</a>. Mené par le <a href="https://pollocklab.github.io/blitz-the-gap/" target="_blank" rel="noopener" style="color:var(--acc)">Pollock Lab</a> de l'Université McGill; un outil complémentaire, non officiel.<br><br><b style="color:var(--ink)">Les observations iNaturalist montrent où les gens ont cherché, pas ce qui vit là</b>, un outil de planification, pas un inventaire.<br><br>Cette carte couvre de nombreux <b style="color:var(--ink)">territoires autochtones</b>, voyez lesquels sur <a href="https://native-land.ca" target="_blank" rel="noopener" style="color:var(--acc)">native-land.ca</a>, masquez les lieux d'espèces sensibles, et obtenez le consentement avant d'observer sur leurs terres.`,
     top_cells:"Meilleures cellules (liste accessible)",
@@ -2083,9 +2087,10 @@ function renderCellTable(){
   const active=document.activeElement,row=active&&active.closest&&active.closest('#celltable tr[data-la]');
   const origin=row?{element:row,row:{lat:row.dataset.la,lon:row.dataset.lo}}:null;
   const paint=html=>{el.innerHTML=html;if(origin)restorePopupFocus(origin);};
-  if(overlay!=='priority'){paint('<p>'+t('rank_layer_unavailable')+'</p>');return;}
+  const cl=clActive();
+  if(overlay!=='priority'&&!cl){paint('<p>'+t('rank_layer_unavailable')+'</p>');return;}
   if(caOnlyActive()&&!US_CELLS){paint('<p>'+t(_usFailed?'rank_mask_unavailable':'rank_mask_loading')+'</p>');return;}
-  const eligible=eligibleMarkers().filter(m=>Number.isFinite(m.t));
+  const eligible=eligibleMarkers().filter(m=>Number.isFinite(m.t)&&(!cl||m.need>0));   // a lit cell needs nothing
   const inView=state.view==='explore'&&_mapLoaded&&typeof map!=='undefined'&&map&&typeof map.getBounds==='function';
   let nearby=eligible;
   if(inView){
@@ -2093,10 +2098,10 @@ function renderCellTable(){
     // A fine viewport can fit inside one 25 km cell without containing its centre.
     if(!nearby.length){const centre=map.getCenter(),parent=parentMarker(centre.lat,centre.lng);nearby=parent&&eligible.includes(parent)?[parent]:[];}
   }
-  const top=nearby.map(m=>({r:m.r,t:m.t})).sort((a,b)=>b.t-a.t).slice(0,40);
+  const top=nearby.map(m=>({r:m.r,t:m.t,sc:cl?m.need:m.t*100|0})).sort((a,b)=>b.t-a.t).slice(0,40);
   if(!top.length){paint('<p>'+t(inView?'rank_no_cells_in_view':'rank_no_cells')+'</p>');return;}
-  paint('<table><caption>'+t(inView?'table_caption_view':'table_caption')+'</caption><thead><tr><th scope="col">'+t('table_rank')+'</th><th scope="col">'+t('table_latlon')+'</th><th scope="col">'+t('table_score')+'</th></tr></thead><tbody>'+
-    top.map((o,i)=>`<tr tabindex="0" role="button" data-la="${o.r[0]}" data-lo="${o.r[1]}" aria-label="${t('rank_aria',i+1,o.r[0].toFixed(2),o.r[1].toFixed(2),(o.t*100|0))}"><td>${i+1}</td><td>${o.r[0].toFixed(2)}, ${o.r[1].toFixed(2)}</td><td>${(o.t*100|0)}/100</td></tr>`).join('')+'</tbody></table>');
+  paint('<table><caption>'+t(cl?'cl_table_caption':inView?'table_caption_view':'table_caption')+'</caption><thead><tr><th scope="col">'+t('table_rank')+'</th><th scope="col">'+t('table_latlon')+'</th><th scope="col">'+t(cl?'cl_need':'table_score')+'</th></tr></thead><tbody>'+
+    top.map((o,i)=>`<tr tabindex="0" role="button" data-la="${o.r[0]}" data-lo="${o.r[1]}" aria-label="${t(cl?'cl_rank_aria':'rank_aria',i+1,o.r[0].toFixed(2),o.r[1].toFixed(2),o.sc)}"><td>${i+1}</td><td>${o.r[0].toFixed(2)}, ${o.r[1].toFixed(2)}</td><td>${o.sc}${cl?'':'/100'}</td></tr>`).join('')+'</tbody></table>');
   el.querySelectorAll('tr[data-la]').forEach(tr=>{const go=()=>{const la=+tr.dataset.la,lo=+tr.dataset.lo;map.jumpTo({center:[lo,la],zoom:8});state.view==='plan'?planTap(la,lo):exploreCell(la,lo);};tr.onclick=go;tr.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}};});
 }
 function priorityPercentiles(values){
@@ -2118,10 +2123,14 @@ function paintGECells(){
   markers.forEach(m=>{const cell=globalThis.geEvidence&&snapToLattice(m.r[0],m.r[1],25000),shown=!cell||globalThis.geEvidence.visible(25000,cell.col,cell.row);setCellState(m.i,_geLoading?null:geColour(m),shown?op:0);});
   applyCanadaMask();
 }
-// The outlines are drawn from the PNG (refreshCells5), so cells-fill stays a transparent click target.
+// The outlines are drawn from the PNG (refreshCells5), so cells-fill stays a transparent click target. Ranking
+// reuses m.t: fewest observer-days left to light up first, lit cells last.
 function paintCLCells(){
-  if(!clImage(25000)&&!_clLoading)loadCLVals(25000).then(()=>{if(clActive())recolour();},()=>{});   // a group change lands here first
-  markers.forEach(m=>setCellState(m.i,null,0));
+  const v=clImage(25000),lit=CL_META&&CL_META.rule_of_thumb_units;
+  if(!v&&!_clLoading)loadCLVals(25000).then(()=>{if(clActive())recolour();},()=>{});   // a group change lands here first
+  markers.forEach(m=>{const s=v&&snapToLattice(m.r[0],m.r[1],25000),n=s?clDays(v,s.col,s.row):-1;m.need=n<0?null:Math.max(0,lit-n);m.t=null;setCellState(m.i,null,0);});
+  const ranked=eligibleMarkers().filter(m=>m.need!==null),pct=priorityPercentiles(ranked.map(m=>m.need?-m.need:-lit-1));
+  ranked.forEach((m,i)=>{m.t=pct[i];});
   applyCanadaMask();
 }
 function recolour(){
@@ -2829,7 +2838,7 @@ async function planTrip(){
   planned=true;state.planMode='auto';
   if(!state.modeSet)applyAutoMode(greenestForAnyGap());
   const trips=document.getElementById('trips');const [slat,slon]=state.start,budget=state.budget,M=MODES[state.mode];
-  const all=eligibleMarkers().map(m=>{const km=haversine(slat,slon,m.r[0],m.r[1]);return {m,km,estOne:(km*ROAD_FACTOR)/M.kmh,imp:impact(m.r)};});
+  const all=eligibleMarkers().map(m=>{const km=haversine(slat,slon,m.r[0],m.r[1]);return {m,km,estOne:(km*ROAD_FACTOR)/M.kmh,imp:m.t||0};});   // m.t: the active goal's rank (checklist: fewest observer-days to light up)
   if(!all.length){trips.textContent=t(_usFailed?'rank_mask_unavailable':'rank_no_cells');return;}
   // Pick candidates BEFORE we know routability, so blend two signals: the highest-impact
   // cells AND the nearest cells. Picking by impact alone can hand back 8 cells that all

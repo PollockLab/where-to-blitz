@@ -13,6 +13,7 @@ from test_template_wiring import _i18n_keys, _i18n_segments
 CL_KEYS = (
     "crit_cl", "cl_loading", "cl_opacity", "aria_cl_opacity", "cl_status", "cl_legend", "cl_blurb",
     "method_cl", "cl_how", "pop_layer_cl", "cl_pop_pct", "cl_pop_days", "cl_pop_note", "cl_pop_far",
+    "cl_need", "cl_table_caption", "cl_rank_aria",
 )  # fmt: skip
 needs_node = pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
 

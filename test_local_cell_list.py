@@ -20,7 +20,7 @@ def _render(action="", lang="en"):
     script += _function(source, "t")
     script += """
 let _mapLoaded=true,overlay='priority',_usFailed=false,US_CELLS=new Set();
-const state={view:'explore'},gekey=(lat,lon)=>lat.toFixed(3)+','+lon.toFixed(3),caOnlyActive=()=>true;
+const state={view:'explore'},gekey=(lat,lon)=>lat.toFixed(3)+','+lon.toFixed(3),caOnlyActive=()=>true,clActive=()=>overlay==='checklist';
 const markers=[{r:[45.25,-75.5],t:0.24},{r:[45.75,-75],t:0.56},{r:[82,-80],t:1}];
 const table={innerHTML:'',querySelectorAll:()=>[]},document={getElementById:()=>table};
 let contains=([lon,lat])=>lat>=45&&lat<=46&&lon>=-76&&lon<=-74,parent=markers[0];
