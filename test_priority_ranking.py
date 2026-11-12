@@ -209,3 +209,24 @@ for(const m of eligible){{if(byScore.has(m.r[2]))assert.equal(m.t,byScore.get(m.
 const top=eligible.toSorted((a,b)=>b.t-a.t).slice(0,40);
 assert(top.every(m=>!US_CELLS.has(gekey(m.r[0],m.r[1]))));
 """)
+
+
+def test_checklist_ranks_cells_by_observer_days_left_into_the_list_and_trip_planner():
+    run_js("""
+US_CELLS=new Set(["77.190,-52.080"]);overlay="checklist";
+globalThis.CL_META={rule_of_thumb_units:30};
+const days={45:40,46:29,47:0,48:5,77:28};   // keyed by row = latitude; 47 has no records, 77 is foreign
+globalThis.clImage=()=>({w:1,h:1});globalThis.snapToLattice=(la,lo)=>({col:0,row:Math.floor(la)});
+globalThis.clDays=(v,col,row)=>days[row];
+markers=[cell(45,-75,1),cell(46,-76,0),cell(47,-77,0),cell(48,-78,0),cell(77.19,-52.08,1)];
+recolour();
+assert.deepEqual(markers.map(m=>m.need),[0,1,30,25,2]);
+assert.equal(markers[4].t,null);
+assert(markers[1].t>markers[3].t&&markers[3].t>markers[2].t&&markers[2].t>markers[0].t);
+const at=la=>table.innerHTML.indexOf('data-la="'+la+'"');
+assert(at(46)>=0&&at(46)<at(48)&&at(48)<at(47));
+assert.equal(at(45),-1);assert.equal(at(77.19),-1);   // lit cells need nothing; foreign cells never rank
+assert(table.innerHTML.includes('cl_need')&&!table.innerHTML.includes('/100'));
+await planTrip();
+assert(routeRequests[0].includes("-76,46"));   // the closest cell to lighting up is routed first
+""")

@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Where to Blitz</title>
+<meta http-equiv="refresh" content="0; url=../?goal=cl">
+<link rel="canonical" href="../?goal=cl">
+<script>
+// The light-up preview moved into the main viewer's "Complete a checklist" goal; keep the first ticked group of old links.
+const g=(new URLSearchParams(location.hash.slice(1)).get('groups')||'').split(',')[0];
+location.replace('../?goal=cl'+(g?'&g='+encodeURIComponent(g):''));
+</script>
+</head>
+<body><p><a href="../?goal=cl">Where to Blitz: Complete a checklist</a></p></body>
+</html>

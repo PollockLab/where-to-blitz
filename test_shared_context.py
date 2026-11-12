@@ -112,7 +112,7 @@ document.createElement=()=>({dataset:{},appendChild(){},setAttribute(){}});
     if real_overlay:
         script += "\nconst OVERLAY_TOGGLE={coverage:'tgCoverage',gettingeven:'tgGettingEven',climate:'tgClimateGap',checklist:''};"
         script += "\nlet _overlaySeq=0;async function loadGE(){GE_LOADED=true;};"
-        script += "\nlet CL_LOADED=false;const clImage=()=>CL_LOADED;async function loadCLVals(){CL_LOADED=true;}"
+        script += "\nlet CL_LOADED=false;const clImage=()=>CL_LOADED,clStatus=()=>0;async function loadCLVals(){CL_LOADED=true;}"
         script += _function(src, "setOverlay")
     if controls:
         if "function refreshProspectGroup(" in src:

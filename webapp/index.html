@@ -713,17 +713,18 @@ const I18N={
     pop_layer_ge:"Getting Even: group recommendation, no national percentile.",
     pop_layer_climate:"Climate Gap: no national percentile.",
     pop_layer_density:"Sampling density: no national percentile.",
-    crit_cl:"Complete a checklist", cl_loading:"Loading checklist completeness…", cl_opacity:"Checklist cell opacity", aria_cl_opacity:"Checklist cell opacity",
-    cl_status:["Complete","Nearly complete","Far from complete","Too few records"],
-    cl_legend:(complete,close,min)=>[`Complete (≥${complete}% of estimated species recorded)`,`Nearly complete (${close}–${complete}%)`,`Far from complete (<${close}%)`,`Too few records (<${min} observer-days)`],
-    cl_blurb:"How close each cell is to a full species list for the selected group: a complete list shows which species are probably absent. Colours show completeness, not priority. Tap a cell to see the effort left.", cl_how:"How completeness is measured",
-    method_cl:`<b>Why it matters.</b> iNaturalist records show where species were seen, never where they were missed. A nearly complete list turns missing species into likely absences, which let distribution models estimate how common a species is (Phillips &amp; Elith 2013).<br><br><b>Effort</b> is counted in observer-days, one person recording on one day: one person on 30 days or a 30-person blitz both make 30.<br><br><b>Method.</b> Completeness is species recorded ÷ species estimated. The estimate, Chao2 (Chao 1987), reads the species seen on only one or two observer-days: many of them signal many still unseen. Effort left extends each cell's species-accumulation curve (iNEXT, Chao et al. 2014) and is not given beyond double the effort so far. Uneven sampling, such as one trail or one season, can overstate completeness. <a href="https://github.com/PollockLab/where-to-blitz/blob/main/METHODOLOGY.md#the-complete-a-checklist-layer" target="_blank" rel="noopener">Full method and limits</a>`,
-    pop_layer_cl:"Complete a checklist: inventory completeness, no national percentile.",
-    cl_pop_pct:p=>`${p}% of estimated species recorded`,
-    cl_pop_ci:(lo,hi,maybe)=>` (likely ${lo}–${hi}%`+(maybe?', may already be complete':'')+')',
-    cl_pop_effort:(x,n,c)=>x>n||x>=65535?`<b>Over ${n>=65535?'65,000':n.toLocaleString('en')} more observer-days</b> to reach ${c}%, more than double the effort so far: too far to estimate reliably. Try a narrower species group.`:`<b>About ${x.toLocaleString('en')} more observer-day${x===1?'':'s'}</b> to reach ${c}% (${n>=65535?'over 65,000':n.toLocaleString('en')} so far)`,
-    cl_pop_days:(n,k)=>`${n>=65535?'Over 65,000':n.toLocaleString('en')} observer-day${n===1?'':'s'} so far`+(k?`; complete lists typically take about ${k}`:'; more visits add few species here'),
-    cl_pop_note:d=>`Chao2 estimate from iNaturalist research-grade records, ${d} export.`,
+    crit_cl:"Complete a checklist", cl_loading:"Loading checklist effort…", cl_opacity:"Checklist outline opacity", aria_cl_opacity:"Checklist outline opacity",
+    cl_status:["Well observed","Close","Not yet"],
+    cl_legend:(n,half)=>[`Well observed (≥${n} observer-days)`,`Close (${half}–${n-1})`,`Not yet (<${half})`],
+    cl_blurb:"Which cells have a well-observed species list for the selected group: a cell lights up at 30 observer-days. Outlines show effort, not priority. Tap a cell to see how many more observer-days it needs.", cl_how:"How cells light up",
+    method_cl:`<b>Why it matters.</b> iNaturalist records show where species were seen, never where they were missed. A well-observed list turns missing species into likely absences, which let distribution models estimate how common a species is (Phillips &amp; Elith 2013).<br><br><b>Effort</b> is counted in observer-days, one person recording on one day: one person on 30 days or a 30-person blitz both make 30.<br><br><b>Method.</b> A cell is well observed once the group reaches 30 observer-days there, and close from 15. On later records, a species missing from a well-observed 5&nbsp;km list turned up less than half as often as in other cells (amphibians and mammals). The popup also gives Chao2 completeness (Chao 1987), species recorded ÷ species estimated, with its 95% interval: an estimate, not a status. Uneven sampling, such as one trail or one season, can overstate it. <a href="https://github.com/PollockLab/where-to-blitz/blob/main/METHODOLOGY.md#the-complete-a-checklist-layer" target="_blank" rel="noopener">Full method and limits</a>`,
+    pop_layer_cl:"Complete a checklist: lit by observer-days, no national percentile.",
+    cl_pop_pct:(p,lo,hi)=>`Chao2 completeness estimate: ${p}%`+(lo==null?'':` (95% interval ${lo}–${hi}%)`),
+    cl_pop_far:(lit,unlit)=>`A species missing from this list turned up later ${lit}% of the time (${unlit}% in cells not yet well observed; next 10 observer-days, 2025–26 test).`,
+    cl_pop_days:(n,need)=>`${n>=65535?'Over 65,000':n.toLocaleString('en')} observer-day${n===1?'':'s'} so far`+(need?`; <b>${need} more to light up</b>`:''),
+    cl_pop_note:d=>`From iNaturalist research-grade records, ${d} export.`,
+    cl_need:"Observer-days to light up", cl_table_caption:"Up to 40 cells of 25 km closest to lighting up for this group, fewest observer-days first. Select a row to open its cell.",
+    cl_rank_aria:(i,la,lo,n)=>`Rank ${i}: latitude ${la}, longitude ${lo}, ${n} more observer-days to light up`,
     leak_note:`The walkthrough compares the all-time density blend with a separate score using earlier observations. This retrospective comparison does not establish how many species a visit to this cell will discover.`,
     foot:`<b style="color:var(--ink)">How it works:</b> <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">Blitz the Gap</a> is a Canada-wide bioblitz, go to a high-priority cell, record what you see on <a href="https://www.inaturalist.org" target="_blank" rel="noopener" style="color:var(--acc)">iNaturalist</a>, and your research-grade sightings flow into the <a href="https://www.inaturalist.org/projects/blitz-the-gap-2026-general" target="_blank" rel="noopener" style="color:var(--acc)">2026 project</a>. Led by the <a href="https://pollocklab.github.io/blitz-the-gap/" target="_blank" rel="noopener" style="color:var(--acc)">Pollock Lab</a> at McGill; a companion tool, not an official project page.<br><br><b style="color:var(--ink)">iNaturalist records show where people looked, not what lives there</b>, a planning aid, not a census.<br><br>This map spans many <b style="color:var(--ink)">Indigenous territories</b>, see whose at <a href="https://native-land.ca" target="_blank" rel="noopener" style="color:var(--acc)">native-land.ca</a>, obscure sensitive-species locations, and seek consent before recording on their lands.`,
     top_cells:"Top cells (accessible list)",
@@ -986,17 +987,18 @@ const I18N={
     pop_layer_ge:"Combler l'écart : groupe recommandé, aucun centile national.",
     pop_layer_climate:"Lacune climatique : aucun centile national.",
     pop_layer_density:"Densité d'observations : aucun centile national.",
-    crit_cl:"Compléter une liste d'espèces", cl_loading:"Chargement de la complétude des listes…", cl_opacity:"Opacité des cellules Liste d'espèces", aria_cl_opacity:"Opacité des cellules Liste d'espèces",
-    cl_status:["Complète","Presque complète","Loin d'être complète","Trop peu d'observations"],
-    cl_legend:(complete,close,min)=>[`Complète (≥ ${complete} % des espèces estimées observées)`,`Presque complète (${close}–${complete} %)`,`Loin d'être complète (< ${close} %)`,`Trop peu d'observations (< ${min} jours-observateur)`],
-    cl_blurb:"Montre à quel point chaque cellule est proche d'une liste d'espèces complète pour le groupe choisi : une liste complète montre les espèces probablement absentes. Les couleurs montrent la complétude, pas une priorité. Touchez une cellule pour voir l'effort restant.", cl_how:"Comment la complétude est mesurée",
-    method_cl:`<b>Pourquoi c'est important.</b> Les observations iNaturalist montrent où une espèce a été vue, jamais où elle a été cherchée sans succès. Une liste presque complète transforme les espèces manquantes en absences probables, qui permettent aux modèles de répartition d'estimer la fréquence d'une espèce (Phillips &amp; Elith 2013).<br><br><b>L'effort</b> se compte en jours-observateur, soit une personne qui observe pendant une journée : une personne pendant 30 jours ou un blitz de 30 personnes en comptent tous deux 30.<br><br><b>Méthode.</b> La complétude est le nombre d'espèces observées ÷ le nombre estimé. L'estimation, Chao2 (Chao 1987), s'appuie sur les espèces vues lors d'un ou deux jours-observateur seulement : plus ces espèces sont nombreuses, plus il reste d'espèces à trouver. L'effort restant prolonge la courbe d'accumulation d'espèces de chaque cellule (iNEXT, Chao et al. 2014) et n'est pas calculé au-delà du double de l'effort actuel. Un échantillonnage inégal, par exemple sur un seul sentier ou pendant une seule saison, peut surestimer la complétude. <a href="https://github.com/PollockLab/where-to-blitz/blob/main/METHODOLOGY.md#the-complete-a-checklist-layer" target="_blank" rel="noopener">Méthode complète et limites (en anglais)</a>`,
-    pop_layer_cl:"Compléter une liste d'espèces : complétude de l'inventaire, aucun centile national.",
-    cl_pop_pct:p=>`${p} % des espèces estimées observées`,
-    cl_pop_ci:(lo,hi,maybe)=>` (probablement ${lo}–${hi} %`+(maybe?', peut-être déjà complète':'')+')',
-    cl_pop_effort:(x,n,c)=>x>n||x>=65535?`<b>Plus de ${n>=65535?'65 000':n.toLocaleString('fr')} jours-observateur supplémentaires</b> pour atteindre ${c} %, plus du double de l'effort actuel : trop loin pour une estimation fiable. Essayez un groupe d'espèces plus restreint.`:`<b>Environ ${x.toLocaleString('fr')} jour${x===1?'':'s'}-observateur supplémentaire${x===1?'':'s'}</b> pour atteindre ${c} % (${n>=65535?'plus de 65 000':n.toLocaleString('fr')} jusqu'ici)`,
-    cl_pop_days:(n,k)=>`${n>=65535?'Plus de 65 000':n.toLocaleString('fr')} jour${n<2?'':'s'}-observateur jusqu'ici`+(k?`; une liste complète en demande généralement environ ${k}`:'; de nouvelles visites y ajoutent peu d\'espèces'),
-    cl_pop_note:d=>`Estimation Chao2 à partir des observations iNaturalist de qualité recherche, exportation du ${d}.`,
+    crit_cl:"Compléter une liste d'espèces", cl_loading:"Chargement de l'effort des listes…", cl_opacity:"Opacité des contours Liste d'espèces", aria_cl_opacity:"Opacité des contours Liste d'espèces",
+    cl_status:["Bien observée","Presque","Pas encore"],
+    cl_legend:(n,half)=>[`Bien observée (≥ ${n} jours-observateur)`,`Presque (${half}–${n-1})`,`Pas encore (< ${half})`],
+    cl_blurb:"Montre les cellules dont la liste d'espèces est bien observée pour le groupe choisi : une cellule s'allume à 30 jours-observateur. Les contours montrent l'effort, pas une priorité. Touchez une cellule pour voir combien de jours-observateur il lui manque.", cl_how:"Comment une cellule s'allume",
+    method_cl:`<b>Pourquoi c'est important.</b> Les observations iNaturalist montrent où une espèce a été vue, jamais où elle a été cherchée sans succès. Une liste bien observée transforme les espèces manquantes en absences probables, qui permettent aux modèles de répartition d'estimer la fréquence d'une espèce (Phillips &amp; Elith 2013).<br><br><b>L'effort</b> se compte en jours-observateur, soit une personne qui observe pendant une journée : une personne pendant 30 jours ou un blitz de 30 personnes en comptent tous deux 30.<br><br><b>Méthode.</b> Une cellule est bien observée dès que le groupe y atteint 30 jours-observateur, et presque à partir de 15. Dans les observations ultérieures, une espèce absente d'une liste de 5&nbsp;km bien observée a été trouvée plus de deux fois moins souvent que dans les autres cellules (amphibiens et mammifères). La fenêtre contextuelle donne aussi la complétude Chao2 (Chao 1987), espèces observées ÷ espèces estimées, avec son intervalle à 95 % : une estimation, pas un statut. Un échantillonnage inégal, par exemple sur un seul sentier ou pendant une seule saison, peut la surestimer. <a href="https://github.com/PollockLab/where-to-blitz/blob/main/METHODOLOGY.md#the-complete-a-checklist-layer" target="_blank" rel="noopener">Méthode complète et limites (en anglais)</a>`,
+    pop_layer_cl:"Compléter une liste d'espèces : allumée selon les jours-observateur, aucun centile national.",
+    cl_pop_pct:(p,lo,hi)=>`Complétude estimée (Chao2) : ${p} %`+(lo==null?'':` (intervalle à 95 % : ${lo}–${hi} %)`),
+    cl_pop_far:(lit,unlit)=>`Une espèce absente de cette liste a été trouvée plus tard dans ${String(lit).replace('.',',')} % des cas (${String(unlit).replace('.',',')} % dans les cellules pas encore bien observées; 10 jours-observateur suivants, test 2025–2026).`,
+    cl_pop_days:(n,need)=>`${n>=65535?'Plus de 65 000':n.toLocaleString('fr')} jour${n<2?'':'s'}-observateur jusqu'ici`+(need?`; <b>encore ${need} pour s'allumer</b>`:''),
+    cl_pop_note:d=>`D'après les observations iNaturalist de qualité recherche, exportation du ${d}.`,
+    cl_need:"Jours-observateur pour s'allumer", cl_table_caption:"Jusqu'à 40 cellules de 25 km les plus proches de s'allumer pour ce groupe, du plus petit nombre de jours-observateur manquants au plus grand. Sélectionnez une ligne pour ouvrir sa cellule.",
+    cl_rank_aria:(i,la,lo,n)=>`Rang ${i} : latitude ${la}, longitude ${lo}, encore ${n} jours-observateur pour s'allumer`,
     leak_note:`Le guide compare la combinaison fondée sur la densité toutes périodes à un score distinct utilisant des observations antérieures. Cette comparaison rétrospective ne mesure pas combien d'espèces une visite permettra de découvrir.`,
     foot:`<b style="color:var(--ink)">Fonctionnement&nbsp;:</b> <a href="https://blitzthegap.org" target="_blank" rel="noopener" style="color:var(--acc)">Blitz the Gap</a> est un bioblitz pancanadien, rendez-vous dans une cellule prioritaire, notez ce que vous voyez sur <a href="https://www.inaturalist.org" target="_blank" rel="noopener" style="color:var(--acc)">iNaturalist</a>, et vos observations de qualité recherche alimentent le <a href="https://www.inaturalist.org/projects/blitz-the-gap-2026-general" target="_blank" rel="noopener" style="color:var(--acc)">projet 2026</a>. Mené par le <a href="https://pollocklab.github.io/blitz-the-gap/" target="_blank" rel="noopener" style="color:var(--acc)">Pollock Lab</a> de l'Université McGill; un outil complémentaire, non officiel.<br><br><b style="color:var(--ink)">Les observations iNaturalist montrent où les gens ont cherché, pas ce qui vit là</b>, un outil de planification, pas un inventaire.<br><br>Cette carte couvre de nombreux <b style="color:var(--ink)">territoires autochtones</b>, voyez lesquels sur <a href="https://native-land.ca" target="_blank" rel="noopener" style="color:var(--acc)">native-land.ca</a>, masquez les lieux d'espèces sensibles, et obtenez le consentement avant d'observer sur leurs terres.`,
     top_cells:"Meilleures cellules (liste accessible)",
@@ -1253,14 +1255,16 @@ function geCat(v,col,row){
   const k=(row*v.w+col)*4;
   return (v.d[k+3]<128||v.d[k]===GE_UNSCORED)?-1:v.d[k];
 }
-// Complete a checklist: Chao2 inventory completeness per cell for the SELECTED group (build_checklist.py).
-// One PNG per (tier, group), same lattice index space as Getting Even: R=round(completeness*250),
-// G*256+B=observer-days, A=255 where the group has records, 64 for a Canadian cell without any, 0 outside
-// Canada. A _ci PNG holds the 95% interval and sample coverage for the popup, an _effort PNG the extra
-// observer-days to reach the complete band (R*256+G). Bands and the effort
-// floor come from the sidecar, so a threshold change is not a rebuild. CVD-safe ColorBrewer RdBu stops;
-// too few = GE's grey.
-const CL_DIR='cluster_results/checklist/', CL_PAL=['#2166AC','#67A9CF','#EF8A62',GE_ALL], CL_FEW=3, CL_VALS={};
+// Complete a checklist: a cell lights up once the SELECTED group reaches rule_of_thumb_units observer-days
+// (build_checklist.py). One PNG per (tier, group), same lattice index space as Getting Even: R=round(Chao2
+// completeness*250), G*256+B=observer-days, A=255 where the group has records, 64 for a Canadian cell without
+// any, 0 outside Canada. A _ci PNG holds the 95% interval for the popup. Chao2 is popup-only, never a status.
+// Lit, close (half way) and not yet are drawn as outlines; CVD-safe ColorBrewer RdBu blues, not yet = GE's grey.
+const CL_DIR='cluster_results/checklist/', CL_PAL=['#2166AC','#67A9CF',GE_ALL], CL_VALS={};
+// False-absence rate of the 30 observer-day rule on 5 km test cells, lit vs unlit, in percent. Source:
+// research/results/checklist_calibrated.md, table "H-S2: false-absence rate at 5 km" (branch research/checklist-calibrated).
+// Only these two groups at 5 km were measured, so the popup says nothing elsewhere.
+const CL_FAR={Amphibia:[3.6,9.1],Mammalia:[2.1,4.9]};
 let CL_META=null,clOpacity=0.62;
 async function loadCLMeta(){
   if(CL_META)return CL_META;
@@ -1275,32 +1279,37 @@ async function loadCLVals(res){
   return cachedPng(CL_VALS,res+'|'+g,CL_DIR+entry.png);
 }
 function clImage(res){return CL_META&&CL_VALS[res+'|'+state.taxon];}
-// part 'ci' or 'effort': the popup-only PNGs, fetched on first popup.
+// The popup-only 95% interval PNG, fetched on first popup.
 async function loadCLPart(res,part){
   const g=state.taxon,entry=(await loadCLMeta()).tiers[String(res)]?.groups?.[g];
   if(!entry?.[part+'_png'])throw new Error('No checklist '+part+' layer for '+g+' at '+res+' m');
   return cachedPng(CL_VALS,res+'|'+g+'|'+part,CL_DIR+entry[part+'_png']);
 }
-// 0 complete, 1 close, 2 far, CL_FEW too few observer-days (or no records); -1 outside Canada or off the raster.
-// Unlike Getting Even, "too few records" is true of every Canadian cell it is drawn on, so 5 km draws it too.
-// Compares in the pixel's own 0..250 units so 0.9 and 0.7 land exactly on 225 and 175.
-function clStatus(v,col,row){
+// Observer-days of the cell: 0 for a Canadian cell without records, -1 outside Canada or off the raster.
+function clDays(v,col,row){
   if(col<0||row<0||col>=v.w||row>=v.h)return -1;
-  const k=(row*v.w+col)*4,b=CL_META.bands;
-  if(v.d[k+3]<32)return -1;
-  if(v.d[k+3]<128||v.d[k+1]*256+v.d[k+2]<CL_META.min_units)return CL_FEW;
-  return v.d[k]>=Math.round(b.complete*250)?0:v.d[k]>=Math.round(b.close*250)?1:2;
+  const k=(row*v.w+col)*4;
+  return v.d[k+3]<32?-1:v.d[k+3]<128?0:v.d[k+1]*256+v.d[k+2];
+}
+// 0 lit (well observed), 1 close (half way or more), 2 not yet; -1 not drawn. Every Canadian cell is drawn.
+function clStatus(v,col,row){
+  const n=clDays(v,col,row),lit=CL_META.rule_of_thumb_units;
+  return n<0?-1:n>=lit?0:n>=Math.ceil(lit/2)?1:2;
 }
 function clPopup(lat,lon,resM){
   const v=clImage(resM),s=v&&snapToLattice(lat,lon,resM);
   if(!v){loadCLVals(resM).then(paintPopScore,()=>{});return t('cl_loading');}
-  const status=s?clStatus(v,s.col,s.row):-1;if(status<0)return t('cl_status')[CL_FEW];
-  const k=(s.row*v.w+s.col)*4,days=v.d[k+3]<128?0:v.d[k+1]*256+v.d[k+2];
-  const judged=status!==CL_FEW,part=p=>{const img=judged&&CL_VALS[resM+'|'+state.taxon+'|'+p];if(judged&&!img)loadCLPart(resM,p).then(paintPopScore,()=>{});return img&&img.d[k+3]>=128&&img;};
-  const ci=part('ci'),ef=status===1||status===2?part('effort'):null,more=ef&&ef.d[k]*256+ef.d[k+1];
-  const iv=ci?t('cl_pop_ci',Math.round(ci.d[k]*0.4),Math.round(ci.d[k+1]*0.4),status>0&&ci.d[k+1]>=Math.round(CL_META.bands.complete*250)):'';
-  return '<b>'+t('cl_status')[status]+'</b>'+(days?'<br>'+t('cl_pop_pct',Math.round(v.d[k]*0.4))+iv:'')+
-    '<br>'+(more?t('cl_pop_effort',more,days,Math.round(CL_META.bands.complete*100)):t('cl_pop_days',days,status?CL_META.rule_of_thumb_units:0))+'<br><span class="hint">'+t('cl_pop_note',esc(CL_META.source?.export_date??'?'))+'</span>';
+  const days=s?clDays(v,s.col,s.row):-1;if(days<0)return t('cl_status')[2];
+  const k=(s.row*v.w+s.col)*4,status=clStatus(v,s.col,s.row),lit=CL_META.rule_of_thumb_units;
+  let pct='';
+  if(days>=CL_META.min_units){   // below the floor the builder leaves Chao2 unestimated
+    const ci=CL_VALS[resM+'|'+state.taxon+'|ci'];if(!ci)loadCLPart(resM,'ci').then(paintPopScore,()=>{});
+    const iv=ci&&ci.d[k+3]>=128;
+    pct='<br>'+t('cl_pop_pct',Math.round(v.d[k]*0.4),iv?Math.round(ci.d[k]*0.4):null,iv?Math.round(ci.d[k+1]*0.4):null);
+  }
+  const far=status===0&&resM===5000&&CL_FAR[state.taxon];
+  return '<b>'+t('cl_status')[status]+'</b><br>'+t('cl_pop_days',days,Math.max(0,lit-days))+pct+
+    (far?'<br>'+t('cl_pop_far',...far):'')+'<br><span class="hint">'+t('cl_pop_note',esc(CL_META.source?.export_date??'?'))+'</span>';
 }
 // One data overlay at a time. Coverage used to read its own hidden checkbox, Getting Even read
 // its own, and the priority grid was whatever was left, so every listener had to reach across and
@@ -1361,7 +1370,7 @@ function setOverlay(kind){
 // The 25 km lattice outline is the shape of the goal grid, so it explains the cells it traces.
 // Under a raster overlay (iNat density, climate gap) it traces nothing the pixels below it share,
 // and just reads as chart junk over the data. Hide it while one of those is up.
-function setGridLines(){if(_mapLoaded&&map.getLayer('cells-line'))map.setLayoutProperty('cells-line','visibility',(covOn()||climateOn()||(globalThis.optionalLayers&&globalThis.optionalLayers.isDiscovery()))?'none':'visible');}
+function setGridLines(){if(_mapLoaded&&map.getLayer('cells-line'))map.setLayoutProperty('cells-line','visibility',(covOn()||climateOn()||clActive()||(globalThis.optionalLayers&&globalThis.optionalLayers.isDiscovery()))?'none':'visible');}
 function caOnlyActive(){const e=document.getElementById('tgCanadaOnly');return e?e.checked:true;}        // issue #20 removed the toggle; behaviour stays on by default
 // The shared country mask governs ranking and candidate eligibility as well as rendering.
 let US_CELLS=null;
@@ -2078,9 +2087,10 @@ function renderCellTable(){
   const active=document.activeElement,row=active&&active.closest&&active.closest('#celltable tr[data-la]');
   const origin=row?{element:row,row:{lat:row.dataset.la,lon:row.dataset.lo}}:null;
   const paint=html=>{el.innerHTML=html;if(origin)restorePopupFocus(origin);};
-  if(overlay!=='priority'){paint('<p>'+t('rank_layer_unavailable')+'</p>');return;}
+  const cl=clActive();
+  if(overlay!=='priority'&&!cl){paint('<p>'+t('rank_layer_unavailable')+'</p>');return;}
   if(caOnlyActive()&&!US_CELLS){paint('<p>'+t(_usFailed?'rank_mask_unavailable':'rank_mask_loading')+'</p>');return;}
-  const eligible=eligibleMarkers().filter(m=>Number.isFinite(m.t));
+  const eligible=eligibleMarkers().filter(m=>Number.isFinite(m.t)&&(!cl||m.need>0));   // a lit cell needs nothing
   const inView=state.view==='explore'&&_mapLoaded&&typeof map!=='undefined'&&map&&typeof map.getBounds==='function';
   let nearby=eligible;
   if(inView){
@@ -2088,10 +2098,10 @@ function renderCellTable(){
     // A fine viewport can fit inside one 25 km cell without containing its centre.
     if(!nearby.length){const centre=map.getCenter(),parent=parentMarker(centre.lat,centre.lng);nearby=parent&&eligible.includes(parent)?[parent]:[];}
   }
-  const top=nearby.map(m=>({r:m.r,t:m.t})).sort((a,b)=>b.t-a.t).slice(0,40);
+  const top=nearby.map(m=>({r:m.r,t:m.t,sc:cl?m.need:m.t*100|0})).sort((a,b)=>b.t-a.t).slice(0,40);
   if(!top.length){paint('<p>'+t(inView?'rank_no_cells_in_view':'rank_no_cells')+'</p>');return;}
-  paint('<table><caption>'+t(inView?'table_caption_view':'table_caption')+'</caption><thead><tr><th scope="col">'+t('table_rank')+'</th><th scope="col">'+t('table_latlon')+'</th><th scope="col">'+t('table_score')+'</th></tr></thead><tbody>'+
-    top.map((o,i)=>`<tr tabindex="0" role="button" data-la="${o.r[0]}" data-lo="${o.r[1]}" aria-label="${t('rank_aria',i+1,o.r[0].toFixed(2),o.r[1].toFixed(2),(o.t*100|0))}"><td>${i+1}</td><td>${o.r[0].toFixed(2)}, ${o.r[1].toFixed(2)}</td><td>${(o.t*100|0)}/100</td></tr>`).join('')+'</tbody></table>');
+  paint('<table><caption>'+t(cl?'cl_table_caption':inView?'table_caption_view':'table_caption')+'</caption><thead><tr><th scope="col">'+t('table_rank')+'</th><th scope="col">'+t('table_latlon')+'</th><th scope="col">'+t(cl?'cl_need':'table_score')+'</th></tr></thead><tbody>'+
+    top.map((o,i)=>`<tr tabindex="0" role="button" data-la="${o.r[0]}" data-lo="${o.r[1]}" aria-label="${t(cl?'cl_rank_aria':'rank_aria',i+1,o.r[0].toFixed(2),o.r[1].toFixed(2),o.sc)}"><td>${i+1}</td><td>${o.r[0].toFixed(2)}, ${o.r[1].toFixed(2)}</td><td>${o.sc}${cl?'':'/100'}</td></tr>`).join('')+'</tbody></table>');
   el.querySelectorAll('tr[data-la]').forEach(tr=>{const go=()=>{const la=+tr.dataset.la,lo=+tr.dataset.lo;map.jumpTo({center:[lo,la],zoom:8});state.view==='plan'?planTap(la,lo):exploreCell(la,lo);};tr.onclick=go;tr.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}};});
 }
 function priorityPercentiles(values){
@@ -2113,10 +2123,14 @@ function paintGECells(){
   markers.forEach(m=>{const cell=globalThis.geEvidence&&snapToLattice(m.r[0],m.r[1],25000),shown=!cell||globalThis.geEvidence.visible(25000,cell.col,cell.row);setCellState(m.i,_geLoading?null:geColour(m),shown?op:0);});
   applyCanadaMask();
 }
+// The outlines are drawn from the PNG (refreshCells5), so cells-fill stays a transparent click target. Ranking
+// reuses m.t: fewest observer-days left to light up first, lit cells last.
 function paintCLCells(){
-  const v=clImage(25000),op=_clLoading||(map&&map.getZoom&&map.getZoom()>=TIER_SWITCH_Z)?0:clOpacity;
+  const v=clImage(25000),lit=CL_META&&CL_META.rule_of_thumb_units;
   if(!v&&!_clLoading)loadCLVals(25000).then(()=>{if(clActive())recolour();},()=>{});   // a group change lands here first
-  markers.forEach(m=>{const s=v&&snapToLattice(m.r[0],m.r[1],25000),k=s?clStatus(v,s.col,s.row):-1;setCellState(m.i,k<0?null:CL_PAL[k],k<0?0:op);});
+  markers.forEach(m=>{const s=v&&snapToLattice(m.r[0],m.r[1],25000),n=s?clDays(v,s.col,s.row):-1;m.need=n<0?null:Math.max(0,lit-n);m.t=null;setCellState(m.i,null,0);});
+  const ranked=eligibleMarkers().filter(m=>m.need!==null),pct=priorityPercentiles(ranked.map(m=>m.need?-m.need:-lit-1));
+  ranked.forEach((m,i)=>{m.t=pct[i];});
   applyCanadaMask();
 }
 function recolour(){
@@ -2178,11 +2192,11 @@ function updateLegend(){
   const paint=html=>{ml.innerHTML=html;globalThis.refreshMapContext?.();};
   if(GE_PRIORITY_LEGEND===null)GE_PRIORITY_LEGEND=ml.innerHTML;   // capture the as-built priority legend once
   if(globalThis.optionalLayers&&globalThis.optionalLayers.isDiscovery()){paint(_discoveryLoading?'<div class="hint" role="status">'+t('discovery_loading')+'</div>':globalThis.optionalLayers.discoveryLegend());return;}
-  const sw=(c,lab)=>`<div style="display:flex;align-items:center;gap:6px;margin:2px 0"><span style="width:13px;height:13px;border-radius:3px;background:${c};border:1px solid #ccc;flex:none"></span><span>${lab}</span></div>`;
+  const sw=(c,lab,line)=>`<div style="display:flex;align-items:center;gap:6px;margin:2px 0"><span style="width:13px;height:13px;border-radius:3px;${line?`border:2px solid ${c};box-sizing:border-box`:`background:${c};border:1px solid #ccc`};flex:none"></span><span>${lab}</span></div>`;
   if(clActive()){
     if(_clLoading||!CL_META){paint('<div class="hint" role="status">'+t('cl_loading')+'</div>');return;}
-    const b=CL_META.bands;
-    paint('<div class="lt">'+t('crit_cl')+'</div>'+t('cl_legend',Math.round(b.complete*100),Math.round(b.close*100),CL_META.min_units).map((nm,i)=>sw(CL_PAL[i],nm)).join(''));
+    const n=CL_META.rule_of_thumb_units;
+    paint('<div class="lt">'+t('crit_cl')+'</div>'+t('cl_legend',n,Math.ceil(n/2)).map((nm,i)=>sw(CL_PAL[i],nm,true)).join(''));
   }else if(geActive()){
     if(_geLoading){paint('<div class="hint" role="status">'+t('ge_loading')+'</div>');return;}
     paint('<div class="lt">'+t('getting_even')+'</div>'+
@@ -2431,11 +2445,14 @@ function setGridFill(){
       'fill-opacity':gridOpacity}},CELL_LAYER);
   }
   // 5 km tier: viewport-built cell polygons (refreshCells5), rebuilt on moveend above the switch.
+  // The checklist draws outlines from its own PNG at both tiers, so Canadian cells without a data row show too.
   map.addSource('cells5',{type:'geojson',data:{type:'FeatureCollection',features:[]},attribution:'Blitz the Gap priority grid'});
-  map.addLayer({id:'grid5',type:'fill',source:'cells5',minzoom:TIER_SWITCH_Z,paint:{
+  if(cl)map.addLayer({id:'grid5',type:'line',source:'cells5',layout:{'line-sort-key':['get','k']},paint:{
+    'line-color':['get','c'],'line-width':1.5,'line-opacity':['*',['get','a'],clOpacity]}},CELL_LAYER);
+  else map.addLayer({id:'grid5',type:'fill',source:'cells5',minzoom:TIER_SWITCH_Z,paint:{
     'fill-color':['get','c'],
     'fill-color-transition':{duration:250},
-    'fill-opacity':ge&&globalThis.geEvidence?globalThis.geEvidence.opacityExpression(geOpacity):ge?geOpacity:cl?clOpacity:gridOpacity}},CELL_LAYER);
+    'fill-opacity':ge&&globalThis.geEvidence?globalThis.geEvidence.opacityExpression(geOpacity):ge?geOpacity:gridOpacity}},CELL_LAYER);
   if(!ge&&!cl)loadVals(25000).then(v=>{
     if(seq!==_gridSeq)return;
     if(map.getZoom()<TIER_SWITCH_Z)STRETCH=makeStretch(sample25(v));   // above the switch the 5 km tier is the visible one and sets STRETCH itself
@@ -2466,22 +2483,24 @@ function restretch25(){
 let _c5seq=0;
 // Lattice keys of the 5 km cells on screen: a tap opens a cell exactly when it is drawn.
 var DRAWN5=null;   // var, not let: setGridFill can reset it before this line has run (same TDZ trap as STRETCH).
+var _cl25=null;   // the checklist 25 km image the whole lattice was last drawn from, so a pan does not rebuild it
 async function refreshCells5(){
-  if(!_mapLoaded||!map.getSource('cells5')||map.getZoom()<TIER_SWITCH_Z)return;
-  const seq=++_c5seq;
   const ge=geActive(),cl=clActive();
-  let v;try{v=await (ge?loadGEVals(5000):cl?loadCLVals(5000):loadVals(5000));}catch(e){return;}
+  if(!_mapLoaded||!map.getSource('cells5')||(!cl&&map.getZoom()<TIER_SWITCH_Z))return;
+  const seq=++_c5seq,R=cl?activeCellResM():5000;
+  let v;try{v=await (ge?loadGEVals(5000):cl?loadCLVals(R):loadVals(5000));}catch(e){return;}
   if(seq!==_c5seq||!map.getSource('cells5'))return;
-  const R=5000,b=map.getBounds(),W=b.getWest(),E=b.getEast(),S=b.getSouth(),N=b.getNorth();
+  const whole=cl&&R===25000;if(whole&&DRAWN5&&_cl25===v)return;
+  const b=map.getBounds(),W=b.getWest(),E=b.getEast(),S=b.getSouth(),N=b.getNorth();
   // Viewport extent in LAEA: corners + edge midpoints (a Mercator rectangle's edges bow in LAEA).
   let minX=1/0,maxX=-1/0,minY=1/0,maxY=-1/0;
   [[W,S],[E,S],[W,N],[E,N],[(W+E)/2,S],[(W+E)/2,N],[W,(S+N)/2],[E,(S+N)/2]].forEach(p=>{
     const c=LAEA.fwd(p[1],p[0]);
     if(c[0]<minX)minX=c[0];if(c[0]>maxX)maxX=c[0];if(c[1]<minY)minY=c[1];if(c[1]>maxY)maxY=c[1];});
-  const c0=Math.max(0,Math.floor((minX-LATTICE_X0)/R)-1),c1=Math.min(v.w-1,Math.floor((maxX-LATTICE_X0)/R)+1);
-  const r0=Math.max(0,Math.floor((LATTICE_Y1-maxY)/R)-1),r1=Math.min(v.h-1,Math.floor((LATTICE_Y1-minY)/R)+1);
+  const c0=whole?0:Math.max(0,Math.floor((minX-LATTICE_X0)/R)-1),c1=whole?v.w-1:Math.min(v.w-1,Math.floor((maxX-LATTICE_X0)/R)+1);
+  const r0=whole?0:Math.max(0,Math.floor((LATTICE_Y1-maxY)/R)-1),r1=whole?v.h-1:Math.min(v.h-1,Math.floor((LATTICE_Y1-minY)/R)+1);
   const cells=[];
-  if((c1-c0+1)*(r1-r0+1)<=40000){   // z >= TIER_SWITCH_Z keeps this in the low thousands; the cap guards pathological viewports
+  if((c1-c0+1)*(r1-r0+1)<=40000){   // 5 km above the switch is low thousands, the whole 25 km lattice just fits; the cap guards pathological viewports
     for(let row=r0;row<=r1;row++)for(let col=c0;col<=c1;col++){
       const g=ge?geCat(v,col,row):cl?clStatus(v,col,row):valG(v,col,row);if(g<0)continue;   // no cell (GE: or too few records to name a group) -> draw nothing
       cells.push([col,row,g]);
@@ -2493,10 +2512,11 @@ async function refreshCells5(){
     const x=LATTICE_X0+col*R,y=LATTICE_Y1-row*R;   // exact lattice corners -> neighbours share vertices, no seams
     const ring=[[x,y],[x+R,y],[x+R,y-R],[x,y-R],[x,y]].map(q=>{const g=LAEA.inv(q[0],q[1]);return[g[1],g[0]];});
     const fill=ge?(GE_PAL[c[2]]||GE_ALL):cl?CL_PAL[c[2]]:(STRETCH?virColour(stretchT(c[2])):valColor(v,col,row));
-    return{type:'Feature',properties:{c:fill,...(ge&&globalThis.geEvidence?{geCount:globalThis.geEvidence.countAt(5000,col,row)??-1}:{})},geometry:{type:'Polygon',coordinates:[ring]}};
+    // Checklist: lit outlines sort on top of shared edges, not-yet ones stay faint.
+    return{type:'Feature',properties:{c:fill,...(cl?{k:2-c[2],a:c[2]===2?0.35:1}:{}),...(ge&&globalThis.geEvidence?{geCount:globalThis.geEvidence.countAt(5000,col,row)??-1}:{})},geometry:{type:'Polygon',coordinates:[ring]}};
   });
   map.getSource('cells5').setData({type:'FeatureCollection',features:feats});
-  DRAWN5=new Set(cells.map(c=>c[0]+','+c[1]));
+  DRAWN5=new Set(cells.map(c=>c[0]+','+c[1]));_cl25=whole?v:null;
   updateLegendLabels();
 }
 const COVPM=['All','Amphibia','Aves','Insecta','Mammalia','Plantae','Reptilia','Actinopterygii','Arachnida','Mollusca','Fungi'];   // taxa with a local PMTiles (others -> All)
@@ -2563,7 +2583,7 @@ function setClimateOpacity(v){climateOpacity=v;if(_mapLoaded&&map.getLayer('clim
 // The shared slider remembers each active data layer's opacity. The priority grid keeps its
 // fixed 0.5 fill (#46); Getting Even adjusts only its categorical cells (#121).
 function dataOverlayActive(){return covOn()||climateOn()||geActive()||clActive();}
-function setCLOpacity(v){clOpacity=v;if(!_mapLoaded||!clActive())return;paintCLCells();if(map.getLayer('grid5'))map.setPaintProperty('grid5','fill-opacity',v);}
+function setCLOpacity(v){clOpacity=v;if(_mapLoaded&&clActive()&&map.getLayer('grid5'))map.setPaintProperty('grid5','line-opacity',['*',['get','a'],v]);}
 function setGEOpacity(v){
   if(_geLoading)return;
   geOpacity=v;
@@ -2818,7 +2838,7 @@ async function planTrip(){
   planned=true;state.planMode='auto';
   if(!state.modeSet)applyAutoMode(greenestForAnyGap());
   const trips=document.getElementById('trips');const [slat,slon]=state.start,budget=state.budget,M=MODES[state.mode];
-  const all=eligibleMarkers().map(m=>{const km=haversine(slat,slon,m.r[0],m.r[1]);return {m,km,estOne:(km*ROAD_FACTOR)/M.kmh,imp:impact(m.r)};});
+  const all=eligibleMarkers().map(m=>{const km=haversine(slat,slon,m.r[0],m.r[1]);return {m,km,estOne:(km*ROAD_FACTOR)/M.kmh,imp:m.t||0};});   // m.t: the active goal's rank (checklist: fewest observer-days to light up)
   if(!all.length){trips.textContent=t(_usFailed?'rank_mask_unavailable':'rank_no_cells');return;}
   // Pick candidates BEFORE we know routability, so blend two signals: the highest-impact
   // cells AND the nearest cells. Picking by impact alone can hand back 8 cells that all
@@ -3107,7 +3127,9 @@ function exploreCell(lat,lon){
   // grid. At 5 km a cell opens exactly when it is drawn (DRAWN5; under a raster overlay, when its 25 km
   // parent has data); at 25 km, when it has a data row. Never select a hidden US cell -- the marker
   // handler already guards direct cell taps, this covers taps on the bare map.
-  const open=globalThis.optionalLayers&&globalThis.optionalLayers.isDiscovery()?!!globalThis.optionalLayers.discoveryCell(snap.lat,snap.lon,resM):resM===5000&&DRAWN5?DRAWN5.has(latKey(snap)):!!best;
+  // Under the checklist goal a cell opens exactly when its outline is drawn, data row or not.
+  const clv=clActive()&&clImage(resM);
+  const open=globalThis.optionalLayers&&globalThis.optionalLayers.isDiscovery()?!!globalThis.optionalLayers.discoveryCell(snap.lat,snap.lon,resM):clv?clStatus(clv,snap.col,snap.row)>=0:resM===5000&&DRAWN5?DRAWN5.has(latKey(snap)):!!best;
   if(!open||(best&&caOnlyActive()&&US_CELLS&&US_CELLS.has(gekey(best.r[0],best.r[1]))))return;
   _selectionSeq++;   // a valid explicit selection supersedes a pending shared-link restoration
   _reselect=true;   // swapping selections: suppress the close-driven deselect until the new popup is open (issue #16)
