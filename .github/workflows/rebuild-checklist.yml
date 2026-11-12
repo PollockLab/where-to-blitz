@@ -1,8 +1,8 @@
 name: Rebuild checklist
-# Trial: rebuilds the "Complete a checklist" layer (build_checklist.py) from the monthly iNaturalist
-# open-data export and, with publish: true, uploads it to the checklist-outputs-v1 release, the way
-# rebuild-grid.yml publishes grid-outputs-v1. The site still deploys the committed
-# cluster_results/checklist/; nothing here changes that.
+# Rebuilds the "Complete a checklist" layer (build_checklist.py) from GBIF's latest monthly
+# occurrence snapshot, iNaturalist research grade, and uploads it to the checklist-outputs-v1
+# release, the way rebuild-grid.yml publishes grid-outputs-v1. A full rebuild every run: the
+# snapshot is a full copy, not a diff.
 on:
   workflow_dispatch:
     inputs:
@@ -10,6 +10,8 @@ on:
         description: "Upload the built layer to the checklist-outputs-v1 release"
         type: boolean
         default: true
+  schedule:
+    - cron: "0 6 5 * *"   # GBIF writes the snapshot on the 1st
 
 jobs:
   build:
@@ -17,8 +19,6 @@ jobs:
     timeout-minutes: 120
     permissions:
       contents: write   # release asset upload
-    env:
-      EXPORT: https://inaturalist-open-data.s3.amazonaws.com
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -31,17 +31,16 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}-py-3.11
       - name: Install deps
         run: pip install -r requirements.txt
-      - name: Build from the streamed export
-        # The ~13 GB observations export never touches disk: awk keeps research-grade rows inside
-        # build_checklist's BBOX and the seven columns read_records reads, and pandas reads the pipe.
+      - name: Build from the latest GBIF snapshot
         run: |
           set -euo pipefail
-          curl -sfLo taxa.csv.gz "$EXPORT/taxa.csv.gz"
-          export_date=$(date -u -d "$(curl -sfI "$EXPORT/observations.csv.gz" | sed -n 's/^last-modified: //Ip' | tr -d '\r')" +%F)
-          echo "export date $export_date"
-          curl -sfL "$EXPORT/observations.csv.gz" | gzip -dc \
-            | awk -F'\t' -v OFS='\t' 'NR == 1 || ($7 == "research" && $4 >= -142 && $4 <= -50 && $3 >= 40 && $3 <= 84) { print $2, $3, $4, $5, $6, $7, $8 }' \
-            | python build_checklist.py --observations /dev/stdin --taxa taxa.csv.gz --export-date "$export_date"
+          snapshot=$(curl -sf "https://gbif-open-data-us-east-1.s3.amazonaws.com/?list-type=2&prefix=occurrence/&delimiter=/" \
+            | grep -o 'occurrence/[0-9-]*/' | sort | tail -1)
+          snapshot_date=$(basename "$snapshot")
+          echo "snapshot $snapshot_date"
+          rx=$(cat /sys/class/net/eth0/statistics/rx_bytes)
+          python build_checklist.py --gbif "s3://gbif-open-data-us-east-1/${snapshot%/}" --export-date "$snapshot_date"
+          echo "received $(( ($(cat /sys/class/net/eth0/statistics/rx_bytes) - rx) / 1000000 )) MB"
           tar -czf checklist.tar.gz -C cluster_results/checklist .
           ls -la cluster_results/checklist checklist.tar.gz
       - uses: actions/upload-artifact@v4
@@ -50,7 +49,7 @@ jobs:
           path: checklist.tar.gz
           retention-days: 7
       - name: Publish to release
-        if: inputs.publish
+        if: github.event_name == 'schedule' || inputs.publish
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REL: checklist-outputs-v1
@@ -58,6 +57,6 @@ jobs:
           set -euo pipefail
           if ! gh release view "$REL" >/dev/null 2>&1; then
             gh release create "$REL" --prerelease --title "Checklist outputs (auto-built)" \
-              --notes "build_checklist.py output from the iNaturalist open-data export, rebuilt by rebuild-checklist.yml."
+              --notes "build_checklist.py output from GBIF's monthly occurrence snapshot (iNaturalist research grade), rebuilt by rebuild-checklist.yml."
           fi
           gh release upload "$REL" checklist.tar.gz --clobber

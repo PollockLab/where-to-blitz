@@ -29,6 +29,11 @@ public iNaturalist open-data export, not a sample:
     curl -O https://inaturalist-open-data.s3.amazonaws.com/taxa.csv.gz
     python build_checklist.py --observations observations.csv.gz --taxa taxa.csv.gz
 
+or, as CI does (.github/workflows/rebuild-checklist.yml), the same records from GBIF's monthly
+Parquet snapshot, read in place with DuckDB (~3.6 GB fetched instead of the ~13.7 GB export):
+
+    python build_checklist.py --gbif s3://gbif-open-data-us-east-1/occurrence/2026-11-01 --export-date 2026-11-01
+
 The status bands and the minimum effort live in the sidecar, not in this file's pixels, so the
 app can show them and a threshold change is not a rebuild. Chao2 is a lower bound on richness
 and is unstable on a handful of units, so cells under MIN_UNITS are drawn as "too few".
@@ -93,6 +98,21 @@ ICONIC = {
     "Mollusca": 47115,
 }
 GROUP_CODE = {g: i + 1 for i, g in enumerate(ICONIC)}  # 0 = species outside the named groups
+# iNaturalist Research-grade Observations on GBIF, https://www.gbif.org/dataset/50c9509d-22c7-4a22-a47d-8c48425ef4a7
+GBIF_INAT = "50c9509d-22c7-4a22-a47d-8c48425ef4a7"
+# The same groups in GBIF's backbone (rank, names); it splits ray-finned fishes into classes.
+GBIF_GROUP = {
+    "Plantae": ("kingdom", ["Plantae"]),
+    "Insecta": ("class", ["Insecta"]),
+    "Aves": ("class", ["Aves"]),
+    "Fungi": ("kingdom", ["Fungi"]),
+    "Mammalia": ("class", ["Mammalia"]),
+    "Actinopterygii": ("class", ["Actinopterygii", "Teleostei", "Holostei", "Chondrostei", "Cladistia"]),
+    "Reptilia": ("class", ["Reptilia"]),
+    "Amphibia": ("class", ["Amphibia"]),
+    "Arachnida": ("class", ["Arachnida"]),
+    "Mollusca": ("phylum", ["Mollusca"]),
+}
 BBOX = (-142.0, 40.0, -50.0, 84.0)  # lon/lat prefilter; the lattice and border mask cut exactly
 SPECIES_RANK = 10
 NO_RECORDS_ALPHA = 64  # a Canadian cell with no record of the group; the app reads >= 32 as Canadian
@@ -186,13 +206,30 @@ def species_lookup(taxa):
     return sp, grp
 
 
-def read_records(obs_path, sp, grp, lat5):
-    """Stream the export into compact per-record arrays on the 5 km lattice.
+def lattice_records(lat5, lon, lat, day, species, group, observer, acc):
+    """Per-record arrays on the 5 km lattice, dropping records off it or undated (day as datetime64).
 
     Returns a dict of equal-length arrays: species, group, row/col (5 km), observer, day and
     acc (positional accuracy in metres, NaN when unknown).
     """
-    to_lattice = Transformer.from_crs("EPSG:4326", lat5.crs, always_xy=True)
+    x, y = Transformer.from_crs("EPSG:4326", lat5.crs, always_xy=True).transform(lon, lat)
+    col = np.floor((x - lat5.x0) / lat5.res).astype(np.int64)
+    row = np.floor((lat5.y1 - y) / lat5.res).astype(np.int64)
+    day = np.asarray(day).astype("datetime64[D]")
+    inside = (row >= 0) & (row < lat5.nrow) & (col >= 0) & (col < lat5.ncol) & ~np.isnat(day)
+    return {
+        "species": species[inside].astype(np.int32),
+        "group": group[inside].astype(np.int8),
+        "row": row[inside].astype(np.int32),
+        "col": col[inside].astype(np.int32),
+        "observer": observer[inside].astype(np.int32),
+        "day": day[inside].astype(np.int64).astype(np.int32),
+        "acc": acc[inside].astype(np.float32),
+    }
+
+
+def read_records(obs_path, sp, grp, lat5):
+    """Stream the iNaturalist export into lattice_records' arrays."""
     cols = [
         "observer_id",
         "latitude",
@@ -224,25 +261,65 @@ def read_records(obs_path, sp, grp, lat5):
         species = sp[tid]
         keep = species > 0
         df, species, tid = df[keep], species[keep], tid[keep]
-        x, y = to_lattice.transform(df.longitude.to_numpy(), df.latitude.to_numpy())
-        col = np.floor((x - lat5.x0) / lat5.res).astype(np.int64)
-        row = np.floor((lat5.y1 - y) / lat5.res).astype(np.int64)
-        inside = (row >= 0) & (row < lat5.nrow) & (col >= 0) & (col < lat5.ncol)
-        day = pd.to_datetime(df.observed_on, errors="coerce", format="%Y-%m-%d")
-        inside &= day.notna().to_numpy()
-        parts.append(
-            {
-                "species": species[inside].astype(np.int32),
-                "group": grp[tid][inside],
-                "row": row[inside].astype(np.int32),
-                "col": col[inside].astype(np.int32),
-                "observer": df.observer_id.to_numpy(np.int64)[inside].astype(np.int32),
-                "day": (day[inside].to_numpy().astype("datetime64[D]").astype(np.int64)).astype(np.int32),
-                "acc": df.positional_accuracy.to_numpy(float)[inside].astype(np.float32),
-            }
+        part = lattice_records(
+            lat5,
+            df.longitude.to_numpy(),
+            df.latitude.to_numpy(),
+            pd.to_datetime(df.observed_on, errors="coerce", format="%Y-%m-%d").to_numpy(),
+            species,
+            grp[tid],
+            df.observer_id.to_numpy(np.int64),
+            df.positional_accuracy.to_numpy(float),
         )
-        print(f"chunk {i}: kept {inside.sum():,} records", flush=True)
+        parts.append(part)
+        print(f"chunk {i}: kept {len(part['species']):,} records", flush=True)
     return {k: np.concatenate([p[k] for p in parts]) for k in parts[0]}
+
+
+def read_gbif(snapshot, lat5):
+    """lattice_records' arrays from GBIF's monthly occurrence snapshot, iNaturalist research grade.
+
+    `snapshot` is a snapshot folder such as s3://gbif-open-data-us-east-1/occurrence/2026-11-01.
+    Species are GBIF backbone species keys and observers are recordedBy (the iNaturalist display
+    name, else login), both renumbered to dense ints; groups come from GBIF_GROUP's ranks.
+    """
+    import duckdb
+
+    con = duckdb.connect()
+    con.execute("INSTALL httpfs; LOAD httpfs; SET s3_region = 'us-east-1'")
+    # The snapshot's ~10k files are grouped by dataset, and a query reads its selected columns
+    # from every file it scans, so find iNaturalist's ~1.2k files from datasetkey alone first.
+    files = [
+        f
+        for (f,) in con.execute(
+            "SELECT DISTINCT filename FROM read_parquet($glob, filename = true) WHERE datasetkey = $key",
+            {"glob": f"{snapshot}/occurrence.parquet/*", "key": GBIF_INAT},
+        ).fetchall()
+    ]
+    group = " ".join(
+        f'WHEN "{rank}" IN ({", ".join(repr(n) for n in names)}) THEN {GROUP_CODE[g]}'
+        for g, (rank, names) in GBIF_GROUP.items()
+    )
+    df = con.execute(
+        f"""SELECT decimallongitude AS lon, decimallatitude AS lat, make_date(year, month, day) AS day,
+                   specieskey, CASE {group} ELSE 0 END AS grp, recordedby[1] AS observer,
+                   coordinateuncertaintyinmeters AS acc
+            FROM read_parquet($files)
+            WHERE datasetkey = $key AND specieskey IS NOT NULL AND recordedby[1] IS NOT NULL
+              AND decimallongitude BETWEEN $w AND $e AND decimallatitude BETWEEN $s AND $n""",
+        {"files": files, "key": GBIF_INAT, "w": BBOX[0], "s": BBOX[1], "e": BBOX[2], "n": BBOX[3]},
+    ).df()
+    print(f"{len(files)} files, {len(df):,} records", flush=True)
+    return lattice_records(
+        lat5,
+        df.lon.to_numpy(),
+        df.lat.to_numpy(),
+        df.day.to_numpy(),
+        pd.factorize(df.specieskey)[0] + 1,
+        df.grp.to_numpy(),
+        pd.factorize(df.observer)[0],
+        df.acc.to_numpy(float),
+    )
 
 
 def completeness_by_cell(cell, observer, day, species):
@@ -427,29 +504,50 @@ def build(rec, crs, source, out_dir=OUT_DIR):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("--observations", required=True, help="iNaturalist open-data observations.csv.gz")
-    ap.add_argument("--taxa", required=True, help="iNaturalist open-data taxa.csv.gz")
+    ap.add_argument("--observations", help="iNaturalist open-data observations.csv.gz")
+    ap.add_argument("--taxa", help="iNaturalist open-data taxa.csv.gz")
+    ap.add_argument(
+        "--gbif",
+        help="GBIF occurrence snapshot folder, e.g. s3://gbif-open-data-us-east-1/occurrence/2026-11-01, "
+        "read instead of --observations and --taxa",
+    )
     ap.add_argument(
         "--export-date",
         required=True,
-        help="Last-Modified date of the export, YYYY-MM-DD, recorded as its vintage",
+        help="Last-Modified date of the export (or the GBIF snapshot date), YYYY-MM-DD, recorded as its vintage",
     )
     args = ap.parse_args()
+    with open(GRID_SIDECAR) as fh:
+        crs = CRS.from_wkt(json.load(fh)["tiers"]["5000"]["lattice"]["crs"])
+    lat5 = grid_lattice.Lattice(5000, crs)
+    filters = (
+        "research grade; species rank or below, rolled up to species; dated; "
+        "positional accuracy unknown or <= cell size"
+    )
+    if args.gbif:
+        rec = read_gbif(args.gbif.rstrip("/"), lat5)
+        source = {
+            "name": f"GBIF occurrence snapshot, iNaturalist Research-grade Observations (dataset {GBIF_INAT})",
+            "url": args.gbif,
+            "export_date": args.export_date,
+            "records_used": int(len(rec["species"])),
+            "filters": filters + "; species are GBIF backbone species, observers are recordedBy",
+        }
+        return build(rec, crs, source)
+    if not (args.observations and args.taxa):
+        ap.error("give --gbif, or both --observations and --taxa")
     for p in (args.observations, args.taxa):
         if not os.path.exists(p):
             raise SystemExit(f"missing input {p}")
-    with open(GRID_SIDECAR) as fh:
-        crs = CRS.from_wkt(json.load(fh)["tiers"]["5000"]["lattice"]["crs"])
     taxa = pd.read_csv(args.taxa, sep="\t", usecols=["taxon_id", "ancestry", "rank_level"])
     sp, grp = species_lookup(taxa)
-    rec = read_records(args.observations, sp, grp, grid_lattice.Lattice(5000, crs))
+    rec = read_records(args.observations, sp, grp, lat5)
     source = {
         "name": "iNaturalist open data (inaturalist-open-data S3 export)",
         "url": "https://inaturalist-open-data.s3.amazonaws.com/observations.csv.gz",
         "export_date": args.export_date,
         "records_used": int(len(rec["species"])),
-        "filters": "research grade; species rank or below, rolled up to species; dated; "
-        "positional accuracy unknown or <= cell size",
+        "filters": filters,
     }
     build(rec, crs, source)
 
