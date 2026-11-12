@@ -723,6 +723,7 @@ const I18N={
     cl_pop_far:(lit,unlit)=>`A species missing from this list turned up later ${lit}% of the time (${unlit}% in cells not yet well observed; next 10 observer-days, 2025–26 test).`,
     cl_pop_days:(n,need)=>`${n>=65535?'Over 65,000':n.toLocaleString('en')} observer-day${n===1?'':'s'} so far`+(need?`; <b>${need} more to light up</b>`:''),
     cl_pop_note:d=>`From iNaturalist research-grade records, ${d} export.`,
+    cl_pop_recent:(n,d,cap,total)=>`+${n.toLocaleString('en')} observer-day${n===1?'':'s'} since ${d}, live from iNaturalist`+(total>cap?` (counted from the ${cap} most recent of ${total.toLocaleString('en')} records)`:''),
     cl_need:"Observer-days to light up", cl_table_caption:"Up to 40 cells of 25 km closest to lighting up for this group, fewest observer-days first. Select a row to open its cell.",
     cl_rank_aria:(i,la,lo,n)=>`Rank ${i}: latitude ${la}, longitude ${lo}, ${n} more observer-days to light up`,
     leak_note:`The walkthrough compares the all-time density blend with a separate score using earlier observations. This retrospective comparison does not establish how many species a visit to this cell will discover.`,
@@ -997,6 +998,7 @@ const I18N={
     cl_pop_far:(lit,unlit)=>`Une espèce absente de cette liste a été trouvée plus tard dans ${String(lit).replace('.',',')} % des cas (${String(unlit).replace('.',',')} % dans les cellules pas encore bien observées; 10 jours-observateur suivants, test 2025–2026).`,
     cl_pop_days:(n,need)=>`${n>=65535?'Plus de 65 000':n.toLocaleString('fr')} jour${n<2?'':'s'}-observateur jusqu'ici`+(need?`; <b>encore ${need} pour s'allumer</b>`:''),
     cl_pop_note:d=>`D'après les observations iNaturalist de qualité recherche, exportation du ${d}.`,
+    cl_pop_recent:(n,d,cap,total)=>`+${n.toLocaleString('fr')} jour${n<2?'':'s'}-observateur depuis le ${d}, en direct d'iNaturalist`+(total>cap?` (comptés sur les ${cap} plus récentes de ${total.toLocaleString('fr')} observations)`:''),
     cl_need:"Jours-observateur pour s'allumer", cl_table_caption:"Jusqu'à 40 cellules de 25 km les plus proches de s'allumer pour ce groupe, du plus petit nombre de jours-observateur manquants au plus grand. Sélectionnez une ligne pour ouvrir sa cellule.",
     cl_rank_aria:(i,la,lo,n)=>`Rang ${i} : latitude ${la}, longitude ${lo}, encore ${n} jours-observateur pour s'allumer`,
     leak_note:`Le guide compare la combinaison fondée sur la densité toutes périodes à un score distinct utilisant des observations antérieures. Cette comparaison rétrospective ne mesure pas combien d'espèces une visite permettra de découvrir.`,
@@ -1309,7 +1311,20 @@ function clPopup(lat,lon,resM){
   }
   const far=status===0&&resM===5000&&CL_FAR[state.taxon];
   return '<b>'+t('cl_status')[status]+'</b><br>'+t('cl_pop_days',days,Math.max(0,lit-days))+pct+
-    (far?'<br>'+t('cl_pop_far',...far):'')+'<br><span class="hint">'+t('cl_pop_note',esc(CL_META.source?.export_date??'?'))+'</span>';
+    (far?'<br>'+t('cl_pop_far',...far):'')+clRecent(lat,lon,resM)+'<br><span class="hint">'+t('cl_pop_note',esc(CL_META.source?.export_date??'?'))+'</span>';
+}
+// Observer-days added since the snapshot: one live iNaturalist call per tapped cell (its lat/lon envelope),
+// distinct user + observed_on over at most CL_RECENT_CAP records. Silent until it answers, and on any error.
+const CL_RECENT_CAP=200,CL_RECENT=new Map();   // url -> response, null while pending or after an error
+function clRecent(lat,lon,resM){
+  const d=CL_META.source?.export_date,b=cellBoundsForRes(lat,lon,resM),ic=ICONIC[state.taxon];
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(d||''))return '';
+  const url='https://api.inaturalist.org/v2/observations?quality_grade=research&d1='+d+'&swlat='+b.swlat+'&nelat='+b.nelat+
+    '&swlng='+b.swlng+'&nelng='+b.nelng+(ic?'&iconic_taxa='+ic:'')+'&per_page='+CL_RECENT_CAP+'&fields=observed_on,user.id';
+  if(!CL_RECENT.has(url)){CL_RECENT.set(url,null);jget(url).then(j=>{CL_RECENT.set(url,j);paintPopScore();},()=>{});}
+  const j=CL_RECENT.get(url);if(!Array.isArray(j?.results))return '';
+  const n=new Set(j.results.map(o=>o.user?.id+'|'+o.observed_on)).size;
+  return '<br>'+t('cl_pop_recent',n,d,CL_RECENT_CAP,Number.isInteger(j.total_results)?j.total_results:j.results.length);
 }
 // One data overlay at a time. Coverage used to read its own hidden checkbox, Getting Even read
 // its own, and the priority grid was whatever was left, so every listener had to reach across and
