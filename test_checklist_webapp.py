@@ -13,7 +13,7 @@ from test_template_wiring import _i18n_keys, _i18n_segments
 CL_KEYS = (
     "crit_cl", "cl_loading", "cl_opacity", "aria_cl_opacity", "cl_status", "cl_legend", "cl_blurb",
     "method_cl", "cl_how", "pop_layer_cl", "cl_pop_pct", "cl_pop_days", "cl_pop_note", "cl_pop_far",
-    "cl_need", "cl_table_caption", "cl_rank_aria", "cl_pop_recent", "cl_pop_likely",
+    "cl_need", "cl_table_caption", "cl_rank_aria", "cl_pop_recent", "cl_pop_likely", "cl_data_date",
 )  # fmt: skip
 needs_node = pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
 
@@ -231,3 +231,12 @@ def test_popup_says_likely_well_observed_once_snapshot_plus_live_reaches_the_rul
 @pytest.mark.parametrize("days,n", [(22, 7), (30, 50)])  # short of the rule; already lit in the snapshot
 def test_popup_omits_likely_well_observed_otherwise(days, n):
     assert "Likely" not in _recent_popup(_live(n, n), days=days)["after"]
+
+
+@needs_node
+@pytest.mark.parametrize("lang,text", [("en", "Data from 2026-11-01, rebuilt monthly."),
+                                       ("fr", "Données du 2026-11-01, reconstruites chaque mois.")])  # fmt: skip
+def test_goal_text_dates_the_data_from_the_built_sidecar(lang, text):
+    assert _node("console.log(JSON.stringify(t('cl_data_date','2026-11-01')))", lang) == text
+    block = _function(TEMPLATE.read_text(), "renderGoalContext")
+    assert "t('cl_data_date',d)" in block and "CL_META?.source?.export_date" in block

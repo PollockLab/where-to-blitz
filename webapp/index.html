@@ -723,7 +723,7 @@ const I18N={
     cl_pop_far:(lit,unlit)=>`A species missing from this list turned up later ${lit}% of the time (${unlit}% in cells not yet well observed; next 10 observer-days, 2025–26 test).`,
     cl_pop_days:(n,need)=>`${n>=65535?'Over 65,000':n.toLocaleString('en')} observer-day${n===1?'':'s'} so far`+(need?`; <b>${need} more to light up</b>`:''),
     cl_pop_note:d=>`From iNaturalist research-grade records, ${d} export.`,
-    cl_pop_likely:"Likely well observed now (snapshot plus live count)",
+    cl_pop_likely:"Likely well observed now (snapshot plus live count)", cl_data_date:d=>`Data from ${d}, rebuilt monthly.`,
     cl_pop_recent:(n,d,cap,total)=>`+${n.toLocaleString('en')} observer-day${n===1?'':'s'} since ${d}, live from iNaturalist`+(total>cap?` (counted from the ${cap} most recent of ${total.toLocaleString('en')} records)`:''),
     cl_need:"Observer-days to light up", cl_table_caption:"Up to 40 cells of 25 km closest to lighting up for this group, fewest observer-days first. Select a row to open its cell.",
     cl_rank_aria:(i,la,lo,n)=>`Rank ${i}: latitude ${la}, longitude ${lo}, ${n} more observer-days to light up`,
@@ -999,7 +999,7 @@ const I18N={
     cl_pop_far:(lit,unlit)=>`Une espèce absente de cette liste a été trouvée plus tard dans ${String(lit).replace('.',',')} % des cas (${String(unlit).replace('.',',')} % dans les cellules pas encore bien observées; 10 jours-observateur suivants, test 2025–2026).`,
     cl_pop_days:(n,need)=>`${n>=65535?'Plus de 65 000':n.toLocaleString('fr')} jour${n<2?'':'s'}-observateur jusqu'ici`+(need?`; <b>encore ${need} pour s'allumer</b>`:''),
     cl_pop_note:d=>`D'après les observations iNaturalist de qualité recherche, exportation du ${d}.`,
-    cl_pop_likely:"Probablement bien observée maintenant (instantané plus compte en direct)",
+    cl_pop_likely:"Probablement bien observée maintenant (instantané plus compte en direct)", cl_data_date:d=>`Données du ${d}, reconstruites chaque mois.`,
     cl_pop_recent:(n,d,cap,total)=>`+${n.toLocaleString('fr')} jour${n<2?'':'s'}-observateur depuis le ${d}, en direct d'iNaturalist`+(total>cap?` (comptés sur les ${cap} plus récentes de ${total.toLocaleString('fr')} observations)`:''),
     cl_need:"Jours-observateur pour s'allumer", cl_table_caption:"Jusqu'à 40 cellules de 25 km les plus proches de s'allumer pour ce groupe, du plus petit nombre de jours-observateur manquants au plus grand. Sélectionnez une ligne pour ouvrir sa cellule.",
     cl_rank_aria:(i,la,lo,n)=>`Rang ${i} : latitude ${la}, longitude ${lo}, encore ${n} jours-observateur pour s'allumer`,
@@ -1115,7 +1115,8 @@ function renderGoalContext(){
   const methods=document.getElementById('goalmethods');if(methods)methods.innerHTML=goalMethodsHtml(selected);
   const current=document.getElementById('howcurrent');if(current)current.textContent=t('current_goal',typeof selected==='number'?presetName(selected):t(selected==='ge'?'crit_ge':selected==='climate'?'crit_climate':selected==='cl'?'crit_cl':'density_name'));
   const cb=document.getElementById('challengeBlurb');if(cb){
-    if(clActive())cb.innerHTML=t('cl_blurb')+' <a href="#how-goals" onclick="event.preventDefault();openHowSection(\'how-goals\',this)" style="color:var(--acc);white-space:nowrap">'+t('cl_how')+'</a>';
+    const d=CL_META?.source?.export_date;
+    if(clActive())cb.innerHTML=t('cl_blurb')+(/^\d{4}-\d{2}-\d{2}$/.test(d||'')?' '+t('cl_data_date',d):'')+' <a href="#how-goals" onclick="event.preventDefault();openHowSection(\'how-goals\',this)" style="color:var(--acc);white-space:nowrap">'+t('cl_how')+'</a>';
     else if(overlay!=='priority')cb.textContent=t(geActive()?'ge_blurb':climateOn()?'climate_blurb':'density_blurb');
     else{const i=window.__activePreset||0,p=PRESETS[i];
       cb.innerHTML=presetBlurb(i)+' <a href="https://www.inaturalist.org/projects/'+p.proj+'" target="_blank" rel="noopener" style="color:var(--acc);white-space:nowrap">'+t('join')+'</a>';}
@@ -1382,7 +1383,7 @@ function setOverlay(kind){
   if(clActive()){
     paint();
     if(!_clLoading)return _overlayReady=Promise.resolve();
-    return _overlayReady=loadCLVals(activeCellResM()).then(()=>{if(seq!==_overlaySeq)return;_clLoading=false;paint();},()=>{if(seq!==_overlaySeq)return;setOverlay('priority');
+    return _overlayReady=loadCLVals(activeCellResM()).then(()=>{if(seq!==_overlaySeq)return;_clLoading=false;paint();renderGoalContext();},()=>{if(seq!==_overlaySeq)return;setOverlay('priority');
       const cs=document.getElementById('criteria');if(cs)cs.value=String(window.__activePreset||0);syncSharedCellUrl();});
   }
   return _overlayReady=Promise.resolve(paint());
