@@ -17,6 +17,9 @@ cluster_results/ca/grid_*m/
 # Per-(group, goal) cell-colour PNGs: rebuilt by CI, shipped via release + Pages (#116)
 cluster_results/ca/values/
 
+# Checklist light-up research data: needs the full iNat export, which CI does not have; the viewer reads the checklist PNGs
+cluster_results/checklist/lightup/
+
 # claude-flow runtime/session state
 .claude-flow/
 

@@ -16,9 +16,9 @@ applied unchanged at every tier. A cell takes the mean of the CHELSA samples who
     python research/checklist_lightup.py RECORDS.npz CHELSA.npz
 
 RECORDS.npz holds build_checklist.read_records' arrays. Writes research/results/checklist_lightup.md and
-.png, and cluster_results/checklist/lightup/ (per-tier lit cells and meta.json) that checklist/index.html
-loads; it also rebuilds
-the layer into cluster_results/lightup/checklist/ (not the shipped cluster_results/checklist/).
+.png, and cluster_results/checklist/lightup/ (per-tier lit cells and meta.json, gitignored: it needs the full
+iNat export, so neither the repo nor CI carries it; the viewer's checklist goal reads the shipped PNGs). It
+also rebuilds the layer into cluster_results/lightup/checklist/ (not the shipped cluster_results/checklist/).
 """
 import json
 import os
