@@ -514,8 +514,14 @@ jobs:
           # 5 km layer rather than the deploy failing.
           cp cluster_results/ca/*.png _site/cluster_results/ca/
           cp -R cluster_results/ca/values _site/cluster_results/ca/
-          # "Complete a checklist" layer (build_checklist.py); guarded until its first build is committed.
-          if [ -d cluster_results/checklist ]; then mkdir -p _site/cluster_results/checklist && cp -R cluster_results/checklist/. _site/cluster_results/checklist/; fi
+          # "Complete a checklist" layer: rebuild-checklist.yml's monthly release asset, else the committed build.
+          mkdir -p _site/cluster_results/checklist
+          if gh release download checklist-outputs-v1 --pattern checklist.tar.gz --dir "$RUNNER_TEMP" --repo "$GITHUB_REPOSITORY" --clobber; then
+            tar -xzf "$RUNNER_TEMP/checklist.tar.gz" -C _site/cluster_results/checklist
+          else
+            cp -R cluster_results/checklist/. _site/cluster_results/checklist/
+          fi
+          test -s _site/cluster_results/checklist/checklist.json
           # Old checklist light-up page, now a redirect to ?goal=cl so shared links keep working.
           cp -R checklist _site/
           du -sh _site
@@ -603,8 +609,14 @@ jobs:
           cp cluster_results/ca/*.json _site/cluster_results/ca/
           cp cluster_results/ca/*.png _site/cluster_results/ca/   # the Getting Even fill (#122) and the land/sea mask
           cp -R cluster_results/ca/values _site/cluster_results/ca/
-          # "Complete a checklist" layer (build_checklist.py); guarded until its first build is committed.
-          if [ -d cluster_results/checklist ]; then mkdir -p _site/cluster_results/checklist && cp -R cluster_results/checklist/. _site/cluster_results/checklist/; fi
+          # "Complete a checklist" layer: rebuild-checklist.yml's monthly release asset, else the committed build.
+          mkdir -p _site/cluster_results/checklist
+          if gh release download checklist-outputs-v1 --pattern checklist.tar.gz --dir "$RUNNER_TEMP" --repo "$GITHUB_REPOSITORY" --clobber; then
+            tar -xzf "$RUNNER_TEMP/checklist.tar.gz" -C _site/cluster_results/checklist
+          else
+            cp -R cluster_results/checklist/. _site/cluster_results/checklist/
+          fi
+          test -s _site/cluster_results/checklist/checklist.json
           # Old checklist light-up page, now a redirect to ?goal=cl so shared links keep working.
           cp -R checklist _site/
           du -sh _site
