@@ -29,12 +29,16 @@ on:
   # could only ever report a regression that had already landed on main.
   pull_request:
   workflow_run:
-    workflows: ["Conservation Challenge snapshot", "Rebuild checklist"]
+    workflows: ["Conservation Challenge snapshot"]
     types: [completed]
+  # rebuild-checklist.yml sends this only after publishing a new snapshot: a workflow_run trigger
+  # would also redeploy after its early-exit runs, which succeed without publishing.
+  repository_dispatch:
+    types: [checklist-published]
 
 jobs:
   validate-light:
-    if: github.event_name == 'push' || github.event_name == 'pull_request' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == github.event.repository.default_branch && github.event.workflow_run.head_repository.full_name == github.repository)
+    if: github.event_name == 'push' || github.event_name == 'pull_request' || github.event_name == 'repository_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == github.event.repository.default_branch && github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -536,7 +540,7 @@ jobs:
   deploy-site-fast:
     # On push to main: redeploy the site without rebuilding tiles (use latest release assets).
     # Lint validation already passed. This job rebuilds the webapp (index.html) and deploys.
-    if: github.event_name == 'push' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == github.event.repository.default_branch && github.event.workflow_run.head_repository.full_name == github.repository)
+    if: github.event_name == 'push' || github.event_name == 'repository_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == github.event.repository.default_branch && github.event.workflow_run.head_repository.full_name == github.repository)
     needs: validate-light
     runs-on: ubuntu-latest
     # One Pages deployment at a time: deploy-site (dispatch) and deploy-site-fast (push to

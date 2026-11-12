@@ -310,6 +310,7 @@ def evaluate_condition(expression, github):
         ("push", "", "main", REPOSITORY, True, True),
         ("pull_request", "", "topic", "contributor/fork", True, False),
         ("workflow_dispatch", "", "main", REPOSITORY, False, False),
+        ("repository_dispatch", "", "main", REPOSITORY, True, True),  # a new checklist snapshot
         ("workflow_run", "success", "main", REPOSITORY, True, True),
         ("workflow_run", "failure", "main", REPOSITORY, False, False),
         ("workflow_run", "skipped", "main", REPOSITORY, False, False),
