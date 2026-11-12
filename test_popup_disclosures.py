@@ -27,7 +27,7 @@ const document={createElement:tag=>new Element(tag),activeElement:null};
 const state={taxon:'All biodiversity'},markers=[{r:[],t:0.8}],overlay='priority';
 const map={getZoom:()=>3,getContainer:()=>({clientHeight:400}),project:()=>({x:0,y:0}),unproject:p=>p,jumpTo(){}};
 const activeCellResM=()=>25000,snapToLattice=(lat,lon)=>({lat,lon}),parentMarker=()=>markers[0];
-const caOnlyActive=()=>true,US_CELLS=new Set(),gekey=()=>'',DRAWN5=null;
+const caOnlyActive=()=>true,US_CELLS=new Set(),gekey=()=>'',DRAWN5=null,clActive=()=>false;
 const clearRoute=()=>{},syncSharedCellUrl=()=>{},setDestCell=()=>{},latKey=()=>'';
 const t=id=>id,popScoreHtml=()=>'cell facts',contribStr=()=>'components',openHowSection=()=>{};
 const popupActionsHtml=()=>'record actions';
