@@ -72,7 +72,7 @@ h1{font-size:20.5px;line-height:1.16;margin:0 0 2px}
 <div id="panel" role="main"><div id="panelInner">
   <h1>Well-observed cells</h1>
   <p class="sub">A cell lights up once it has at least 30 observer-days for a group. Research preview, iNaturalist research-grade records, export of 2026-09-27.</p>
-  <div class="sec">Latest well-observed cells</div>
+  <div class="sec">Latest lit cells</div>
   <ol id="latest"></ol>
   <p class="hint" id="latestnote"></p>
   <div class="sec">Lit when</div>
@@ -151,11 +151,14 @@ async function drawUnlit(t){const on=st.unlit&&big();
   const g=['in',['get','g'],['literal',st.on]];
   map.setFilter('close',['all',g,closeExpr()]);map.setFilter('unlit',['all',g,['!',closeExpr()]]);map.setFilter('unlithit',g);}
 // One object per lit cell: its true outline once the cell is wider on screen than the marker, else the marker.
-const MARKER_PX=14;
+// Outlines whenever a cell is at least ~6 px wide (100 km at z3 is); markers only for a manual tier finer than that.
+const MARKER_PX=6;
 function big(){const c=map.getCenter(),mpp=156543.03*Math.cos(c.lat*Math.PI/180)/2**map.getZoom();return tier()/mpp>MARKER_PX;}
 function showMode(){const b=big();
   ['cells','cellhit','cell'].forEach(id=>map.setLayoutProperty(id,'visibility',b?'visible':'none'));
-  map.setLayoutProperty('lit','visibility',b?'none':'visible');drawUnlit(tier());}
+  map.setLayoutProperty('lit','visibility',b?'none':'visible');drawUnlit(tier());
+  document.getElementById('legendnote').textContent='Each square is one grid cell (5, 25 or 100 km) whose list counts as well observed.'+
+    (b?'':' At this zoom the cells are too small to draw, so each shows as a small marker.')+' Click one for its numbers.';}
 async function load(t){if(!cells[t])cells[t]=fetch(DATA+t+'.json').then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(j=>cells[t+'_raw']=j);return cells[t];}
 const fc=(rows,t)=>({type:'FeatureCollection',features:Object.entries(rows).flatMap(([g,list])=>list.map(p=>({type:'Feature',
   geometry:{type:'Point',coordinates:[p[0],p[1]]},properties:{g,t,i:list.indexOf(p),m:p[2],s:p[3],c:p[4],lo:p[5],hi:p[6],d:p[7]||'',f:p[8]}})))});
@@ -227,7 +230,7 @@ function openPopup(q,ll){
   document.querySelector('#rule [data-v=effort]').textContent='≥ '+META.effort_lit+' observer-days';
   document.querySelector('#rule [data-v=chao2]').textContent='Chao2 ≥ '+Math.round(META.complete*100)+'%';
   document.getElementById('rulenote').textContent='Observer-days: one observer on one day in the cell. Chao2: species seen over species estimated, with at least '+META.min_units+' observer-days.';
-  document.getElementById('legendnote').textContent='Each square is one grid cell (5, 25 or 100 km) whose list counts as well observed. Zoomed out, a cell shrinks to a small marker. Click one for its numbers.';
+  
   const box=document.getElementById('groups');
   Object.keys(META.groups).forEach(g=>{const l=document.createElement('label');l.dataset.g=g;
     l.innerHTML='<input type="checkbox">';l.appendChild(symbol(g,24)).className='sym';
@@ -249,10 +252,10 @@ function openPopup(q,ll){
   const col=['match',['get','g']];groups.forEach(g=>col.push(g,META.groups[g][1]));col.push('#787878');
   map.addSource('unlit',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
   map.addLayer({id:'unlithit',type:'fill',source:'unlit',paint:{'fill-color':'#000','fill-opacity':0}});
-  map.addLayer({id:'unlit',type:'line',source:'unlit',paint:{'line-color':'#8a96a3','line-width':0.7,'line-opacity':0.35}});
-  map.addLayer({id:'close',type:'line',source:'unlit',paint:{'line-color':col,'line-width':1.3,'line-opacity':0.6,'line-dasharray':[3,2]}});
+  map.addLayer({id:'unlit',type:'line',source:'unlit',paint:{'line-color':'#8a96a3','line-width':['interpolate',['linear'],['zoom'],3,0.5,8,0.7],'line-opacity':0.35}});
+  map.addLayer({id:'close',type:'line',source:'unlit',paint:{'line-color':col,'line-opacity':0.6,'line-dasharray':[3,2],'line-width':['interpolate',['linear'],['zoom'],3,0.8,8,1.3]}});
   map.addLayer({id:'cellhit',type:'fill',source:'cells',paint:{'fill-color':'#000','fill-opacity':0}});
-  map.addLayer({id:'cells',type:'line',source:'cells',paint:{'line-color':col,'line-width':1.5}});
+  map.addLayer({id:'cells',type:'line',source:'cells',paint:{'line-color':col,'line-width':['interpolate',['linear'],['zoom'],3,1,8,1.5]}});
   map.addLayer({id:'cell',type:'line',source:'cell',paint:{'line-color':col,'line-width':3.5}});
   // Smaller when zoomed out so dense areas stay readable; 0.55 of 14 px is about 8 px, still clickable.
   map.addLayer({id:'lit',type:'symbol',source:'lit',layout:{'icon-image':['concat','sym-',['get','g']],'icon-allow-overlap':true,
