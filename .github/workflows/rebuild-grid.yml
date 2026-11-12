@@ -29,7 +29,7 @@ on:
   # could only ever report a regression that had already landed on main.
   pull_request:
   workflow_run:
-    workflows: ["Conservation Challenge snapshot"]
+    workflows: ["Conservation Challenge snapshot", "Rebuild checklist"]
     types: [completed]
 
 jobs:
