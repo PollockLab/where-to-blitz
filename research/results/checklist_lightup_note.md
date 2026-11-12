@@ -2,7 +2,7 @@
 
 ## What was built
 
-A map that starts empty and lights a cell once that cell's list for a group counts as complete, in the form of the sketch: a Canada outline, hollow squares per group (green amphibians, brown mammals), a "Complete checklists" legend with a checkbox per group, a "Latest checklists" panel, and switches for the rule and the cell size (5, 25 or 100 km). Page: `research/checklist_lightup.html`. Static figure: `research/results/checklist_lightup.png` (100 km, observer-days rule). Full tables: `research/results/checklist_lightup.md`. Records: the iNaturalist open-data export of 2026-09-27, research grade, species level, 31,644,832 records in the Canada box, the same input as the live layer. A sampling unit is one observer on one day in the cell (an observer-day).
+A map that starts empty and lights a cell once that cell's list for a group counts as complete, in the form of the sketch: a Canada outline, hollow squares per group (green amphibians, brown mammals), a "Complete checklists" legend with a checkbox per group, a "Latest checklists" panel, and switches for the rule and the cell size (5, 25 or 100 km). Page: `checklist/` on the where-to-blitz site. Static figure: `research/results/checklist_lightup.png` (100 km, observer-days rule). Full tables: `research/results/checklist_lightup.md`. Records: the iNaturalist open-data export of 2026-09-27, research grade, species level, 31,644,832 records in the Canada box, the same input as the live layer. A sampling unit is one observer on one day in the cell (an observer-day).
 
 ## The two rules
 
