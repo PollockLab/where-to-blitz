@@ -1,4 +1,6 @@
-"""The light-up view's dating and climate-strata helpers."""
+"""The light-up view's dating, climate-strata and per-tier cell helpers."""
+from types import SimpleNamespace
+
 import checklist_lightup as cl
 import numpy as np
 
@@ -28,3 +30,23 @@ def test_record_centroid_lies_inside_its_cell():
         left = x0 + cell * res
         assert left < x < left + res and y1 - res < y < y1
     assert cen.loc[0].tolist() == [x0 + 12500, y1 - 12500]  # mean of the two 5 km centres
+
+
+def test_tier_cells_lists_every_canadian_cell_including_unrecorded(monkeypatch):
+    # 3 x 4 lattice of 5 km cells; the last column is outside Canada.
+    lat = SimpleNamespace(res=5000, x0=0.0, y1=15000.0, nrow=3, ncol=4)
+    hidden = np.zeros((3, 4), bool)
+    hidden[:, 3] = True
+    monkeypatch.setattr(cl.bc, "tier_grid", lambda res, crs: (lat, hidden))
+    # Cell 0 gets 30 observer-days of one species, cell 5 one record, cell 3 (hidden) one record.
+    n = 32
+    rec = {"row": np.array([0] * 30 + [1, 0]), "col": np.array([0] * 30 + [1, 3]), "acc": np.full(n, np.nan),
+           "group": np.zeros(n, int), "observer": np.arange(n), "day": np.arange(n), "species": np.zeros(n, int)}
+    _, _, df = cl.tier_cells(rec, 5000, None, "All biodiversity")
+    assert sorted(df.cell) == [c for c in range(12) if c % 4 != 3]
+    by = df.set_index("cell")
+    assert by.loc[0, "m"] == 30 and by.loc[0, "effort"] and by.loc[5, "m"] == 1
+    empty = by.drop([0, 5])
+    assert (empty.m == 0).all() and empty.comp.isna().all() and not (empty.chao2 | empty.effort).any()
+    r, c = np.divmod(df.cell.to_numpy(), lat.ncol)
+    assert ((df.x > c * 5000) & (df.x < (c + 1) * 5000) & (df.y < 15000 - r * 5000) & (df.y > 10000 - r * 5000)).all()

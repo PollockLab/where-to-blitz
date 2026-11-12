@@ -88,8 +88,9 @@ def record_centroids(cell, row5, col5, x0, y1):
 
 
 def tier_cells(rec, res, crs, group):
-    """Per Canadian cell of the group: index, observer-days, species, quantised completeness with its 95%
-    interval, both lit flags and the effort lit day."""
+    """Per Canadian (non-hidden) cell: index, observer-days, species, quantised completeness with its 95%
+    interval, both lit flags, the effort lit day and the records' mean position. A cell without records of the
+    group has m = 0, no completeness and its centre as position, so it reads "not yet" rather than vanishing."""
     lat, hidden = bc.tier_grid(res, crs)
     k = res // 5000
     cell = (rec["row"] // k).astype(np.int64) * lat.ncol + rec["col"] // k
@@ -104,11 +105,16 @@ def tier_cells(rec, res, crs, group):
     days = nth_unit_day(cell[sel], rec["observer"][sel], rec["day"][sel], EFFORT_LIT)
     df = pd.DataFrame({"cell": cells, "m": m, "s_obs": s_obs, "comp": comp,
                        "comp_lo": s_obs / hi, "comp_hi": s_obs / lo})[canadian]
+    every = np.flatnonzero(~hidden.reshape(-1))
+    df = df.set_index("cell").reindex(every).rename_axis("cell").reset_index()
+    df[["m", "s_obs"]] = df[["m", "s_obs"]].fillna(0).astype(np.int64)
     df["chao2"] = (df.m >= bc.MIN_UNITS) & (df.comp >= bc.BANDS["complete"])
     df["effort"] = df.m >= EFFORT_LIT
     df["lit_day"] = df.cell.map(days)
     cen = record_centroids(cell[sel], rec["row"][sel], rec["col"][sel], lat.x0, lat.y1)
-    df["x"], df["y"] = df.cell.map(cen.x), df.cell.map(cen.y)
+    r, c = np.divmod(df.cell.to_numpy(), lat.ncol)
+    df["x"] = df.cell.map(cen.x).fillna(pd.Series(lat.x0 + (c + 0.5) * lat.res, index=df.index))
+    df["y"] = df.cell.map(cen.y).fillna(pd.Series(lat.y1 - (r + 0.5) * lat.res, index=df.index))
     return lat, hidden, df
 
 
@@ -138,9 +144,9 @@ def main(records_path, climate_path):
             assert int(df.chao2.sum()) == built, (res, g, int(df.chao2.sum()), built)
             if res in (5000, 25000):
                 gates.append((res, g, built, shipped["tiers"][str(res)]["groups"][g]["cells"]["complete"]))
-            n = len(df)
-            rows.append((g, res, n, int(df.chao2.sum()), int(df.effort.sum())))
-            ct = pd.crosstab(df.chao2, df.effort).reindex(index=[True, False], columns=[True, False], fill_value=0)
+            seen = df[df.m > 0]  # the report's tables count cells with records, as before unrecorded cells joined df
+            rows.append((g, res, len(seen), int(df.chao2.sum()), int(df.effort.sum())))
+            ct = pd.crosstab(seen.chao2, seen.effort).reindex(index=[True, False], columns=[True, False], fill_value=0)
             agree.append((g, res, *ct.to_numpy().ravel().tolist()))
             dd, cmd = cell_climate(clim, lat, to_lattice)
             i, j = stratum(dd[df.cell], cmd[df.cell], dd_cuts, cmd_cuts)
@@ -176,7 +182,7 @@ def main(records_path, climate_path):
             comp = df.comp.to_numpy()
             unlit[g] = [[int(mm), None if cp != cp else round(float(cp), 2), *rg[[0, 1, 4, 5]].tolist()]
                         for mm, cp, rg in zip(df.m.to_numpy()[~lit], comp[~lit], ring[~lit].reshape(-1, 8))]
-            assert len(unlit[g]) + len(markers[g]) == n
+            assert len(unlit[g]) + len(markers[g]) == len(df)
         os.makedirs(DATA, exist_ok=True)
         with open(os.path.join(DATA, f"{res}.json"), "w") as fh:
             json.dump(markers, fh, separators=(",", ":"))
