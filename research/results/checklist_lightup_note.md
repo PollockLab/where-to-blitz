@@ -51,6 +51,8 @@ Climate is CHELSA V2.1, 1981-2010. Degree-days below 0 C are summed from the 12 
 
 Lit cells pile up in the mild third: of 939 amphibian cells lit by 30 days at 5 km, all 939 are mild. Mammals reach the 25-checklist design at 25 km and 100 km and come close to 50. Amphibians have at most one lit cell in any cold stratum under either rule, so a stratified amphibian design may need strata drawn within the amphibian records' range rather than over all of Canada.
 
+The same agreement and tally tables for all eleven groups (including plants, birds, insects, fungi and "All biodiversity") are in `research/results/checklist_lightup.md`, and the page shows every group behind its checkbox.
+
 ## Limits
 
 - Degree-days from monthly means miss frost days in months whose mean is above 0 C; the moisture deficit uses Penman evaporation, not the Hargreaves form ClimateNA uses. Both are approximations to the named variables.
