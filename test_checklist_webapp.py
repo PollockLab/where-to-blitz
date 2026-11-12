@@ -139,6 +139,23 @@ def test_popup_does_not_print_the_encoding_cap(lang):
     assert ("Over 65,000" if lang == "en" else "Plus de 65 000") in out
 
 
+@needs_node
+@pytest.mark.parametrize(
+    "hash_,target",
+    [("#map=4/60/-100&rule=effort&tier=25000&groups=Mammalia,Amphibia&unlit=0", "../?goal=cl&g=Mammalia"),
+     ("#groups=All%20biodiversity", "../?goal=cl&g=All%20biodiversity"), ("", "../?goal=cl")],
+)  # fmt: skip
+def test_old_checklist_page_redirects_to_the_goal(hash_, target):
+    page = (TEMPLATE.parent.parent / "checklist" / "index.html").read_text()
+    assert len(page.splitlines()) < 20 and 'content="0; url=../?goal=cl"' in page  # no-JS fallback
+    script = page[page.index("<script>") + 8 : page.index("</script>")]
+    got = subprocess.run(
+        ["node", "-e", f"let out;const location={{hash:{json.dumps(hash_)},replace:u=>{{out=u;}}}};{script};console.log(out)"],
+        capture_output=True, text=True, check=True,
+    ).stdout.strip()  # fmt: skip
+    assert got == target
+
+
 def test_error_rate_comment_cites_its_source():
     src = TEMPLATE.read_text()
     block = src[src.index("const CL_DIR=") : src.index("const CL_FAR=")]
