@@ -139,6 +139,17 @@ def test_status_counts_respect_min_units():
     assert bc.status_counts(comp, m) == {"complete": 1, "close": 1, "far": 1, "too_few": 1}
 
 
+def test_100km_tier_pads_south_and_hides_only_all_foreign_cells():
+    crs = bc.CRS.from_wkt(json.load(open(bc.GRID_SIDECAR))["tiers"]["5000"]["lattice"]["crs"])
+    fine_lat, fine = bc.tier_grid(5000, crs)
+    lat, hidden = bc.tier_grid(100000, crs)
+    assert (lat.nrow, lat.ncol) == (46, 55)  # 905 rows of 5 km round up to 46 x 20
+    padded = np.ones((920, 1100), bool)
+    padded[:905] = fine
+    assert (hidden == padded.reshape(46, 20, 55, 20).all(axis=(1, 3))).all()
+    assert not hidden.all()
+
+
 @pytest.mark.skipif(not os.path.exists(os.path.join(OUT, "checklist.json")), reason="layer not built")
 def test_shipped_sidecar_matches_pngs():
     doc = json.load(open(os.path.join(OUT, "checklist.json")))

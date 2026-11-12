@@ -60,6 +60,7 @@ import json
 import os
 from datetime import datetime, timezone
 from statistics import NormalDist
+from types import SimpleNamespace
 
 import matplotlib.image
 import numpy as np
@@ -74,7 +75,7 @@ OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cluster_resu
 GRID_SIDECAR = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "cluster_results", "ca", "gettingeven_grid.json"
 )
-TIERS = (25000, 5000)
+TIERS = (25000, 5000, 100000)
 MIN_UNITS = 10
 BANDS = {"complete": 0.9, "close": 0.7}
 RULE_OF_THUMB_UNITS = 30
@@ -333,15 +334,32 @@ def sha256_file(path):
     return h.hexdigest()
 
 
+def tier_grid(res, crs):
+    """(lattice, outside-Canada mask) for a tier.
+
+    100 km does not divide the lattice's 181 rows of 25 km, so a tier that does not pads the south
+    edge with hidden rows and, as at 25 km, hides a cell only when all its 5 km children are hidden.
+    """
+    if not grid_lattice.HEIGHT_M % res:
+        lat = grid_lattice.Lattice(res, crs)
+        return lat, border_mask.hidden_for_tier(lat.nrow, lat.ncol, lat.res, lat.crs, lat.x0, lat.y1)
+    fine = tier_grid(5000, crs)[1]
+    k = res // 5000
+    nrow, ncol = -(-fine.shape[0] // k), fine.shape[1] // k
+    padded = np.ones((nrow * k, ncol * k), bool)
+    padded[: fine.shape[0]] = fine
+    lat = SimpleNamespace(res=res, crs=crs, x0=grid_lattice.X0, y1=grid_lattice.Y1, nrow=nrow, ncol=ncol)
+    return lat, padded.reshape(nrow, k, ncol, k).all(axis=(1, 3))
+
+
 def build(rec, crs, source, out_dir=OUT_DIR):
     os.makedirs(out_dir, exist_ok=True)
     tiers = {}
     for res in TIERS:
-        lat = grid_lattice.Lattice(res, crs)
+        lat, hidden = tier_grid(res, crs)
         k = res // 5000
         cell = (rec["row"] // k).astype(np.int64) * lat.ncol + rec["col"] // k
         precise = ~(rec["acc"] > res)  # NaN (unknown) passes
-        hidden = border_mask.hidden_for_tier(lat.nrow, lat.ncol, lat.res, lat.crs, lat.x0, lat.y1)
         groups = {}
         for name, cog in GROUP_TO_COG.items():
             sel = precise if name not in ICONIC else precise & (rec["group"] == GROUP_CODE[name])
