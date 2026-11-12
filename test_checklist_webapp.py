@@ -13,7 +13,7 @@ from test_template_wiring import _i18n_keys, _i18n_segments
 CL_KEYS = (
     "crit_cl", "cl_loading", "cl_opacity", "aria_cl_opacity", "cl_status", "cl_legend", "cl_blurb",
     "method_cl", "cl_how", "pop_layer_cl", "cl_pop_pct", "cl_pop_days", "cl_pop_note", "cl_pop_far",
-    "cl_need", "cl_table_caption", "cl_rank_aria", "cl_pop_recent",
+    "cl_need", "cl_table_caption", "cl_rank_aria", "cl_pop_recent", "cl_pop_likely",
 )  # fmt: skip
 needs_node = pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
 
@@ -168,9 +168,9 @@ def test_error_rate_comment_cites_its_source():
     assert "research/results/checklist_calibrated.md" in block and "H-S2" in block
 
 
-def _recent_popup(recent, lang="en"):
+def _recent_popup(recent, lang="en", days=22):
     """The popup before and after the live call settles, and the URLs it asked for."""
-    vals = {"25000|Aves": {"w": 1, "h": 1, "d": _pixel(22)}}
+    vals = {"25000|Aves": {"w": 1, "h": 1, "d": _pixel(days)}}
     return _node(
         f"CL_META={json.dumps(META)};Object.assign(CL_VALS,{json.dumps(vals)});"
         "const snapToLattice=()=>({col:0,row:0});const before=clPopup(45,-75,25000);"
@@ -194,6 +194,7 @@ def test_popup_adds_live_observer_days_since_the_snapshot(lang):
     assert "per_page=200" in url and "swlat=45&nelat=45.1&swlng=-75.1&nelng=-75" in url
     assert "+3 " in out["after"] and "2026-10-01" in out["after"]  # distinct user + day
     assert "200" in out["after"] and "500" in out["after"]  # the cap is stated when it bites
+    assert ("Likely" if lang == "en" else "Probablement") not in out["after"]  # 22 + 3 < 30
 
 
 @needs_node
@@ -206,3 +207,27 @@ def test_popup_states_no_cap_when_every_record_was_counted():
 def test_popup_is_silent_when_the_live_call_fails():
     out = _recent_popup(None)
     assert out["before"] == out["after"] and "+" not in out["after"]
+
+
+def _live(n, total):
+    return {
+        "total_results": total,
+        "results": [{"user": {"id": u}, "observed_on": "2026-10-05"} for u in range(n)],
+    }
+
+
+@needs_node
+@pytest.mark.parametrize("lang", ["en", "fr"])
+# 500 is capped: the live count is then a lower bound, so the line still shows.
+@pytest.mark.parametrize("total", [8, 500])
+def test_popup_says_likely_well_observed_once_snapshot_plus_live_reaches_the_rule(lang, total):
+    out = _recent_popup(_live(8, total), lang)  # 22 + 8 = 30
+    likely = "Likely well observed now" if lang == "en" else "Probablement bien observée maintenant"
+    assert likely in out["after"] and likely not in out["before"]
+    assert ("most recent" in out["after"] or "plus récentes" in out["after"]) == (total > 200)
+
+
+@needs_node
+@pytest.mark.parametrize("days,n", [(22, 7), (30, 50)])  # short of the rule; already lit in the snapshot
+def test_popup_omits_likely_well_observed_otherwise(days, n):
+    assert "Likely" not in _recent_popup(_live(n, n), days=days)["after"]
