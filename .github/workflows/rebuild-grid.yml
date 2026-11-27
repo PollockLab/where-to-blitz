@@ -455,18 +455,8 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && inputs.publish && !inputs.validate_only
     needs: [aggregate, validate]
     runs-on: ubuntu-latest
-    # One Pages deployment at a time: deploy-site (dispatch) and deploy-site-fast (push to
-    # main) target the same environment, and concurrent deploy-pages calls fail the loser.
-    concurrency:
-      group: pages
-      cancel-in-progress: false
     permissions:
       contents: read
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - name: Download rebuilt site artifact
@@ -530,12 +520,9 @@ jobs:
           cp -R checklist _site/
           du -sh _site
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: _site
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
 
   deploy-site-fast:
     # On push to main: redeploy the site without rebuilding tiles (use latest release assets).
@@ -543,18 +530,8 @@ jobs:
     if: github.event_name == 'push' || github.event_name == 'repository_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == github.event.repository.default_branch && github.event.workflow_run.head_repository.full_name == github.repository)
     needs: validate-light
     runs-on: ubuntu-latest
-    # One Pages deployment at a time: deploy-site (dispatch) and deploy-site-fast (push to
-    # main) target the same environment, and concurrent deploy-pages calls fail the loser.
-    concurrency:
-      group: pages
-      cancel-in-progress: false
     permissions:
       contents: read
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -625,9 +602,47 @@ jobs:
           cp -R checklist _site/
           du -sh _site
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: _site
+
+  deploy-pages:
+    # Deploy in its own job, as GitHub's Pages starter does: "Re-run failed jobs" then reruns
+    # only this job against the one github-pages artifact, instead of re-uploading a duplicate
+    # that deploy-pages rejects. No always(): a job that outlives its skipped build reaches the
+    # github-pages environment gate and is rejected on PRs instead of skipped.
+    needs: deploy-site
+    runs-on: ubuntu-latest
+    # One Pages deployment at a time: concurrent deploy-pages calls fail the loser.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
+
+  deploy-pages-fast:
+    # Same as deploy-pages, for deploy-site-fast.
+    needs: deploy-site-fast
+    runs-on: ubuntu-latest
+    # One Pages deployment at a time: concurrent deploy-pages calls fail the loser.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
