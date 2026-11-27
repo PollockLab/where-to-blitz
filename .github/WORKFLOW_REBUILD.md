@@ -28,8 +28,9 @@ the density overlay only, too big for git, so they live on the `grid-outputs-v1`
 ## Pages
 
 `deploy-site` and `deploy-site-fast` build and upload the Pages artifact; the separate
-`deploy-pages` job deploys it, in a `concurrency: pages` group. After a transient deploy
-failure, "Re-run failed jobs" reruns only `deploy-pages` against the same artifact. Nothing goes live unless the repo's Pages source is GitHub
+`deploy-pages` and `deploy-pages-fast` jobs deploy it, in a `concurrency: pages` group. After
+a transient deploy failure, "Re-run failed jobs" reruns only the deploy job against the same
+artifact. Nothing goes live unless the repo's Pages source is GitHub
 Actions:
 
 ```bash

@@ -609,9 +609,28 @@ jobs:
   deploy-pages:
     # Deploy in its own job, as GitHub's Pages starter does: "Re-run failed jobs" then reruns
     # only this job against the one github-pages artifact, instead of re-uploading a duplicate
-    # that deploy-pages rejects. deploy-site and deploy-site-fast never both run.
-    needs: [deploy-site, deploy-site-fast]
-    if: always() && contains(needs.*.result, 'success') && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
+    # that deploy-pages rejects. No always(): a job that outlives its skipped build reaches the
+    # github-pages environment gate and is rejected on PRs instead of skipped.
+    needs: deploy-site
+    runs-on: ubuntu-latest
+    # One Pages deployment at a time: concurrent deploy-pages calls fail the loser.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  deploy-pages-fast:
+    # Same as deploy-pages, for deploy-site-fast.
+    needs: deploy-site-fast
     runs-on: ubuntu-latest
     # One Pages deployment at a time: concurrent deploy-pages calls fail the loser.
     concurrency:
